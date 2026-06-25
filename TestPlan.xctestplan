@@ -1,0 +1,18 @@
+{
+  "configurations" : [
+    {
+      "id" : "F60DB22C-BE66-43FA-ABB7-45909BF5B949",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+
+  ],
+  "version" : 1
+}
