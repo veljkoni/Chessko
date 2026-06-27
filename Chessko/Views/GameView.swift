@@ -4,13 +4,18 @@ import SwiftUI
 
 struct GameView: View {
     var viewModel: GameViewModel
+    var localization: LocalizationManager = .shared
     @State private var showColorPicker = false
     @State private var showNewGameConfirm = false
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+
+                    // Status bar
+                    //statusBar
 
                     // Computer header (opposite of player's color)
                     let computerColor = viewModel.playerColor.opposite
@@ -49,12 +54,15 @@ struct GameView: View {
                             : viewModel.gameState.capturedByBlack
                     )
 
-                    // Status bar
-                    statusBar
-
                     // Move history
                     if !viewModel.gameState.moveNotations.isEmpty {
-                        MoveHistoryView(notations: viewModel.gameState.moveNotations)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Potezi")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+                            MoveHistoryView(notations: viewModel.gameState.moveNotations)
+                        }
                     }
                 }
                 .padding(.horizontal, 8)
@@ -66,21 +74,28 @@ struct GameView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    difficultyMenu
+                    Button {
+                        requestNewGame()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button {
-                            viewModel.undo()
-                        } label: {
-                            Image(systemName: "arrow.uturn.backward")
-                        }
-                        .disabled(!viewModel.canUndo)
-
-                        Button("Nova igra") {
-                            requestNewGame()
-                        }
-                        .font(.subheadline)
+                    Button {
+                        viewModel.undo()
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    }
+                    .disabled(!viewModel.canUndo)
+                }
+                if #available(iOS 26.0, *) {
+                    ToolbarSpacer(.fixed, placement: .primaryAction)
+                } 
+ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
                     }
                 }
             }
@@ -98,37 +113,8 @@ struct GameView: View {
             } message: {
                 Text("Partija je u toku. Sigurno želiš da počneš iznova?")
             }
-        }
-    }
-
-    // MARK: - Difficulty Menu
-
-    private var difficultyMenu: some View {
-        Menu {
-            ForEach(GameDifficulty.allCases, id: \.self) { diff in
-                Button {
-                    viewModel.setDifficulty(diff)
-                } label: {
-                    HStack {
-                        Text("\(diff.icon) \(diff.label)")
-                        if viewModel.difficulty == diff {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-                .disabled(diff == .stockfish && !viewModel.isStockfishAvailable)
-            }
-            if !viewModel.isStockfishAvailable {
-                Divider()
-                Text("Stockfish zahteva NNUE fajlove")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Text(viewModel.difficulty.icon)
-                Text(viewModel.difficulty.label)
-                    .font(.subheadline.weight(.medium))
+            .sheet(isPresented: $showSettings) {
+                SettingsSheet(gameViewModel: viewModel, localization: localization)
             }
         }
     }
@@ -157,7 +143,7 @@ struct GameView: View {
             // Name row + captured pieces
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    Text(label)
+                    Text(LocalizedStringKey(label))
                         .font(.subheadline.weight(.semibold))
                     if matAdv > 0 {
                         Text("+\(matAdv)")
@@ -203,21 +189,21 @@ struct GameView: View {
         return max(0, color == .white ? w - b : b - w)
     }
 
-    private var statusBar: some View {
-        HStack {
-            Image(systemName: statusIcon)
-                .foregroundStyle(statusColor)
-                .font(.subheadline)
-            Text(viewModel.statusMessage)
-                .font(.subheadline)
-                .foregroundStyle(statusColor)
-                .animation(.default, value: viewModel.statusMessage)
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
+//    private var statusBar: some View {
+//        HStack {
+//            Image(systemName: statusIcon)
+//                .foregroundStyle(statusColor)
+//                .font(.subheadline)
+//            Text(viewModel.statusMessage)
+//                .font(.subheadline)
+//                .foregroundStyle(statusColor)
+//                .animation(.default, value: viewModel.statusMessage)
+//            Spacer()
+//        }
+//        .padding(.horizontal, 12)
+//        .padding(.vertical, 10)
+//        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+//    }
 
     private var statusIcon: String {
         switch viewModel.gameState.status {
@@ -254,8 +240,8 @@ struct GameView: View {
                         .foregroundStyle(.white)
 
                     HStack(spacing: 20) {
-                        colorButton(color: .white, label: "Beli")
-                        colorButton(color: .black, label: "Crni")
+                        colorButton(color: .white)
+                        colorButton(color: .black)
                     }
                 }
                 .padding(28)
@@ -276,7 +262,7 @@ struct GameView: View {
         }
     }
 
-    private func colorButton(color: PieceColor, label: String) -> some View {
+    private func colorButton(color: PieceColor) -> some View {
         Button {
             withAnimation(.spring(duration: 0.25)) { showColorPicker = false }
             viewModel.newGame(playerColor: color)
@@ -295,7 +281,7 @@ struct GameView: View {
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(.white.opacity(0.35), lineWidth: 1)
                     )
-                Text(label)
+                Text(color.srbAdjective.capitalized)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white)
             }

@@ -51,13 +51,19 @@ final class MateExerciseViewModel {
     var statusMessage: String {
         switch gameState.status {
         case .checkmate(let c):
-            return c == .black ? "Bravo! Mat! 🎉" : "Poraz — pokušaj ponovo."
+            return c == .black
+                ? Loc("Bravo! Mat! 🎉")
+                : Loc("Poraz — pokušaj ponovo.")
         case .draw:
-            return "Remi — pazi na pat! Pokušaj ponovo."
+            return Loc("Remi — pazi na pat! Pokušaj ponovo.")
         case .check(let c):
-            return c == .black ? "Šah! Nastavi..." : "Šah — mora da se braniš!"
+            return c == .black
+                ? Loc("Šah! Nastavi...")
+                : Loc("Šah — mora da se braniš!")
         case .playing:
-            return isThinking ? "Crni razmišlja..." : "Na potezu si!"
+            return isThinking
+                ? Loc("Crni razmišlja...")
+                : Loc("Na potezu si!")
         }
     }
 

@@ -23,9 +23,9 @@ struct ChessPuzzle: Codable, Sendable {
     /// Friendly difficulty label based on Lichess rating.
     var difficultyLabel: String {
         switch rating {
-        case ..<1200: return "Lako"
-        case 1200..<1600: return "Srednje"
-        default: return "Teško"
+        case ..<1200: return Loc("Lako")
+        case 1200..<1600: return Loc("Srednje")
+        default: return Loc("Teško")
         }
     }
 

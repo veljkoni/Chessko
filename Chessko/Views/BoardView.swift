@@ -105,22 +105,22 @@ struct BoardView: View {
                             isSelected: Bool, isLegal: Bool, isLast: Bool) -> String {
         var parts = [pos.algebraic]
         if isLegal {
-            parts.append("mogući potez")
+            parts.append(Loc("mogući potez"))
             if let p = piece { parts.append(p.a11yLabel) }
         } else if let p = piece {
             parts.append(p.a11yLabel)
         } else {
-            parts.append("prazno")
+            parts.append(Loc("prazno"))
         }
-        if isSelected { parts.append("izabrano") }
-        if isLast     { parts.append("poslednji potez") }
+        if isSelected { parts.append(Loc("izabrano")) }
+        if isLast     { parts.append(Loc("poslednji potez")) }
         return parts.joined(separator: ", ")
     }
 
     private func a11yHint(piece: ChessPiece?, isLegal: Bool) -> String {
-        if isLegal { return "Dupli dodir za potez" }
+        if isLegal { return Loc("Dupli dodir za potez") }
         if let p = piece, p.color == playerColor, isPlayerTurn {
-            return "Dupli dodir za izbor"
+            return Loc("Dupli dodir za izbor")
         }
         return ""
     }

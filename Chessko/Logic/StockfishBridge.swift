@@ -16,9 +16,9 @@ import ChessKitEngine
 
 actor StockfishBridge {
 
-    private var engine: Engine?
-    private var pendingContinuation: CheckedContinuation<ChessMove?, Never>?
-    private var pendingState: GameState?
+    // NNUE file URLs cached once at startup.
+    private var nnueBig:   URL?
+    private var nnueSmall: URL?
 
     // MARK: - Availability
 
@@ -29,82 +29,53 @@ actor StockfishBridge {
 
     // MARK: - Lifecycle
 
+    /// Cache NNUE URLs once at startup. The engine itself is created fresh
+    /// for each search so the responseStream is always in a clean state.
     func start() async {
-        guard engine == nil else { return }
+        nnueBig   = Bundle.main.url(forResource: "nn-1111cefa1111", withExtension: "nnue")
+        nnueSmall = Bundle.main.url(forResource: "nn-37f18f62d772", withExtension: "nnue")
+    }
 
-        let nnueBig   = Bundle.main.url(forResource: "nn-1111cefa1111",  withExtension: "nnue")
-        let nnueSmall = Bundle.main.url(forResource: "nn-37f18f62d772",  withExtension: "nnue")
+    // MARK: - Best Move
 
+    /// Creates a fresh Engine for every search so the responseStream is always
+    /// in a clean state. The engine is started, used once, then released.
+    func bestMove(for state: GameState, depth: Int = 12) async -> ChessMove? {
+        // Fresh engine — ensures responseStream is pristine every call.
         let eng = Engine(type: .stockfish, loggingEnabled: false)
-        engine = eng
-
         await eng.start()
 
-        // Wait for isRunning
+        // Wait up to 5 s for the engine to become ready.
         var waited = 0
         while !(await eng.isRunning), waited < 50 {
             try? await Task.sleep(for: .milliseconds(100))
             waited += 1
         }
+        guard await eng.isRunning else { return nil }
 
-        // Set NNUE paths. EvalFile (big) is required — fall back to small if missing.
+        // Configure NNUE. EvalFile (big) is required — fall back to small if missing.
         let evalFile      = nnueBig ?? nnueSmall
         let evalFileSmall = nnueSmall ?? nnueBig
         if let url = evalFile      { await eng.send(command: .setoption(id: "EvalFile",      value: url.path())) }
         if let url = evalFileSmall { await eng.send(command: .setoption(id: "EvalFileSmall", value: url.path())) }
 
-        // Subscribe to response stream after start() — stream is nil before start().
-        // rawValue uses tagged format: "<bestmove> d7d5 <ponder> e2e4"
-        if let stream = await eng.responseStream {
-            Task { [weak self] in
-                for await response in stream {
-                    await self?.handle(response: response)
-                }
-            }
+        // Subscribe to the response stream before sending any search commands.
+        guard let stream = await eng.responseStream else { return nil }
+
+        await eng.send(command: .position(.fen(state.fen)))
+        await eng.send(command: .go(depth: depth))
+
+        // Iterate until we get a bestmove response.
+        for await response in stream {
+            let raw = response.rawValue
+            guard raw.hasPrefix("<bestmove>") else { continue }
+            let tokens = raw.split(separator: " ")
+            guard tokens.count >= 2 else { break }
+            let uciMove = String(tokens[1])
+            guard uciMove != "(none)" else { break }
+            return parseUCI(uciMove, in: state)
         }
-    }
-
-    // MARK: - Best Move
-
-    /// Ask Stockfish for the best move in the given position.
-    /// Returns nil if engine is not running or no legal move found.
-    func bestMove(for state: GameState, depth: Int = 12) async -> ChessMove? {
-        guard let engine else { return nil }
-
-        // Wait up to 5 s for engine to finish startup
-        var waited = 0
-        while !(await engine.isRunning), waited < 50 {
-            try? await Task.sleep(for: .milliseconds(100))
-            waited += 1
-        }
-        guard await engine.isRunning else { return nil }
-
-        pendingState = state
-        await engine.send(command: .stop)
-        await engine.send(command: .position(.fen(state.fen)))
-        await engine.send(command: .go(depth: depth))
-
-        return await withCheckedContinuation { continuation in
-            pendingContinuation = continuation
-        }
-    }
-
-    // MARK: - Response Handler
-
-    private func handle(response: EngineResponse) {
-        // rawValue uses tagged format: "<bestmove> d7d5 <ponder> e2e4"
-        let raw = response.rawValue
-        guard raw.hasPrefix("<bestmove>") else { return }
-        guard let state = pendingState, let cont = pendingContinuation else { return }
-
-        // tokens: ["<bestmove>", "d7d5", "<ponder>", "e2e4"]
-        let tokens = raw.split(separator: " ")
-        guard tokens.count >= 2 else { return }
-        let uciMove = String(tokens[1])
-
-        pendingContinuation = nil
-        pendingState = nil
-        cont.resume(returning: parseUCI(uciMove, in: state))
+        return nil
     }
 
     // MARK: - UCI Move Parser

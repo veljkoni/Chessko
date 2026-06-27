@@ -188,6 +188,8 @@ struct PuzzleView: View {
             if let puzzle = viewModel.currentPuzzle {
                 puzzleHeader(puzzle: puzzle)
             }
+            
+            statusCard
 
             BoardView(
                 board:            viewModel.gameState.board,
@@ -203,7 +205,7 @@ struct PuzzleView: View {
             )
             .padding(.horizontal, 4)
 
-            statusCard
+            
 
             actionButtons
 
@@ -230,7 +232,7 @@ struct PuzzleView: View {
             let themes = puzzle.themeList.prefix(2)
             ForEach(Array(themes), id: \.self) { theme in
                 Text(localizeTheme(theme))
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.white.opacity(0.75))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
@@ -375,13 +377,13 @@ struct PuzzleView: View {
         let sel   = viewModel.selectedDate
 
         if sel == today {
-            return "Danas"
+            return Loc("Danas")
         } else if sel == cal.date(byAdding: .day, value: -1, to: today) {
-            return "Juče"
+            return Loc("Juče")
         } else {
             let f = DateFormatter()
-            f.locale = Locale(identifier: "sr_Latn_RS")
-            f.dateFormat = "d. MMM"
+            f.locale = LocalizationManager.shared.locale
+            f.setLocalizedDateFormatFromTemplate("dMMM")
             return f.string(from: sel)
         }
     }
@@ -417,27 +419,27 @@ struct PuzzleView: View {
 
     private func localizeTheme(_ theme: String) -> String {
         switch theme {
-        case "opening":          return "Otvaranje"
-        case "middlegame":       return "Srednja igra"
-        case "endgame":          return "Završnica"
-        case "mate":             return "Mat"
-        case "mateIn1":          return "Mat u 1"
-        case "mateIn2":          return "Mat u 2"
-        case "mateIn3":          return "Mat u 3"
-        case "fork":             return "Vilica"
-        case "pin":              return "Vezivanje"
-        case "skewer":           return "Nabijanje"
-        case "sacrifice":        return "Žrtva"
-        case "discoveredAttack": return "Otkriveni napad"
-        case "deflection":       return "Odvlačenje"
-        case "advantage":        return "Prednost"
-        case "crushing":         return "Odlučujuće"
-        case "short":            return "Kratko"
-        case "long":             return "Dugo"
-        case "oneMove":          return "Jedan potez"
-        case "defensiveMove":    return "Odbrana"
-        case "queensideAttack":  return "Napad na dam"
-        case "kingsideAttack":   return "Napad na kral"
+        case "opening":          return Loc("Otvaranje")
+        case "middlegame":       return Loc("Srednja igra")
+        case "endgame":          return Loc("Završnica")
+        case "mate":             return Loc("Mat")
+        case "mateIn1":          return Loc("Mat u 1")
+        case "mateIn2":          return Loc("Mat u 2")
+        case "mateIn3":          return Loc("Mat u 3")
+        case "fork":             return Loc("Vilica")
+        case "pin":              return Loc("Vezivanje")
+        case "skewer":           return Loc("Nabijanje")
+        case "sacrifice":        return Loc("Žrtva")
+        case "discoveredAttack": return Loc("Otkriveni napad")
+        case "deflection":       return Loc("Odvlačenje")
+        case "advantage":        return Loc("Prednost")
+        case "crushing":         return Loc("Odlučujuće")
+        case "short":            return Loc("Kratko")
+        case "long":             return Loc("Dugo")
+        case "oneMove":          return Loc("Jedan potez")
+        case "defensiveMove":    return Loc("Odbrana")
+        case "queensideAttack":  return Loc("Napad na dam")
+        case "kingsideAttack":   return Loc("Napad na kral")
         default:                 return theme
         }
     }

@@ -109,14 +109,15 @@ final class PuzzleViewModel {
 
     var statusMessage: String {
         switch phase {
-        case .loading:         return "Učitavam zadatak..."
-        case .networkError:    return "Greška pri učitavanju."
+        case .loading:         return Loc("Učitavam zadatak...")
+        case .networkError:    return Loc("Greška pri učitavanju.")
         case .playing:
-            let side = playerColor == .white ? "bele" : "crne"
-            return "Pronađi pravi potez za \(side)"
-        case .wrongMove:       return "Pogrešno. Pokušaj ponovo."
-        case .solved:          return "Odlično! Zadatak rešen! 🎉"
-        case .showingSolution: return "Rešenje..."
+            return playerColor == .white
+                ? Loc("Pronađi pravi potez za bele")
+                : Loc("Pronađi pravi potez za crne")
+        case .wrongMove:       return Loc("Pogrešno. Pokušaj ponovo.")
+        case .solved:          return Loc("Odlično! Zadatak rešen! 🎉")
+        case .showingSolution: return Loc("Rešenje...")
         }
     }
 
@@ -135,17 +136,17 @@ final class PuzzleViewModel {
 
         guard let url = URL(string:
             "https://chess-puzzles-api.vercel.app/puzzles?start=\(dayIndex % 10_000)&limit=1")
-        else { phase = .networkError("Neispravan URL"); return }
+        else { phase = .networkError(Loc("Neispravan URL")); return }
 
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let puzzles   = try JSONDecoder().decode([ChessPuzzle].self, from: data)
             guard let puzzle = puzzles.first else {
-                phase = .networkError("Nema dostupnih zadataka"); return
+                phase = .networkError(Loc("Nema dostupnih zadataka")); return
             }
             setup(puzzle: puzzle)
         } catch {
-            phase = .networkError("Greška mreže: \(error.localizedDescription)")
+            phase = .networkError(LocF("Greška mreže: %@", error.localizedDescription))
         }
     }
 
@@ -153,7 +154,7 @@ final class PuzzleViewModel {
 
     private func setup(puzzle: ChessPuzzle) {
         guard let state = GameState.fromFEN(puzzle.fen) else {
-            phase = .networkError("Neispravan FEN"); return
+            phase = .networkError(Loc("Neispravan FEN")); return
         }
 
         currentPuzzle = puzzle

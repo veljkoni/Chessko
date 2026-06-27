@@ -47,10 +47,10 @@ struct LessonDetailView: View {
                     .foregroundStyle(lesson.accentColor)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(lesson.title)
+                Text(LocalizedStringKey(lesson.title))
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
-                Text(lesson.subtitle)
+                Text(LocalizedStringKey(lesson.subtitle))
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.6))
             }
@@ -626,7 +626,7 @@ private struct L_SectionHeader: View {
             Image(systemName: icon)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(color)
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.white)
         }
@@ -661,7 +661,7 @@ private struct L_Bullet: View {
                 .frame(width: 18)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                 Text(LocalizedStringKey(text))
@@ -687,7 +687,7 @@ private struct L_Box: View {
                 Image(systemName: icon)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(color)
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.caption.weight(.bold))
                     .foregroundStyle(color)
             }
@@ -714,7 +714,7 @@ private struct L_PieceRow: View {
         HStack(spacing: 12) {
             PieceImageView(piece: ChessPiece(type: type, color: .white))
                 .frame(width: 32, height: 32)
-            Text(name)
+            Text(LocalizedStringKey(name))
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.white)
             Spacer()
@@ -744,10 +744,10 @@ private struct L_NumberedRule: View {
                     .foregroundStyle(color)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(.white)
-                Text(text)
+                Text(LocalizedStringKey(text))
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.72))
                     .fixedSize(horizontal: false, vertical: true)
@@ -806,11 +806,11 @@ private struct L_PieceValueTable: View {
                 HStack(spacing: 12) {
                     PieceImageView(piece: ChessPiece(type: row.0, color: .white))
                         .frame(width: 28, height: 28)
-                    Text(row.1)
+                    Text(LocalizedStringKey(row.1))
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.85))
                     Spacer()
-                    Text(row.2 == "∞" ? "∞" : "\(row.2) bod\(row.2 == "1" ? "" : row.2 == "9" ? "ova" : "a")")
+                    Text(LocalizedStringKey(row.2 == "∞" ? "∞" : "\(row.2) bod\(row.2 == "1" ? "" : row.2 == "9" ? "ova" : "a")"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(row.2 == "∞" ? Color.yellow : Color.white)
                 }
@@ -866,7 +866,7 @@ struct MatePuzzleCard: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(vm.line.name)
+                        Text(LocalizedStringKey(vm.line.name))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.white)
                         Text("Mat u \(mateIn)")
@@ -875,7 +875,7 @@ struct MatePuzzleCard: View {
                             .padding(.horizontal, 6).padding(.vertical, 2)
                             .background(vm.line.accentColor.opacity(0.18), in: Capsule())
                     }
-                    Text(vm.line.hint)
+                    Text(LocalizedStringKey(vm.line.hint))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.55))
                         .lineLimit(2)
@@ -981,10 +981,10 @@ struct OpeningExerciseCard: View {
                         .foregroundStyle(line.accentColor)
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(line.name)
+                    Text(LocalizedStringKey(line.name))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
-                    Text(line.hint)
+                    Text(LocalizedStringKey(line.hint))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.55))
                         .lineLimit(2)
@@ -1111,10 +1111,10 @@ struct MateExerciseCard: View {
                         .foregroundStyle(color)
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
+                    Text(LocalizedStringKey(title))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
-                    Text(hint)
+                    Text(LocalizedStringKey(hint))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.55))
                 }

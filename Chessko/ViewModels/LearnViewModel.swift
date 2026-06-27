@@ -9,9 +9,9 @@ enum LearnScenario: String, Equatable {
 
     var label: String {
         switch self {
-        case .castling:  return "Rokada"
+        case .castling:  return Loc("Rokada")
         case .enPassant: return "En passant"
-        case .promotion: return "Promocija"
+        case .promotion: return Loc("Promocija")
         }
     }
 }
@@ -99,9 +99,9 @@ final class LearnViewModel {
     var infoTitle: String {
         switch activeScenario {
         case .none:        return selectedPieceType.srbName
-        case .castling:    return "Rokada"
+        case .castling:    return Loc("Rokada")
         case .enPassant:   return "En passant"
-        case .promotion:   return "Promocija"
+        case .promotion:   return Loc("Promocija")
         }
     }
 
@@ -110,33 +110,33 @@ final class LearnViewModel {
         case .none:
             switch selectedPieceType {
             case .pawn:
-                return "Kreće se jedno polje napred. Uzima figuru dijagonalno ispred sebe. Sa startne pozicije može da skoči i dva polja odjednom."
+                return Loc("Kreće se jedno polje napred. Uzima figuru dijagonalno ispred sebe. Sa startne pozicije može da skoči i dva polja odjednom.")
             case .rook:
-                return "Kreće se horizontalno ili vertikalno, koliko god polja želi. Ne može preskakati figure."
+                return Loc("Kreće se horizontalno ili vertikalno, koliko god polja želi. Ne može preskakati figure.")
             case .knight:
-                return "Kreće se u obliku slova L: dva polja u jednom pravcu pa jedno bočno. Jedina figura koja može preskočiti druge."
+                return Loc("Kreće se u obliku slova L: dva polja u jednom pravcu pa jedno bočno. Jedina figura koja može preskočiti druge.")
             case .bishop:
-                return "Kreće se dijagonalno, koliko god polja želi. Uvek ostaje na istoj boji polja."
+                return Loc("Kreće se dijagonalno, koliko god polja želi. Uvek ostaje na istoj boji polja.")
             case .queen:
-                return "Najjača figura na tabli. Kombinuje kretanje topa i lovca — horizontalno, vertikalno i dijagonalno."
+                return Loc("Najjača figura na tabli. Kombinuje kretanje topa i lovca — horizontalno, vertikalno i dijagonalno.")
             case .king:
-                return "Kreće se jedno polje u bilo kom smeru. Ne sme stati na polje koje napada protivnik. Zaštiti ga!"
+                return Loc("Kreće se jedno polje u bilo kom smeru. Ne sme stati na polje koje napada protivnik. Zaštiti ga!")
             }
         case .castling:
-            return "Poseban potez: ako kralj i top nisu se još pomerali i između njih nema figura, kralj skoči dva polja ka topu, a top preskoči kralja. Tapni g1 (kratka rokada) ili c1 (duga rokada)."
+            return Loc("Poseban potez: ako kralj i top nisu se još pomerali i između njih nema figura, kralj skoči dva polja ka topu, a top preskoči kralja. Tapni g1 (kratka rokada) ili c1 (duga rokada).")
         case .enPassant:
-            return "Posebno uzimanje pešakom: ako protivnički pešak skoči dva polja i nađe se pored tvojeg pešaka, možeš ga uzeti 'u prolazu' — kao da se pomerio samo jedno polje. Tapni d6."
+            return Loc("Posebno uzimanje pešakom: ako protivnički pešak skoči dva polja i nađe se pored tvojeg pešaka, možeš ga uzeti 'u prolazu' — kao da se pomerio samo jedno polje. Tapni d6.")
         case .promotion:
-            return "Kad beli pešak stigne do osmog reda (redovi 8), može se pretvoriti u bilo koju figuru — gotovo uvek u damu. Tapni e8."
+            return Loc("Kad beli pešak stigne do osmog reda (redovi 8), može se pretvoriti u bilo koju figuru — gotovo uvek u damu. Tapni e8.")
         }
     }
 
     var movesCountLabel: String {
         let n = legalMoves.count
         switch n {
-        case 0:  return "Nema mogućih poteza"
-        case 1:  return "1 mogući potez"
-        default: return "\(n) mogućih poteza"
+        case 0:  return Loc("Nema mogućih poteza")
+        case 1:  return Loc("1 mogući potez")
+        default: return LocF("%lld mogućih poteza", n)
         }
     }
 

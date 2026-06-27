@@ -53,11 +53,11 @@ struct LessonCard: View {
                 Text("Lekcija \(info.id)")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(info.accentColor.opacity(0.9))
-                Text(info.title)
+                Text(LocalizedStringKey(info.title))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.leading)
-                Text(info.subtitle)
+                Text(LocalizedStringKey(info.subtitle))
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.55))
             }

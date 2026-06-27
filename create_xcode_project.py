@@ -29,8 +29,13 @@ print(f"Found {len(swift_files)} Swift files:")
 for f in swift_files:
     print(" ", f.relative_to(ROOT))
 
-# ── Collect resource files (mp3, etc.) ──────────────────────────────────────
-resource_files = sorted(SRC.glob("*.mp3"))   # top-level audio files
+# ── Collect resource files (mp3 audio, nnue Stockfish networks, etc.) ───────
+RESOURCE_GLOBS = ["*.mp3", "*.nnue"]
+resource_files = sorted({f for g in RESOURCE_GLOBS for f in SRC.glob(g)})
+
+def res_filetype(name: str) -> str:
+    if name.endswith(".mp3"): return "audio.mp3"
+    return "file"   # nnue and other data blobs
 if resource_files:
     print(f"Found {len(resource_files)} resource file(s):")
     for f in resource_files:
@@ -60,6 +65,20 @@ RESOURCES_PHASE_UID    = uid()
 # Assets.xcassets UIDs
 ASSETS_FILEREF_UID  = uid()
 ASSETS_BUILDFILE_UID = uid()
+
+# Localizable.xcstrings (String Catalog) — included if present
+XCSTRINGS_PATH = SRC / "Localizable.xcstrings"
+HAS_XCSTRINGS  = XCSTRINGS_PATH.exists()
+XCSTRINGS_FILEREF_UID   = uid()
+XCSTRINGS_BUILDFILE_UID = uid()
+
+# Localizations advertised by the app (must match Localizable.xcstrings)
+APP_REGIONS = ["sr", "fr", "de", "it", "ru", "zh-Hans", "hi"]
+DEV_REGION  = "sr" if HAS_XCSTRINGS else "en"
+def _region_token(r): return f'"{r}"' if "-" in r else r
+EXTRA_REGIONS_BLOCK = (
+    "".join(f"\t\t\t\t{_region_token(r)},\n" for r in APP_REGIONS) if HAS_XCSTRINGS else ""
+)
 
 # Per-file UIDs
 file_refs  = {}   # path -> fileRef UID
@@ -96,9 +115,12 @@ def file_ref_section():
         lines.append(f'\t\t{fuid} = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "{f.name}"; sourceTree = "<group>"; }};')
     # Assets.xcassets
     lines.append(f'\t\t{ASSETS_FILEREF_UID} = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; }};')
-    # Resource files (mp3, etc.)
+    # Localizable.xcstrings (String Catalog)
+    if HAS_XCSTRINGS:
+        lines.append(f'\t\t{XCSTRINGS_FILEREF_UID} = {{isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; }};')
+    # Resource files (mp3 audio, nnue networks, etc.)
     for f, fuid in res_file_refs.items():
-        lines.append(f'\t\t{fuid} = {{isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "{f.name}"; sourceTree = "<group>"; }};')
+        lines.append(f'\t\t{fuid} = {{isa = PBXFileReference; lastKnownFileType = {res_filetype(f.name)}; path = "{f.name}"; sourceTree = "<group>"; }};')
     # App product
     lines.append(f'\t\t{APP_PRODUCT_UID} = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = {APP_NAME}.app; sourceTree = BUILT_PRODUCTS_DIR; }};')
     return "\n".join(lines)
@@ -110,6 +132,9 @@ def build_file_section():
         lines.append(f'\t\t{buid} = {{isa = PBXBuildFile; fileRef = {fuid}; }};')
     # Assets.xcassets build file
     lines.append(f'\t\t{ASSETS_BUILDFILE_UID} = {{isa = PBXBuildFile; fileRef = {ASSETS_FILEREF_UID}; }};')
+    # Localizable.xcstrings build file
+    if HAS_XCSTRINGS:
+        lines.append(f'\t\t{XCSTRINGS_BUILDFILE_UID} = {{isa = PBXBuildFile; fileRef = {XCSTRINGS_FILEREF_UID}; }};')
     # Resource build files (mp3, etc.)
     for f, buid in res_build_refs.items():
         fuid = res_file_refs[f]
@@ -146,6 +171,8 @@ def group_section():
 
     # Source group (Chessko/)
     src_children = [f"\t\t\t\t{ASSETS_FILEREF_UID},"]
+    if HAS_XCSTRINGS:
+        src_children.append(f"\t\t\t\t{XCSTRINGS_FILEREF_UID},")
     src_children += [f"\t\t\t\t{c}," for c in root_children]
     src_children += [f"\t\t\t\t{fuid}," for fuid in res_file_refs.values()]
     src_children += [f"\t\t\t\t{gid}," for gid in sub_folders.values()]
@@ -261,12 +288,12 @@ pbxproj = f"""// !$*UTF8*$!
 \t\t\t}};
 \t\t\tbuildConfigurationList = {BUILD_CFG_LIST_PROJECT};
 \t\t\tcompatibilityVersion = "Xcode 15.0";
-\t\t\tdevelopmentRegion = en;
+\t\t\tdevelopmentRegion = {DEV_REGION};
 \t\t\thasScannedForEncodings = 0;
 \t\t\tknownRegions = (
 \t\t\t\ten,
 \t\t\t\tBase,
-\t\t\t);
+{EXTRA_REGIONS_BLOCK}\t\t\t);
 \t\t\tmainGroup = {MAIN_GROUP_UID};
 \t\t\tproductRefGroup = {PRODUCTS_UID};
 \t\t\tprojectDirPath = "";
@@ -283,7 +310,7 @@ pbxproj = f"""// !$*UTF8*$!
 \t\t\tbuildActionMask = 2147483647;
 \t\t\tfiles = (
 \t\t\t\t{ASSETS_BUILDFILE_UID},
-{"".join(f"{chr(9)}{chr(9)}{chr(9)}{chr(9)}{buid},{chr(10)}" for buid in res_build_refs.values())}\t\t\t);
+{(chr(9)*4 + XCSTRINGS_BUILDFILE_UID + "," + chr(10)) if HAS_XCSTRINGS else ""}{"".join(f"{chr(9)}{chr(9)}{chr(9)}{chr(9)}{buid},{chr(10)}" for buid in res_build_refs.values())}\t\t\t);
 \t\t\trunOnlyForDeploymentPostprocessing = 0;
 \t\t}};
 /* End PBXResourcesBuildPhase section */
@@ -298,6 +325,11 @@ pbxproj = f"""// !$*UTF8*$!
 \t\t\tbuildSettings = {{
 \t\t\t\tALWAYS_SEARCH_USER_PATHS = NO;
 \t\t\t\tASSET_CATALOG_COMPILER_OPTIMIZATION = space;
+\t\t\t\tCLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+\t\t\t\tCLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;
+\t\t\t\tGCC_WARN_DUPLICATE_METHOD_MATCH = YES;
+\t\t\t\tSTRING_CATALOG_GENERATE_SYMBOLS = YES;
 \t\t\t\tCLANG_ANALYZER_NONNULL = YES;
 \t\t\t\tCLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 \t\t\t\tCLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -360,6 +392,11 @@ pbxproj = f"""// !$*UTF8*$!
 \t\t\tbuildSettings = {{
 \t\t\t\tALWAYS_SEARCH_USER_PATHS = NO;
 \t\t\t\tASSET_CATALOG_COMPILER_OPTIMIZATION = space;
+\t\t\t\tCLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+\t\t\t\tCLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+\t\t\t\tENABLE_USER_SCRIPT_SANDBOXING = YES;
+\t\t\t\tGCC_WARN_DUPLICATE_METHOD_MATCH = YES;
+\t\t\t\tSTRING_CATALOG_GENERATE_SYMBOLS = YES;
 \t\t\t\tCLANG_ANALYZER_NONNULL = YES;
 \t\t\t\tCLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 \t\t\t\tCLANG_ENABLE_MODULES = YES;
@@ -391,7 +428,6 @@ pbxproj = f"""// !$*UTF8*$!
 \t\t\tisa = XCBuildConfiguration;
 \t\t\tbuildSettings = {{
 \t\t\t\tASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-\t\t\t\tASSSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 \t\t\t\tCODE_SIGN_STYLE = Automatic;
 \t\t\t\tCURRENT_PROJECT_VERSION = 1;
 \t\t\t\tDEVELOPMENT_ASSET_PATHS = "";
@@ -417,8 +453,7 @@ pbxproj = f"""// !$*UTF8*$!
 \t\t{RELEASE_TARGET_UID} = {{
 \t\t\tisa = XCBuildConfiguration;
 \t\t\tbuildSettings = {{
-\t\t\t\tASSSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-\t\t\t\tASSSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+\t\t\t\tASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 \t\t\t\tCODE_SIGN_STYLE = Automatic;
 \t\t\t\tCURRENT_PROJECT_VERSION = 1;
 \t\t\t\tDEVELOPMENT_ASSET_PATHS = "";

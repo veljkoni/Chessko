@@ -63,17 +63,19 @@ final class OpeningExerciseViewModel {
         let whiteMoves = line.uciMoves.indices.filter { $0 % 2 == 0 }
         let done = whiteMoves.filter { $0 < movePointer }.count
         let total = whiteMoves.count
-        return "\(done)/\(total) poteza"
+        return LocF("%lld/%lld poteza", done, total)
     }
 
     var statusMessage: String {
         switch phase {
-        case .solved:    return line.solvedMessage
-        case .wrongMove: return line.wrongMessage
+        case .solved:    return Loc(line.solvedMessage)
+        case .wrongMove: return Loc(line.wrongMessage)
         case .playing:
-            if let prompt = line.playingPrompt { return prompt }
+            if let prompt = line.playingPrompt {
+                return Loc(prompt)
+            }
             let moveNum = (movePointer / 2) + 1
-            return "Potez \(moveNum) — pronađi pravi potez za bele!"
+            return LocF("Potez %lld — pronađi pravi potez za bele!", moveNum)
         }
     }
 

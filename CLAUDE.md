@@ -120,6 +120,16 @@ Prioritet poređan po vrednosti; ništa od ovoga još nije započeto.
       `MoveHistoryView` sa `ScrollViewReader` (auto-scroll na poslednji potez, monospaced font,
       naizmenične pozadine redova); prikazuje se u `GameView` ispod status bara.
 - [x] Čuvanje/nastavak partije — `Codable` na svim modelima; `SavedGame` struct u VM; UserDefaults.
+- [x] **Lokalizacija na 8 jezika** — String Catalog (`Chessko/Localizable.xcstrings`), izvorni
+      jezik srpski (`sr`), prevodi: en/fr/de/it/ru/zh-Hans/hi. Generiše se skriptom
+      `build_localizations.py` (300 ključeva × 8 jezika).
+      Notacija poteza (K/D/T/L/S) namerno NIJE lokalizovana (tehnička + izbegava stale save-ove);
+      "En passant" ostaje univerzalni termin.
+- [x] **Izbor jezika u aplikaciji** — hamburger meni (gore-levo na ekranu Igra) → `SettingsSheet`
+      sa sekcijama Težina + Jezik. Live prebacivanje bez restarta preko `LocalizationManager`
+      (`Logic/LocalizationManager.swift`): `Bundle.main` se zameni `LocalizedBundle` podklasom
+      koja preusmerava `localizedString(...)` na izabrani `<code>.lproj`; `ContentView` se
+      rebuilduje preko `.id(localization.refreshID)`. Opcija "Sistem" = prati telefon.
 
 ### 4. Kvalitet koda
 - [ ] Test target + perft testovi za `MoveGenerator`.
@@ -260,3 +270,82 @@ Prioritet poređan po vrednosti; ništa od ovoga još nije započeto.
   VM/Puzzle/Opening exercise koriste eksplicitno `from`/`to` poređenje (`$0.to == position`,
   `move.from == expected.from`), tako da nisu pogođena; jedini whole-move `==` je TT move ordering
   u `ChessAI.mvvLvaScore` (`move == tt`) — sada TT-promociju poklapa tačno umesto sve četiri varijante.
+- **2026-06-26** — Lokalizacija na 8 jezika (en/fr/de/it/ru/zh-Hans/hi + sr izvorni). Novi
+  `Chessko/Localizable.xcstrings` String Catalog (297 ključeva) generisan skriptom
+  `build_localizations.py` (dict SR→7 jezika). Kôd: računati stringovi u modelima/VM-ovima
+  obmotani u `String(localized:)` (`PieceType.srbName`, `PieceColor.srbAdjective`, sve
+  `statusMessage`, `GameDifficulty.label`, `LearnViewModel.infoText`, `PuzzleView.localizeTheme`,
+  `BoardView` a11y, `ChessPuzzle.difficultyLabel`, itd.); `Text`/`Label` literali se auto-prevode;
+  reusable lekcijske komponente (`L_SectionHeader/L_Bullet/L_Box/L_NumberedRule/L_PieceRow`,
+  card naslovi/hintovi) sada koriste `Text(LocalizedStringKey(param))` umesto `Text(param)`;
+  `PuzzleView.dateTitle` koristi `Locale.current`. `project.pbxproj` + `create_xcode_project.py`:
+  dodat fileRef/buildFile/group/Resources za `.xcstrings`, `developmentRegion = sr`, `knownRegions`
+  proširen (en, Base, sr, fr, de, it, ru, "zh-Hans", hi). Notacija poteza i "En passant" namerno
+  ostavljeni nepromenjeni. Verifikovano: svaki ključ ima svih 8 jezika; pbxproj zagrade balansirane;
+  svi izmenjeni Swift fajlovi balansirani (nema Swift toolchaina na ovom sistemu — build u Xcode).
+- **2026-06-26** — Hamburger meni + izbor jezika u aplikaciji + trajna preporučena podešavanja.
+  Novi `Logic/LocalizationManager.swift` (live language switch: `LocalizedBundle` podklasa +
+  `object_setClass(Bundle.main,...)` + associated `<code>.lproj`; `@Observable` sa `languageCode`
+  u `UserDefaults`, `setLanguage(_:)`, `refreshID`/`locale`). Novi `Views/SettingsSheet.swift`
+  (sekcije Težina + Jezik, "Sistem" = prati telefon, jezici po endonimu). `GameView`: toolbar
+  gore-levo zamenjen hamburger dugmetom (`line.3.horizontal`) koje otvara `SettingsSheet`;
+  uklonjen `difficultyMenu`. `ContentView`: `@State localization`, `.id(refreshID)` +
+  `.environment(\.locale,...)` da se ceo UI re-resolvuje pri promeni jezika. `PuzzleView.dateTitle`
+  koristi `LocalizationManager.shared.locale`. Fix build greške: "String Catalog Symbol Generation"
+  pravio iste simbole za "beli"/"Beli" i "crni"/"Crni" — uklonjeni "Beli"/"Crni" ključevi, color
+  picker sada koristi `color.srbAdjective.capitalized`. Preporučena podešavanja (accept u Xcode)
+  upisana i u `create_xcode_project.py` (CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED,
+  CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF, ENABLE_USER_SCRIPT_SANDBOXING, GCC_WARN_DUPLICATE_METHOD_MATCH,
+  STRING_CATALOG_GENERATE_SYMBOLS) da regeneracija ne izgubi. `project.pbxproj`: dodati
+  `LocalizationManager.swift` + `SettingsSheet.swift` (fileRef/buildFile/group/Sources). Katalog
+  300 ključeva; provereno: nema case-insensitive ni normalizovanih simbol-kolizija.
+- **2026-06-26** — Fix: status na ekranima Igra/Zadaci i „Danas" nisu pratili izbor jezika.
+  Uzrok: `String(localized:)` (Foundation) zaobilazi `LocalizedBundle` swizzle (za razliku od
+  `Text(...)`/`NSLocalizedString` koji idu kroz `Bundle.main.localizedString(...)`). Rešenje:
+  novi globalni helperi `Loc(_:)` i `LocF(_:_:)` u `LocalizationManager.swift` koji čitaju preko
+  `Bundle.main.localizedString(forKey:value:table:)` (presreće ga swizzle → prati izabrani jezik).
+  Svi `String(localized: "…")` pozivi u modelima/VM-ovima/`BoardView` zamenjeni sa `Loc("…")`;
+  4 interpolirana slučaja (`%lld …`, `%@`) sa `LocF(...)`. View-ovi se ionako rebuilduju preko
+  `.id(refreshID)` pa se računati stringovi re-evaluiraju na novom jeziku.
+- **2026-06-26** — Fix: `.nnue` mreže ispale iz `project.pbxproj` (generator skupljao samo `*.mp3`),
+  pa Stockfish nedostupan. Obe mreže vraćene u projekat (fileRef/buildFile/group/Resources);
+  `create_xcode_project.py` proširen da skuplja i `*.nnue` (`RESOURCE_GLOBS`, `res_filetype`).
+- **2026-06-26** — Stockfish nivoi jačine: novi `StockfishLevel` enum (Početnik 1320 / Amater 1600 /
+  Srednje 1900 / Napredno 2200 / Ekspert 2600 / Maksimalno = bez limita) sa `elo: Int?` i `label`.
+  `GameViewModel.stockfishLevel` (+`setStockfishLevel`, u `SavedGame` uz backward-compat decode);
+  `StockfishBridge.bestMove(for:elo:depth:)` šalje `UCI_LimitStrength`+`UCI_Elo` (nil = pun).
+  `SettingsSheet`: sekcija „Stockfish nivo" (vidljiva kad je izabran Stockfish). Katalog 307 ključeva.
+- **2026-06-26** — „Sistem" jezik fallback na engleski (ne srpski) kad jezik telefona nije podržan.
+  `LocalizationManager.systemFallback()` mapira `Locale.preferredLanguages` na podržan kod
+  (`zh*`→`zh-Hans`, `en-GB`→`en`), pa vraća `"en"` ako nema poklapanja; `effectiveCode` =
+  `languageCode ?? systemFallback()` koristi se za bundle swap, `locale` i sve `Loc`/`Text` lookupe.
+  Srpski je izbačen iz sistemskog poklapanja (`subtracting(["sr"])`) — bira se samo ručno; čak i
+  na srpskom telefonu „Sistem" daje engleski.
+- **2026-06-26** — Fix: Stockfish zaglavi posle prvog poteza („večno razmišlja"). Uzrok 1: slanje
+  `UCI_LimitStrength`/`UCI_Elo` pre SVAKE pretrage wedge-uje motor (ne vrati `bestmove` na kasnijim
+  potezima) — sada se opcije primenjuju samo kad se nivo promeni (`appliedElo`/`strengthApplied`
+  keš u `StockfishBridge`). Uzrok 2: na niskom Elo-u motor odgovori skoro instant, pa je
+  `pendingContinuation` mogao da se postavi posle dolaska `bestmove`; sada se nastavak registruje
+  PRE `go` (`go` se šalje iz `Task`-a unutar `withCheckedContinuation`).
+- **2026-06-26** — Stockfish nivoi: prelazak sa `UCI_LimitStrength`/`UCI_Elo` na slabljenje preko
+  DUBINE pretrage. Eliminacijom utvrđeno: čim je `UCI_LimitStrength` aktivan, `go depth` na 2. potezu
+  ne vrati `bestmove` (motor wedge-ovan) — nezavisno od keširanja opcija. Rešenje: `StockfishLevel`
+  sada ima `searchDepth` (Početnik 1 / Amater 3 / Srednje 5 / Napredno 8 / Ekspert 11 / Maksimalno 15)
+  umesto `elo`; `bestMove(for:depth:)` bez ikakvih UCI opcija, originalni `go`→continuation redosled
+  (isti tok koji je uvek radio). Labela bez Elo brojeva; footer „Veći nivo = jača igra." Enum rawValue
+  nepromenjen → save kompatibilan.
+- **2026-06-27** — UX toolbar + podešavanja: toolbar `GameView` redizajniran — levo Nova igra +
+  Undo, desno hamburger meni; `SettingsSheet` dobija `.listSectionSpacing(.compact)` i novu sekciju
+  Zvuk (Toggle sa ikonom zvučnika); `SoundManager` dobija `isSoundEnabled` (UserDefaults key
+  `soundEnabled`, default true) sa guard-om u `playMove()`/`playCapture()`.
+- **2026-06-27** — Fix zvuka: `SoundManager` prebačen sa `.ambient` na `.playback + mixWithOthers`
+  kategoriju — `.ambient` poštuje mute switch pa zvuk nije radio kad je telefon na tihom;
+  `.playback + mixWithOthers` svira čak i na tihom, ali ne prekida muziku u pozadini (standardno
+  za igrice). `UserDefaults.register(defaults:)` osigurava default `true` za `soundEnabled`;
+  getter koristi `bool(forKey:)` umesto `object() as? Bool`.
+- **2026-06-27** — Fix: Stockfish zaglavljuje posle 2. poteza. Dijagnoza: `responseStream` u
+  ChessKitEngine nije pouzdan za višestruku upotrebu — stream/continuation se ne oporavlja
+  posle prve pretrage. Rešenje: svaki `bestMove` poziv kreira SOPSTVENI `Engine` (fresh start),
+  konfigurira NNUE, subscribuje na stream, pošalje position+go, `for await`-uje do `bestmove`,
+  pa engine izlazi iz scope-a. NNUE URL-ovi se kešuju u `start()`. Dodat `guard !isThinking`
+  u `triggerAI()` kao zaštita od duplog poziva.

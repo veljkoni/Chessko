@@ -28,9 +28,9 @@ enum GameDifficulty: String, CaseIterable, Sendable, Codable {
 
     var label: String {
         switch self {
-        case .easy:      return "Lak"
-        case .medium:    return "Srednji"
-        case .hard:      return "Težak"
+        case .easy:      return Loc("Lak")
+        case .medium:    return Loc("Srednji")
+        case .hard:      return Loc("Težak")
         case .stockfish: return "Stockfish"
         }
     }
@@ -49,6 +49,56 @@ enum GameDifficulty: String, CaseIterable, Sendable, Codable {
         case .easy:             return .easy
         case .medium:           return .medium
         case .hard, .stockfish: return .hard
+        }
+    }
+}
+
+// MARK: - Stockfish Level
+//
+// Strength of the Stockfish engine, controlled purely by search depth.
+// (UCI_LimitStrength/UCI_Elo wedged the engine on the 2nd move, so we weaken
+//  it by limiting `go depth` instead — the same flow that always worked.)
+
+enum StockfishLevel: String, CaseIterable, Sendable, Codable {
+    case beginner
+    case casual
+    case intermediate
+    case advanced
+    case expert
+    case maximum
+
+    /// Search depth passed to `go depth`. Higher = stronger.
+    var searchDepth: Int {
+        switch self {
+        case .beginner:     return 1
+        case .casual:       return 3
+        case .intermediate: return 5
+        case .advanced:     return 8
+        case .expert:       return 11
+        case .maximum:      return 15
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .beginner:     return Loc("Početnik")
+        case .casual:       return Loc("Amater")
+        case .intermediate: return Loc("Srednje")
+        case .advanced:     return Loc("Napredno")
+        case .expert:       return Loc("Ekspert")
+        case .maximum:      return Loc("Maksimalno")
+        }
+    }
+
+    /// Approximate ELO for display purposes only (not used for engine strength).
+    var elo: String? {
+        switch self {
+        case .beginner:     return "~1320"
+        case .casual:       return "~1600"
+        case .intermediate: return "~1900"
+        case .advanced:     return "~2200"
+        case .expert:       return "~2600"
+        case .maximum:      return nil
         }
     }
 }
@@ -83,6 +133,7 @@ final class GameViewModel {
     var isThinking = false
     var lastMove: ChessMove?
     var difficulty: GameDifficulty = .medium
+    var stockfishLevel: StockfishLevel = .intermediate
     var promotionMove: ChessMove?
     var showPromotion = false
     var animatingPiece: AnimatingPiece?
@@ -126,17 +177,23 @@ final class GameViewModel {
     var statusMessage: String {
         switch gameState.status {
         case .playing:
-            return gameState.currentTurn == playerColor ? "Tvoj potez" : "Računar razmišlja..."
+            return gameState.currentTurn == playerColor
+                ? Loc("Tvoj potez")
+                : Loc("Računar razmišlja...")
         case .check(let c):
-            return c == playerColor ? "Šah! Tvoj kralj je napadnut." : "Šah! Napadaš kralja."
+            return c == playerColor
+                ? Loc("Šah! Tvoj kralj je napadnut.")
+                : Loc("Šah! Napadaš kralja.")
         case .checkmate(let c):
-            return c == playerColor ? "Mat! Izgubio si." : "Mat! Pobedio si! 🎉"
+            return c == playerColor
+                ? Loc("Mat! Izgubio si.")
+                : Loc("Mat! Pobedio si! 🎉")
         case .draw(let reason):
             switch reason {
-            case .stalemate:            return "Pat – remi!"
-            case .fiftyMoves:           return "Remi – pravilo 50 poteza."
-            case .repetition:           return "Remi – ponavljanje pozicije."
-            case .insufficientMaterial: return "Remi – nedovoljan materijal."
+            case .stalemate:            return Loc("Pat – remi!")
+            case .fiftyMoves:           return Loc("Remi – pravilo 50 poteza.")
+            case .repetition:           return Loc("Remi – ponavljanje pozicije.")
+            case .insufficientMaterial: return Loc("Remi – nedovoljan materijal.")
             }
         }
     }
@@ -291,17 +348,25 @@ final class GameViewModel {
 
     func setDifficulty(_ newDifficulty: GameDifficulty) {
         difficulty = newDifficulty
+        save()
+    }
+
+    func setStockfishLevel(_ level: StockfishLevel) {
+        stockfishLevel = level
+        save()
     }
 
     // MARK: - AI
 
     private func triggerAI() {
         guard gameState.currentTurn != playerColor else { return }
+        guard !isThinking else { return }
         isThinking = true
 
         let capturedState = gameState
         let capturedColor = gameState.currentTurn
         let capturedDifficulty = difficulty
+        let capturedDepth = stockfishLevel.searchDepth
         let capturedGeneration = gameGeneration
         let stockfishRef = stockfish
 
@@ -311,7 +376,7 @@ final class GameViewModel {
             let move: ChessMove?
 
             if capturedDifficulty == .stockfish && stockfishRef.isAvailable {
-                move = await stockfishRef.bestMove(for: capturedState)
+                move = await stockfishRef.bestMove(for: capturedState, depth: capturedDepth)
             } else {
                 let aiDiff = capturedDifficulty.chessAIDifficulty
                 move = await Task.detached(priority: .userInitiated) {
@@ -399,28 +464,31 @@ final class GameViewModel {
         let lastMove: ChessMove?
         let difficulty: GameDifficulty
         let playerColor: PieceColor
+        let stockfishLevel: StockfishLevel
 
-        // Backward-compatible decode: old saves without playerColor default to .white
+        // Backward-compatible decode: old saves default playerColor/.white, level/.intermediate
         private enum CodingKeys: String, CodingKey {
-            case gameState, history, lastMove, difficulty, playerColor
+            case gameState, history, lastMove, difficulty, playerColor, stockfishLevel
         }
 
         init(gameState: GameState, history: [HistoryEntry], lastMove: ChessMove?,
-             difficulty: GameDifficulty, playerColor: PieceColor) {
-            self.gameState   = gameState
-            self.history     = history
-            self.lastMove    = lastMove
-            self.difficulty  = difficulty
-            self.playerColor = playerColor
+             difficulty: GameDifficulty, playerColor: PieceColor, stockfishLevel: StockfishLevel) {
+            self.gameState      = gameState
+            self.history        = history
+            self.lastMove       = lastMove
+            self.difficulty     = difficulty
+            self.playerColor    = playerColor
+            self.stockfishLevel = stockfishLevel
         }
 
         init(from decoder: Decoder) throws {
-            let c       = try decoder.container(keyedBy: CodingKeys.self)
-            gameState   = try c.decode(GameState.self,        forKey: .gameState)
-            history     = try c.decode([HistoryEntry].self,   forKey: .history)
-            lastMove    = try c.decodeIfPresent(ChessMove.self, forKey: .lastMove)
-            difficulty  = try c.decode(GameDifficulty.self,   forKey: .difficulty)
-            playerColor = (try? c.decode(PieceColor.self,     forKey: .playerColor)) ?? .white
+            let c          = try decoder.container(keyedBy: CodingKeys.self)
+            gameState      = try c.decode(GameState.self,        forKey: .gameState)
+            history        = try c.decode([HistoryEntry].self,   forKey: .history)
+            lastMove       = try c.decodeIfPresent(ChessMove.self, forKey: .lastMove)
+            difficulty     = try c.decode(GameDifficulty.self,   forKey: .difficulty)
+            playerColor    = (try? c.decode(PieceColor.self,     forKey: .playerColor)) ?? .white
+            stockfishLevel = (try? c.decode(StockfishLevel.self, forKey: .stockfishLevel)) ?? .intermediate
         }
     }
 
@@ -429,11 +497,12 @@ final class GameViewModel {
     /// Serialise current state to UserDefaults.
     private func save() {
         let snap = SavedGame(
-            gameState:   gameState,
-            history:     history.map { SavedGame.HistoryEntry(state: $0.state, lastMove: $0.lastMove) },
-            lastMove:    lastMove,
-            difficulty:  difficulty,
-            playerColor: playerColor
+            gameState:      gameState,
+            history:        history.map { SavedGame.HistoryEntry(state: $0.state, lastMove: $0.lastMove) },
+            lastMove:       lastMove,
+            difficulty:     difficulty,
+            playerColor:    playerColor,
+            stockfishLevel: stockfishLevel
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: savedGameKey)
@@ -447,11 +516,12 @@ final class GameViewModel {
             let saved = try? JSONDecoder().decode(SavedGame.self, from: data)
         else { return }
 
-        gameState   = saved.gameState
-        history     = saved.history.map { ($0.state, $0.lastMove) }
-        lastMove    = saved.lastMove
-        difficulty  = saved.difficulty
-        playerColor = saved.playerColor
+        gameState      = saved.gameState
+        history        = saved.history.map { ($0.state, $0.lastMove) }
+        lastMove       = saved.lastMove
+        difficulty     = saved.difficulty
+        playerColor    = saved.playerColor
+        stockfishLevel = saved.stockfishLevel
 
         // If it's the AI's turn at load time, trigger it
         if gameState.currentTurn != playerColor && !isGameOver {

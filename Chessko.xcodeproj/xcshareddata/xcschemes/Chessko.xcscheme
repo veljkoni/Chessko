@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2650"
+   LastUpgradeVersion = "2660"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "105E583B3EE34858B5110132"
+               BlueprintIdentifier = "6FED0FA1790640AE870DBE58"
                BuildableName = "Chessko.app"
                BlueprintName = "Chessko"
                ReferencedContainer = "container:Chessko.xcodeproj">
@@ -30,7 +30,8 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:TestPlan.xctestplan">
+            reference = "container:TestPlan.xctestplan"
+            default = "YES">
          </TestPlanReference>
       </TestPlans>
    </TestAction>
@@ -49,7 +50,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "105E583B3EE34858B5110132"
+            BlueprintIdentifier = "6FED0FA1790640AE870DBE58"
             BuildableName = "Chessko.app"
             BlueprintName = "Chessko"
             ReferencedContainer = "container:Chessko.xcodeproj">
@@ -66,7 +67,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "105E583B3EE34858B5110132"
+            BlueprintIdentifier = "6FED0FA1790640AE870DBE58"
             BuildableName = "Chessko.app"
             BlueprintName = "Chessko"
             ReferencedContainer = "container:Chessko.xcodeproj">

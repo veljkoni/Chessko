@@ -28,15 +28,15 @@ enum PieceType: Int, CaseIterable, Equatable, Sendable, Codable {
         }
     }
 
-    /// Serbian name (nominative), e.g. "Kralj", "Pešak"
+    /// Localized piece name (nominative). Source language Serbian: "Kralj", "Pešak"…
     var srbName: String {
         switch self {
-        case .king:   return "Kralj"
-        case .queen:  return "Dama"
-        case .rook:   return "Top"
-        case .bishop: return "Lovac"
-        case .knight: return "Skakač"
-        case .pawn:   return "Pešak"
+        case .king:   return Loc("Kralj")
+        case .queen:  return Loc("Dama")
+        case .rook:   return Loc("Top")
+        case .bishop: return Loc("Lovac")
+        case .knight: return Loc("Skakač")
+        case .pawn:   return Loc("Pešak")
         }
     }
 }
@@ -48,8 +48,8 @@ enum PieceColor: Int, Equatable, Sendable, Codable {
 
     var opposite: PieceColor { self == .white ? .black : .white }
 
-    /// Serbian adjective, e.g. "beli", "crni"
-    var srbAdjective: String { self == .white ? "beli" : "crni" }
+    /// Localized colour adjective (lowercase). Source language Serbian: "beli", "crni"
+    var srbAdjective: String { self == .white ? Loc("beli") : Loc("crni") }
 }
 
 // MARK: - Chess Piece
