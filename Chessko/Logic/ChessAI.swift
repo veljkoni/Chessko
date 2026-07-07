@@ -12,18 +12,18 @@ struct ChessAI {
         /// Maximum search depth (iterative deepening stops here or when time runs out).
         var maxDepth: Int {
             switch self {
-            case .easy:   return 4
-            case .medium: return 8
-            case .hard:   return 20
+            case .easy:   return 2
+            case .medium: return 4
+            case .hard:   return 10
             }
         }
 
         /// Time budget per move (seconds).
         var timeLimit: Double {
             switch self {
-            case .easy:   return 0.5
-            case .medium: return 1.5
-            case .hard:   return 3.0
+            case .easy:   return 0.20
+            case .medium: return 0.50
+            case .hard:   return 2.00
             }
         }
 
@@ -31,8 +31,8 @@ struct ChessAI {
         var quiescenceDepth: Int {
             switch self {
             case .easy:   return 0
-            case .medium: return 4
-            case .hard:   return 6
+            case .medium: return 2
+            case .hard:   return 4
             }
         }
     }
@@ -51,6 +51,21 @@ struct ChessAI {
 
         // Single legal move — return immediately, no need to search.
         if moves.count == 1 { return moves[0] }
+
+        // Introduce random blunder rate for easy/medium
+        let roll = Double.random(in: 0...1)
+        switch difficulty {
+        case .easy:
+            if roll < 0.25 {
+                return moves.randomElement()
+            }
+        case .medium:
+            if roll < 0.08 {
+                return moves.randomElement()
+            }
+        case .hard:
+            break
+        }
 
         let ctx  = SearchContext(timeLimit: difficulty.timeLimit)
         let zt   = ZobristTable.shared

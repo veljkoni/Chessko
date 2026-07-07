@@ -960,6 +960,46 @@ add("Napredno", "Advanced", "Avancé", "Fortgeschritten", "Avanzato", "Прод�
 add("Ekspert", "Expert", "Expert", "Experte", "Esperto", "Эксперт", "专家", "विशेषज्ञ")
 add("Maksimalno", "Maximum", "Maximum", "Maximum", "Massimo", "Максимум", "最大", "अधिकतम")
 
+# Settings translations
+add("Klasična", "Classic", "Classique", "Klassisch", "Classico", "Классическая", "经典", "क्लासिक")
+add("Šumska", "Forest", "Forêt", "Wald", "Foresta", "Лесная", "森林", "वन")
+add("Drvo", "Wood", "Bois", "Holz", "Legno", "Дерево", "木质", "लकड़ी")
+add("Ugalj", "Charcoal", "Charbon", "Kohle", "Carbonella", "Уголь", "木炭", "कोयला")
+add("Polarna", "Polar", "Polaire", "Polar", "Polare", "Полярная", "极地", "ध्रुवीय")
+add("Smaragd", "Emerald", "Émeraude", "Smaragd", "Smeraldo", "Изумруд", "祖母绿", "पन्ना")
+add("Pesak", "Sand", "Sable", "Sand", "Sabbia", "Песок", "沙滩", "रेत")
+add("Sajber", "Cyber", "Cyber", "Cyber", "Cyber", "Кибер", "赛博", "साइबर")
+add("Izgled table", "Board Appearance", "Apparence de l'échiquier", "Brett-Aussehen", "Aspetto della scacchiera", "Внешний vuд доски", "棋盘外观", "बोर्ड का रूप")
+add("Tema table", "Board Theme", "Thème de l'échiquier", "Brett-Thema", "Tema della scacchiera", "Тема доски", "棋盘主题", "बोर्ड थीम")
+add("Prikaži koordinate", "Show Coordinates", "Afficher les coordonnées", "Koordinaten anzeigen", "Mostra coordinate", "Показывать координаты", "显示坐标", "निर्देशांक दिखाएं")
+add("Prikaži poslednji potez", "Show Last Move", "Afficher le dernier coup", "Letzten Zug anzeigen", "Mostra l'ultima mossa", "Показывать последний ход", "显示最后一步", "अंतिम चाल दिखाएं")
+add("Prikaži moguća polja", "Show Legal Moves", "Afficher les coups légaux", "Legale Züge anzeigen", "Mostra mosse legali", "Показывать возможные ходы", "显示合法走法", "वैध चालें दिखाएं")
+add("Stil figura", "Piece Style", "Style des pièces", "Figurenstil", "Stile dei pezzi", "Стиль фигур", "棋子风格", "मोहरों की शैली")
+add("Stil", "Style", "Style", "Stil", "Stile", "Стиль", "风格", "शैली")
+add("Igra i pravila", "Game & Rules", "Jeu & Règles", "Spiel & Regeln", "Gioco & Regole", "Игра и правила", "游戏与规则", "खेल और नियम")
+add("Automatska promocija u damu", "Auto Promote to Queen", "Promotion automatique en dame", "Automatische Damen-Umwandlung", "Promozione automatica a donna", "Автопревращение в ферзя", "自动升变为后", "वज़ीर में स्वचालित पदोन्नति")
+add("Rotiraj tablu u lokalnoj igri", "Rotate Board in Local Play", "Tourner l'échiquier en jeu local", "Brett im lokalen Spiel drehen", "Ruota la scacchiera nel gioco locale", "Поворачивать доску в локальной игре", "在本地对战中旋转棋盘", "स्थानीय खेल में board घुमाएँ")
+add("Izgled", "Appearance", "Apparence", "Aussehen", "Aspetto", "Оформление", "外观", "रूप")
+add("Svetla", "Light", "Clair", "Hell", "Chiaro", "Светлая", "浅色", "हल्का")
+add("Tamna", "Dark", "Sombre", "Dunkel", "Scuro", "Тёмная", "深色", "गहरा")
+add("Ostalo", "Other", "Autre", "Sonstiges", "Altro", "Другое", "其他", "अन्य")
+add("Tanke", "Thin", "Fin", "Dünn", "Sottile", "Тонкие", "细体", "पतली")
+add("Igraonica", "Gameroom", "Gameroom", "Spielzimmer", "Gameroom", "Игровая комната", "游戏室", "गेमरूम")
+add("Staklene", "Glass", "Verre", "Glas", "Vetro", "Стеклянные", "玻璃", "कांच")
+add("Prevlačenje levo/desno", "Swipe left/right", "Glisser gauche/droite", "Wischen links/rechts", "Scorri sinistra/destra", "Проведите влево/вправо", "左右滑动", "बाएं/दाएं स्वाइप करें")
+add("Prevlačenje gore/dole", "Swipe up/down", "Glisser haut/bas", "Wischen oben/unten", "Scorri su/giù", "Проведите вверх/вниз", "上下滑动", "ऊपर/नीचे स्वाइप करें")
+
+# Chess AI and Stockfish Level Name Proposals
+add("Lokalni AI: Početnik", "Local AI: Beginner", "IA locale: Débutant", "Lokale KI: Anfänger", "IA locale: Principiante", "Локальный ИИ: Новичок", "本地 AI：初学者", "स्थानीय एआई: शुरुआती")
+add("Lokalni AI: Amater", "Local AI: Amateur", "IA locale: Amateur", "Lokale KI: Amateur", "IA locale: Dilettante", "Локальный ИИ: Любитель", "本地 AI：业余", "स्थानीय एआई: शौकिया")
+add("Lokalni AI: Napredni", "Local AI: Advanced", "IA locale: Avancé", "Lokale KI: Fortgeschritten", "IA locale: Avanzato", "Локальный ИИ: Продвинутый", "本地 AI：高级", "स्थानीय एआई: उन्नत")
+add("Stockfish: 1300 ELO", "Stockfish: 1300 ELO", "Stockfish: ELO 1300", "Stockfish: 1300 ELO", "Stockfish: 1300 ELO", "Stockfish: 1300 ELO", "Stockfish：1300 ELO", "स्टॉकफ़िश: 1300 ELO")
+add("Stockfish: 1600 ELO", "Stockfish: 1600 ELO", "Stockfish: ELO 1600", "Stockfish: 1600 ELO", "Stockfish: 1600 ELO", "Stockfish: 1600 ELO", "Stockfish：1600 ELO", "स्टॉकफ़िश: 1600 ELO")
+add("Stockfish: 1900 ELO", "Stockfish: 1900 ELO", "Stockfish: ELO 1900", "Stockfish: 1900 ELO", "Stockfish: 1900 ELO", "Stockfish: 1900 ELO", "Stockfish：1900 ELO", "स्टॉकफ़िश: 1900 ELO")
+add("Stockfish: 2200 ELO", "Stockfish: 2200 ELO", "Stockfish: ELO 2200", "Stockfish: 2200 ELO", "Stockfish: 2200 ELO", "Stockfish: 2200 ELO", "Stockfish：2200 ELO", "स्टॉकफ़िश: 2200 ELO")
+add("Stockfish: 2600 ELO", "Stockfish: 2600 ELO", "Stockfish: ELO 2600", "Stockfish: 2600 ELO", "Stockfish: 2600 ELO", "Stockfish: 2600 ELO", "Stockfish：2600 ELO", "स्टॉकफ़िश: 2600 ELO")
+add("Stockfish: Maksimalno", "Stockfish: Maximum", "Stockfish: Maximum", "Stockfish: Maximum", "Stockfish: Massimo", "Stockfish: Максимум", "Stockfish：最大", "स्टॉकफ़िश: अधिकतम")
+
 def build():
     entries = {}
     for sr, trans in T.items():

@@ -55,24 +55,24 @@ struct LessonCard: View {
                     .foregroundStyle(info.accentColor.opacity(0.9))
                 Text(LocalizedStringKey(info.title))
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
                 Text(LocalizedStringKey(info.subtitle))
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 0)
 
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.3))
+                .foregroundStyle(.secondary.opacity(0.8))
         }
         .padding(16)
-        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(info.accentColor.opacity(0.3), lineWidth: 1)
+                .strokeBorder(info.accentColor.opacity(0.2), lineWidth: 1)
         )
     }
 }
@@ -86,8 +86,7 @@ struct LearnView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(red: 0.09, green: 0.14, blue: 0.31)
-                    .ignoresSafeArea()
+                AppBackgroundView()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
@@ -96,10 +95,10 @@ struct LearnView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Nauči šah")
                                 .font(.title2.weight(.bold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Text("4 lekcije od osnova do završnice")
                                 .font(.subheadline)
-                                .foregroundStyle(.white.opacity(0.55))
+                                .foregroundStyle(.secondary)
                         }
                         .padding(.top, 4)
 
@@ -121,8 +120,8 @@ struct LearnView: View {
             }
             .navigationTitle("Učenje")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(red: 0.09, green: 0.14, blue: 0.31), for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
 }

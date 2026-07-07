@@ -7,31 +7,31 @@ struct LessonDetailView: View {
     let lesson: LessonInfo
     var pieceExplorer: LearnViewModel   // used only in Lesson 1
 
-    private let bg = Color(red: 0.09, green: 0.14, blue: 0.31)
-
     var body: some View {
-        ZStack {
-            bg.ignoresSafeArea()
+        GeometryReader { geo in
+            ZStack {
+                AppBackgroundView()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    lessonHeader
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        lessonHeader
 
-                    switch lesson.id {
-                    case 1: lesson1
-                    case 2: lesson2
-                    case 3: lesson3
-                    case 4: lesson4
-                    default: EmptyView()
+                        switch lesson.id {
+                        case 1: lesson1
+                        case 2: lesson2
+                        case 3: lesson3
+                        case 4: lesson4
+                        default: EmptyView()
+                        }
                     }
+                    .frame(width: geo.size.width)
+                    .padding(.bottom, 40)
                 }
-                .padding(.bottom, 40)
             }
         }
         .navigationTitle("Lekcija \(lesson.id)")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(bg, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarBackground(Color.appBackground, for: .navigationBar)
     }
 
     // MARK: - Lesson Header
@@ -49,11 +49,12 @@ struct LessonDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(LocalizedStringKey(lesson.title))
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 Text(LocalizedStringKey(lesson.subtitle))
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             Spacer()
         }
         .padding(.horizontal, 20)
@@ -120,9 +121,11 @@ struct LessonDetailView: View {
                                         .font(.caption.weight(.semibold))
                                     Text(s.label)
                                         .font(.subheadline.weight(.semibold))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
                                 }
                                 .foregroundStyle(active ? .black : .white)
-                                .padding(.horizontal, 14)
+                                .frame(maxWidth: .infinity)
                                 .padding(.vertical, 9)
                                 .background(
                                     active ? Color.yellow : Color.white.opacity(0.15),
@@ -136,8 +139,8 @@ struct LessonDetailView: View {
                                         )
                                 )
                             }
+                            .buttonStyle(.plain)
                         }
-                        Spacer()
                     }
                 }
                 .padding(14)
@@ -216,25 +219,32 @@ struct LessonDetailView: View {
 
     private var piecePicker: some View {
         let pieces: [PieceType] = [.pawn, .knight, .bishop, .rook, .queen, .king]
-        return HStack(spacing: 0) {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
+        return LazyVGrid(columns: columns, spacing: 6) {
             ForEach(pieces, id: \.self) { piece in
                 let sel = pieceExplorer.selectedPieceType == piece
-                Button { withAnimation(.easeInOut(duration: 0.15)) { pieceExplorer.select(piece: piece) } } label: {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        pieceExplorer.select(piece: piece)
+                    }
+                } label: {
                     VStack(spacing: 3) {
                         PieceImageView(piece: ChessPiece(type: piece, color: .white))
-                            .frame(width: 32, height: 32)
+                            .frame(width: 28, height: 28)
                         Text(piece.srbName)
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(sel ? .white : .white.opacity(0.45))
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(sel ? .white : .white.opacity(0.6))
                     }
-                    .frame(maxWidth: .infinity).padding(.vertical, 7)
-                    .background(sel ? Color.white.opacity(0.18) : Color.clear,
-                                in: RoundedRectangle(cornerRadius: 9))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(sel ? Color.white.opacity(0.18) : Color.white.opacity(0.04),
+                                in: RoundedRectangle(cornerRadius: 10))
                 }
+                .buttonStyle(.plain)
             }
         }
-        .padding(5)
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+        .padding(6)
+        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
     }
 
     @ViewBuilder private var lesson1Pieces: some View {
@@ -628,7 +638,7 @@ private struct L_SectionHeader: View {
                 .foregroundStyle(color)
             Text(LocalizedStringKey(title))
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 10)
@@ -642,7 +652,7 @@ private struct L_Para: View {
     var body: some View {
         Text(LocalizedStringKey(text))
             .font(.subheadline)
-            .foregroundStyle(.white.opacity(0.82))
+            .foregroundStyle(.primary.opacity(0.85))
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -663,12 +673,13 @@ private struct L_Bullet: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(LocalizedStringKey(title))
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 Text(LocalizedStringKey(text))
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.72))
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 12)
@@ -693,7 +704,7 @@ private struct L_Box: View {
             }
             Text(LocalizedStringKey(text))
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.82))
+                .foregroundStyle(.primary.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -716,13 +727,13 @@ private struct L_PieceRow: View {
                 .frame(width: 32, height: 32)
             Text(LocalizedStringKey(name))
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
             Spacer()
             Text(count)
                 .font(.caption.weight(.medium))
-                .foregroundStyle(.white.opacity(0.45))
+                .foregroundStyle(.secondary)
                 .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(.white.opacity(0.08), in: Capsule())
+                .background(Color.primary.opacity(0.06), in: Capsule())
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 6)
@@ -746,12 +757,13 @@ private struct L_NumberedRule: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(LocalizedStringKey(title))
                     .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 Text(LocalizedStringKey(text))
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.72))
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 14)
@@ -767,7 +779,7 @@ private struct L_OpeningCard: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(name)
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
             ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                 HStack(alignment: .top, spacing: 8) {
                     Text(item.0 + ":")
@@ -776,14 +788,15 @@ private struct L_OpeningCard: View {
                         .fixedSize()
                     Text(item.1)
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.75))
+                        .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(accentColor.opacity(0.2), lineWidth: 1))
         .padding(.horizontal, 20)
         .padding(.bottom, 12)
@@ -808,19 +821,20 @@ private struct L_PieceValueTable: View {
                         .frame(width: 28, height: 28)
                     Text(LocalizedStringKey(row.1))
                         .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(.primary)
                     Spacer()
                     Text(LocalizedStringKey(row.2 == "∞" ? "∞" : "\(row.2) bod\(row.2 == "1" ? "" : row.2 == "9" ? "ova" : "a")"))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(row.2 == "∞" ? Color.yellow : Color.white)
+                        .foregroundStyle(row.2 == "∞" ? Color.yellow : .primary)
                 }
                 .padding(.vertical, 9)
                 .padding(.horizontal, 14)
-                .background(idx % 2 == 0 ? Color.white.opacity(0.05) : Color.clear)
+                .background(idx % 2 == 0 ? Color.primary.opacity(0.03) : Color.clear)
             }
         }
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.1), lineWidth: 1))
+        .frame(maxWidth: .infinity)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.08), lineWidth: 1))
         .padding(.horizontal, 20)
         .padding(.bottom, 16)
     }
@@ -983,12 +997,13 @@ struct OpeningExerciseCard: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(LocalizedStringKey(line.name))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     Text(LocalizedStringKey(line.hint))
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Spacer(minLength: 0)
                 if vm.phase == .solved {
                     Image(systemName: "checkmark.circle.fill")
@@ -1024,7 +1039,7 @@ struct OpeningExerciseCard: View {
                     ForEach(0..<whiteMoveCount, id: \.self) { i in
                         let done = i * 2 < vm.movePointer
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(done ? line.accentColor : Color.white.opacity(0.15))
+                            .fill(done ? line.accentColor : Color.primary.opacity(0.12))
                             .frame(width: 18, height: 4)
                     }
                 }
@@ -1042,17 +1057,17 @@ struct OpeningExerciseCard: View {
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(.white.opacity(0.1), in: Capsule())
+                        .background(Color.primary.opacity(0.06), in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
         }
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .strokeBorder(openingBorderColor, lineWidth: 1)
@@ -1063,7 +1078,7 @@ struct OpeningExerciseCard: View {
         switch vm.phase {
         case .solved:    return .green
         case .wrongMove: return .red
-        case .playing:   return .white.opacity(0.65)
+        case .playing:   return .secondary
         }
     }
 
@@ -1113,11 +1128,12 @@ struct MateExerciseCard: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(LocalizedStringKey(title))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     Text(LocalizedStringKey(hint))
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Spacer(minLength: 0)
                 if vm.isSolved {
                     Image(systemName: "checkmark.circle.fill")
@@ -1162,17 +1178,17 @@ struct MateExerciseCard: View {
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(.white.opacity(0.1), in: Capsule())
+                        .background(Color.primary.opacity(0.06), in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
         }
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .strokeBorder(borderColor, lineWidth: 1)
@@ -1184,7 +1200,7 @@ struct MateExerciseCard: View {
         if case .draw = vm.gameState.status { return .orange }
         if case .checkmate(let c) = vm.gameState.status, c == .white { return .red }
         if case .check = vm.gameState.status { return .orange }
-        return .white.opacity(0.65)
+        return .secondary
     }
 
     private var borderColor: Color {

@@ -28,32 +28,13 @@ extension Color {
 
 // MARK: - App Background (MeshGradient)
 
-/// Suptilni višetačkasti gradijent koji prati temu sistema.
+/// Suptilni višetačkasti gradijent koji prati temu sistema i izabranu temu table.
+/// Suptilna pozadina koja prati sistemsku temu.
 struct AppBackgroundView: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        MeshGradient(width: 3, height: 3, points: [
-            [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
-            [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
-            [0.0, 1.0], [0.5, 1.0], [1.0, 1.0]
-        ], colors: colorScheme == .dark ? darkColors : lightColors)
-        .ignoresSafeArea()
+        Color(uiColor: .systemGroupedBackground)
+            .ignoresSafeArea()
     }
-
-    /// Tamna tema: duboki navy, blagi plavo-ljubičasti akcenat gore-levo.
-    private var darkColors: [Color] { [
-        Color(hex: "#080e1c"), Color(hex: "#0b1328"), Color(hex: "#0a1122"),
-        Color(hex: "#0e1830"), Color(hex: "#0e1528"), Color(hex: "#10183a"),
-        Color(hex: "#0c1426"), Color(hex: "#0f1b32"), Color(hex: "#0d1528")
-    ] }
-
-    /// Svetla tema: hladna bela, blagi plavi tonovi po uglovima.
-    private var lightColors: [Color] { [
-        Color(hex: "#e2e9f6"), Color(hex: "#edf0f7"), Color(hex: "#eef2fb"),
-        Color(hex: "#e8edf8"), Color(hex: "#edf0f7"), Color(hex: "#f3f6fc"),
-        Color(hex: "#dfe8f4"), Color(hex: "#e9eef8"), Color(hex: "#f0f4fb")
-    ] }
 }
 
 // MARK: - Square View
@@ -70,6 +51,12 @@ struct SquareView: View {
     var isBottomEdge: Bool = false
     /// True when this square is on the left display column — shows rank label (1–8).
     var isLeftEdge: Bool = false
+    var isFlipped: Bool = false
+
+    @AppStorage("boardTheme")            private var boardTheme:            String = "classic"
+    @AppStorage("showCoordinates")       private var showCoordinates:       Bool   = true
+    @AppStorage("showLastMoveHighlight") private var showLastMoveHighlight: Bool   = true
+    @AppStorage("showLegalMoves")        private var showLegalMoves:        Bool   = true
 
     var body: some View {
         ZStack {
@@ -77,7 +64,7 @@ struct SquareView: View {
             baseColor
 
             // Last-move highlight
-            if isLastMove {
+            if isLastMove && showLastMoveHighlight {
                 Color.yellow.opacity(0.40)
             }
 
@@ -87,7 +74,7 @@ struct SquareView: View {
             }
 
             // Legal move indicator
-            if isLegalMove {
+            if isLegalMove && showLegalMoves {
                 legalMoveIndicator
             }
 
@@ -96,20 +83,35 @@ struct SquareView: View {
                 GeometryReader { geo in
                     PieceImageView(piece: piece)
                         .padding(geo.size.width * 0.05)
+                        .rotationEffect(.degrees(isFlipped ? -180 : 0))
                         .transition(.scale.combined(with: .opacity))
                 }
             }
 
             // Coordinate labels
-            coordinateLabels
+            if showCoordinates {
+                coordinateLabels
+            }
         }
         .aspectRatio(1, contentMode: .fit)
     }
 
     // MARK: - Colors
 
-    private var baseColor: Color {
-        isLight ? .squareLight : .squareDark
+    @ViewBuilder
+    private var baseColor: some View {
+        let theme = BoardTheme(rawValue: boardTheme) ?? .classic
+        if !isLight && (theme == .midnightAurora || theme == .cyberLavender) {
+            let centerColor = theme == .midnightAurora ? Color(hex: "#3A475C") : Color(hex: "#4F3B8C")
+            RadialGradient(
+                colors: [centerColor, theme.darkSquareColor],
+                center: .center,
+                startRadius: 0,
+                endRadius: 42
+            )
+        } else {
+            isLight ? theme.lightSquareColor : theme.darkSquareColor
+        }
     }
 
     // MARK: - Legal Move
@@ -139,7 +141,8 @@ struct SquareView: View {
 
     @ViewBuilder
     private var coordinateLabels: some View {
-        let labelColor = isLight ? Color.squareDark : Color.squareLight
+        let theme = BoardTheme(rawValue: boardTheme) ?? .classic
+        let labelColor = isLight ? theme.darkSquareColor : theme.lightSquareColor
 
         // File letter (a–h) on the bottom display row
         if isBottomEdge {
@@ -150,6 +153,7 @@ struct SquareView: View {
                     Text(String("abcdefgh"["abcdefgh".index("abcdefgh".startIndex, offsetBy: position.col)]))
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(labelColor)
+                        .rotationEffect(.degrees(isFlipped ? -180 : 0))
                         .padding(2)
                 }
             }
@@ -161,6 +165,7 @@ struct SquareView: View {
                 Text("\(8 - position.row)")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(labelColor)
+                    .rotationEffect(.degrees(isFlipped ? -180 : 0))
                     .padding(2)
                 Spacer()
             }

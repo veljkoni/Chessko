@@ -17,6 +17,11 @@ struct BoardView: View {
     let isPlayerTurn: Bool
     let onTap: (Position) -> Void
 
+    @AppStorage("boardTheme") private var boardTheme: String = "classic"
+    @AppStorage("pieceStyle") private var pieceStyle: String = "classic"
+    @AppStorage("swipeToChangeBoardTheme") private var swipeToChangeBoardTheme: Bool = true
+    @AppStorage("swipeToChangePieceStyle") private var swipeToChangePieceStyle: Bool = true
+
     var body: some View {
         GeometryReader { geo in
             let squareSize = geo.size.width / 8
@@ -25,10 +30,10 @@ struct BoardView: View {
                 // Grid of squares
                 VStack(spacing: 0) {
                     ForEach(0..<8, id: \.self) { displayRow in
-                        let boardRow = isFlipped ? (7 - displayRow) : displayRow
+                        let boardRow = displayRow
                         HStack(spacing: 0) {
                             ForEach(0..<8, id: \.self) { displayCol in
-                                let boardCol   = isFlipped ? (7 - displayCol) : displayCol
+                                let boardCol   = displayCol
                                 let pos        = Position(row: boardRow, col: boardCol)
                                 let piece      = board[boardRow][boardCol]
                                 let isSelected = selectedPosition == pos
@@ -43,8 +48,9 @@ struct BoardView: View {
                                     isLastMove: isLast,
                                     isLight: (boardRow + boardCol) % 2 == 0,
                                     hidePiece: animatingPiece?.to == pos,
-                                    isBottomEdge: displayRow == 7,
-                                    isLeftEdge:   displayCol == 0
+                                    isBottomEdge: isFlipped ? (displayRow == 0) : (displayRow == 7),
+                                    isLeftEdge:   isFlipped ? (displayCol == 7) : (displayCol == 0),
+                                    isFlipped:    isFlipped
                                 )
                                 .frame(width: squareSize, height: squareSize)
                                 .onTapGesture { onTap(pos) }
@@ -65,12 +71,11 @@ struct BoardView: View {
 
                 // Captured piece overlay — transient, hidden from VoiceOver
                 if let fc = flyingCapture {
-                    let displayRow = isFlipped ? CGFloat(7 - fc.fromPosition.row)
-                                               : CGFloat(fc.fromPosition.row)
-                    let displayCol = isFlipped ? CGFloat(7 - fc.fromPosition.col)
-                                               : CGFloat(fc.fromPosition.col)
+                    let displayRow = CGFloat(fc.fromPosition.row)
+                    let displayCol = CGFloat(fc.fromPosition.col)
                     PieceImageView(piece: fc.piece)
                         .frame(width: squareSize * 0.88, height: squareSize * 0.88)
+                        .rotationEffect(.degrees(isFlipped ? -180 : 0))
                         .position(
                             x: squareSize * displayCol + squareSize / 2,
                             y: squareSize * displayRow + squareSize / 2
@@ -88,10 +93,88 @@ struct BoardView: View {
                         .accessibilityHidden(true)
                 }
             }
+            .rotationEffect(.degrees(isFlipped ? 180 : 0))
         }
         .aspectRatio(1, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 6))
         .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 4)
+        .gesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    let horizontal = value.translation.width
+                    let vertical = value.translation.height
+                    
+                    if abs(horizontal) > abs(vertical) {
+                        if swipeToChangeBoardTheme && abs(horizontal) > 30 {
+                            if horizontal > 0 {
+                                // Swipe Right -> cycle backward (previous theme)
+                                cycleBoardTheme(forward: false)
+                            } else {
+                                // Swipe Left -> cycle forward (next theme)
+                                cycleBoardTheme(forward: true)
+                            }
+                        }
+                    } else {
+                        if swipeToChangePieceStyle && abs(vertical) > 30 {
+                            if vertical > 0 {
+                                // Swipe Down -> cycle backward (previous style)
+                                cyclePieceStyle(forward: false)
+                            } else {
+                                // Swipe Up -> cycle forward (next style)
+                                cyclePieceStyle(forward: true)
+                            }
+                        }
+                    }
+                }
+        )
+    }
+
+    private func cyclePieceStyle(forward: Bool) {
+        let allStyles = PieceStyle.allCases
+        let currentStyle = PieceStyle(rawValue: pieceStyle) ?? .classic
+        guard let currentIndex = allStyles.firstIndex(of: currentStyle) else { return }
+        
+        let nextIndex: Int
+        if forward {
+            nextIndex = (currentIndex + 1) % allStyles.count
+        } else {
+            nextIndex = (currentIndex - 1 + allStyles.count) % allStyles.count
+        }
+        
+        let newStyle = allStyles[nextIndex]
+        
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
+        withAnimation(.easeInOut(duration: 0.25)) {
+            pieceStyle = newStyle.rawValue
+        }
+    }
+
+    private func cycleBoardTheme(forward: Bool) {
+        let allThemes = BoardTheme.allCases
+        let currentTheme = BoardTheme(rawValue: boardTheme) ?? .classic
+        guard let currentIndex = allThemes.firstIndex(of: currentTheme) else { return }
+        
+        let nextIndex: Int
+        if forward {
+            nextIndex = (currentIndex + 1) % allThemes.count
+        } else {
+            nextIndex = (currentIndex - 1 + allThemes.count) % allThemes.count
+        }
+        
+        let newTheme = allThemes[nextIndex]
+        
+        // Haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
+        withAnimation(.easeInOut(duration: 0.25)) {
+            boardTheme = newTheme.rawValue
+        }
     }
 
     private func isLastMove(_ pos: Position) -> Bool {
@@ -144,8 +227,8 @@ struct AnimatingPieceView: View {
     @State private var atDestination = false
 
     private func center(for pos: Position) -> CGPoint {
-        let displayRow = isFlipped ? CGFloat(7 - pos.row) : CGFloat(pos.row)
-        let displayCol = isFlipped ? CGFloat(7 - pos.col) : CGFloat(pos.col)
+        let displayRow = CGFloat(pos.row)
+        let displayCol = CGFloat(pos.col)
         return CGPoint(
             x: squareSize * displayCol + squareSize / 2,
             y: squareSize * displayRow + squareSize / 2
@@ -159,6 +242,7 @@ struct AnimatingPieceView: View {
 
         PieceImageView(piece: animatingPiece.piece)
             .frame(width: squareSize * 0.9, height: squareSize * 0.9)
+            .rotationEffect(.degrees(isFlipped ? -180 : 0))
             .position(pos)
             .onAppear {
                 withAnimation(.easeInOut(duration: 0.25)) {

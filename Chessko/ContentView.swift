@@ -21,17 +21,17 @@ struct ContentView: View {
         TabView {
             GameView(viewModel: gameViewModel, localization: localization)
                 .tabItem {
-                    Label("Igra", systemImage: "crown.fill")
+                    Label("Igra", systemImage: "play.house.fill")
                 }
 
             PuzzleView(viewModel: puzzleViewModel)
                 .tabItem {
-                    Label("Zadaci", systemImage: "puzzlepiece.fill")
+                    Label("Zadaci", systemImage: "play.rectangle.on.rectangle")
                 }
 
             LearnView(viewModel: learnViewModel)
                 .tabItem {
-                    Label("Učenje", systemImage: "graduationcap.fill")
+                    Label("Učenje", systemImage: "book.fill")
                 }
         }
         .preferredColorScheme(preferredColorScheme)

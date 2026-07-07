@@ -17,6 +17,7 @@
 		250DDA525348403690EC2812 /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11D1909A17A462F8BF7B8BF /* GameState.swift */; };
 		27F14DA314BB450EBBA57761 /* ChesskoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7DFB91567E4FFD869A7B7F /* ChesskoApp.swift */; };
 		2F51D610F5994AB8AE204B14 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CF59B4F4804EB9BBE49F3A /* GameView.swift */; };
+		2F51D610F5994AB8AE204CCC /* ChessClockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CF59B4F4804EB9BBE49CCC /* ChessClockView.swift */; };
 		3AFC4973AB524287B4311C50 /* LearnViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C6B1A14F7794C6985D468FA /* LearnViewModel.swift */; };
 		46CEE0A1DB744BA392B043B6 /* PuzzleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E697423DC545FD8B18BD01 /* PuzzleView.swift */; };
 		4A9C3E02B2784A5CAEFD2102 /* MateExerciseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9C3E00B2784A5CAEFD2100 /* MateExerciseViewModel.swift */; };
@@ -73,6 +74,7 @@
 		BFDE9AD864ED479FA9B3560F /* move-self.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "move-self.mp3"; sourceTree = "<group>"; };
 		C11D1909A17A462F8BF7B8BF /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
 		C3CF59B4F4804EB9BBE49F3A /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		C3CF59B4F4804EB9BBE49CCC /* ChessClockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessClockView.swift; sourceTree = "<group>"; };
 		C48D8C6D4E4A487EB552BE28 /* PieceImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PieceImageView.swift; sourceTree = "<group>"; };
 		CD9659979FC044E9AF7C79F0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZobristTable.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 				147B70AC4F314B858E7A311A /* BoardView.swift */,
 				F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */,
 				C3CF59B4F4804EB9BBE49F3A /* GameView.swift */,
+				C3CF59B4F4804EB9BBE49CCC /* ChessClockView.swift */,
 				ACD5405B3998478BB52C55F1 /* LearnView.swift */,
 				6D66F2BC5E3D48C793764D24 /* LessonDetailView.swift */,
 				403F8F9B90274C9886E43245 /* MoveHistoryView.swift */,
@@ -293,6 +296,7 @@
 				EA67FFB8764A4E268D89CE1B /* BoardView.swift in Sources */,
 				8F9ABCE715DD4B4A8218DDF2 /* CapturedPiecesView.swift in Sources */,
 				2F51D610F5994AB8AE204B14 /* GameView.swift in Sources */,
+				2F51D610F5994AB8AE204CCC /* ChessClockView.swift in Sources */,
 				9EBB28D90D73401D92A2E8D6 /* LearnView.swift in Sources */,
 				5945CB2F31AC412D90A755D5 /* LessonDetailView.swift in Sources */,
 				D4168CD080D94B9E8F4ED3CD /* MoveHistoryView.swift in Sources */,
@@ -327,7 +331,9 @@
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
 			name = Debug;
 		};
@@ -391,7 +397,9 @@
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
 			name = Release;
 		};

@@ -1,0 +1,337 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project Chessko.xcodeproj -scheme Chessko -destination "platform=iOS Simulator,name=iPhone 17" build
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  ChessKitEngine: https://github.com/chesskit-app/chesskit-engine @ 0.7.0
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (4 targets)
+    Target 'Chessko' in project 'Chessko'
+        ➜ Explicit dependency on target 'ChessKitEngine' in project 'ChessKitEngine'
+    Target 'ChessKitEngine' in project 'ChessKitEngine'
+        ➜ Explicit dependency on target 'ChessKitEngine' in project 'ChessKitEngine'
+        ➜ Explicit dependency on target 'ChessKitEngineCore' in project 'ChessKitEngine'
+    Target 'ChessKitEngine' in project 'ChessKitEngine'
+        ➜ Explicit dependency on target 'ChessKitEngineCore' in project 'ChessKitEngine'
+    Target 'ChessKitEngineCore' in project 'ChessKitEngine' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -x objective-c++ -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/xcstringstool compile --dry-run --output-directory /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build /Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Localizable.xcstrings
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -x c++ -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -x objective-c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 4e915454d396f104da1f09c093bfe3de
+Build description path: /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/XCBuildData/4e915454d396f104da1f09c093bfe3de.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-6cfe768891a92b912361537c460fe42b.sdkstatcache
+    cd /Users/veljkoodobasic/Documents/Projects/Chess/Chessko.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -o /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-6cfe768891a92b912361537c460fe42b.sdkstatcache
+
+CompileXCStrings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/ /Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Localizable.xcstrings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcstringstool compile --output-directory /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build /Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Localizable.xcstrings
+
+CompileAssetCatalogVariant thinned /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app /Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets --compile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --filter-for-thinning-device-configuration iPhone18,3 --filter-for-device-os-version 26.5 --development-region sr --target-device iphone --target-device ipad --minimum-deployment-target 18.0 --platform iphonesimulator
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+CoreSVG has logged an error. Set environment variable "CORESVG_VERBOSE" to learn more.
+2026-07-04 22:25:39.405 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_bishop_flat.imageset/piece_black_bishop_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.406 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_bishop_flat.imageset/piece_black_bishop_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.407 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_king_flat.imageset/piece_black_king_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.407 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_king_flat.imageset/piece_black_king_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.409 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_knight_flat.imageset/piece_black_knight_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.409 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_knight_flat.imageset/piece_black_knight_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.411 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_pawn_flat.imageset/piece_black_pawn_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.411 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_pawn_flat.imageset/piece_black_pawn_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.412 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_queen_flat.imageset/piece_black_queen_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.412 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_queen_flat.imageset/piece_black_queen_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.414 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_rook_flat.imageset/piece_black_rook_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.414 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_black_rook_flat.imageset/piece_black_rook_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.416 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_bishop_flat.imageset/piece_white_bishop_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.416 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_bishop_flat.imageset/piece_white_bishop_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.417 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_king_flat.imageset/piece_white_king_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.417 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_king_flat.imageset/piece_white_king_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.419 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_knight_flat.imageset/piece_white_knight_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.419 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_knight_flat.imageset/piece_white_knight_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.421 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_pawn_flat.imageset/piece_white_pawn_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.421 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_pawn_flat.imageset/piece_white_pawn_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.422 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_queen_flat.imageset/piece_white_queen_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.422 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_queen_flat.imageset/piece_white_queen_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.424 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_rook_flat.imageset/piece_white_rook_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.424 AssetCatalogSimulatorAgent[70534:16810366] Unable to get image dimensions for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_rook_flat.imageset/piece_white_rook_flat.svg
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+Entity: line 2: parser error : Attribute xmlns redefined
+<svg xmlns="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" viewB
+                                                                          ^
+2026-07-04 22:25:39.426 AssetCatalogSimulatorAgent[70534:16810366] -[TDSimpleArtworkRenditionSpec _createImageRefWithURL:andDocument:format:vectorBased:] Got zero width/height canvas size for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_king_flat.imageset/piece_white_king_flat.svg
+2026-07-04 22:25:39.426 AssetCatalogSimulatorAgent[70534:16810366] asset import didn't finish Got exception -[TDSimpleArtworkRenditionSpec _createImageRefWithURL:andDocument:format:vectorBased:] ot zero width/height canvas size for file:///Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets/piece_white_king_flat.imageset/piece_white_king_flat.svg weight:0 size:0
+/* com.apple.actool.errors */
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets: error: Exception Raised during asset import (2)
+/* com.apple.actool.document.warnings */
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_queen_flat.imageset/(null)[2d][piece_white_queen_flat.png]: warning: The image set "piece_white_queen_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_king_flat.imageset/(null)[2d][piece_black_king_flat.png]: warning: The image set "piece_black_king_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_king_flat.imageset/(null)[2d][piece_white_king_flat.png]: warning: The image set "piece_white_king_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_knight_flat.imageset/(null)[2d][piece_white_knight_flat.png]: warning: The image set "piece_white_knight_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_rook_flat.imageset/(null)[2d][piece_white_rook_flat.png]: warning: The image set "piece_white_rook_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_knight_flat.imageset/(null)[2d][piece_black_knight_flat.png]: warning: The image set "piece_black_knight_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_rook_flat.imageset/(null)[2d][piece_black_rook_flat.png]: warning: The image set "piece_black_rook_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_queen_flat.imageset/(null)[2d][piece_black_queen_flat.png]: warning: The image set "piece_black_queen_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_pawn_flat.imageset/(null)[2d][piece_black_pawn_flat.png]: warning: The image set "piece_black_pawn_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_bishop_flat.imageset/(null)[2d][piece_black_bishop_flat.png]: warning: The image set "piece_black_bishop_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_bishop_flat.imageset/(null)[2d][piece_white_bishop_flat.png]: warning: The image set "piece_white_bishop_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_pawn_flat.imageset/(null)[2d][piece_white_pawn_flat.png]: warning: The image set "piece_white_pawn_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_bishop_flat.imageset/(null)[2d][piece_white_bishop_flat.png]: warning: The image set "piece_white_bishop_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_rook_flat.imageset/(null)[2d][piece_black_rook_flat.png]: warning: The image set "piece_black_rook_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_knight_flat.imageset/(null)[2d][piece_black_knight_flat.png]: warning: The image set "piece_black_knight_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_knight_flat.imageset/(null)[2d][piece_white_knight_flat.png]: warning: The image set "piece_white_knight_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_pawn_flat.imageset/(null)[2d][piece_black_pawn_flat.png]: warning: The image set "piece_black_pawn_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_rook_flat.imageset/(null)[2d][piece_white_rook_flat.png]: warning: The image set "piece_white_rook_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_pawn_flat.imageset/(null)[2d][piece_white_pawn_flat.png]: warning: The image set "piece_white_pawn_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_queen_flat.imageset/(null)[2d][piece_white_queen_flat.png]: warning: The image set "piece_white_queen_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_bishop_flat.imageset/(null)[2d][piece_black_bishop_flat.png]: warning: The image set "piece_black_bishop_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_queen_flat.imageset/(null)[2d][piece_black_queen_flat.png]: warning: The image set "piece_black_queen_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_king_flat.imageset/(null)[2d][piece_white_king_flat.png]: warning: The image set "piece_white_king_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_king_flat.imageset/(null)[2d][piece_black_king_flat.png]: warning: The image set "piece_black_king_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_queen_flat.imageset/(null)[2d][piece_white_queen_flat.png]: warning: The image set "piece_white_queen_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_king_flat.imageset/(null)[2d][piece_black_king_flat.png]: warning: The image set "piece_black_king_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_king_flat.imageset/(null)[2d][piece_white_king_flat.png]: warning: The image set "piece_white_king_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_knight_flat.imageset/(null)[2d][piece_white_knight_flat.png]: warning: The image set "piece_white_knight_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_rook_flat.imageset/(null)[2d][piece_white_rook_flat.png]: warning: The image set "piece_white_rook_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_knight_flat.imageset/(null)[2d][piece_black_knight_flat.png]: warning: The image set "piece_black_knight_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_rook_flat.imageset/(null)[2d][piece_black_rook_flat.png]: warning: The image set "piece_black_rook_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_queen_flat.imageset/(null)[2d][piece_black_queen_flat.png]: warning: The image set "piece_black_queen_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_pawn_flat.imageset/(null)[2d][piece_black_pawn_flat.png]: warning: The image set "piece_black_pawn_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_black_bishop_flat.imageset/(null)[2d][piece_black_bishop_flat.png]: warning: The image set "piece_black_bishop_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_bishop_flat.imageset/(null)[2d][piece_white_bishop_flat.png]: warning: The image set "piece_white_bishop_flat" has an unassigned child.
+/Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets:./piece_white_pawn_flat.imageset/(null)[2d][piece_white_pawn_flat.png]: warning: The image set "piece_white_pawn_flat" has an unassigned child.
+/* com.apple.actool.compilation-results */
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/assetcatalog_generated_info.plist_thinned
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/assetcatalog_output/thinned/AppIcon60x60@2x.png
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/assetcatalog_output/thinned/AppIcon76x76@2x~ipad.png
+
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/zh-Hans.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/zh-Hans.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/zh-Hans.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/zh-Hans.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/zh-Hans.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/sr.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/sr.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/sr.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/sr.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/sr.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/it.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/it.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/it.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/it.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/it.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/ru.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/ru.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/ru.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/ru.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/ru.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/hi.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/hi.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/hi.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/hi.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/hi.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/fr.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/fr.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/fr.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/fr.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/fr.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/en.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/en.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/en.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/en.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/en.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+CopyStringsFile /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/de.lproj/Localizable.strings /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/de.lproj/Localizable.strings (in target 'Chessko' from project 'Chessko')
+    cd /Users/veljkoodobasic/Documents/Projects/Chess
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app/de.lproj -- /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/de.lproj/Localizable.strings
+/Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Intermediates.noindex/Chessko.build/Debug-iphonesimulator/Chessko.build/de.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Chessko' from project 'Chessko')
+
+** BUILD FAILED **
+
+
+The following build commands failed:
+	CompileAssetCatalogVariant thinned /Users/veljkoodobasic/Library/Developer/Xcode/DerivedData/Chessko-flssxsyvkqcbovblcojxrhcfxlnd/Build/Products/Debug-iphonesimulator/Chessko.app /Users/veljkoodobasic/Documents/Projects/Chess/Chessko/Assets.xcassets (in target 'Chessko' from project 'Chessko')
+	Building project Chessko with scheme Chessko
+(2 failures)

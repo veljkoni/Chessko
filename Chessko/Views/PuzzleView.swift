@@ -7,94 +7,163 @@ struct PuzzleView: View {
 
     @State private var showCalendar = false
     @State private var calendarDate: Date = Calendar.current.startOfDay(for: Date())
+    @State private var bounceLeft = 0
+    @State private var bounceCalendar = 0
+    @State private var bounceCheckmark = 0
+    @State private var bounceRight = 0
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(red: 0.09, green: 0.14, blue: 0.31)
-                    .ignoresSafeArea()
+                AppBackgroundView()
 
-                VStack(spacing: 0) {
-                    // Date navigation bar — always visible
-                    dateNavBar
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
+                GeometryReader { geo in
+                    let isLandscape = geo.size.width > geo.size.height
 
                     if case .loading = viewModel.phase {
-                        Spacer()
-                        loadingView
-                        Spacer()
+                        VStack {
+                            Spacer()
+                            loadingView
+                            Spacer()
+                        }
+                        .frame(width: geo.size.width, height: geo.size.height)
                     } else if case .networkError(let msg) = viewModel.phase {
-                        Spacer()
-                        errorView(message: msg)
-                        Spacer()
+                        VStack {
+                            Spacer()
+                            errorView(message: msg)
+                            Spacer()
+                        }
+                        .frame(width: geo.size.width, height: geo.size.height)
                     } else {
-                        puzzleContent
+                        if isLandscape {
+                            HStack(alignment: .top, spacing: 20) {
+                                // Left side: Board
+                                BoardView(
+                                    board:            viewModel.gameState.board,
+                                    isFlipped:        viewModel.isFlipped,
+                                    selectedPosition: viewModel.selectedPosition,
+                                    legalMoves:       viewModel.legalMovesForSelected,
+                                    lastMove:         viewModel.lastMove,
+                                    animatingPiece:   viewModel.animatingPiece,
+                                    flyingCapture:    viewModel.flyingCapture,
+                                    playerColor:      viewModel.playerColor,
+                                    isPlayerTurn:     viewModel.isPlayerTurn,
+                                    onTap:            { viewModel.tap(position: $0) }
+                                )
+                                .aspectRatio(1, contentMode: .fit)
+                                .frame(maxHeight: .infinity)
+                                .padding(.vertical, 8)
+
+                                // Right side: info, status, action buttons
+                                ScrollView {
+                                    VStack(spacing: 14) {
+                                        if let puzzle = viewModel.currentPuzzle {
+                                            puzzleHeader(puzzle: puzzle)
+                                        }
+
+                                        statusCard
+
+                                        actionButtons
+                                    }
+                                    .padding(.trailing, 8)
+                                    .padding(.vertical, 8)
+                                }
+                                .scrollBounceBehavior(.basedOnSize)
+                            }
+                            .padding(.horizontal, 16)
+                            .frame(width: geo.size.width, height: geo.size.height)
+                        } else {
+                            VStack(spacing: 0) {
+                                puzzleContent
+                            }
+                            .frame(width: geo.size.width, height: geo.size.height)
+                        }
                     }
                 }
             }
             .navigationTitle("Zadaci")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(red: 0.09, green: 0.14, blue: 0.31), for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: 8) {
+                        Button {
+                            viewModel.goToPrevious()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(viewModel.canGoPrevious && viewModel.phase != .loading ? Color.primary : Color.primary.opacity(0.25))
+                                .symbolEffect(.bounce, value: bounceLeft)
+                        }
+                        .disabled(!viewModel.canGoPrevious || viewModel.phase == .loading)
+
+                        Button {
+                            calendarDate = viewModel.selectedDate
+                            showCalendar = true
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: "calendar")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.secondary)
+                                    .symbolEffect(.bounce, value: bounceCalendar)
+                                Text(dateTitle)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Color.primary)
+                                if viewModel.isSolved(viewModel.selectedDate) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.green)
+                                        .symbolEffect(.bounce, value: bounceCheckmark)
+                                }
+                            }
+                            .padding(.vertical, 6)
+                        }
+                        .disabled(viewModel.phase == .loading)
+
+                        Button {
+                            viewModel.goToNext()
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(viewModel.canGoNext && viewModel.phase != .loading ? Color.primary : Color.primary.opacity(0.25))
+                                .symbolEffect(.bounce, value: bounceRight)
+                        }
+                        .disabled(!viewModel.canGoNext || viewModel.phase == .loading)
+                    }
+                }
+            }
             .sheet(isPresented: $showCalendar) {
                 calendarSheet
             }
         }
         .task { await viewModel.loadDailyPuzzle() }
-    }
-
-    // MARK: - Date Navigation Bar
-
-    private var dateNavBar: some View {
-        HStack(spacing: 0) {
-            Button {
-                viewModel.goToPrevious()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3.weight(.semibold))
-                    .frame(width: 44, height: 36)
-                    .foregroundStyle(viewModel.canGoPrevious ? .white : .white.opacity(0.25))
-            }
-            .disabled(!viewModel.canGoPrevious)
-
-            Spacer()
-
-            // Date label + solved badge — tap to open calendar
-            Button {
-                calendarDate = viewModel.selectedDate
-                showCalendar = true
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "calendar")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text(dateTitle)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                    if viewModel.isSolved(viewModel.selectedDate) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.green)
+        .onChange(of: viewModel.phase) { oldPhase, newPhase in
+            if newPhase == .solved {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    // 1. Chevron left bounces
+                    bounceLeft += 1
+                    Haptics.impact(.light)
+                    
+                    // 2. Calendar bounces after 0.15s
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        bounceCalendar += 1
+                        Haptics.impact(.light)
+                        
+                        // 3. Checkmark bounces after 0.15s
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            bounceCheckmark += 1
+                            Haptics.impact(.light)
+                            
+                            // 4. Chevron right bounces after 0.15s
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                bounceRight += 1
+                                Haptics.impact(.light)
+                            }
+                        }
                     }
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(.white.opacity(0.1), in: Capsule())
             }
-
-            Spacer()
-
-            Button {
-                viewModel.goToNext()
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title3.weight(.semibold))
-                    .frame(width: 44, height: 36)
-                    .foregroundStyle(viewModel.canGoNext ? .white : .white.opacity(0.25))
-            }
-            .disabled(!viewModel.canGoNext)
         }
     }
 
@@ -233,10 +302,10 @@ struct PuzzleView: View {
             ForEach(Array(themes), id: \.self) { theme in
                 Text(localizeTheme(theme))
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(Color.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
-                    .background(.white.opacity(0.1), in: Capsule())
+                    .background(Color.primary.opacity(0.06), in: Capsule())
             }
 
             Spacer()
@@ -281,7 +350,7 @@ struct PuzzleView: View {
         case .wrongMove:       return .red
         case .solved:          return .green
         case .showingSolution: return .orange
-        default:               return .white.opacity(0.9)
+        default:               return Color.primary.opacity(0.9)
         }
     }
 
@@ -296,10 +365,10 @@ struct PuzzleView: View {
             } label: {
                 Label("Prikaži rešenje", systemImage: "eye")
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(Color.primary.opacity(0.8))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
             }
 
         case .solved:
@@ -309,10 +378,10 @@ struct PuzzleView: View {
                 } label: {
                     Label("Sledeći dan", systemImage: "chevron.right")
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(Color(uiColor: .systemBackground))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(.white, in: RoundedRectangle(cornerRadius: 12))
+                        .background(Color.primary, in: RoundedRectangle(cornerRadius: 12))
                 }
             } else {
                 // Today's puzzle solved — show completion
@@ -321,7 +390,7 @@ struct PuzzleView: View {
                         .foregroundStyle(.yellow)
                     Text("Završio si zadatak za danas!")
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(Color.primary.opacity(0.85))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -337,10 +406,10 @@ struct PuzzleView: View {
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
-                .tint(.white)
+                .tint(.primary)
                 .scaleEffect(1.4)
             Text("Učitavam zadatak...")
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(Color.secondary)
                 .font(.subheadline)
         }
     }
@@ -349,9 +418,9 @@ struct PuzzleView: View {
         VStack(spacing: 20) {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 48))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(Color.secondary)
             Text(message)
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(Color.primary)
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
             Button {
@@ -361,8 +430,8 @@ struct PuzzleView: View {
                     .font(.subheadline.weight(.medium))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(.white)
-                    .foregroundStyle(.black)
+                    .background(Color.primary)
+                    .foregroundStyle(Color(uiColor: .systemBackground))
                     .clipShape(Capsule())
             }
         }

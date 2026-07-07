@@ -8,74 +8,121 @@ struct GameView: View {
     @State private var showColorPicker = false
     @State private var showNewGameConfirm = false
     @State private var showSettings = false
+    enum PendingSelection {
+        case computer
+        case localFriend
+        case chessClock
+    }
+    @State private var pendingSelection: PendingSelection? = nil
+    @State private var showChessClock = false
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
+            GeometryReader { geo in
+                let isLandscape = geo.size.width > geo.size.height
 
-                    // Status bar
-                    //statusBar
+                if isLandscape {
+                    HStack(alignment: .top, spacing: 16) {
+                        // Left side: Board
+                        BoardView(
+                            board:            viewModel.gameState.board,
+                            isFlipped:        viewModel.isFlipped,
+                            selectedPosition: viewModel.selectedPosition,
+                            legalMoves:       viewModel.legalMovesForSelected,
+                            lastMove:         viewModel.lastMove,
+                            animatingPiece:   viewModel.animatingPiece,
+                            flyingCapture:    viewModel.flyingCapture,
+                            playerColor:      viewModel.activePlayerColor,
+                            isPlayerTurn:     viewModel.isPlayerTurn,
+                            onTap:            { viewModel.tap(position: $0) }
+                        )
+                        .aspectRatio(1, contentMode: .fit)
+                        .frame(maxHeight: .infinity)
+                        .padding(.vertical, 8)
 
-                    // Computer header (opposite of player's color)
-                    let computerColor = viewModel.playerColor.opposite
-                    playerHeader(
-                        color: computerColor,
-                        label: "Računar",
-                        capturedPieces: computerColor == .white
-                            ? viewModel.gameState.capturedByWhite
-                            : viewModel.gameState.capturedByBlack
-                    )
+                        // Right side: Info and History
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                topHeader
+                                bottomHeader
 
-                    // Chess board — square based on container width;
-                    // inside ScrollView the proposed height is ∞ so
-                    // aspectRatio always resolves to width × width.
-                    BoardView(
-                        board:            viewModel.gameState.board,
-                        isFlipped:        viewModel.isFlipped,
-                        selectedPosition: viewModel.selectedPosition,
-                        legalMoves:       viewModel.legalMovesForSelected,
-                        lastMove:         viewModel.lastMove,
-                        animatingPiece:   viewModel.animatingPiece,
-                        flyingCapture:    viewModel.flyingCapture,
-                        playerColor:      viewModel.playerColor,
-                        isPlayerTurn:     viewModel.isPlayerTurn,
-                        onTap:            { viewModel.tap(position: $0) }
-                    )
-                    .frame(maxWidth: .infinity)
-                    .aspectRatio(1, contentMode: .fit)
-
-                    // Player header (player's chosen color)
-                    playerHeader(
-                        color: viewModel.playerColor,
-                        label: "Ti",
-                        capturedPieces: viewModel.playerColor == .white
-                            ? viewModel.gameState.capturedByWhite
-                            : viewModel.gameState.capturedByBlack
-                    )
-
-                    // Move history
-                    if !viewModel.gameState.moveNotations.isEmpty {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Potezi")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.leading, 4)
-                            MoveHistoryView(notations: viewModel.gameState.moveNotations)
+                                if !viewModel.gameState.moveNotations.isEmpty {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("Potezi")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.leading, 4)
+                                        MoveHistoryView(notations: viewModel.gameState.moveNotations)
+                                    }
+                                }
+                            }
+                            .padding(.trailing, 8)
+                            .padding(.vertical, 8)
                         }
+                        .scrollBounceBehavior(.basedOnSize)
                     }
+                    .padding(.horizontal, 16)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            topHeader
+
+                            BoardView(
+                                board:            viewModel.gameState.board,
+                                isFlipped:        viewModel.isFlipped,
+                                selectedPosition: viewModel.selectedPosition,
+                                legalMoves:       viewModel.legalMovesForSelected,
+                                lastMove:         viewModel.lastMove,
+                                animatingPiece:   viewModel.animatingPiece,
+                                flyingCapture:    viewModel.flyingCapture,
+                                playerColor:      viewModel.activePlayerColor,
+                                isPlayerTurn:     viewModel.isPlayerTurn,
+                                onTap:            { viewModel.tap(position: $0) }
+                            )
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(1, contentMode: .fit)
+
+                            bottomHeader
+
+                            if !viewModel.gameState.moveNotations.isEmpty {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Potezi")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.secondary)
+                                        .padding(.leading, 4)
+                                    MoveHistoryView(notations: viewModel.gameState.moveNotations)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.top, 4)
+                        .padding(.bottom, 16)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
                 }
-                .padding(.horizontal, 8)
-                .padding(.top, 4)
-                .padding(.bottom, 16)
             }
-            .scrollBounceBehavior(.basedOnSize)
             .navigationTitle("Chessko")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        requestNewGame()
+                    Menu {
+                        Button {
+                            handleNewGameSelection(.computer)
+                        } label: {
+                            Label(Loc("Igraj protiv računara"), systemImage: "cpu")
+                        }
+
+                        Button {
+                            handleNewGameSelection(.localFriend)
+                        } label: {
+                            Label(Loc("Igraj sa prijateljem"), systemImage: "person.2")
+                        }
+
+                        Button {
+                            handleNewGameSelection(.chessClock)
+                        } label: {
+                            Label(Loc("Šahovski sat"), systemImage: "timer")
+                        }
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -91,7 +138,7 @@ struct GameView: View {
                 if #available(iOS 26.0, *) {
                     ToolbarSpacer(.fixed, placement: .primaryAction)
                 } 
-ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
                     } label: {
@@ -107,24 +154,62 @@ ToolbarItem(placement: .topBarTrailing) {
             .overlay(colorPickerOverlay)
             .alert("Napustiti partiju?", isPresented: $showNewGameConfirm) {
                 Button("Napusti", role: .destructive) {
-                    withAnimation(.spring(duration: 0.3)) { showColorPicker = true }
+                    if let selection = pendingSelection {
+                        executeNewGameSelection(selection)
+                        pendingSelection = nil
+                    }
                 }
-                Button("Nastavi", role: .cancel) { }
+                Button("Nastavi", role: .cancel) {
+                    pendingSelection = nil
+                }
             } message: {
                 Text("Partija je u toku. Sigurno želiš da počneš iznova?")
             }
             .sheet(isPresented: $showSettings) {
                 SettingsSheet(gameViewModel: viewModel, localization: localization)
             }
+            .fullScreenCover(isPresented: $showChessClock) {
+                ChessClockView()
+            }
         }
     }
 
     // MARK: - Sub-views
 
+    private var topHeader: some View {
+        let color = viewModel.isFlipped ? PieceColor.white : PieceColor.black
+        return playerHeader(
+            color: color,
+            label: headerLabel(for: color),
+            capturedPieces: color == .white
+                ? viewModel.gameState.capturedByWhite
+                : viewModel.gameState.capturedByBlack
+        )
+    }
+
+    private var bottomHeader: some View {
+        let color = viewModel.isFlipped ? PieceColor.black : PieceColor.white
+        return playerHeader(
+            color: color,
+            label: headerLabel(for: color),
+            capturedPieces: color == .white
+                ? viewModel.gameState.capturedByWhite
+                : viewModel.gameState.capturedByBlack
+        )
+    }
+
+    private func headerLabel(for color: PieceColor) -> String {
+        if viewModel.gameMode == .localFriend {
+            return color == .white ? "Beli" : "Crni"
+        } else {
+            return color == viewModel.playerColor ? "Ti" : "Računar"
+        }
+    }
+
     @ViewBuilder
     private func playerHeader(color: PieceColor, label: String, capturedPieces: [ChessPiece]) -> some View {
         let isActive   = viewModel.gameState.currentTurn == color && !viewModel.isGameOver
-        let isComputer = color != viewModel.playerColor
+        let isComputer = viewModel.gameMode == .vsComputer && color != viewModel.playerColor
         let matAdv     = materialAdvantage(for: color)
 
         HStack(alignment: .center, spacing: 10) {
@@ -252,13 +337,26 @@ ToolbarItem(placement: .topBarTrailing) {
         }
     }
 
-    /// Starts a new game — asks for confirmation if a game is already in progress.
-    private func requestNewGame() {
+    private func handleNewGameSelection(_ selection: PendingSelection) {
         let gameInProgress = !viewModel.isGameOver && !viewModel.gameState.moveHistory.isEmpty
         if gameInProgress {
+            pendingSelection = selection
             showNewGameConfirm = true
         } else {
-            withAnimation(.spring(duration: 0.3)) { showColorPicker = true }
+            executeNewGameSelection(selection)
+        }
+    }
+
+    private func executeNewGameSelection(_ selection: PendingSelection) {
+        switch selection {
+        case .computer:
+            withAnimation(.spring(duration: 0.25)) {
+                showColorPicker = true
+            }
+        case .localFriend:
+            viewModel.newGame(gameMode: .localFriend, playerColor: .white)
+        case .chessClock:
+            showChessClock = true
         }
     }
 

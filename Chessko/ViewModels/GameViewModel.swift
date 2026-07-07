@@ -6,14 +6,17 @@ import UIKit
 enum Haptics {
     @MainActor
     static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        guard UserDefaults.standard.bool(forKey: "hapticsEnabled") else { return }
         UIImpactFeedbackGenerator(style: style).impactOccurred()
     }
     @MainActor
     static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+        guard UserDefaults.standard.bool(forKey: "hapticsEnabled") else { return }
         UINotificationFeedbackGenerator().notificationOccurred(type)
     }
     @MainActor
     static func selection() {
+        guard UserDefaults.standard.bool(forKey: "hapticsEnabled") else { return }
         UISelectionFeedbackGenerator().selectionChanged()
     }
 }
@@ -28,9 +31,9 @@ enum GameDifficulty: String, CaseIterable, Sendable, Codable {
 
     var label: String {
         switch self {
-        case .easy:      return Loc("Lak")
-        case .medium:    return Loc("Srednji")
-        case .hard:      return Loc("Težak")
+        case .easy:      return Loc("Lokalni AI: Početnik")
+        case .medium:    return Loc("Lokalni AI: Amater")
+        case .hard:      return Loc("Lokalni AI: Napredni")
         case .stockfish: return "Stockfish"
         }
     }
@@ -81,12 +84,12 @@ enum StockfishLevel: String, CaseIterable, Sendable, Codable {
 
     var label: String {
         switch self {
-        case .beginner:     return Loc("Početnik")
-        case .casual:       return Loc("Amater")
-        case .intermediate: return Loc("Srednje")
-        case .advanced:     return Loc("Napredno")
-        case .expert:       return Loc("Ekspert")
-        case .maximum:      return Loc("Maksimalno")
+        case .beginner:     return Loc("Stockfish: 1300 ELO")
+        case .casual:       return Loc("Stockfish: 1600 ELO")
+        case .intermediate: return Loc("Stockfish: 1900 ELO")
+        case .advanced:     return Loc("Stockfish: 2200 ELO")
+        case .expert:       return Loc("Stockfish: 2600 ELO")
+        case .maximum:      return Loc("Stockfish: Maksimalno")
         }
     }
 
@@ -119,6 +122,13 @@ struct FlyingCapture: Sendable {
     let fromPosition: Position
 }
 
+// MARK: - Game Mode
+
+enum GameMode: String, Codable {
+    case vsComputer
+    case localFriend
+}
+
 // MARK: - Game View Model
 
 @Observable
@@ -139,7 +149,12 @@ final class GameViewModel {
     var animatingPiece: AnimatingPiece?
     var flyingCapture: FlyingCapture?
 
+    var gameMode: GameMode = .vsComputer
     var playerColor: PieceColor = .white
+
+    var activePlayerColor: PieceColor {
+        gameMode == .localFriend ? gameState.currentTurn : playerColor
+    }
 
     private let stockfish = StockfishBridge()
     private var gameGeneration = 0
@@ -150,13 +165,30 @@ final class GameViewModel {
     // MARK: Init
 
     init() {
+        UserDefaults.standard.register(defaults: [
+            "soundEnabled": true,
+            "hapticsEnabled": true,
+            "boardTheme": "classic",
+            "showCoordinates": true,
+            "showLastMoveHighlight": true,
+            "showLegalMoves": true,
+            "autoPromoteToQueen": false,
+            "pieceStyle": "classic",
+            "rotateBoardInLocalPlay": true
+        ])
         Task { await stockfish.start() }
         load()   // restore game from previous session (no-op if nothing saved)
     }
 
     // MARK: Computed
 
-    var isPlayerTurn: Bool { gameState.currentTurn == playerColor && !isThinking }
+    var isPlayerTurn: Bool {
+        if gameMode == .localFriend {
+            return !isGameOver && !isThinking
+        } else {
+            return gameState.currentTurn == playerColor && !isThinking
+        }
+    }
 
     var isGameOver: Bool {
         switch gameState.status {
@@ -172,22 +204,46 @@ final class GameViewModel {
     var hasSavedGame: Bool { UserDefaults.standard.data(forKey: savedGameKey) != nil }
 
     /// True when the board should be displayed from black's perspective (rows and cols reversed).
-    var isFlipped: Bool { playerColor == .black }
+    var isFlipped: Bool {
+        if gameMode == .localFriend {
+            return UserDefaults.standard.bool(forKey: "rotateBoardInLocalPlay") && gameState.currentTurn == .black
+        } else {
+            return playerColor == .black
+        }
+    }
 
     var statusMessage: String {
         switch gameState.status {
         case .playing:
-            return gameState.currentTurn == playerColor
-                ? Loc("Tvoj potez")
-                : Loc("Računar razmišlja...")
+            if gameMode == .localFriend {
+                return gameState.currentTurn == .white
+                    ? Loc("Beli igra")
+                    : Loc("Crni igra")
+            } else {
+                return gameState.currentTurn == playerColor
+                    ? Loc("Tvoj potez")
+                    : Loc("Računar razmišlja...")
+            }
         case .check(let c):
-            return c == playerColor
-                ? Loc("Šah! Tvoj kralj je napadnut.")
-                : Loc("Šah! Napadaš kralja.")
+            if gameMode == .localFriend {
+                return c == .white
+                    ? Loc("Šah! Beli kralj je napadnut.")
+                    : Loc("Šah! Crni kralj je napadnut.")
+            } else {
+                return c == playerColor
+                    ? Loc("Šah! Tvoj kralj je napadnut.")
+                    : Loc("Šah! Napadaš kralja.")
+            }
         case .checkmate(let c):
-            return c == playerColor
-                ? Loc("Mat! Izgubio si.")
-                : Loc("Mat! Pobedio si! 🎉")
+            if gameMode == .localFriend {
+                return c == .white
+                    ? Loc("Mat! Crni je pobedio! 🎉")
+                    : Loc("Mat! Beli je pobedio! 🎉")
+            } else {
+                return c == playerColor
+                    ? Loc("Mat! Izgubio si.")
+                    : Loc("Mat! Pobedio si! 🎉")
+            }
         case .draw(let reason):
             switch reason {
             case .stalemate:            return Loc("Pat – remi!")
@@ -209,12 +265,12 @@ final class GameViewModel {
             return
         }
 
-        if let piece = gameState.board[position.row][position.col], piece.color == playerColor {
+        if let piece = gameState.board[position.row][position.col], piece.color == activePlayerColor {
             if selectedPosition != position {
                 Haptics.selection()
             }
             selectedPosition = position
-            legalMovesForSelected = MoveGenerator.legalMoves(for: playerColor, in: gameState)
+            legalMovesForSelected = MoveGenerator.legalMoves(for: activePlayerColor, in: gameState)
                 .filter { $0.from == position }
         } else {
             selectedPosition = nil
@@ -224,9 +280,13 @@ final class GameViewModel {
 
     private func handleMove(_ move: ChessMove) {
         if case .promotion = move.flag {
-            // Show promotion picker — wait for player to choose
-            promotionMove = move
-            showPromotion = true
+            if UserDefaults.standard.bool(forKey: "autoPromoteToQueen") {
+                execute(ChessMove(from: move.from, to: move.to, flag: .promotion(.queen)))
+            } else {
+                // Show promotion picker — wait for player to choose
+                promotionMove = move
+                showPromotion = true
+            }
         } else {
             execute(move)
         }
@@ -280,16 +340,22 @@ final class GameViewModel {
 
         let newState = gameState.applying(move)
 
-        // Apply board state without animation (piece is handled by AnimatingPieceView)
-        gameState = newState
-        save()   // persist after every move
-
-        // Animate UI elements (highlights, selection dots)
-        withAnimation(.easeInOut(duration: 0.2)) {
-            lastMove = move
-            selectedPosition = nil
-            legalMovesForSelected = []
+        if gameMode == .localFriend {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                gameState = newState
+                lastMove = move
+                selectedPosition = nil
+                legalMovesForSelected = []
+            }
+        } else {
+            gameState = newState
+            withAnimation(.easeInOut(duration: 0.2)) {
+                lastMove = move
+                selectedPosition = nil
+                legalMovesForSelected = []
+            }
         }
+        save()   // persist after every move
 
         // Sound + haptics based on outcome
         switch newState.status {
@@ -326,6 +392,22 @@ final class GameViewModel {
     func undo() {
         guard canUndo else { return }
         flyingCapture = nil
+
+        if gameMode == .localFriend {
+            if let last = history.popLast() {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    gameState = last.state
+                    lastMove = last.lastMove
+                    selectedPosition = nil
+                    legalMovesForSelected = []
+                }
+                SoundManager.shared.playMove()
+                Haptics.impact(.rigid)
+                save()
+            }
+            return
+        }
+
         // Pop states until we're back at the player's turn
         while let last = history.last {
             history.removeLast()
@@ -359,6 +441,7 @@ final class GameViewModel {
     // MARK: - AI
 
     private func triggerAI() {
+        guard gameMode == .vsComputer else { return }
         guard gameState.currentTurn != playerColor else { return }
         guard !isThinking else { return }
         isThinking = true
@@ -465,20 +548,21 @@ final class GameViewModel {
         let difficulty: GameDifficulty
         let playerColor: PieceColor
         let stockfishLevel: StockfishLevel
+        let gameMode: GameMode
 
-        // Backward-compatible decode: old saves default playerColor/.white, level/.intermediate
         private enum CodingKeys: String, CodingKey {
-            case gameState, history, lastMove, difficulty, playerColor, stockfishLevel
+            case gameState, history, lastMove, difficulty, playerColor, stockfishLevel, gameMode
         }
 
         init(gameState: GameState, history: [HistoryEntry], lastMove: ChessMove?,
-             difficulty: GameDifficulty, playerColor: PieceColor, stockfishLevel: StockfishLevel) {
+             difficulty: GameDifficulty, playerColor: PieceColor, stockfishLevel: StockfishLevel, gameMode: GameMode) {
             self.gameState      = gameState
             self.history        = history
             self.lastMove       = lastMove
             self.difficulty     = difficulty
             self.playerColor    = playerColor
             self.stockfishLevel = stockfishLevel
+            self.gameMode       = gameMode
         }
 
         init(from decoder: Decoder) throws {
@@ -489,6 +573,7 @@ final class GameViewModel {
             difficulty     = try c.decode(GameDifficulty.self,   forKey: .difficulty)
             playerColor    = (try? c.decode(PieceColor.self,     forKey: .playerColor)) ?? .white
             stockfishLevel = (try? c.decode(StockfishLevel.self, forKey: .stockfishLevel)) ?? .intermediate
+            gameMode       = (try? c.decode(GameMode.self,       forKey: .gameMode)) ?? .vsComputer
         }
     }
 
@@ -502,7 +587,8 @@ final class GameViewModel {
             lastMove:       lastMove,
             difficulty:     difficulty,
             playerColor:    playerColor,
-            stockfishLevel: stockfishLevel
+            stockfishLevel: stockfishLevel,
+            gameMode:       gameMode
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: savedGameKey)
@@ -522,9 +608,10 @@ final class GameViewModel {
         difficulty     = saved.difficulty
         playerColor    = saved.playerColor
         stockfishLevel = saved.stockfishLevel
+        gameMode       = saved.gameMode
 
         // If it's the AI's turn at load time, trigger it
-        if gameState.currentTurn != playerColor && !isGameOver {
+        if gameMode == .vsComputer && gameState.currentTurn != playerColor && !isGameOver {
             triggerAI()
         }
     }
@@ -535,7 +622,8 @@ final class GameViewModel {
 
     // MARK: - New Game
 
-    func newGame(playerColor: PieceColor = .white) {
+    func newGame(gameMode: GameMode = .vsComputer, playerColor: PieceColor = .white) {
+        self.gameMode = gameMode
         self.playerColor = playerColor
         gameGeneration += 1
         flyingCapture = nil
@@ -549,7 +637,7 @@ final class GameViewModel {
             isThinking = false
         }
         // When player picks black, AI (white) moves first
-        if playerColor == .black {
+        if gameMode == .vsComputer && playerColor == .black {
             triggerAI()
         }
     }

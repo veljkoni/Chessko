@@ -1,7 +1,31 @@
 {
   "images" : [
     {
+      "filename" : "a_premium_ios_app_icon_for_a_chess_game._the_icon_features_a_minimalist_sleek 1.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
       "filename" : "a_premium_ios_app_icon_for_a_chess_game._the_icon_features_a_minimalist_sleek.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "tinted"
+        }
+      ],
+      "filename" : "app_icon_tinted.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
