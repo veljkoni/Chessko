@@ -12,14 +12,15 @@ računar je **crni**. UI je na srpskom. Jedan ekran, jedan mod igre.
 - Jezik: **Swift 6.0**, **SwiftUI**
 - Bundle ID: `com.veljkoni.chessko`
 - Xcode projekat: `Chessko.xcodeproj` (target `Chessko`)
-- Bez eksternih dependency-ja, bez test target-a, nije git repo.
+- Git repo (grana `v2/faza-0`); jedna eksterna SPM zavisnost (`chesskit-engine`,
+  za Stockfish); testira se kroz odvojeni SwiftPM paket (vidi „Testovi").
 
 ## Build / Run
 
 ```bash
 # Build (simulator)
 xcodebuild -project Chessko.xcodeproj -scheme Chessko \
-  -destination 'platform=iOS Simulator,name=iPhone 16' build
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 Najlakše: otvoriti `Chessko.xcodeproj` u Xcode i pokrenuti (⌘R).
 Pomoćne skripte u rootu: `create_xcode_project.py` (generiše pbxproj),
@@ -95,9 +96,6 @@ Chessko/
 
 ## Poznata ograničenja / TODO kandidati
 
-- Nema undo poteza, nema čuvanja partije, nema detekcije ponavljanja/50 poteza
-  (remi samo na pat/mat).
-- Igrač ne može da igra crnim, tabla se ne rotira.
 - Stockfish radi samo sa `nn-37f18f62d772.nnue` (mali); `nn-1111cefa1111.nnue`
   (veliki, ~79MB) opcionalan za jaču igru — skinuti sa stockfishchess.org.
 - **Isti bug sa rokadom postoji na Androidu** —
