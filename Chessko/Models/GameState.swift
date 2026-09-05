@@ -280,15 +280,17 @@ struct GameState: Sendable, Codable {
 
         case .castleKingside:
             let row = move.from.row
-            s.board[row][6] = ChessPiece(type: .king, color: piece.color)
-            s.board[row][5] = ChessPiece(type: .rook, color: piece.color)
+            // Pomeri POSTOJECEG topa; ranije se pravio nov, pa je rokada
+            // posle pojedenog topa stvarala figuru iz vazduha.
+            s.board[row][5] = s.board[row][7]
+            s.board[row][6] = piece
             s.board[row][4] = nil
             s.board[row][7] = nil
 
         case .castleQueenside:
             let row = move.from.row
-            s.board[row][2] = ChessPiece(type: .king, color: piece.color)
-            s.board[row][3] = ChessPiece(type: .rook, color: piece.color)
+            s.board[row][3] = s.board[row][0]
+            s.board[row][2] = piece
             s.board[row][4] = nil
             s.board[row][0] = nil
 
@@ -327,6 +329,16 @@ struct GameState: Sendable, Codable {
             case Position(row: 0, col: 0): s.blackCanCastleQueenside = false
             default: break
             }
+        }
+
+        // Top pojeden na startnom polju takodje oduzima pravo rokade
+        // vlasniku tog topa. Vazi za svaku figuru koja stigne na to polje.
+        switch move.to {
+        case Position(row: 7, col: 7): s.whiteCanCastleKingside  = false
+        case Position(row: 7, col: 0): s.whiteCanCastleQueenside = false
+        case Position(row: 0, col: 7): s.blackCanCastleKingside  = false
+        case Position(row: 0, col: 0): s.blackCanCastleQueenside = false
+        default: break
         }
 
         s.moveHistory.append(move)
