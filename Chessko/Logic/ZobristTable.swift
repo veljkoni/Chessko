@@ -139,6 +139,16 @@ struct ZobristTable: Sendable {
             }
         }
 
+        // Top pojeden na startnom polju takodje oduzima pravo rokade —
+        // mora da ostane usaglaseno sa GameState.applyingForSearch.
+        switch move.to {
+        case Position(row: 7, col: 7): wck = false
+        case Position(row: 7, col: 0): wcq = false
+        case Position(row: 0, col: 7): bck = false
+        case Position(row: 0, col: 0): bcq = false
+        default: break
+        }
+
         // XOR in new castling rights
         if wck { h ^= castling[0] }
         if wcq { h ^= castling[1] }

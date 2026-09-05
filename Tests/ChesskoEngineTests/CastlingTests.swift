@@ -57,3 +57,41 @@ private func countRooks(in state: GameState, color: PieceColor) -> Int {
     }
     return count
 }
+
+// Sva cetiri ugla moraju da oduzmu pravo kad se top na njima pojede.
+// Task 4 je testirao samo h1; ostala tri ugla su bila nepokrivena.
+@Test func capturingRookOnEveryCornerRevokesRight() {
+    // Crni Ra8 jede belog Ra1 -> belo damino pravo pada (a crno takodje, jer top napusta a8).
+    let a1 = try! #require(GameState.fromFEN("r3k3/8/8/8/8/8/8/R3K3 b Qq - 0 1"))
+    let rxa1 = try! #require(
+        MoveGenerator.legalMoves(for: .black, in: a1)
+            .first { $0.from == Position(row: 0, col: 0) && $0.to == Position(row: 7, col: 0) }
+    )
+    #expect(a1.applying(rxa1).whiteCanCastleQueenside == false)
+
+    // Beli Rh1 jede crnog Rh8 -> crno kraljevo pravo pada.
+    let h8 = try! #require(GameState.fromFEN("4k2r/8/8/8/8/8/8/4K2R w Kk - 0 1"))
+    let rxh8 = try! #require(
+        MoveGenerator.legalMoves(for: .white, in: h8)
+            .first { $0.from == Position(row: 7, col: 7) && $0.to == Position(row: 0, col: 7) }
+    )
+    #expect(h8.applying(rxh8).blackCanCastleKingside == false)
+
+    // Beli Ra1 jede crnog Ra8 -> crno damino pravo pada.
+    let a8 = try! #require(GameState.fromFEN("r3k3/8/8/8/8/8/8/R3K3 w Qq - 0 1"))
+    let rxa8 = try! #require(
+        MoveGenerator.legalMoves(for: .white, in: a8)
+            .first { $0.from == Position(row: 7, col: 0) && $0.to == Position(row: 0, col: 0) }
+    )
+    #expect(a8.applying(rxa8).blackCanCastleQueenside == false)
+}
+
+// Partija sacuvana starijom verzijom moze da nosi pravo rokade bez topa na uglu.
+// Motor to mora sam da odbije, umesto da se osloni na zastavicu.
+@Test func staleCastlingRightWithoutRookOffersNoCastle() {
+    let state = try! #require(GameState.fromFEN("4k3/8/8/8/8/8/8/4K3 w K - 0 1"))
+    #expect(state.whiteCanCastleKingside == true)   // zastavica je zaista postavljena
+    let castles = MoveGenerator.legalMoves(for: .white, in: state)
+        .filter { $0.flag == .castleKingside }
+    #expect(castles.isEmpty)
+}

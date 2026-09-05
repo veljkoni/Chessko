@@ -128,15 +128,20 @@ enum MoveGenerator {
         let canKS = color == .white ? state.whiteCanCastleKingside  : state.blackCanCastleKingside
         let canQS = color == .white ? state.whiteCanCastleQueenside : state.blackCanCastleQueenside
 
-        // Kingside: f & g must be empty, f must not be attacked
-        if canKS && state.board[row][5] == nil && state.board[row][6] == nil {
+        // Kingside: rook must actually be on h-file corner, f & g empty, f not attacked.
+        // Provera topa stiti od zastarelih prava u partijama sacuvanim starijom verzijom.
+        let ksRook = state.board[row][7]
+        if canKS && ksRook?.type == .rook && ksRook?.color == color
+            && state.board[row][5] == nil && state.board[row][6] == nil {
             if !isAttacked(square: Position(row: row, col: 5), by: color.opposite, in: state) {
                 moves.append(ChessMove(from: pos, to: Position(row: row, col: 6), flag: .castleKingside))
             }
         }
 
-        // Queenside: b, c, d must be empty, d must not be attacked
-        if canQS && state.board[row][3] == nil && state.board[row][2] == nil && state.board[row][1] == nil {
+        // Queenside: rook must actually be on a-file corner, b/c/d empty, d not attacked.
+        let qsRook = state.board[row][0]
+        if canQS && qsRook?.type == .rook && qsRook?.color == color
+            && state.board[row][3] == nil && state.board[row][2] == nil && state.board[row][1] == nil {
             if !isAttacked(square: Position(row: row, col: 3), by: color.opposite, in: state) {
                 moves.append(ChessMove(from: pos, to: Position(row: row, col: 2), flag: .castleQueenside))
             }
