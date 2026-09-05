@@ -233,18 +233,18 @@ struct LessonDetailView: View {
                             .frame(width: 28, height: 28)
                         Text(piece.srbName)
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(sel ? .white : .white.opacity(0.6))
+                            .foregroundStyle(sel ? Color.primary : Color.secondary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
-                    .background(sel ? Color.white.opacity(0.18) : Color.white.opacity(0.04),
+                    .background(sel ? Color.primary.opacity(0.14) : Color.primary.opacity(0.05),
                                 in: RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(6)
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
     }
 
     @ViewBuilder private var lesson1Pieces: some View {
