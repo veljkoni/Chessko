@@ -359,6 +359,15 @@ struct GameState: Sendable, Codable {
         return nil
     }
 
+    /// True when the corner actually holds this side's rook. Castling rights alone
+    /// are not enough: a game saved by an older build can carry a stale right after
+    /// the rook was captured, so every consumer of those flags must confirm the rook.
+    func hasCastlingRook(_ color: PieceColor, kingside: Bool) -> Bool {
+        let row = color == .white ? 7 : 0
+        let piece = board[row][kingside ? 7 : 0]
+        return piece?.type == .rook && piece?.color == color
+    }
+
     /// Returns true when neither side has sufficient material to force checkmate.
     private static func isInsufficientMaterial(_ s: GameState) -> Bool {
         var whitePieces: [PieceType] = []

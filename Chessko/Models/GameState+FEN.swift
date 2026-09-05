@@ -114,19 +114,21 @@ extension GameState {
         // 2. Active color
         let active = currentTurn == .white ? "w" : "b"
 
-        // 3. Castling availability
+        // 3. Castling availability — gated on the rook actually being present,
+        // since a game saved by an older build can carry a stale right after the
+        // rook was captured (see GameState.hasCastlingRook).
         var castling = ""
-        if whiteCanCastleKingside  { castling += "K" }
-        if whiteCanCastleQueenside { castling += "Q" }
-        if blackCanCastleKingside  { castling += "k" }
-        if blackCanCastleQueenside { castling += "q" }
+        if whiteCanCastleKingside  && hasCastlingRook(.white, kingside: true)  { castling += "K" }
+        if whiteCanCastleQueenside && hasCastlingRook(.white, kingside: false) { castling += "Q" }
+        if blackCanCastleKingside  && hasCastlingRook(.black, kingside: true)  { castling += "k" }
+        if blackCanCastleQueenside && hasCastlingRook(.black, kingside: false) { castling += "q" }
         if castling.isEmpty { castling = "-" }
 
         // 4. En passant target square
         let ep = enPassantTarget?.algebraic ?? "-"
 
-        // 5 & 6. Halfmove clock / fullmove number (not tracked; use safe defaults)
-        return "\(rows.joined(separator: "/")) \(active) \(castling) \(ep) 0 1"
+        // 5. Halfmove clock (tracked); 6. fullmove number (not tracked; safe default)
+        return "\(rows.joined(separator: "/")) \(active) \(castling) \(ep) \(halfmoveClock) 1"
     }
 }
 

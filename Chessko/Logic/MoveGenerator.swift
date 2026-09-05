@@ -130,8 +130,7 @@ enum MoveGenerator {
 
         // Kingside: rook must actually be on h-file corner, f & g empty, f not attacked.
         // Provera topa stiti od zastarelih prava u partijama sacuvanim starijom verzijom.
-        let ksRook = state.board[row][7]
-        if canKS && ksRook?.type == .rook && ksRook?.color == color
+        if canKS && state.hasCastlingRook(color, kingside: true)
             && state.board[row][5] == nil && state.board[row][6] == nil {
             if !isAttacked(square: Position(row: row, col: 5), by: color.opposite, in: state) {
                 moves.append(ChessMove(from: pos, to: Position(row: row, col: 6), flag: .castleKingside))
@@ -139,8 +138,7 @@ enum MoveGenerator {
         }
 
         // Queenside: rook must actually be on a-file corner, b/c/d empty, d not attacked.
-        let qsRook = state.board[row][0]
-        if canQS && qsRook?.type == .rook && qsRook?.color == color
+        if canQS && state.hasCastlingRook(color, kingside: false)
             && state.board[row][3] == nil && state.board[row][2] == nil && state.board[row][1] == nil {
             if !isAttacked(square: Position(row: row, col: 3), by: color.opposite, in: state) {
                 moves.append(ChessMove(from: pos, to: Position(row: row, col: 2), flag: .castleQueenside))
