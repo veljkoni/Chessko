@@ -89,8 +89,11 @@ Package.resolved
 
 # Android
 ChesskoAndroid/app/build/
+ChesskoAndroid/app/.cxx/
+ChesskoAndroid/app/release/
 ChesskoAndroid/build/
 ChesskoAndroid/.gradle/
+ChesskoAndroid/.kotlin/
 ChesskoAndroid/.idea/
 ChesskoAndroid/local.properties
 
@@ -110,6 +113,15 @@ git status --short | grep -E "jks|keystore|app/build" || echo "OK: kljuc i build
 ```
 
 Očekivano: ispis `OK: kljuc i build artefakti su ignorisani`.
+
+Zatim proveriti koliko se stvarno commit-uje:
+
+```bash
+git diff --cached --numstat | wc -l
+du -ch $(git diff --cached --name-only | tr '\n' ' ') 2>/dev/null | tail -1
+```
+
+Očekivano: oko **77 MB**, od čega je 71 MB `ChesskoAndroid/app/src/main/assets/nn-1c0000000000.nnue` — Stockfish mreža za Android, prava datoteka aplikacije (iOS ekvivalent od 74 MB je već u repou). **Ako broj pređe 100 MB, stati i prijaviti** — znači da neko pravilo u `.gitignore` ne hvata build artefakte.
 
 - [ ] **Step 5: Commit**
 
