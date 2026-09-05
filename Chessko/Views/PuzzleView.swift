@@ -302,12 +302,15 @@ struct PuzzleView: View {
 
             let themes = puzzle.themeList.prefix(2)
             ForEach(Array(themes), id: \.self) { theme in
-                Text(localizeTheme(theme))
-                    .font(.caption2)
-                    .foregroundStyle(Color.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(Color.primary.opacity(0.06), in: Capsule())
+                let label = localizeTheme(theme)
+                if !label.isEmpty {
+                    Text(label)
+                        .font(.caption2)
+                        .foregroundStyle(Color.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Color.primary.opacity(0.06), in: Capsule())
+                }
             }
 
             Spacer()
@@ -509,9 +512,11 @@ struct PuzzleView: View {
         case "long":             return Loc("Dugo")
         case "oneMove":          return Loc("Jedan potez")
         case "defensiveMove":    return Loc("Odbrana")
-        case "queensideAttack":  return Loc("Napad na dam")
-        case "kingsideAttack":   return Loc("Napad na kral")
-        default:                 return theme
+        case "queensideAttack":  return Loc("Napad na damu")
+        case "kingsideAttack":   return Loc("Napad na kralja")
+        // Nepoznata tema se ne prikazuje — bolje nista nego sirov kljuc
+        // tipa "backRankMate". Mapa se dopunjava u Fazi 2, uz offline bazu.
+        default:                 return ""
         }
     }
 }

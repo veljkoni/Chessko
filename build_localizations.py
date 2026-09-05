@@ -128,8 +128,8 @@ add("Kratko", "Short", "Court", "Kurz", "Corto", "Короткая", "短", "छ
 add("Dugo", "Long", "Long", "Lang", "Lungo", "Длинная", "长", "लंबा")
 add("Jedan potez", "One move", "Un coup", "Ein Zug", "Una mossa", "Один ход", "一步", "एक चाल")
 add("Odbrana", "Defense", "Défense", "Verteidigung", "Difesa", "Защита", "防守", "बचाव")
-add("Napad na dam", "Queenside attack", "Attaque à l’aile dame", "Damenflügelangriff", "Attacco sull’ala di donna", "Атака на ферзевом фланге", "后翼进攻", "वज़ीर-पक्ष हमला")
-add("Napad na kral", "Kingside attack", "Attaque à l’aile roi", "Königsflügelangriff", "Attacco sull’ala di re", "Атака на королевском фланге", "王翼进攻", "राजा-पक्ष हमला")
+add("Napad na damu", "Queenside attack", "Attaque à l’aile dame", "Damenflügelangriff", "Attacco sull’ala di donna", "Атака на ферзевом фланге", "后翼进攻", "वज़ीर-पक्ष हमला")
+add("Napad na kralja", "Kingside attack", "Attaque à l’aile roi", "Königsflügelangriff", "Attacco sull’ala di re", "Атака на королевском фланге", "王翼进攻", "राजा-पक्ष हमला")
 
 # ── ChessPuzzle.difficultyLabel ─────────────────────────────────────────────
 add("Lako", "Easy", "Facile", "Leicht", "Facile", "Легко", "简单", "आसान")
