@@ -114,7 +114,7 @@ Chessko/
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
-Prioritet poređan po vrednosti; ništa od ovoga još nije započeto.
+Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
 
 ### 1. Gameplay funkcije
 - [x] **Izbor figure pri promociji** — `promotionMove`/`showPromotion` u VM;
@@ -162,7 +162,10 @@ Prioritet poređan po vrednosti; ništa od ovoga još nije započeto.
       rebuilduje preko `.id(localization.refreshID)`. Opcija "Sistem" = prati telefon.
 
 ### 4. Kvalitet koda
-- [ ] Test target + perft testovi za `MoveGenerator`.
+- [x] **Test target + perft testovi za `MoveGenerator`** — SwiftPM paket u korenu
+      (`Package.swift`) koji kompajlira postojeće izvorne fajlove po putanji, nezavisno
+      od Xcode projekta; 11 testova (perft za svih 6 standardnih pozicija i 4 testa
+      prava rokade). Pokreće se sa `swift test` (vidi „Testovi").
 - [x] `ChessMove ==` sada poredi i `flag` (uz `from`/`to`) — uklonjena krhka logika
       oko promocije. Sva poklapanja poteza u kodu ionako koriste eksplicitno `from`/`to`
       poređenje; jedini whole-move `==` je TT move ordering u `ChessAI`, gde je
