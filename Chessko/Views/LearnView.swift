@@ -45,27 +45,27 @@ struct LessonCard: View {
                     .fill(info.accentColor.opacity(0.18))
                     .frame(width: 54, height: 54)
                 Image(systemName: info.systemIcon)
-                    .font(.title3.weight(.medium))
+                    .font(.appFont(.title3).weight(.medium))
                     .foregroundStyle(info.accentColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Lekcija \(info.id)")
-                    .font(.caption.weight(.semibold))
+                Text(LocF("Lekcija %lld", info.id))
+                    .font(.appFont(.caption).weight(.semibold))
                     .foregroundStyle(info.accentColor.opacity(0.9))
-                Text(LocalizedStringKey(info.title))
-                    .font(.subheadline.weight(.semibold))
+                Text(Loc(info.title))
+                    .font(.appFont(.subheadline).weight(.semibold))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
-                Text(LocalizedStringKey(info.subtitle))
-                    .font(.caption)
+                Text(Loc(info.subtitle))
+                    .font(.appFont(.caption))
                     .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 0)
 
             Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
+                .font(.appFont(.caption).weight(.semibold))
                 .foregroundStyle(.secondary.opacity(0.8))
         }
         .padding(16)
@@ -93,11 +93,11 @@ struct LearnView: View {
 
                         // Header
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Nauči šah")
-                                .font(.title2.weight(.bold))
+                            Text(Loc("Nauči šah"))
+                                .font(.appFont(.title2).weight(.bold))
                                 .foregroundStyle(.primary)
-                            Text("4 lekcije od osnova do završnice")
-                                .font(.subheadline)
+                            Text(Loc("4 lekcije od osnova do završnice"))
+                                .font(.appFont(.subheadline))
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.top, 4)
@@ -118,7 +118,7 @@ struct LearnView: View {
                     .padding(.vertical, 12)
                 }
             }
-            .navigationTitle("Učenje")
+            .navigationTitle(Loc("Učenje"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)

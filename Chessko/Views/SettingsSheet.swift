@@ -84,8 +84,9 @@ struct SettingsSheet: View {
     @AppStorage("rotateBoardInLocalPlay") private var rotateBoardInLocalPlay: Bool   = true
     @AppStorage("swipeToChangeBoardTheme") private var swipeToChangeBoardTheme: Bool = true
     @AppStorage("swipeToChangePieceStyle") private var swipeToChangePieceStyle: Bool = true
-    @State private var isDifficultyExpanded: Bool = false
+    @AppStorage("showEvalBar")           private var showEvalBar:           Bool   = true
     @State private var isLanguageExpanded:   Bool = false
+    @State private var showResetStatsConfirm: Bool = false
 
     private var preferredColorScheme: ColorScheme? {
         switch colorScheme {
@@ -98,55 +99,68 @@ struct SettingsSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                // ── Difficulty (basic AI + Stockfish in one expandable DisclosureGroup) ──
-                Section {
-                    DisclosureGroup(isExpanded: $isDifficultyExpanded) {
-                        // Basic AI levels
-                        let basicDiffs: [GameDifficulty] = [.easy, .medium, .hard]
-                        ForEach(basicDiffs, id: \.self) { diff in
-                            Button {
-                                gameViewModel.setDifficulty(diff)
-                            } label: {
-                                HStack {
-                                    Text(diff.label)
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    if gameViewModel.difficulty == diff {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.tint)
-                                    }
-                                }
-                            }
+                // ── Statistics Section ───────────────────────────────────────
+                Section(Loc("Statistika igranja")) {
+                    let stats = StatsManager.shared
+                    VStack(spacing: 12) {
+                        HStack {
+                            StatBox(label: Loc("Odigrano"), value: "\(stats.gamesPlayed)", color: .primary)
+                            Spacer()
+                            StatBox(label: Loc("Pobede"), value: "\(stats.gamesWon)", color: .green)
+                            Spacer()
+                            StatBox(label: Loc("Porazi"), value: "\(stats.gamesLost)", color: .red)
+                            Spacer()
+                            StatBox(label: Loc("Remi"), value: "\(stats.gamesDrawn)", color: .orange)
                         }
 
-                        // Stockfish levels
-                        if gameViewModel.isStockfishAvailable {
-                            ForEach(StockfishLevel.allCases, id: \.self) { level in
-                                Button {
-                                    gameViewModel.setDifficulty(.stockfish)
-                                    gameViewModel.setStockfishLevel(level)
-                                } label: {
-                                    HStack {
-                                        Text(level.label)
-                                            .foregroundStyle(.primary)
-                                        Spacer()
-                                        if gameViewModel.difficulty == .stockfish
-                                            && gameViewModel.stockfishLevel == level {
-                                            Image(systemName: "checkmark")
-                                                .foregroundStyle(.tint)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } label: {
+                        Divider()
+
                         HStack {
-                            Label(Loc("Težina"), systemImage: "gauge.with.needle")
+                            StatBox(label: Loc("Uspešnost"), value: "\(stats.winRate)%", color: .cyan)
                             Spacer()
-                            if !isDifficultyExpanded {
-                                Text(currentDifficultyLabel)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                            StatBox(label: Loc("Najbolji niz"), value: "\(stats.bestWinStreak) 🔥", color: .orange)
+                            Spacer()
+                            StatBox(label: Loc("Rešeno zadataka"), value: "\(stats.puzzlesSolved) 🧩", color: .purple)
+                        }
+
+                        if stats.gamesPlayed > 0 || stats.puzzlesSolved > 0 {
+                            Divider()
+                            Button(role: .destructive) {
+                                showResetStatsConfirm = true
+                            } label: {
+                                Text(Loc("Resetuj statistiku"))
+                                    .font(.caption)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                // ── Difficulty Section ───────────────────────────────────────
+                Section(Loc("Težina protivnika (AI)")) {
+                    ForEach(GameDifficulty.allCases, id: \.self) { diff in
+                        Button {
+                            gameViewModel.setDifficulty(diff)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(diff.title)
+                                        .font(.subheadline)
+                                        .bold(gameViewModel.difficulty == diff)
+                                        .foregroundStyle(gameViewModel.difficulty == diff ? Color.accentColor : Color.primary)
+
+                                    Text(diff.subtitle)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                if gameViewModel.difficulty == diff {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.tint)
+                                }
                             }
                         }
                     }
@@ -275,6 +289,12 @@ struct SettingsSheet: View {
                     Toggle(isOn: $rotateBoardInLocalPlay) {
                         Label(Loc("Rotiraj tablu u lokalnoj igri"), systemImage: "arrow.triangle.2.circlepath")
                     }
+                    Toggle(isOn: $showEvalBar) {
+                        Label(Loc("Evaluaciona traka (Eval Bar)"), systemImage: "chart.bar.xaxis")
+                    }
+                    .onChange(of: showEvalBar) { _, _ in
+                        gameViewModel.updateEvaluation()
+                    }
                 }
 
                 // ── Language (collapsible DisclosureGroup) ──────────────────
@@ -282,7 +302,8 @@ struct SettingsSheet: View {
                     DisclosureGroup(isExpanded: $isLanguageExpanded) {
                         languageRow(code: nil, name: Loc("Sistem"))
                         
-                        let sortedLanguages = AppLanguage.all.sorted { $0.endonym.localizedCompare( $1.endonym ) == .orderedAscending }
+                        let sortedLanguages = AppLanguage.all.sorted {
+                            $0.endonym.localizedCompare( $1.endonym ) == .orderedAscending }
                         ForEach(sortedLanguages) { lang in
                             languageRow(code: lang.code, name: lang.endonym)
                         }
@@ -360,8 +381,34 @@ struct SettingsSheet: View {
                     Button(Loc("Gotovo")) { dismiss() }
                 }
             }
+            .alert(Loc("Potvrda"), isPresented: $showResetStatsConfirm) {
+                Button(Loc("Resetuj"), role: .destructive) {
+                    StatsManager.shared.resetStats()
+                }
+                Button(Loc("Otkaži"), role: .cancel) {}
+            } message: {
+                Text(Loc("Da li želite da resetujete sve statistike?"))
+            }
         }
         .preferredColorScheme(preferredColorScheme)
+    }
+
+    struct StatBox: View {
+        let label: String
+        let value: String
+        let color: Color
+
+        var body: some View {
+            VStack(spacing: 2) {
+                Text(value)
+                    .font(.headline)
+                    .bold()
+                    .foregroundStyle(color)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     @ViewBuilder

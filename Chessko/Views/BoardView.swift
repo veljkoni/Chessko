@@ -15,12 +15,38 @@ struct BoardView: View {
     let flyingCapture: FlyingCapture?
     let playerColor: PieceColor
     let isPlayerTurn: Bool
+    var gameStatus: GameStatus = .playing
     let onTap: (Position) -> Void
 
     @AppStorage("boardTheme") private var boardTheme: String = "classic"
     @AppStorage("pieceStyle") private var pieceStyle: String = "classic"
     @AppStorage("swipeToChangeBoardTheme") private var swipeToChangeBoardTheme: Bool = true
     @AppStorage("swipeToChangePieceStyle") private var swipeToChangePieceStyle: Bool = true
+
+    private var checkKingPosition: Position? {
+        let inCheckColor: PieceColor? = {
+            switch gameStatus {
+            case .check(let c): return c
+            case .checkmate(let c): return c
+            default: return nil
+            }
+        }()
+        guard let color = inCheckColor else { return nil }
+
+        for r in 0..<8 {
+            for c in 0..<8 {
+                if let p = board[r][c], p.type == .king && p.color == color {
+                    return Position(row: r, col: c)
+                }
+            }
+        }
+        return nil
+    }
+
+    private var isCheckmate: Bool {
+        if case .checkmate = gameStatus { return true }
+        return false
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -39,6 +65,7 @@ struct BoardView: View {
                                 let isSelected = selectedPosition == pos
                                 let isLegal    = legalMoves.contains { $0.to == pos }
                                 let isLast     = isLastMove(pos)
+                                let isInCheck  = (pos == checkKingPosition)
 
                                 SquareView(
                                     position: pos,
@@ -47,6 +74,7 @@ struct BoardView: View {
                                     isLegalMove: isLegal,
                                     isLastMove: isLast,
                                     isLight: (boardRow + boardCol) % 2 == 0,
+                                    isInCheck: isInCheck,
                                     hidePiece: animatingPiece?.to == pos,
                                     isBottomEdge: isFlipped ? (displayRow == 0) : (displayRow == 7),
                                     isLeftEdge:   isFlipped ? (displayCol == 7) : (displayCol == 0),
@@ -92,6 +120,9 @@ struct BoardView: View {
                                        isFlipped: isFlipped)
                         .accessibilityHidden(true)
                 }
+
+                // Victory Confetti Particle Overlay on Checkmate
+                ConfettiOverlayView(isTriggered: isCheckmate)
             }
             .rotationEffect(.degrees(isFlipped ? 180 : 0))
         }
@@ -249,5 +280,79 @@ struct AnimatingPieceView: View {
                     atDestination = true
                 }
             }
+    }
+}
+
+// MARK: - Confetti Overlay
+
+struct ConfettiParticleItem: Identifiable {
+    let id = UUID()
+    var x: CGFloat
+    var y: CGFloat
+    let size: CGFloat
+    let speedY: CGFloat
+    let speedX: CGFloat
+    var rotation: Double
+    let rotationSpeed: Double
+    let color: Color
+}
+
+struct ConfettiOverlayView: View {
+    let isTriggered: Bool
+
+    @State private var particles: [ConfettiParticleItem] = []
+    @State private var timer = Timer.publish(every: 0.03, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        GeometryReader { geo in
+            if isTriggered {
+                Canvas { context, size in
+                    for p in particles {
+                        var ctx = context
+                        let px = p.x * size.width
+                        let py = p.y * size.height
+                        ctx.translateBy(x: px, y: py)
+                        ctx.rotate(by: .degrees(p.rotation))
+                        let rect = CGRect(x: -p.size / 2, y: -p.size / 2, width: p.size, height: p.size * 0.55)
+                        ctx.fill(Path(rect), with: .color(p.color))
+                    }
+                }
+                .onReceive(timer) { _ in
+                    let w = geo.size.width
+                    let h = geo.size.height
+                    guard w > 0, h > 0 else { return }
+                    for i in particles.indices {
+                        particles[i].y += particles[i].speedY
+                        particles[i].x += particles[i].speedX
+                        particles[i].rotation += particles[i].rotationSpeed
+                        if particles[i].y > 1.1 {
+                            particles[i].y = -0.1
+                            particles[i].x = CGFloat.random(in: 0...1)
+                        }
+                    }
+                }
+                .onAppear {
+                    spawnParticles()
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private func spawnParticles() {
+        let colors: [Color] = [.yellow, Color(hex: "#00D2FF"), .pink, .green, .purple, .white]
+        particles = (0..<50).map { _ in
+            ConfettiParticleItem(
+                x: CGFloat.random(in: 0...1),
+                y: CGFloat.random(in: -0.5...0),
+                size: CGFloat.random(in: 10...22),
+                speedY: CGFloat.random(in: 0.005...0.015),
+                speedX: CGFloat.random(in: -0.004...0.004),
+                rotation: Double.random(in: 0...360),
+                rotationSpeed: Double.random(in: -6...6),
+                color: colors.randomElement() ?? .yellow
+            )
+        }
     }
 }

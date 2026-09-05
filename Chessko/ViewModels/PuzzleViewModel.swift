@@ -29,6 +29,7 @@ final class PuzzleViewModel {
 
     var currentPuzzle: ChessPuzzle?
     var phase: PuzzlePhase = .loading
+    private var puzzleHadError: Bool = false
 
     // MARK: - Date Navigation
 
@@ -125,6 +126,7 @@ final class PuzzleViewModel {
 
     func loadDailyPuzzle() async {
         loadSolvedDates()
+        puzzleHadError = false
         await fetchPuzzle()
     }
 
@@ -210,6 +212,10 @@ final class PuzzleViewModel {
             phase = .wrongMove
             selectedPosition      = nil
             legalMovesForSelected = []
+            if !puzzleHadError {
+                puzzleHadError = true
+                StatsManager.shared.recordPuzzleFailed()
+            }
             return
         }
 
@@ -221,6 +227,9 @@ final class PuzzleViewModel {
             phase = .solved
             Haptics.notification(.success)
             markCurrentSolved()
+            if !puzzleHadError {
+                StatsManager.shared.recordPuzzleSolved()
+            }
             return
         }
 
@@ -248,6 +257,10 @@ final class PuzzleViewModel {
     func showSolution() {
         guard phase == .playing || phase == .wrongMove else { return }
         phase = .showingSolution
+        if !puzzleHadError {
+            puzzleHadError = true
+            StatsManager.shared.recordPuzzleFailed()
+        }
 
         Task {
             while movePointer < rawMoves.count {

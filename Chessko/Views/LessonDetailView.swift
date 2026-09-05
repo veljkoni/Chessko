@@ -43,15 +43,15 @@ struct LessonDetailView: View {
                     .fill(lesson.accentColor.opacity(0.18))
                     .frame(width: 60, height: 60)
                 Image(systemName: lesson.systemIcon)
-                    .font(.title2.weight(.medium))
+                    .font(.appFont(.title2).weight(.medium))
                     .foregroundStyle(lesson.accentColor)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(LocalizedStringKey(lesson.title))
-                    .font(.headline.weight(.bold))
+                Text(Loc(lesson.title))
+                    .font(.appFont(.headline).weight(.bold))
                     .foregroundStyle(.primary)
-                Text(LocalizedStringKey(lesson.subtitle))
-                    .font(.subheadline)
+                Text(Loc(lesson.subtitle))
+                    .font(.appFont(.subheadline))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,13 +99,13 @@ struct LessonDetailView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 6) {
                         Image(systemName: "star.fill")
-                            .font(.caption.weight(.semibold))
+                            .font(.appFont(.caption).weight(.semibold))
                             .foregroundStyle(.yellow)
-                        Text("Specijalna pravila")
-                            .font(.subheadline.weight(.semibold))
+                        Text(Loc("Specijalna pravila"))
+                            .font(.appFont(.subheadline).weight(.semibold))
                             .foregroundStyle(.white)
-                        Text("— izaberi i istraži na tabli")
-                            .font(.caption)
+                        Text(Loc("— izaberi i istraži na tabli"))
+                            .font(.appFont(.caption))
                             .foregroundStyle(.white.opacity(0.5))
                     }
                     HStack(spacing: 10) {
@@ -118,9 +118,9 @@ struct LessonDetailView: View {
                             } label: {
                                 HStack(spacing: 5) {
                                     Image(systemName: active ? "checkmark.circle.fill" : "circle")
-                                        .font(.caption.weight(.semibold))
+                                        .font(.appFont(.caption).weight(.semibold))
                                     Text(s.label)
-                                        .font(.subheadline.weight(.semibold))
+                                        .font(.appFont(.subheadline).weight(.semibold))
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                 }
@@ -152,8 +152,8 @@ struct LessonDetailView: View {
             }
 
             HStack(spacing: 5) {
-                Image(systemName: "hand.point.up.left").font(.caption2)
-                Text("Tapni figuru da je promeniš · Tapni polje da je premestiš").font(.caption)
+                Image(systemName: "hand.point.up.left").font(.appFont(.caption2))
+                Text(Loc("Tapni figuru da je promeniš · Tapni polje da je premestiš")).font(.appFont(.caption))
             }
             .foregroundStyle(.white.opacity(0.35))
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -634,10 +634,10 @@ private struct L_SectionHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.subheadline.weight(.semibold))
+                .font(.appFont(.subheadline).weight(.semibold))
                 .foregroundStyle(color)
-            Text(LocalizedStringKey(title))
-                .font(.subheadline.weight(.bold))
+            Text(Loc(title))
+                .font(.appFont(.subheadline).weight(.bold))
                 .foregroundStyle(.primary)
         }
         .padding(.horizontal, 20)
@@ -650,8 +650,8 @@ private struct L_Para: View {
     init(_ text: String) { self.text = text }
 
     var body: some View {
-        Text(LocalizedStringKey(text))
-            .font(.subheadline)
+        Text(Loc(text))
+            .font(.appFont(.subheadline))
             .foregroundStyle(.primary.opacity(0.85))
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -666,16 +666,16 @@ private struct L_Bullet: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .font(.caption.weight(.semibold))
+                .font(.appFont(.caption).weight(.semibold))
                 .foregroundStyle(color)
                 .frame(width: 18)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 3) {
-                Text(LocalizedStringKey(title))
-                    .font(.subheadline.weight(.semibold))
+                Text(Loc(title))
+                    .font(.appFont(.subheadline).weight(.semibold))
                     .foregroundStyle(.primary)
-                Text(LocalizedStringKey(text))
-                    .font(.subheadline)
+                Text(Loc(text))
+                    .font(.appFont(.subheadline))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -696,14 +696,14 @@ private struct L_Box: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.caption.weight(.bold))
+                    .font(.appFont(.caption).weight(.bold))
                     .foregroundStyle(color)
-                Text(LocalizedStringKey(title))
-                    .font(.caption.weight(.bold))
+                Text(Loc(title))
+                    .font(.appFont(.caption).weight(.bold))
                     .foregroundStyle(color)
             }
-            Text(LocalizedStringKey(text))
-                .font(.subheadline)
+            Text(Loc(text))
+                .font(.appFont(.subheadline))
                 .foregroundStyle(.primary.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -725,12 +725,12 @@ private struct L_PieceRow: View {
         HStack(spacing: 12) {
             PieceImageView(piece: ChessPiece(type: type, color: .white))
                 .frame(width: 32, height: 32)
-            Text(LocalizedStringKey(name))
-                .font(.subheadline.weight(.bold))
+            Text(Loc(name))
+                .font(.appFont(.subheadline).weight(.bold))
                 .foregroundStyle(.primary)
             Spacer()
             Text(count)
-                .font(.caption.weight(.medium))
+                .font(.appFont(.caption).weight(.medium))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(Color.primary.opacity(0.06), in: Capsule())
@@ -751,15 +751,15 @@ private struct L_NumberedRule: View {
             ZStack {
                 Circle().fill(color.opacity(0.2)).frame(width: 32, height: 32)
                 Text("\(number)")
-                    .font(.subheadline.weight(.bold))
+                    .font(.appFont(.subheadline).weight(.bold))
                     .foregroundStyle(color)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(LocalizedStringKey(title))
-                    .font(.subheadline.weight(.bold))
+                Text(Loc(title))
+                    .font(.appFont(.subheadline).weight(.bold))
                     .foregroundStyle(.primary)
-                Text(LocalizedStringKey(text))
-                    .font(.subheadline)
+                Text(Loc(text))
+                    .font(.appFont(.subheadline))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -778,16 +778,16 @@ private struct L_OpeningCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(name)
-                .font(.subheadline.weight(.bold))
+                .font(.appFont(.subheadline).weight(.bold))
                 .foregroundStyle(.primary)
             ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                 HStack(alignment: .top, spacing: 8) {
                     Text(item.0 + ":")
-                        .font(.caption.weight(.semibold))
+                        .font(.appFont(.caption).weight(.semibold))
                         .foregroundStyle(accentColor)
                         .fixedSize()
                     Text(item.1)
-                        .font(.caption)
+                        .font(.appFont(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -819,12 +819,12 @@ private struct L_PieceValueTable: View {
                 HStack(spacing: 12) {
                     PieceImageView(piece: ChessPiece(type: row.0, color: .white))
                         .frame(width: 28, height: 28)
-                    Text(LocalizedStringKey(row.1))
-                        .font(.subheadline)
+                    Text(Loc(row.1))
+                        .font(.appFont(.subheadline))
                         .foregroundStyle(.primary)
                     Spacer()
-                    Text(LocalizedStringKey(row.2 == "∞" ? "∞" : "\(row.2) bod\(row.2 == "1" ? "" : row.2 == "9" ? "ova" : "a")"))
-                        .font(.subheadline.weight(.semibold))
+                    Text(Loc(row.2 == "∞" ? "∞" : "\(row.2) bod\(row.2 == "1" ? "" : row.2 == "9" ? "ova" : "a")"))
+                        .font(.appFont(.subheadline).weight(.semibold))
                         .foregroundStyle(row.2 == "∞" ? Color.yellow : .primary)
                 }
                 .padding(.vertical, 9)
@@ -875,22 +875,22 @@ struct MatePuzzleCard: View {
                         .fill(vm.line.accentColor.opacity(0.2))
                         .frame(width: 32, height: 32)
                     Image(systemName: vm.line.icon)
-                        .font(.caption.weight(.semibold))
+                        .font(.appFont(.caption).weight(.semibold))
                         .foregroundStyle(vm.line.accentColor)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(LocalizedStringKey(vm.line.name))
-                            .font(.subheadline.weight(.semibold))
+                        Text(Loc(vm.line.name))
+                            .font(.appFont(.subheadline).weight(.semibold))
                             .foregroundStyle(.white)
-                        Text("Mat u \(mateIn)")
-                            .font(.caption2.weight(.bold))
+                        Text(LocF("Mat u %lld", mateIn))
+                            .font(.appFont(.caption2).weight(.bold))
                             .foregroundStyle(vm.line.accentColor)
                             .padding(.horizontal, 6).padding(.vertical, 2)
                             .background(vm.line.accentColor.opacity(0.18), in: Capsule())
                     }
-                    Text(LocalizedStringKey(vm.line.hint))
-                        .font(.caption)
+                    Text(Loc(vm.line.hint))
+                        .font(.appFont(.caption))
                         .foregroundStyle(.white.opacity(0.55))
                         .lineLimit(2)
                 }
@@ -898,7 +898,7 @@ struct MatePuzzleCard: View {
                 if vm.phase == .solved {
                     Image(systemName: "trophy.fill")
                         .foregroundStyle(.yellow)
-                        .font(.title3)
+                        .font(.appFont(.title3))
                         .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -925,7 +925,7 @@ struct MatePuzzleCard: View {
             // Status bar
             HStack(spacing: 6) {
                 Text(vm.statusMessage)
-                    .font(.caption.weight(.medium))
+                    .font(.appFont(.caption).weight(.medium))
                     .foregroundStyle(puzzleStatusColor)
                     .lineLimit(1).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
@@ -933,7 +933,7 @@ struct MatePuzzleCard: View {
                     withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.caption.weight(.medium))
+                        .font(.appFont(.caption).weight(.medium))
                         .foregroundStyle(.white.opacity(0.6))
                         .padding(.horizontal, 10).padding(.vertical, 5)
                         .background(.white.opacity(0.1), in: Capsule())
@@ -991,15 +991,15 @@ struct OpeningExerciseCard: View {
                         .fill(line.accentColor.opacity(0.2))
                         .frame(width: 32, height: 32)
                     Image(systemName: line.icon)
-                        .font(.caption.weight(.semibold))
+                        .font(.appFont(.caption).weight(.semibold))
                         .foregroundStyle(line.accentColor)
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(LocalizedStringKey(line.name))
-                        .font(.subheadline.weight(.semibold))
+                    Text(Loc(line.name))
+                        .font(.appFont(.subheadline).weight(.semibold))
                         .foregroundStyle(.primary)
-                    Text(LocalizedStringKey(line.hint))
-                        .font(.caption)
+                    Text(Loc(line.hint))
+                        .font(.appFont(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
@@ -1008,7 +1008,7 @@ struct OpeningExerciseCard: View {
                 if vm.phase == .solved {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                        .font(.title3)
+                        .font(.appFont(.title3))
                 }
             }
             .padding(.horizontal, 14)
@@ -1045,7 +1045,7 @@ struct OpeningExerciseCard: View {
                 }
 
                 Text(vm.statusMessage)
-                    .font(.caption.weight(.medium))
+                    .font(.appFont(.caption).weight(.medium))
                     .foregroundStyle(openingStatusColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -1056,7 +1056,7 @@ struct OpeningExerciseCard: View {
                     withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.caption.weight(.medium))
+                        .font(.appFont(.caption).weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -1122,15 +1122,15 @@ struct MateExerciseCard: View {
                         .fill(color.opacity(0.2))
                         .frame(width: 32, height: 32)
                     Image(systemName: icon)
-                        .font(.caption.weight(.semibold))
+                        .font(.appFont(.caption).weight(.semibold))
                         .foregroundStyle(color)
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(LocalizedStringKey(title))
-                        .font(.subheadline.weight(.semibold))
+                    Text(Loc(title))
+                        .font(.appFont(.subheadline).weight(.semibold))
                         .foregroundStyle(.primary)
-                    Text(LocalizedStringKey(hint))
-                        .font(.caption)
+                    Text(Loc(hint))
+                        .font(.appFont(.caption))
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1138,7 +1138,7 @@ struct MateExerciseCard: View {
                 if vm.isSolved {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                        .font(.title3)
+                        .font(.appFont(.title3))
                 }
             }
             .padding(.horizontal, 14)
@@ -1170,14 +1170,14 @@ struct MateExerciseCard: View {
                         .tint(color)
                 }
                 Text(vm.statusMessage)
-                    .font(.caption.weight(.medium))
+                    .font(.appFont(.caption).weight(.medium))
                     .foregroundStyle(statusColor)
                 Spacer(minLength: 0)
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.caption.weight(.medium))
+                        .font(.appFont(.caption).weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)

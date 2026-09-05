@@ -1,0 +1,388 @@
+package com.veljkoni.chessko.ui
+
+import com.veljkoni.chessko.logic.loc
+import com.veljkoni.chessko.logic.locF
+
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import com.veljkoni.chessko.models.*
+import com.veljkoni.chessko.viewmodels.GameMode
+import com.veljkoni.chessko.viewmodels.GameViewModel
+import kotlin.math.max
+
+@Composable
+fun PlayerHeaderCard(
+    color: PieceColor,
+    name: String,
+    isActive: Boolean,
+    isThinking: Boolean,
+    capturedPieces: List<ChessPiece>,
+    materialAdvantage: Int,
+    boardTheme: BoardTheme,
+    pieceStyle: PieceStyle,
+    evaluationScore: Double = 0.0,
+    evaluationMateIn: Int? = null,
+    showEvalBar: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val cardBackground = if (color == PieceColor.WHITE) {
+        Color.White.copy(alpha = 0.05f)
+    } else {
+        Color.Black.copy(alpha = 0.22f)
+    }
+
+    val borderColor = if (isActive) {
+        Color(0xFF00D2FF).copy(alpha = 0.50f)
+    } else {
+        Color.White.copy(alpha = 0.07f)
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(cardBackground)
+            .border(
+                width = if (isActive) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // King Avatar
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(if (color == PieceColor.WHITE) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.35f)),
+            contentAlignment = Alignment.Center
+        ) {
+            val kingAsset = getAssetName(ChessPiece(PieceType.KING, color), pieceStyle, boardTheme)
+            AsyncImage(
+                model = "file:///android_asset/pieces/$kingAsset.svg",
+                contentDescription = null,
+                modifier = Modifier.size(26.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        // Name + Material Adv + Captured list
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = name,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (materialAdvantage > 0) {
+                    Text(
+                        text = "+$materialAdvantage",
+                        color = Color(0xFF00D2FF).copy(alpha = 0.85f),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            CapturedPiecesView(
+                pieces = capturedPieces,
+                pieceStyle = pieceStyle,
+                boardTheme = boardTheme
+            )
+        }
+
+        // Evaluation Score Pill (when eval bar is enabled)
+        if (showEvalBar) {
+            val evalText: String? = when {
+                evaluationMateIn != null -> {
+                    if (color == PieceColor.WHITE && evaluationMateIn > 0) "M$evaluationMateIn"
+                    else if (color == PieceColor.BLACK && evaluationMateIn < 0) "M${kotlin.math.abs(evaluationMateIn)}"
+                    else null
+                }
+                color == PieceColor.WHITE -> {
+                    if (evaluationScore >= 0.1) String.format(java.util.Locale.US, "+%.1f", evaluationScore)
+                    else if (kotlin.math.abs(evaluationScore) < 0.1) "0.0"
+                    else null
+                }
+                else -> {
+                    if (evaluationScore <= -0.1) String.format(java.util.Locale.US, "+%.1f", kotlin.math.abs(evaluationScore))
+                    else null
+                }
+            }
+
+            val isMate = (color == PieceColor.WHITE && (evaluationMateIn ?: 0) > 0) ||
+                         (color == PieceColor.BLACK && (evaluationMateIn ?: 0) < 0)
+
+            if (evalText != null) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color.White.copy(alpha = 0.12f))
+                        .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 7.dp, vertical = 3.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = evalText,
+                        color = if (isMate) Color(0xFFFFD700) else Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+        }
+
+        // Active State Indicator
+        if (isActive) {
+            if (isThinking) {
+                ThinkingDots()
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF10B981))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ThinkingDots() {
+    val transition = rememberInfiniteTransition(label = "dots")
+
+    @Composable
+    fun dotAlpha(delayMillis: Int): Float {
+        val alpha by transition.animateFloat(
+            initialValue = 0.2f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 600, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+                initialStartOffset = StartOffset(delayMillis)
+            ),
+            label = "alpha"
+        )
+        return alpha
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color.White.copy(alpha = dotAlpha(0))))
+        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color.White.copy(alpha = dotAlpha(200))))
+        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color.White.copy(alpha = dotAlpha(400))))
+    }
+}
+
+@Composable
+fun StatusBanner(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = 0.05f))
+            .padding(vertical = 10.dp, horizontal = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            color = Color.White.copy(alpha = 0.9f),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun RowScope.BottomNavItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val contentColor = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.5f)
+
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = contentColor
+        ),
+        modifier = Modifier.weight(1f),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = contentColor
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = label,
+                color = contentColor,
+                fontSize = 11.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun LearnPlaceholderView() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        Text(
+            text = "📖 Učenje i Taktike",
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 12.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Cards list
+        LearnCard("Osnovna šahovska pravila", "Nauči kretanje figura, rokadu, en passant i pravila za mat i remi.", "📚 Pravila")
+        Spacer(modifier = Modifier.height(12.dp))
+        LearnCard("Otvaranja (Openings)", "Savladaj klasične šahovske sisteme poput Španske partije, Sicilijanske odbrane i Daminog gambita.", "♟️ Otvaranja")
+        Spacer(modifier = Modifier.height(12.dp))
+        LearnCard("Taktički motivi", "Vežbaj motive kao što su dvostruki udar (viljuška), vezivanje, ražanj i otkriveni šah.", "💥 Taktika")
+    }
+}
+
+@Composable
+fun LearnCard(title: String, desc: String, tag: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFF00D2FF).copy(alpha = 0.15f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(text = tag, color = Color(0xFF00D2FF), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = desc, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+        }
+    }
+}
+
+fun getPlayerName(viewModel: GameViewModel, color: PieceColor): String {
+    return if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
+        if (color == PieceColor.WHITE) loc("Beli") else loc("Crni")
+    } else {
+        if (color == viewModel.playerColor) loc("Ti") else loc("Računar")
+    }
+}
+
+fun getMaterialAdvantage(gameState: GameState, color: PieceColor): Int {
+    val whiteVal = gameState.capturedByWhite.sumOf { it.type.materialValue / 100 }
+    val blackVal = gameState.capturedByBlack.sumOf { it.type.materialValue / 100 }
+    return if (color == PieceColor.WHITE) {
+        max(0, whiteVal - blackVal)
+    } else {
+        max(0, blackVal - whiteVal)
+    }
+}
+
+fun getStatusMessage(viewModel: GameViewModel): String {
+    val status = viewModel.gameState.status
+    val color = viewModel.playerColor
+    return when (status) {
+        is GameStatus.Playing -> {
+            if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
+                if (viewModel.gameState.currentTurn == PieceColor.WHITE) loc("Beli igra") else loc("Crni igra")
+            } else {
+                if (viewModel.gameState.currentTurn == color) loc("Tvoj potez") else loc("Računar razmišlja...")
+            }
+        }
+        is GameStatus.Check -> {
+            val targetColor = status.color
+            if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
+                if (targetColor == PieceColor.WHITE) loc("Šah! Beli kralj je napadnut.") else loc("Šah! Crni kralj je napadnut.")
+            } else {
+                if (targetColor == color) loc("Šah! Tvoj kralj je napadnut.") else loc("Šah! Napadaš kralja.")
+            }
+        }
+        is GameStatus.Checkmate -> {
+            val loserColor = status.color
+            if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
+                if (loserColor == PieceColor.WHITE) loc("Mat! Crni je pobedio! 🎉") else loc("Mat! Beli je pobedio! 🎉")
+            } else {
+                if (loserColor == color) loc("Mat! Izgubio si.") else loc("Mat! Pobedio si! 🎉")
+            }
+        }
+        is GameStatus.Resigned -> {
+            val loserColor = status.color
+            if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
+                if (loserColor == PieceColor.WHITE) loc("Predaja! Crni je pobedio.") else loc("Predaja! Beli je pobedio.")
+            } else {
+                if (loserColor == color) loc("Predaja! Izgubio si.") else loc("Predaja! Pobedio si! 🎉")
+            }
+        }
+        is GameStatus.Draw -> {
+            when (status.reason) {
+                is DrawReason.Stalemate -> loc("Pat – remi!")
+                is DrawReason.FiftyMoves -> loc("Remi – pravilo 50 poteza.")
+                is DrawReason.Repetition -> loc("Remi – ponavljanje pozicije.")
+                is DrawReason.InsufficientMaterial -> loc("Remi – nedovoljan materijal.")
+            }
+        }
+    }
+}

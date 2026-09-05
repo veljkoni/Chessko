@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+Chessko.xcodeproj/xcuserdata/
+
+# SwiftPM
+.build/
+Package.resolved
+
+# Android
+ChesskoAndroid/app/build/
+ChesskoAndroid/app/.cxx/
+ChesskoAndroid/app/release/
+ChesskoAndroid/build/
+ChesskoAndroid/.gradle/
+ChesskoAndroid/.kotlin/
+ChesskoAndroid/.idea/
+ChesskoAndroid/local.properties
+
+# Potpisni kljucevi — nikad u repozitorijum
+*.jks
+*.keystore
+
+# Logovi
+build.log

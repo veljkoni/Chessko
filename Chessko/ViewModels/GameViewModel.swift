@@ -24,31 +24,45 @@ enum Haptics {
 // MARK: - Difficulty
 
 enum GameDifficulty: String, CaseIterable, Sendable, Codable {
+    case beginner  = "beginner"
     case easy      = "easy"
     case medium    = "medium"
     case hard      = "hard"
     case stockfish = "stockfish"
 
-    var label: String {
+    var title: String {
         switch self {
-        case .easy:      return Loc("Lokalni AI: Početnik")
-        case .medium:    return Loc("Lokalni AI: Amater")
-        case .hard:      return Loc("Lokalni AI: Napredni")
-        case .stockfish: return "Stockfish"
+        case .beginner:  return Loc("Početnik (~500 ELO)")
+        case .easy:      return Loc("Lako (~900 ELO)")
+        case .medium:    return Loc("Srednje (~1300 ELO)")
+        case .hard:      return Loc("Teško (~1700 ELO)")
+        case .stockfish: return Loc("Stockfish Majstor (2200+ ELO)")
         }
     }
 
-    var icon: String {
+    var subtitle: String {
         switch self {
-        case .easy:      return "🟢"
-        case .medium:    return "🟡"
-        case .hard:      return "🔴"
-        case .stockfish: return "⚡"
+        case .beginner:  return Loc("Za one koji uče pravila i osnove")
+        case .easy:      return Loc("Opuštena i prijatna partija")
+        case .medium:    return Loc("Dobar balans za redovne igrače")
+        case .hard:      return Loc("Snažna igra bez previda")
+        case .stockfish: return Loc("Maksimalna snaga šahovskog motora")
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .beginner:  return Loc("Početnik")
+        case .easy:      return Loc("Lako")
+        case .medium:    return Loc("Srednje")
+        case .hard:      return Loc("Teško")
+        case .stockfish: return "Stockfish"
         }
     }
 
     var chessAIDifficulty: ChessAI.Difficulty {
         switch self {
+        case .beginner:         return .beginner
         case .easy:             return .easy
         case .medium:           return .medium
         case .hard, .stockfish: return .hard
@@ -142,7 +156,14 @@ final class GameViewModel {
     var legalMovesForSelected: [ChessMove] = []
     var isThinking = false
     var lastMove: ChessMove?
-    var difficulty: GameDifficulty = .medium
+    var difficulty: GameDifficulty = {
+        if let raw = UserDefaults.standard.string(forKey: "selectedDifficulty"),
+           let diff = GameDifficulty(rawValue: raw) {
+            return diff
+        }
+        return .medium
+    }()
+    private var hasRecordedGameEnd: Bool = false
     var stockfishLevel: StockfishLevel = .intermediate
     var promotionMove: ChessMove?
     var showPromotion = false
@@ -155,6 +176,13 @@ final class GameViewModel {
     var activePlayerColor: PieceColor {
         gameMode == .localFriend ? gameState.currentTurn : playerColor
     }
+
+    // Game review (move-by-move navigation)
+    var viewingMoveIndex: Int? = nil
+
+    // Evaluation bar
+    var evaluationScore: Double = 0.0
+    var evaluationMateIn: Int? = nil
 
     private let stockfish = StockfishBridge()
     private var gameGeneration = 0
@@ -174,15 +202,129 @@ final class GameViewModel {
             "showLegalMoves": true,
             "autoPromoteToQueen": false,
             "pieceStyle": "classic",
-            "rotateBoardInLocalPlay": true
+            "rotateBoardInLocalPlay": true,
+            "showEvalBar": true
         ])
         Task { await stockfish.start() }
         load()   // restore game from previous session (no-op if nothing saved)
+        updateEvaluation()
     }
 
     // MARK: Computed
 
+    var allHistoryStates: [(state: GameState, lastMove: ChessMove?)] {
+        var list: [(state: GameState, lastMove: ChessMove?)] = []
+        if !history.isEmpty {
+            list.append((history[0].state, nil))
+            for i in 1..<history.count {
+                list.append((history[i].state, history[i].lastMove))
+            }
+            list.append((gameState, lastMove))
+        } else {
+            list.append((gameState, lastMove))
+        }
+        return list
+    }
+
+    var displayState: GameState {
+        guard let idx = viewingMoveIndex, idx < allHistoryStates.count else { return gameState }
+        return allHistoryStates[idx].state
+    }
+
+    var displayLastMove: ChessMove? {
+        guard let idx = viewingMoveIndex, idx < allHistoryStates.count else { return lastMove }
+        return allHistoryStates[idx].lastMove
+    }
+
+    var isReviewing: Bool {
+        viewingMoveIndex != nil && viewingMoveIndex != (allHistoryStates.count - 1)
+    }
+
+    var currentReviewMoveIndex: Int {
+        viewingMoveIndex ?? max(0, allHistoryStates.count - 1)
+    }
+
+    var totalReviewMoves: Int {
+        max(0, allHistoryStates.count - 1)
+    }
+
+    var canStepBackward: Bool {
+        currentReviewMoveIndex > 0
+    }
+
+    var canStepForward: Bool {
+        viewingMoveIndex != nil && viewingMoveIndex! < (allHistoryStates.count - 1)
+    }
+
+    func goToStart() {
+        if !allHistoryStates.isEmpty {
+            viewingMoveIndex = 0
+            updateEvaluation()
+        }
+    }
+
+    func stepBackward() {
+        let cur = viewingMoveIndex ?? (allHistoryStates.count - 1)
+        if cur > 0 {
+            viewingMoveIndex = cur - 1
+            updateEvaluation()
+        }
+    }
+
+    func stepForward() {
+        let cur = viewingMoveIndex ?? (allHistoryStates.count - 1)
+        if cur < allHistoryStates.count - 1 {
+            let next = cur + 1
+            viewingMoveIndex = (next == allHistoryStates.count - 1) ? nil : next
+            updateEvaluation()
+        }
+    }
+
+    func goToEnd() {
+        viewingMoveIndex = nil
+        updateEvaluation()
+    }
+
+    func goToMove(_ moveNumber: Int) {
+        if moveNumber >= 0 && moveNumber < allHistoryStates.count {
+            viewingMoveIndex = (moveNumber == allHistoryStates.count - 1) ? nil : moveNumber
+            updateEvaluation()
+        }
+    }
+
+    func updateEvaluation() {
+        let state = displayState
+        Task.detached {
+            let (score, mate) = ChessAI.evaluatePosition(state: state)
+            await MainActor.run {
+                self.evaluationScore = score
+                self.evaluationMateIn = mate
+            }
+        }
+    }
+
+    func resign() {
+        guard canResign else { return }
+        let loser = activePlayerColor
+        gameState.status = .resigned(loser)
+        viewingMoveIndex = nil
+        save()
+        SoundManager.shared.playMove()
+        Haptics.notification(.error)
+        updateEvaluation()
+
+        if gameMode == .vsComputer && !hasRecordedGameEnd {
+            hasRecordedGameEnd = true
+            if loser == playerColor {
+                StatsManager.shared.recordGameLost()
+            } else {
+                StatsManager.shared.recordGameWon()
+            }
+        }
+    }
+
     var isPlayerTurn: Bool {
+        if isReviewing { return false }
         if gameMode == .localFriend {
             return !isGameOver && !isThinking
         } else {
@@ -192,14 +334,16 @@ final class GameViewModel {
 
     var isGameOver: Bool {
         switch gameState.status {
-        case .checkmate, .draw: return true
+        case .checkmate, .draw, .resigned: return true
         default: return false
         }
     }
 
     var isStockfishAvailable: Bool { stockfish.isAvailable }
 
-    var canUndo: Bool { !history.isEmpty && !isThinking && !isGameOver }
+    var canUndo: Bool { !history.isEmpty && !isThinking && !isGameOver && !isReviewing }
+
+    var canResign: Bool { !isGameOver && !isThinking && (!history.isEmpty || !gameState.moveNotations.isEmpty) }
 
     var hasSavedGame: Bool { UserDefaults.standard.data(forKey: savedGameKey) != nil }
 
@@ -244,6 +388,16 @@ final class GameViewModel {
                     ? Loc("Mat! Izgubio si.")
                     : Loc("Mat! Pobedio si! 🎉")
             }
+        case .resigned(let c):
+            if gameMode == .localFriend {
+                return c == .white
+                    ? Loc("Predaja! Crni je pobedio.")
+                    : Loc("Predaja! Beli je pobedio.")
+            } else {
+                return c == playerColor
+                    ? Loc("Predaja! Izgubio si.")
+                    : Loc("Predaja! Pobedio si! 🎉")
+            }
         case .draw(let reason):
             switch reason {
             case .stalemate:            return Loc("Pat – remi!")
@@ -257,6 +411,10 @@ final class GameViewModel {
     // MARK: - User Interaction
 
     func tap(position: Position) {
+        if isReviewing {
+            goToEnd()
+            return
+        }
         guard isPlayerTurn, !isGameOver else { return }
 
         if selectedPosition != nil,
@@ -339,6 +497,7 @@ final class GameViewModel {
         }
 
         let newState = gameState.applying(move)
+        viewingMoveIndex = nil
 
         if gameMode == .localFriend {
             withAnimation(.easeInOut(duration: 0.5)) {
@@ -356,15 +515,39 @@ final class GameViewModel {
             }
         }
         save()   // persist after every move
+        updateEvaluation()
 
         // Sound + haptics based on outcome
         switch newState.status {
         case .checkmate(let c):
             SoundManager.shared.playMove()
             Haptics.notification(c == playerColor ? .error : .success)
+            if !hasRecordedGameEnd && gameMode == .vsComputer {
+                hasRecordedGameEnd = true
+                if c != playerColor {
+                    StatsManager.shared.recordGameWon()
+                } else {
+                    StatsManager.shared.recordGameLost()
+                }
+            }
+        case .resigned(let c):
+            SoundManager.shared.playMove()
+            Haptics.notification(c == playerColor ? .error : .success)
+            if !hasRecordedGameEnd && gameMode == .vsComputer {
+                hasRecordedGameEnd = true
+                if c != playerColor {
+                    StatsManager.shared.recordGameWon()
+                } else {
+                    StatsManager.shared.recordGameLost()
+                }
+            }
         case .draw:
             SoundManager.shared.playMove()
             Haptics.notification(.warning)
+            if !hasRecordedGameEnd && gameMode == .vsComputer {
+                hasRecordedGameEnd = true
+                StatsManager.shared.recordGameDrawn()
+            }
         case .check:
             SoundManager.shared.playMove()
             Haptics.notification(.warning)
@@ -392,6 +575,7 @@ final class GameViewModel {
     func undo() {
         guard canUndo else { return }
         flyingCapture = nil
+        viewingMoveIndex = nil
 
         if gameMode == .localFriend {
             if let last = history.popLast() {
@@ -404,6 +588,7 @@ final class GameViewModel {
                 SoundManager.shared.playMove()
                 Haptics.impact(.rigid)
                 save()
+                updateEvaluation()
             }
             return
         }
@@ -421,6 +606,7 @@ final class GameViewModel {
                 SoundManager.shared.playMove()
                 Haptics.impact(.rigid)
                 save()
+                updateEvaluation()
                 return
             }
         }
@@ -430,6 +616,7 @@ final class GameViewModel {
 
     func setDifficulty(_ newDifficulty: GameDifficulty) {
         difficulty = newDifficulty
+        UserDefaults.standard.set(newDifficulty.rawValue, forKey: "selectedDifficulty")
         save()
     }
 
@@ -509,9 +696,32 @@ final class GameViewModel {
                 case .checkmate(let c):
                     SoundManager.shared.playMove()
                     Haptics.notification(c == self.playerColor ? .error : .success)
+                    if !self.hasRecordedGameEnd && self.gameMode == .vsComputer {
+                        self.hasRecordedGameEnd = true
+                        if c != self.playerColor {
+                            StatsManager.shared.recordGameWon()
+                        } else {
+                            StatsManager.shared.recordGameLost()
+                        }
+                    }
+                case .resigned(let c):
+                    SoundManager.shared.playMove()
+                    Haptics.notification(c == self.playerColor ? .error : .success)
+                    if !self.hasRecordedGameEnd && self.gameMode == .vsComputer {
+                        self.hasRecordedGameEnd = true
+                        if c != self.playerColor {
+                            StatsManager.shared.recordGameWon()
+                        } else {
+                            StatsManager.shared.recordGameLost()
+                        }
+                    }
                 case .draw:
                     SoundManager.shared.playMove()
                     Haptics.notification(.warning)
+                    if !self.hasRecordedGameEnd && self.gameMode == .vsComputer {
+                        self.hasRecordedGameEnd = true
+                        StatsManager.shared.recordGameDrawn()
+                    }
                 case .check:
                     SoundManager.shared.playMove()
                     Haptics.notification(.warning)
@@ -597,6 +807,11 @@ final class GameViewModel {
 
     /// Restore state from UserDefaults; no-op if nothing is saved or data is corrupt.
     private func load() {
+        if let raw = UserDefaults.standard.string(forKey: "selectedDifficulty"),
+           let diff = GameDifficulty(rawValue: raw) {
+            difficulty = diff
+        }
+
         guard
             let data  = UserDefaults.standard.data(forKey: savedGameKey),
             let saved = try? JSONDecoder().decode(SavedGame.self, from: data)
@@ -625,6 +840,12 @@ final class GameViewModel {
     func newGame(gameMode: GameMode = .vsComputer, playerColor: PieceColor = .white) {
         self.gameMode = gameMode
         self.playerColor = playerColor
+        self.hasRecordedGameEnd = false
+        self.viewingMoveIndex = nil
+        if let raw = UserDefaults.standard.string(forKey: "selectedDifficulty"),
+           let diff = GameDifficulty(rawValue: raw) {
+            self.difficulty = diff
+        }
         gameGeneration += 1
         flyingCapture = nil
         clearSave()
@@ -636,10 +857,44 @@ final class GameViewModel {
             lastMove = nil
             isThinking = false
         }
+        updateEvaluation()
         // When player picks black, AI (white) moves first
         if gameMode == .vsComputer && playerColor == .black {
             triggerAI()
         }
+    }
+
+    func generatePGN() -> String {
+        var pgn = ""
+        pgn += "[Event \"Chessko Game\"]\n"
+        pgn += "[Site \"Chessko App\"]\n"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        pgn += "[Date \"\(formatter.string(from: Date()))\"]\n"
+        pgn += "[White \"\(gameMode == .localFriend ? "Player 1" : (playerColor == .white ? "Player" : "Chessko AI"))\"]\n"
+        pgn += "[Black \"\(gameMode == .localFriend ? "Player 2" : (playerColor == .black ? "Player" : "Chessko AI"))\"]\n"
+
+        let result: String
+        switch gameState.status {
+        case .checkmate(let loser), .resigned(let loser):
+            result = loser == .white ? "0-1" : "1-0"
+        case .draw:
+            result = "1/2-1/2"
+        default:
+            result = "*"
+        }
+        pgn += "[Result \"\(result)\"]\n\n"
+
+        for (index, notation) in gameState.moveNotations.enumerated() {
+            if index % 2 == 0 {
+                pgn += "\(index / 2 + 1). "
+            }
+            pgn += "\(notation) "
+        }
+        if !gameState.moveNotations.isEmpty {
+            pgn += result
+        }
+        return pgn.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func loadDebugPromotion() {

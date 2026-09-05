@@ -6,33 +6,36 @@ struct ChessAI {
 
     // MARK: - Difficulty
 
-    enum Difficulty {
-        case easy, medium, hard
+    enum Difficulty: Sendable {
+        case beginner, easy, medium, hard
 
         /// Maximum search depth (iterative deepening stops here or when time runs out).
         var maxDepth: Int {
             switch self {
-            case .easy:   return 2
-            case .medium: return 4
-            case .hard:   return 10
+            case .beginner: return 1
+            case .easy:     return 2
+            case .medium:   return 6
+            case .hard:     return 8
             }
         }
 
         /// Time budget per move (seconds).
         var timeLimit: Double {
             switch self {
-            case .easy:   return 0.20
-            case .medium: return 0.50
-            case .hard:   return 2.00
+            case .beginner: return 0.20
+            case .easy:     return 0.30
+            case .medium:   return 0.80
+            case .hard:     return 1.50
             }
         }
 
         /// Extra plies of capture-only search after main search (quiescence).
         var quiescenceDepth: Int {
             switch self {
-            case .easy:   return 0
-            case .medium: return 2
-            case .hard:   return 4
+            case .beginner: return 0
+            case .easy:     return 1
+            case .medium:   return 4
+            case .hard:     return 5
             }
         }
     }
@@ -52,18 +55,18 @@ struct ChessAI {
         // Single legal move — return immediately, no need to search.
         if moves.count == 1 { return moves[0] }
 
-        // Introduce random blunder rate for easy/medium
+        // Introduce random blunder rate for beginner/easy (Medium & Hard have 0% blunder)
         let roll = Double.random(in: 0...1)
         switch difficulty {
-        case .easy:
+        case .beginner:
             if roll < 0.25 {
                 return moves.randomElement()
             }
-        case .medium:
-            if roll < 0.08 {
+        case .easy:
+            if roll < 0.10 {
                 return moves.randomElement()
             }
-        case .hard:
+        case .medium, .hard:
             break
         }
 
@@ -81,6 +84,9 @@ struct ChessAI {
                                        moves: moves, depth: depth, ctx: ctx) {
                 bestMove  = m
                 bestScore = s
+            } else {
+                // Iteration timed out mid-search; preserve bestMove from previous completed depth
+                break
             }
 
             if ctx.shouldStop { break }
@@ -94,8 +100,8 @@ struct ChessAI {
 
     // MARK: - Root Search (one iteration at `depth`)
     //
-    // Returns the best move found, or nil if time ran out before completing
-    // even the first move (extremely rare; bestMove() falls back to prior iter).
+    // Returns the best move found for this full depth, or nil if time ran out
+    // before completing all root moves.
 
     private func searchRoot(color: PieceColor, state: GameState, rootHash: UInt64,
                              moves: [ChessMove], depth: Int,
@@ -128,15 +134,13 @@ struct ChessAI {
             alpha = max(alpha, score)
         }
 
-        // Store result only if we completed the iteration without mid-search timeout.
+        // Return result ONLY if the iteration completed in full without timing out
         if !ctx.shouldStop, let m = bestMove {
             ctx.tt.store(hash: rootHash, depth: depth, score: bestScore,
                          flag: .exact, move: m)
             return (m, bestScore)
         }
 
-        // If we timed out but had at least one move scored, return it.
-        if let m = bestMove { return (m, bestScore) }
         return nil
     }
 
@@ -212,7 +216,9 @@ struct ChessAI {
             }
         }
 
-        ctx.tt.store(hash: hash, depth: depth, score: best, flag: flag, move: bestMv)
+        if !ctx.shouldStop {
+            ctx.tt.store(hash: hash, depth: depth, score: best, flag: flag, move: bestMv)
+        }
         return best
     }
 
@@ -395,5 +401,27 @@ struct ChessAI {
         case .king:   return endgame ? ChessAI.kingEndgamePST[r][col]
                                      : ChessAI.kingMiddlePST[r][col]
         }
+    }
+
+    static func evaluatePosition(state: GameState) -> (score: Double, mateIn: Int?) {
+        switch state.status {
+        case .checkmate(let loser):
+            return (loser == .white ? -100.0 : 100.0, loser == .white ? -1 : 1)
+        case .resigned(let loser):
+            return (loser == .white ? -100.0 : 100.0, loser == .white ? -1 : 1)
+        case .draw:
+            return (0.0, nil)
+        default:
+            break
+        }
+
+        var ai = ChessAI()
+        let zt = ZobristTable.shared
+        let hash = zt.hash(for: state)
+        let ctx = SearchContext(timeLimit: 0.05)
+        let score = -ai.negamax(state: state, hash: hash, depth: 2, alpha: -20000, beta: 20000, color: state.currentTurn, ctx: ctx)
+        let whitePerspective = state.currentTurn == .white ? -score : score
+        let pawns = max(-20.0, min(20.0, Double(whitePerspective) / 100.0))
+        return (pawns, nil)
     }
 }

@@ -48,6 +48,7 @@ struct PuzzleView: View {
                                     flyingCapture:    viewModel.flyingCapture,
                                     playerColor:      viewModel.playerColor,
                                     isPlayerTurn:     viewModel.isPlayerTurn,
+                                    gameStatus:       viewModel.gameState.status,
                                     onTap:            { viewModel.tap(position: $0) }
                                 )
                                 .aspectRatio(1, contentMode: .fit)
@@ -81,7 +82,7 @@ struct PuzzleView: View {
                     }
                 }
             }
-            .navigationTitle("Zadaci")
+            .navigationTitle(Loc("Zadaci"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -191,14 +192,14 @@ struct PuzzleView: View {
                 }
                 .padding(.bottom, 32)
             }
-            .navigationTitle("Izaberi dan")
+            .navigationTitle(Loc("Izaberi dan"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Otkaži") { showCalendar = false }
+                    Button(Loc("Otkaži")) { showCalendar = false }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Otvori") {
+                    Button(Loc("Otvori")) {
                         viewModel.load(date: calendarDate)
                         showCalendar = false
                     }
@@ -216,7 +217,7 @@ struct PuzzleView: View {
 
         return AnyView(
             VStack(alignment: .leading, spacing: 10) {
-                Text("Rešeni zadaci")
+                Text(Loc("Rešeni zadaci"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
 
@@ -270,6 +271,7 @@ struct PuzzleView: View {
                 flyingCapture:    viewModel.flyingCapture,
                 playerColor:      viewModel.playerColor,
                 isPlayerTurn:     viewModel.isPlayerTurn,
+                gameStatus:       viewModel.gameState.status,
                 onTap:            { viewModel.tap(position: $0) }
             )
             .padding(.horizontal, 4)
@@ -388,7 +390,7 @@ struct PuzzleView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "star.fill")
                         .foregroundStyle(.yellow)
-                    Text("Završio si zadatak za danas!")
+                    Text(Loc("Završio si zadatak za danas!"))
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(Color.primary.opacity(0.85))
                 }
@@ -408,7 +410,7 @@ struct PuzzleView: View {
             ProgressView()
                 .tint(.primary)
                 .scaleEffect(1.4)
-            Text("Učitavam zadatak...")
+            Text(Loc("Učitavam zadatak..."))
                 .foregroundStyle(Color.secondary)
                 .font(.subheadline)
         }

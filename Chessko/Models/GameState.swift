@@ -16,9 +16,10 @@ enum GameStatus: Equatable, Sendable, Codable {
     case check(PieceColor)
     case checkmate(PieceColor)   // this color lost
     case draw(DrawReason)
+    case resigned(PieceColor)    // this color resigned
 
     private enum CodingKeys: String, CodingKey { case type, color, drawReason }
-    private enum StatusType: String, Codable { case playing, check, checkmate, draw, stalemate }
+    private enum StatusType: String, Codable { case playing, check, checkmate, draw, stalemate, resigned }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
@@ -34,6 +35,9 @@ enum GameStatus: Equatable, Sendable, Codable {
         case .draw(let reason):
             try c.encode(StatusType.draw,      forKey: .type)
             try c.encode(reason,               forKey: .drawReason)
+        case .resigned(let color):
+            try c.encode(StatusType.resigned,  forKey: .type)
+            try c.encode(color,                forKey: .color)
         }
     }
 
@@ -46,6 +50,7 @@ enum GameStatus: Equatable, Sendable, Codable {
         case .checkmate: self = .checkmate(try c.decode(PieceColor.self, forKey: .color))
         case .draw:      self = .draw(try c.decode(DrawReason.self, forKey: .drawReason))
         case .stalemate: self = .draw(.stalemate)   // backward compat for old saves
+        case .resigned:  self = .resigned(try c.decode(PieceColor.self, forKey: .color))
         }
     }
 }

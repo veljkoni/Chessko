@@ -46,6 +46,7 @@ struct SquareView: View {
     let isLegalMove: Bool
     let isLastMove: Bool
     let isLight: Bool
+    var isInCheck: Bool = false
     var hidePiece: Bool = false
     /// True when this square is on the bottom display row — shows file label (a–h).
     var isBottomEdge: Bool = false
@@ -58,19 +59,50 @@ struct SquareView: View {
     @AppStorage("showLastMoveHighlight") private var showLastMoveHighlight: Bool   = true
     @AppStorage("showLegalMoves")        private var showLegalMoves:        Bool   = true
 
+    @State private var checkPulse = false
+    @State private var selectPulse = false
+    @State private var dotAnimated = false
+
     var body: some View {
         ZStack {
             // Base square
             baseColor
 
+            // King in Check Red Aura
+            if isInCheck {
+                RadialGradient(
+                    colors: [
+                        Color(hex: "#EF4444").opacity(checkPulse ? 0.85 : 0.40),
+                        Color(hex: "#DC2626").opacity(checkPulse ? 0.45 : 0.20),
+                        Color.clear
+                    ],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 40
+                )
+                .overlay(
+                    Rectangle()
+                        .stroke(Color(hex: "#EF4444").opacity(checkPulse ? 0.85 : 0.40), lineWidth: 2)
+                )
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 0.65).repeatForever(autoreverses: true)) {
+                        checkPulse = true
+                    }
+                }
+            }
+
             // Last-move highlight
-            if isLastMove && showLastMoveHighlight {
+            if isLastMove && showLastMoveHighlight && !isInCheck {
                 Color.yellow.opacity(0.40)
             }
 
-            // Selection highlight
+            // Selection highlight with Cyan glow
             if isSelected {
-                Color(hex: "#8d98b0").opacity(0.70)
+                Color(hex: "#00D2FF").opacity(0.28)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color(hex: "#00D2FF").opacity(0.75), lineWidth: 1.5)
+                    )
             }
 
             // Legal move indicator
@@ -84,7 +116,24 @@ struct SquareView: View {
                     PieceImageView(piece: piece)
                         .padding(geo.size.width * 0.05)
                         .rotationEffect(.degrees(isFlipped ? -180 : 0))
+                        .scaleEffect(isSelected ? (selectPulse ? 1.07 : 1.0) : 1.0)
                         .transition(.scale.combined(with: .opacity))
+                        .onAppear {
+                            if isSelected {
+                                withAnimation(.easeInOut(duration: 0.70).repeatForever(autoreverses: true)) {
+                                    selectPulse = true
+                                }
+                            }
+                        }
+                        .onChange(of: isSelected) { selected in
+                            if selected {
+                                withAnimation(.easeInOut(duration: 0.70).repeatForever(autoreverses: true)) {
+                                    selectPulse = true
+                                }
+                            } else {
+                                selectPulse = false
+                            }
+                        }
                 }
             }
 
@@ -118,21 +167,30 @@ struct SquareView: View {
 
     @ViewBuilder
     private var legalMoveIndicator: some View {
-        if piece != nil {
-            // Capture ring
-            GeometryReader { geo in
-                let line = geo.size.width * 0.10
-                RoundedRectangle(cornerRadius: 0)
-                    .strokeBorder(Color.black.opacity(0.22), lineWidth: line)
+        Group {
+            if piece != nil {
+                // Capture ring
+                GeometryReader { geo in
+                    let line = geo.size.width * 0.08
+                    Rectangle()
+                        .stroke(Color(hex: "#00D2FF").opacity(0.65), lineWidth: line)
+                }
+            } else {
+                // Empty-square dot
+                GeometryReader { geo in
+                    Circle()
+                        .fill(Color(hex: "#00D2FF").opacity(0.55))
+                        .frame(width:  geo.size.width  * 0.28,
+                               height: geo.size.height * 0.28)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
-        } else {
-            // Empty-square dot
-            GeometryReader { geo in
-                Circle()
-                    .fill(Color.black.opacity(0.20))
-                    .frame(width:  geo.size.width  * 0.28,
-                           height: geo.size.height * 0.28)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .scaleEffect(dotAnimated ? 1.0 : 0.4)
+        .opacity(dotAnimated ? 1.0 : 0.0)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.18)) {
+                dotAnimated = true
             }
         }
     }

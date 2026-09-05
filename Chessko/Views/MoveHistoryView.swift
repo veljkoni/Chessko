@@ -10,6 +10,8 @@ struct MoveHistoryView: View {
 
     /// Notacije u redosledu igranja: [beli1, crni1, beli2, crni2, ...]
     let notations: [String]
+    var selectedMoveIndex: Int? = nil
+    var onSelectMove: ((Int) -> Void)? = nil
 
     // MARK: - Data model
 
@@ -17,7 +19,9 @@ struct MoveHistoryView: View {
         let id: Int
         let number: Int
         let white: String
+        let whiteIndex: Int
         let black: String?
+        let blackIndex: Int?
     }
 
     private struct PairRow: Identifiable {
@@ -32,7 +36,9 @@ struct MoveHistoryView: View {
                 id: i / 2,
                 number: i / 2 + 1,
                 white: notations[i],
-                black: i + 1 < notations.count ? notations[i + 1] : nil
+                whiteIndex: i + 1,
+                black: i + 1 < notations.count ? notations[i + 1] : nil,
+                blackIndex: i + 1 < notations.count ? i + 2 : nil
             )
         }
     }
@@ -64,6 +70,14 @@ struct MoveHistoryView: View {
                     }
                 }
             }
+            .onChange(of: selectedMoveIndex) { _, newIndex in
+                if let idx = newIndex, idx > 0 {
+                    let pairId = (idx - 1) / 4
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        proxy.scrollTo(pairId, anchor: .center)
+                    }
+                }
+            }
         }
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
@@ -92,26 +106,43 @@ struct MoveHistoryView: View {
 
     @ViewBuilder
     private func pairCell(pair: MovePair) -> some View {
-        let lastIndex = notations.count - 1
-        let whiteIsLast = pair.id * 2 == lastIndex
-        let blackIsLast = pair.black != nil && pair.id * 2 + 1 == lastIndex
+        let whiteSelected = selectedMoveIndex == pair.whiteIndex
+        let blackSelected = pair.blackIndex != nil && selectedMoveIndex == pair.blackIndex
 
         HStack(spacing: 0) {
             Text("\(pair.number).")
                 .foregroundStyle(.secondary)
                 .frame(width: 26, alignment: .trailing)
 
-            Text(pair.white)
-                .fontWeight(whiteIsLast ? .semibold : .regular)
-                .foregroundStyle(whiteIsLast ? Color.primary : Color.primary.opacity(0.85))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 6)
+            Button {
+                onSelectMove?(pair.whiteIndex)
+            } label: {
+                Text(pair.white)
+                    .fontWeight(whiteSelected ? .bold : .regular)
+                    .foregroundStyle(whiteSelected ? Color.cyan : Color.primary.opacity(0.85))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(whiteSelected ? Color.cyan.opacity(0.18) : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 4)
 
             Group {
-                if let black = pair.black {
-                    Text(black)
-                        .fontWeight(blackIsLast ? .semibold : .regular)
-                        .foregroundStyle(blackIsLast ? Color.primary : Color.primary.opacity(0.85))
+                if let black = pair.black, let bIdx = pair.blackIndex {
+                    Button {
+                        onSelectMove?(bIdx)
+                    } label: {
+                        Text(black)
+                            .fontWeight(blackSelected ? .bold : .regular)
+                            .foregroundStyle(blackSelected ? Color.cyan : Color.primary.opacity(0.85))
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .background(blackSelected ? Color.cyan.opacity(0.18) : Color.clear)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+                    .buttonStyle(.plain)
                 } else {
                     Text("").foregroundStyle(.secondary)
                 }
@@ -119,19 +150,8 @@ struct MoveHistoryView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .font(.system(.subheadline, design: .monospaced))
-        .padding(.vertical, 5)
-        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .padding(.horizontal, 6)
         .frame(maxWidth: .infinity)
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    MoveHistoryView(notations: [
-        "e4", "e5", "Sf3", "Sc6", "Lb5", "a6",
-        "La4", "Sf6", "O-O", "Le7", "Te1", "b5",
-        "Lb3", "d6", "c3", "O-O", "h3", "Sb8",
-    ])
-    .padding()
 }

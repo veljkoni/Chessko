@@ -181,7 +181,7 @@ struct ChessClockView: View {
 
             VStack(spacing: 12) {
                 if isTimeOut {
-                    Text(LocalizedStringKey("Vreme je isteklo!"))
+                    Text(Loc("Vreme je isteklo!"))
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(textColor)
                         .padding(.horizontal, 16)
@@ -189,11 +189,11 @@ struct ChessClockView: View {
                         .background(textColor.opacity(0.1), in: Capsule())
                 } else {
                     if !hasStarted {
-                        Text(LocalizedStringKey(selectedPreset.subtitle))
+                        Text(Loc(selectedPreset.subtitle))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(subtextColor)
                     } else {
-                        Text(String(format: NSLocalizedString("Poteza: %d", comment: ""), moves))
+                        Text(LocF("Poteza: %d", moves))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(subtextColor)
                     }
@@ -244,13 +244,13 @@ struct ChessClockView: View {
                                                     Image(systemName: "star.fill")
                                                 }
                                             }
-                                            Text(LocalizedStringKey(preset.subtitle))
+                                            Text(Loc(preset.subtitle))
                                                 .font(.caption)
                                         }
                                     }
                                 }
                             } label: {
-                                Text(LocalizedStringKey(category))
+                                Text(Loc(category))
                             }
                         }
                     } label: {
@@ -463,11 +463,11 @@ struct ChessClockInfoView: View {
                 }
                 .padding(20)
             }
-            .navigationTitle(LocalizedStringKey("Objašnjenje vremenskih kontrola"))
+            .navigationTitle(Loc("Objašnjenje vremenskih kontrola"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(LocalizedStringKey("Zatvori")) {
+                    Button(Loc("Zatvori")) {
                         dismiss()
                     }
                 }
@@ -477,7 +477,7 @@ struct ChessClockInfoView: View {
 
     private func categorySection(title: String, items: [(String, String)]) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(LocalizedStringKey(title))
+            Text(Loc(title))
                 .font(.title3.weight(.bold))
                 .padding(.bottom, 4)
 
@@ -489,7 +489,7 @@ struct ChessClockInfoView: View {
                             .frame(width: 100, alignment: .leading)
                             .foregroundColor(.primary)
 
-                        Text(LocalizedStringKey(description))
+                        Text(Loc(description))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

@@ -64,6 +64,8 @@ final class MateExerciseViewModel {
             return isThinking
                 ? Loc("Crni razmišlja...")
                 : Loc("Na potezu si!")
+        case .resigned:
+            return Loc("Predaja")
         }
     }
 
