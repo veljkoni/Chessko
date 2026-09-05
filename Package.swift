@@ -18,6 +18,7 @@ let package = Package(
                 "Models/GameState.swift",
                 "Models/GameState+FEN.swift",
                 "Logic/MoveGenerator.swift",
+                "Logic/ZobristTable.swift",
                 "TestSupport/LocShim.swift",
             ],
             swiftSettings: [.define("CHESSKO_ENGINE_PACKAGE")]
