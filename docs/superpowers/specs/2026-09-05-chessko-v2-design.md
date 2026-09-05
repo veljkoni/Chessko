@@ -292,6 +292,34 @@ U Putu, korak tipa `game` koristi analizu za povratnu informaciju umesto pukog
 
 Uvodi se pre novih ekrana, da se Put ne gradi na zatečenoj neujednačenoj osnovi.
 
+**Odabrani pravac (2026-09-06): „Tiho i precizno".** Sistemski iOS urađen kako
+treba — neutralne podloge, jedan uzdržan akcent izveden iz postojećeg
+`#17234f`, jedna tipografska skala kroz celu aplikaciju. Tabla je jedina
+zasićena stvar na ekranu.
+
+| Token | Svetla | Tamna |
+|---|---|---|
+| akcent | `#2E4A8A` | `#7EA0E8` |
+| podloga | `#F2F3F7` | `#0E1428` |
+| površina | `#FFFFFF` | `#161D33` |
+| navigacija | `#FFFFFF` | `#131A2E` |
+| čip / ispuna | `#E7EAF1` | `#1E2740` |
+| linija | `#DFE3EC` | `#232C46` |
+| tekst | `#161A22` | `#EEF1F7` |
+| prigušen tekst | `#6B7280` | `#8B93A7` |
+
+Tamne vrednosti su praktično zatečeni `Color.appBackground`, pa je ovo
+doterivanje postojećeg a ne zaokret.
+
+**Akcent je fiksan i nezavisan od teme table.** Aplikacija ima 8 tema table
+koje korisnik bira; akcent se ne menja sa njima. Tabla ostaje jedini šaroliki
+element, a boje vezane za tablu (poslednji potez, legalni potezi, šah) i dalje
+dolaze iz teme table.
+
+**Mrtav prostor se ne popunjava nego se raspored preuređuje.** Umesto dodavanja
+sadržaja, tabla se uvećava i raspored centrira tako da praznine nema. Faza 1
+ne izmišlja nov sadržaj — statistika, streak i „Nastavi" dolaze tek u Fazi 4.
+
 - **Tokeni:** boje, razmaci, radijusi, tipografska skala. `Font.appFont` iz
   `PlatformHelper.swift` je začetak tipografskog dela i proširuje se.
 - **Jedan akcent** umesto današnjih plava / zelena / narandžasta / crvena po lekcijama.
