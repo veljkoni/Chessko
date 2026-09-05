@@ -5,8 +5,11 @@
 
 ## Šta je aplikacija
 
-**Chessko** — iOS aplikacija: šah protiv računara (AI). Igrač je uvek **beli**,
-računar je **crni**. UI je na srpskom. Jedan ekran, jedan mod igre.
+**Chessko** — iOS aplikacija: šah protiv računara (AI), sa dodatnim modovima
+(igra sa prijateljem na istom uređaju, samostalni šahovski sat). Igrač bira
+boju (beli ili crni; podrazumevano beli) — tabla se rotira kad igra crnim.
+UI je lokalizovan na 8 jezika (izvorni srpski). `ContentView` je `TabView`
+sa tri taba: Igra, Zadaci (dnevni puzzle), Učenje (lekcije).
 
 - Platforma: **iOS 18.0+**, iPhone + iPad (`TARGETED_DEVICE_FAMILY = 1,2`)
 - Jezik: **Swift 6.0**, **SwiftUI**
@@ -57,7 +60,7 @@ Chessko/
 ├── Models/                   čiste vrednosne strukture (struct/enum, Sendable)
 │   ├── Position.swift        row 0 = rank 8 (crni), col 0 = file a
 │   ├── ChessPiece.swift      PieceType, PieceColor, materialValue, Unicode symbol
-│   ├── ChessMove.swift       from/to/flag; == poredi SAMO from+to (ne flag!)
+│   ├── ChessMove.swift       from/to/flag; == poredi from+to **i** flag
 │   └── GameState.swift       cela tabla + prava rokade + status; immutable apply
 ├── Logic/
 │   ├── MoveGenerator.swift   generisanje poteza, detekcija šaha (enum, statičke fn)
@@ -81,13 +84,16 @@ Chessko/
     beskonačnu rekurziju). Koristi se unutar MoveGenerator i AI pretrage.
 - **Legalnost poteza**: `MoveGenerator.legalMoves` = pseudo-legalni potezi
   filtrirani tako da kralj ne ostaje u šahu (igra potez pa proverava `isInCheck`).
-- **AI**: `ChessAI` — negamax sa alfa-beta. Dubina po težini: easy 2 / medium 3 /
-  hard 4. Trenutno hardkodirano `.medium` u `GameViewModel`. Evaluacija =
-  materijal + piece-square bonus. Potezi se `shuffled()` radi varijacije.
+- **AI**: `ChessAI` — negamax sa alfa-beta, iterative deepening + transpoziciona
+  tabela (Zobrist). Težina (`Difficulty`) određuje `maxDepth` + `timeLimit`
+  (beginner/easy/medium/hard), NE fiksnu dubinu; korisnik bira težinu u
+  podešavanjima (uključujući Stockfish nivoe). Evaluacija = materijal +
+  piece-square bonus (+ endgame king tabela). Potezi se `shuffled()` radi varijacije.
 - **Concurrency**: AI se računa na `Task.detached(priority: .userInitiated)`,
   rezultat se primenjuje nazad na `@MainActor`. `isThinking` gejtuje UI.
-- **Promocija**: UI uvek automatski promoviše u **damu** (`handleMove` u VM);
-  postoje `promotionMove`/`showPromotion` polja ali UI za izbor još nije urađen.
+- **Promocija**: `promotionMove`/`showPromotion` u VM otvaraju overlay sa 4 figure
+  (D/T/L/S) — `confirmPromotion(_:)`/`cancelPromotion()`. Postoji i podešavanje za
+  automatsku promociju u damu (bez overlay-a) za korisnike koji to žele.
 - **Boje table** (`SquareView`): `squareLight #e9ebde`, `squareDark #8592af`,
   `boardBackground #17234f`. Highlight: žuto za poslednji potez, sivo za selekciju.
 - **Rotacija table**: `viewModel.isFlipped` → `BoardView` iterira redove/kolone u obrnutom
@@ -98,6 +104,11 @@ Chessko/
 
 - Stockfish radi samo sa `nn-37f18f62d772.nnue` (mali); `nn-1111cefa1111.nnue`
   (veliki, ~79MB) opcionalan za jaču igru — skinuti sa stockfishchess.org.
+- `positionKey` (`GameState.swift:97-100`) uključuje prava rokade u heš. Partija
+  sačuvana starijom verzijom sa zastarelim pravom (top uzet, pravo ostalo) daje
+  drugačiji `positionKey` od identične pozicije bez tog prava — brojač za
+  trostruko ponavljanje se posle nadogradnje može "razdvojiti" i propustiti remi.
+  Bezopasno (retko, ne ruši partiju), ali vredi zapisati.
 - **Isti bug sa rokadom postoji na Androidu** —
   `ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/models/GameState.kt`
   (grane `CastleKingside`/`CastleQueenside` i blok koji oduzima prava rokade
@@ -444,3 +455,24 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
 
 
 
+- **2026-09-05** — Fix wave iz finalnog pregleda cele grane Faze 0 (5 nalaza):
+  (1) `GameState.fen` je i dalje slepo verovala zastavicama rokade — dodat
+  `GameState.hasCastlingRook(_:kingside:)` helper (jedno mesto istine); `fen` gejtuje
+  sva 4 slova na njemu, `MoveGenerator.kingMoves` prepravljen da poziva isti helper
+  umesto duplirane inline provere; halfmove polje u FEN-u sada šalje pravi
+  `halfmoveClock` umesto hardkodovane `"0"`. (2) Svetla tema: preostala tri mesta u
+  `LessonDetailView.swift` (header „Specijalna pravila", scenario dugmad, `MatePuzzleCard`)
+  su i dalje imala `.white`/`Color.white.opacity(...)` — zamenjeno `.primary`/`.secondary`/
+  `Color.primary.opacity(...)` po istom obrascu kao `OpeningExerciseCard`/`MateExerciseCard`.
+  (3) Arhitektura sekcija ovog fajla je ispravljena na 4 mesta gde je bila u sukobu sa
+  sopstvenim roadmap-om/kodom: igrač bira boju + 8 jezika + `TabView` sa 3 taba (ne
+  "uvek beli, jedan ekran"); `ChessMove ==` uključuje `flag`; AI koristi `maxDepth`/
+  `timeLimit` po težini koju bira korisnik (ne hardkodovan `.medium`/fiksna dubina);
+  promocija ima UI izbor figure (ne uvek dama). Dodata napomena u „Poznata ograničenja"
+  da `positionKey` nosi prava rokade pa stari save može razdvojiti brojač ponavljanja
+  posle nadogradnje. (4) `PuzzleView` je sekla temu na `prefix(2)` PRE filtriranja
+  nepoznatih Lichess tema — puzzle čije prve dve teme nisu u mapi nije prikazivao
+  nijedan čip iako je treća bila poznata; sad se prvo mapira+filtrira, pa tek onda
+  `prefix(2)`. (5) `Logic/ZobristTable.swift` dodat u `sources:` liste `Package.swift`
+  (kompajlira se samo sa Foundation) da kasnija faza može da mu piše test bez izmene
+  build konfiguracije. Perft nepromenjen (potvrđeno `swift test`); build zelen.
