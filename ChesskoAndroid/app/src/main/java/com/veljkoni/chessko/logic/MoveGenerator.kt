@@ -127,8 +127,12 @@ object MoveGenerator {
         if (isInCheck(color, state)) return moves
 
         val row = if (color == PieceColor.WHITE) 7 else 0
-        val canKS = if (color == PieceColor.WHITE) state.whiteCanCastleKingside else state.blackCanCastleKingside
-        val canQS = if (color == PieceColor.WHITE) state.whiteCanCastleQueenside else state.blackCanCastleQueenside
+        // Zastavica prava rokade sama po sebi nije dovoljna — sačuvana partija
+        // iz starije verzije može nositi zastarelo pravo bez topa u uglu.
+        val canKS = (if (color == PieceColor.WHITE) state.whiteCanCastleKingside else state.blackCanCastleKingside) &&
+                state.hasCastlingRook(color, kingside = true)
+        val canQS = (if (color == PieceColor.WHITE) state.whiteCanCastleQueenside else state.blackCanCastleQueenside) &&
+                state.hasCastlingRook(color, kingside = false)
 
         // Kingside: f & g must be empty, f must not be attacked
         if (canKS && state.board[row][5] == null && state.board[row][6] == null) {

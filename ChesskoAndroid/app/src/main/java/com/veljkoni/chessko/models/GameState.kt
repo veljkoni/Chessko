@@ -95,11 +95,13 @@ data class GameState(
 
             val active = if (currentTurn == PieceColor.WHITE) "w" else "b"
 
+            // Zastavica prava rokade nije dovoljna — proveri i da top zaista postoji,
+            // jer se ovaj FEN šalje i Stockfish-u (ne sme opisati nelegalnu poziciju).
             val castling = StringBuilder()
-            if (whiteCanCastleKingside) castling.append("K")
-            if (whiteCanCastleQueenside) castling.append("Q")
-            if (blackCanCastleKingside) castling.append("k")
-            if (blackCanCastleQueenside) castling.append("q")
+            if (whiteCanCastleKingside && hasCastlingRook(PieceColor.WHITE, true)) castling.append("K")
+            if (whiteCanCastleQueenside && hasCastlingRook(PieceColor.WHITE, false)) castling.append("Q")
+            if (blackCanCastleKingside && hasCastlingRook(PieceColor.BLACK, true)) castling.append("k")
+            if (blackCanCastleQueenside && hasCastlingRook(PieceColor.BLACK, false)) castling.append("q")
             val castlingStr = if (castling.isEmpty()) "-" else castling.toString()
 
             val ep = enPassantTarget?.algebraic ?: "-"
@@ -187,15 +189,17 @@ data class GameState(
             }
             is MoveFlag.CastleKingside -> {
                 val row = move.from.row
-                mutableBoard[row][6] = ChessPiece(PieceType.KING, piece.color)
-                mutableBoard[row][5] = ChessPiece(PieceType.ROOK, piece.color)
+                // Pomeri POSTOJECEG topa; ranije se pravio nov, pa je rokada
+                // posle pojedenog topa stvarala figuru iz vazduha.
+                mutableBoard[row][5] = mutableBoard[row][7]
+                mutableBoard[row][6] = piece
                 mutableBoard[row][4] = null
                 mutableBoard[row][7] = null
             }
             is MoveFlag.CastleQueenside -> {
                 val row = move.from.row
-                mutableBoard[row][2] = ChessPiece(PieceType.KING, piece.color)
-                mutableBoard[row][3] = ChessPiece(PieceType.ROOK, piece.color)
+                mutableBoard[row][3] = mutableBoard[row][0]
+                mutableBoard[row][2] = piece
                 mutableBoard[row][4] = null
                 mutableBoard[row][0] = null
             }
@@ -240,6 +244,15 @@ data class GameState(
                 Position(0, 0) -> nextBCQ = false
             }
         }
+        // Top pojeden na startnom polju takodje oduzima pravo rokade
+        // vlasniku tog topa. Vazi za svaku figuru koja stigne na to polje.
+        when (move.to) {
+            Position(7, 7) -> nextWCK = false
+            Position(7, 0) -> nextWCQ = false
+            Position(0, 7) -> nextBCK = false
+            Position(0, 0) -> nextBCQ = false
+            else -> {}
+        }
 
         return GameState(
             board = mutableBoard.map { it.toList() }.toList(),
@@ -257,6 +270,14 @@ data class GameState(
             positionHistory = positionHistory,
             moveNotations = moveNotations
         )
+    }
+
+    // Da li POSTOJI top na uglu potrebnom za rokadu (ne oslanja se samo na zastavice
+    // prava rokade, koje mogu biti zastarele u sačuvanoj partiji).
+    fun hasCastlingRook(color: PieceColor, kingside: Boolean): Boolean {
+        val row = if (color == PieceColor.WHITE) 7 else 0
+        val p = board[row][if (kingside) 7 else 0]
+        return p?.type == PieceType.ROOK && p.color == color
     }
 
     fun kingPosition(color: PieceColor): Position? {

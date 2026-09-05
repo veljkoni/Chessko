@@ -265,6 +265,15 @@ class ZobristTable private constructor() {
                 Position(0, 0) -> bcq = false
             }
         }
+        // Top pojeden na startnom polju takodje oduzima pravo rokade
+        // vlasniku tog topa (mora pratiti applyingForSearch tacno).
+        when (move.to) {
+            Position(7, 7) -> wck = false
+            Position(7, 0) -> wcq = false
+            Position(0, 7) -> bck = false
+            Position(0, 0) -> bcq = false
+            else -> {}
+        }
 
         // XOR in new castling rights
         if (wck) h = h xor castling[0]
