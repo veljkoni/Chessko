@@ -300,17 +300,14 @@ struct PuzzleView: View {
             .padding(.vertical, 5)
             .background(ratingColor(puzzle.rating).opacity(0.18), in: Capsule())
 
-            let themes = puzzle.themeList.prefix(2)
-            ForEach(Array(themes), id: \.self) { theme in
-                let label = localizeTheme(theme)
-                if !label.isEmpty {
-                    Text(label)
-                        .font(.caption2)
-                        .foregroundStyle(Color.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 5)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
-                }
+            let themes = Array(puzzle.themeList.map(localizeTheme).filter { !$0.isEmpty }.prefix(2))
+            ForEach(Array(themes.enumerated()), id: \.offset) { _, label in
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(Color.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(Color.primary.opacity(0.06), in: Capsule())
             }
 
             Spacer()
