@@ -262,7 +262,7 @@ LocShim zamenjuje Loc(_:) u testovima jer LocalizationManager uvozi SwiftUI."
 
 Početna pozicija ne hvata rokadu, en passant ni promociju. Standardni skup od šest pozicija hvata. **Jedan od njih će pasti** — to nije greška u testu nego stvarni bug u motoru, koji popravlja Task 4.
 
-Sve očekivane vrednosti u ovom zadatku su unapred provorene na ovom motoru: pet pozicija daje tačne brojeve, pozicija 5 na dubini 3 daje **62416 umesto 62379**.
+Sve očekivane vrednosti u ovom zadatku su unapred proverene na ovom motoru: pet pozicija daje tačne brojeve, pozicija 5 na dubini 3 daje **62416 umesto 62379**.
 
 **Files:**
 - Modify: `Tests/ChesskoEngineTests/PerftTests.swift`
