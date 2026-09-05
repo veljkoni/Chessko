@@ -25,6 +25,28 @@ Najlakše: otvoriti `Chessko.xcodeproj` u Xcode i pokrenuti (⌘R).
 Pomoćne skripte u rootu: `create_xcode_project.py` (generiše pbxproj),
 `extract_pieces.py` (seče `design-reference.svg` u SVG figure za asset katalog).
 
+> **UPOZORENJE:** `create_xcode_project.py` se **više ne sme pokretati**.
+> Regeneriše ceo `project.pbxproj` iz nule i ne zna za `chesskit-engine`
+> SPM zavisnost — pokretanje obara Stockfish. `project.pbxproj` se od
+> 2026-07-03 održava ručno.
+
+## Testovi
+
+Motor se testira kroz SwiftPM paket u korenu (`Package.swift`), nezavisno
+od Xcode projekta — kompajlira postojeće izvorne fajlove po putanji, bez
+kopiranja.
+
+```bash
+swift test              # ceo skup
+swift test --filter Perft
+```
+
+Pokriveno (11 testova): perft za svih 6 standardnih pozicija (uključujući
+početnu do dubine 5, 4.865.609 čvorova, ~85s) i 4 testa prava rokade
+(uzimanje topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo
+pravo). `Chessko/TestSupport/LocShim.swift` postoji samo zbog paketa i
+zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u aplikaciji se ne kompajlira.
+
 ## Arhitektura (MVVM)
 
 ```
@@ -73,14 +95,24 @@ Chessko/
 
 ## Poznata ograničenja / TODO kandidati
 
-- Izbor figure pri promociji nije implementiran (uvek dama).
-- Izbor figure pri promociji nije implementiran (uvek dama).
 - Nema undo poteza, nema čuvanja partije, nema detekcije ponavljanja/50 poteza
   (remi samo na pat/mat).
-- Nema test target-a.
 - Igrač ne može da igra crnim, tabla se ne rotira.
 - Stockfish radi samo sa `nn-37f18f62d772.nnue` (mali); `nn-1111cefa1111.nnue`
   (veliki, ~79MB) opcionalan za jaču igru — skinuti sa stockfishchess.org.
+- **Isti bug sa rokadom postoji na Androidu** —
+  `ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/models/GameState.kt`
+  (grane `CastleKingside`/`CastleQueenside` i blok koji oduzima prava rokade
+  gledaju samo `move.from`, tačno ono što je iOS imao pre Faze 0). Popravka je
+  planirana za Fazu 6.
+- `PuzzleView` portretni raspored je `VStack` bez `ScrollView`-a, sa svega
+  ~10–20pt rezerve ispod poslednje kontrole — rizik od sečenja sadržaja na
+  većem Dynamic Type-u ili na manjim ekranima.
+- `build_localizations.py` pri svakom pokretanju regeneriše ceo
+  `Localizable.xcstrings` i briše Xcode-ove auto-ekstraktovane ključeve iz
+  izvornog koda (bez prevoda — Xcode ih sam vrati pri sledećem build-u), ali
+  diff od ~28.000 linija po pokretanju može sakriti stvaran gubitak ako se
+  ikad desi.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
@@ -369,10 +401,45 @@ Prioritet poređan po vrednosti; ništa od ovoga još nije započeto.
 - **2026-07-04** — Realistične teme za figure (Drvo i Metal): Dodali smo dva nova, visoko-realistična stila u `PieceStyle.swift` i `PieceImageView.swift`. Drveni stil koristi krem-zlatne gradijente javora za bele i tamne gradijente oraha/ebanovine za crne figure uz 3D overlay senčenje. Metalni stil koristi polirani hrom/srebro za bele i tamni gunmetal/crni hrom za crne figure, kreirajući logičnu distribuciju svetle i tamne strane. Uveli smo i horizontalni `ScrollView` za izbor stilova u `SettingsSheet.swift` radi bezbednog prilagođavanja širini ekrana.
 - **2026-07-04** — Ravne figure (Flat Style): Iskoristili smo priloženi vektorski SVG kôd za svih 6 figura. Napisali smo skriptu `split_svg.py` koja računa precizan bounding box za svaki element, centriranjem ih smešta u kvadratne SVG viewBox okvire (veličine 96x96) radi srazmerne visine. Stilizovali smo bele figure sa konturom od 1.8pt, a crne kao pune outline-free siluete. Izbacili smo stare stilove „Moderni“ i „Stakleni“.
 - **2026-07-04** — Jednostavne figure (Simple Bold & Thin): Uvezli smo dva nova seta iz foldera projekta. Napisali smo skriptu `merge_simple_svgs.py` koja automatski spaja crne solid maske i bele šuplje linije kako bi se dobile bele figure sa belom unutrašnjošću i tamno-sivom konturom, dok su crne figure solid tamno-sive. Registrovani su kao dynamic vector SVG asseti u Xcode-u.
-
-
-
-
+- **2026-09-05** — Faza 0 (higijena i temelji). Commit-ovan zaostali rad (Android port,
+  `StatsManager`, `EvalBarView`, `PlatformHelper`, review mode, resign, PGN) i dodat
+  `.gitignore` (potpisni ključ `appbundle.jks` više se ne prati). Uveden SwiftPM testni
+  paket (`Package.swift` + `Tests/ChesskoEngineTests`; `Chessko/TestSupport/LocShim.swift`
+  zamenjuje `Loc(_:)` u testovima jer `LocalizationManager` uvozi SwiftUI) koji kompajlira
+  izvorne fajlove motora po putanji, bez kopiranja i bez diranja `Chessko.xcodeproj`;
+  11 testova (perft za svih 6 standardnih pozicija, uključujući početnu do dubine 5, i
+  4 testa prava rokade). **Popravljen stvarni bug u pravilima:** prava rokade su se
+  oduzimala samo po `move.from`, pa pojeden top na startnom polju nije gasio pravo — motor
+  je nudio rokadu bez topa, a grana rokade je stvarala novog topa iz vazduha (2 topa umesto
+  1). Rokada sada pomera postojećeg topa, prava se oduzimaju i po `move.to` (perft poz. 5
+  dubina 3: 62416 → 62379, dokaz da je bug otklonjen). **Naknadno (Task 4b, van
+  prvobitnog plana):** ista greška je preživela na dva mesta koja su duplirala logiku
+  rokade — `ZobristTable.hash(after:in:from:)` je i dalje gasio prava samo po `move.from`
+  (netačan inkrementalni heš → gubljene transpozicije, ne pravilo legalnosti; komentar da
+  „prati" `applyingForSearch` je posle Task 4 postao netačan, sad je ispravljen) i
+  `MoveGenerator.kingMoves` je verovao zastavicama bez provere da top zaista stoji u uglu
+  (partija sačuvana starijom verzijom aplikacije može nositi zastarelo pravo —
+  `GameViewModel` učitava save-ove bez verzionisanja — pa bi motor posle nadogradnje i
+  dalje nudio nelegalnu rokadu). Oba mesta popravljena, dodata dva regresiona testa (sva
+  4 ugla umesto samo h1, i rokada bez topa). **Isti bug postoji na Androidu**
+  (`ChesskoAndroid/.../GameState.kt`) — vidi „Poznata ograničenja", čeka Fazu 6.
+  Popravljeni i UI bug-ovi: Markdown u lekcijama se renderovao kao zvezdice (`Text(Loc(_:))`
+  ne parsira Markdown, samo `LocalizedStringKey`; dodata `mdText()` preko
+  `AttributedString`), birač figura nevidljiv u svetloj temi (bela tipografija na
+  `Color.white.opacity(0.04)`, zamenjeno `.primary`/`.secondary`), sirovi ključevi tema
+  zadataka (`localizeTheme` je za nepoznatu temu vraćala sam ključ, npr. `backRankMate`;
+  sad vraća prazan string i čip se preskače — dopuna mape svim ~60 Lichess tema ostaje za
+  Fazu 2) i dva odsečena prevoda („Napad na dam" → „Napad na damu", „Napad na kral" →
+  „Napad na kralja"). Sadržaj ispod plutajućeg iOS 26 tab bara popravljen
+  `safeAreaPadding(.bottom, 24)` u **tri** fajla — `LessonDetailView.swift`,
+  `LearnView.swift` i portretnoj grani `GameView.swift`. Plan je prvobitno ciljao i
+  `PuzzleView`, ali taj `ScrollView` je unutar `.sheet` birača datuma koji tab bar nikad
+  ne prekriva, a portretna grana `PuzzleView`-a uopšte nema `ScrollView`; ta izmena je
+  namerno izostavljena (vidi i „Poznata ograničenja"). `project.pbxproj` se od 2026-07-03
+  održava ručno — `create_xcode_project.py` se više ne sme pokretati (vidi „Build / Run").
+  **Vizuelna provera u obe teme nije završena** — ekran host Mac-a se zaključao usred
+  faze, pa gorenavedeni UI fix-evi nisu potvrđeni na simulatoru/uređaju, samo pregledom
+  koda i diff-a.
 
 
 
