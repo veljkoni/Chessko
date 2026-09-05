@@ -645,12 +645,27 @@ private struct L_SectionHeader: View {
     }
 }
 
+/// Parsira inline Markdown (**podebljano**, *kurziv*) u vec prevedenom stringu.
+/// Loc() vraca String, a Text(String) ne parsira Markdown — parsira ga samo
+/// Text(LocalizedStringKey), sto bi ovde znacilo drugo trazenje po katalogu.
+fileprivate func mdText(_ localized: String) -> Text {
+    if let attributed = try? AttributedString(
+        markdown: localized,
+        options: AttributedString.MarkdownParsingOptions(
+            interpretedSyntax: .inlineOnlyPreservingWhitespace
+        )
+    ) {
+        return Text(attributed)
+    }
+    return Text(localized)
+}
+
 private struct L_Para: View {
     let text: String
     init(_ text: String) { self.text = text }
 
     var body: some View {
-        Text(Loc(text))
+        mdText(Loc(text))
             .font(.appFont(.subheadline))
             .foregroundStyle(.primary.opacity(0.85))
             .fixedSize(horizontal: false, vertical: true)
@@ -674,7 +689,7 @@ private struct L_Bullet: View {
                 Text(Loc(title))
                     .font(.appFont(.subheadline).weight(.semibold))
                     .foregroundStyle(.primary)
-                Text(Loc(text))
+                mdText(Loc(text))
                     .font(.appFont(.subheadline))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -702,7 +717,7 @@ private struct L_Box: View {
                     .font(.appFont(.caption).weight(.bold))
                     .foregroundStyle(color)
             }
-            Text(Loc(text))
+            mdText(Loc(text))
                 .font(.appFont(.subheadline))
                 .foregroundStyle(.primary.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
@@ -758,7 +773,7 @@ private struct L_NumberedRule: View {
                 Text(Loc(title))
                     .font(.appFont(.subheadline).weight(.bold))
                     .foregroundStyle(.primary)
-                Text(Loc(text))
+                mdText(Loc(text))
                     .font(.appFont(.subheadline))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
