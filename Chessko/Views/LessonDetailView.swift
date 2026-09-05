@@ -104,10 +104,10 @@ struct LessonDetailView: View {
                             .foregroundStyle(.yellow)
                         Text(Loc("Specijalna pravila"))
                             .font(.appFont(.subheadline).weight(.semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                         Text(Loc("— izaberi i istraži na tabli"))
                             .font(.appFont(.caption))
-                            .foregroundStyle(.white.opacity(0.5))
+                            .foregroundStyle(.secondary)
                     }
                     HStack(spacing: 10) {
                         ForEach(scenarios, id: \.self) { s in
@@ -125,17 +125,17 @@ struct LessonDetailView: View {
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                 }
-                                .foregroundStyle(active ? .black : .white)
+                                .foregroundStyle(active ? .black : Color.primary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 9)
                                 .background(
-                                    active ? Color.yellow : Color.white.opacity(0.15),
+                                    active ? Color.yellow : Color.primary.opacity(0.08),
                                     in: RoundedRectangle(cornerRadius: 10)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
                                         .strokeBorder(
-                                            active ? Color.yellow : Color.white.opacity(0.2),
+                                            active ? Color.yellow : Color.primary.opacity(0.14),
                                             lineWidth: 1
                                         )
                                 )
@@ -156,7 +156,7 @@ struct LessonDetailView: View {
                 Image(systemName: "hand.point.up.left").font(.appFont(.caption2))
                 Text(Loc("Tapni figuru da je promeniš · Tapni polje da je premestiš")).font(.appFont(.caption))
             }
-            .foregroundStyle(.white.opacity(0.35))
+            .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 16).padding(.bottom, 24)
@@ -898,7 +898,7 @@ struct MatePuzzleCard: View {
                     HStack(spacing: 6) {
                         Text(Loc(vm.line.name))
                             .font(.appFont(.subheadline).weight(.semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                         Text(LocF("Mat u %lld", mateIn))
                             .font(.appFont(.caption2).weight(.bold))
                             .foregroundStyle(vm.line.accentColor)
@@ -907,7 +907,7 @@ struct MatePuzzleCard: View {
                     }
                     Text(Loc(vm.line.hint))
                         .font(.appFont(.caption))
-                        .foregroundStyle(.white.opacity(0.55))
+                        .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
                 Spacer(minLength: 0)
@@ -950,16 +950,16 @@ struct MatePuzzleCard: View {
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
                         .font(.appFont(.caption).weight(.medium))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 10).padding(.vertical, 5)
-                        .background(.white.opacity(0.1), in: Capsule())
+                        .background(Color.primary.opacity(0.06), in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
         }
-        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .strokeBorder(puzzleBorderColor, lineWidth: 1.5)
@@ -971,7 +971,7 @@ struct MatePuzzleCard: View {
         switch vm.phase {
         case .solved:    return .yellow
         case .wrongMove: return .red
-        case .playing:   return .white.opacity(0.65)
+        case .playing:   return .secondary
         }
     }
 
