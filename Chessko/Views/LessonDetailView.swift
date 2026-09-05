@@ -27,6 +27,7 @@ struct LessonDetailView: View {
                     .frame(width: geo.size.width)
                     .padding(.bottom, 40)
                 }
+                .safeAreaPadding(.bottom, 24)
             }
         }
         .navigationTitle("Lekcija \(lesson.id)")

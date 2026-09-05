@@ -117,6 +117,7 @@ struct LearnView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                 }
+                .safeAreaPadding(.bottom, 24)
             }
             .navigationTitle(Loc("Učenje"))
             .navigationBarTitleDisplayMode(.inline)

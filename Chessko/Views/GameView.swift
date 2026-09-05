@@ -142,6 +142,7 @@ struct GameView: View {
                         .padding(.bottom, 16)
                     }
                     .scrollBounceBehavior(.basedOnSize)
+                    .safeAreaPadding(.bottom, 24)
                 }
             }
             .navigationTitle("Chessko")
