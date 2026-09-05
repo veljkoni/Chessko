@@ -192,7 +192,6 @@ struct PuzzleView: View {
                 }
                 .padding(.bottom, 32)
             }
-            .safeAreaPadding(.bottom, 24)
             .navigationTitle(Loc("Izaberi dan"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -711,7 +711,6 @@ Na iOS-u 26 tab bar pluta iznad sadržaja. Tabla u lekciji je presečena. Nigde 
 **Files:**
 - Modify: `Chessko/Views/LessonDetailView.swift:15`
 - Modify: `Chessko/Views/LearnView.swift:91`
-- Modify: `Chessko/Views/PuzzleView.swift:175`
 - Modify: `Chessko/Views/GameView.swift:90`
 
 **Interfaces:**
@@ -736,13 +735,19 @@ Na `ScrollView` sa linije 91 dodati isti modifikator:
                 .safeAreaPadding(.bottom, 24)
 ```
 
-- [ ] **Step 3: PuzzleView**
+- [ ] **Step 3: PuzzleView — PRESKOČITI**
 
-Na `ScrollView` sa linije 175 (portret grana) dodati:
+Prvobitno je ovde stajalo „na `ScrollView` sa linije 175". To je pogrešno:
+taj `ScrollView` je **unutar `.sheet(isPresented: $showCalendar)`** (blok počinje
+na liniji 137) — to je birač datuma „Izaberi dan", ne sadržaj taba. Sheet se
+prikazuje iznad tab bara, pa ga tab bar nikad ne preklapa.
 
-```swift
-            .safeAreaPadding(.bottom, 24)
-```
+Portretna grana `PuzzleView`-a (`} else {` na liniji 76) **uopšte nema
+`ScrollView`** — sadržaj je fiksni raspored. Nema čemu da se doda uvlačenje.
+
+`PuzzleView` se u ovom zadatku **ne menja**. Da li portretni raspored treba
+prepravljati je pitanje za Fazu 1 (dizajn sistem), gde se ionako popunjava
+mrtav prostor na tom tabu.
 
 - [ ] **Step 4: GameView**
 
