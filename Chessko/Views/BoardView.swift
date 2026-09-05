@@ -16,6 +16,9 @@ struct BoardView: View {
     let playerColor: PieceColor
     let isPlayerTurn: Bool
     var gameStatus: GameStatus = .playing
+    /// Swipe-to-change-theme/style is for the game board. Boards embedded in a
+    /// scrolling lesson must not swallow vertical drags — the page has to scroll.
+    var allowsStyleSwipe: Bool = true
     let onTap: (Position) -> Void
 
     @AppStorage("boardTheme") private var boardTheme: String = "classic"
@@ -134,7 +137,7 @@ struct BoardView: View {
                 .onEnded { value in
                     let horizontal = value.translation.width
                     let vertical = value.translation.height
-                    
+
                     if abs(horizontal) > abs(vertical) {
                         if swipeToChangeBoardTheme && abs(horizontal) > 30 {
                             if horizontal > 0 {
@@ -157,7 +160,7 @@ struct BoardView: View {
                         }
                     }
                 }
-        )
+        , including: allowsStyleSwipe ? .all : .subviews)
     }
 
     private func cyclePieceStyle(forward: Bool) {

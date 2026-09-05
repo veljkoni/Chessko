@@ -91,6 +91,7 @@ struct LessonDetailView: View {
                 flyingCapture:    pieceExplorer.flyingCapture,
                 playerColor:      .white,
                 isPlayerTurn:     true,
+                allowsStyleSwipe: false,
                 onTap:            { pieceExplorer.tap(position: $0) }
             )
             .padding(.horizontal, 4)
@@ -932,6 +933,7 @@ struct MatePuzzleCard: View {
                 flyingCapture:    nil,
                 playerColor:      .white,
                 isPlayerTurn:     vm.isPlayerTurn,
+                allowsStyleSwipe: false,
                 onTap:            { vm.tap(position: $0) }
             )
             .aspectRatio(1, contentMode: .fit)
@@ -1041,6 +1043,7 @@ struct OpeningExerciseCard: View {
                 flyingCapture:   nil,
                 playerColor:     .white,
                 isPlayerTurn:    vm.isPlayerTurn,
+                allowsStyleSwipe: false,
                 onTap:           { vm.tap(position: $0) }
             )
             .aspectRatio(1, contentMode: .fit)
@@ -1171,6 +1174,7 @@ struct MateExerciseCard: View {
                 flyingCapture:  nil,
                 playerColor:    .white,
                 isPlayerTurn:   vm.isPlayerTurn,
+                allowsStyleSwipe: false,
                 onTap:          { vm.tap(position: $0) }
             )
             .aspectRatio(1, contentMode: .fit)
