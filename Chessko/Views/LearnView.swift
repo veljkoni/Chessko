@@ -91,12 +91,19 @@ struct LearnView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
 
-                        // Podnaslov — naslov ekrana nosi nativni veliki naslov
-                        // u nav baru, kao i na tabu Zadaci.
-                        Text(Loc("4 lekcije od osnova do završnice"))
-                            .font(.dsBody)
-                            .foregroundStyle(DS.inkMuted)
-                            .padding(.top, 4)
+                        // Naslov ekrana zivi u sadrzaju, a nav bar je sakriven.
+                        // Nativni veliki naslov ovde ne radi: ScrollView je umotan
+                        // u ZStack sa pozadinom, pa ga nav bar ne prepoznaje kao svoj
+                        // skrol i naslov se ne iscrta — ostane samo prazna traka.
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(Loc("Nauči šah"))
+                                .font(.dsTitle)
+                                .foregroundStyle(DS.ink)
+                            Text(Loc("4 lekcije od osnova do završnice"))
+                                .font(.dsBody)
+                                .foregroundStyle(DS.inkMuted)
+                        }
+                        .padding(.top, 4)
 
                         // Lesson cards
                         ForEach(LessonInfo.all) { lesson in
@@ -115,10 +122,7 @@ struct LearnView: View {
                 }
                 .safeAreaPadding(.bottom, 24)
             }
-            .navigationTitle(Loc("Učenje"))
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }
