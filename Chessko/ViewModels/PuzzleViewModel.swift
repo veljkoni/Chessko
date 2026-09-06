@@ -115,7 +115,7 @@ final class PuzzleViewModel {
     var statusMessage: String {
         switch phase {
         case .loading:         return Loc("Učitavam zadatak...")
-        case .unavailable:     return Loc("Greška pri učitavanju.")
+        case .unavailable(let msg): return msg
         case .playing:
             return playerColor == .white
                 ? Loc("Pronađi pravi potez za bele")
@@ -128,17 +128,23 @@ final class PuzzleViewModel {
 
     // MARK: - Load
 
-    func loadDailyPuzzle() async {
+    func loadDailyPuzzle() {
         loadSolvedDates()
-        puzzleHadError = false
         loadPuzzle()
     }
 
     /// Cita zadatak dana direktno iz `PuzzleRepository` — sinhrono, bez mrezne
-    /// zavisnosti. `.loading` ostaje samo pocetna vrednost `phase`-a pre prvog
-    /// poziva; posle toga svaki poziv odmah razresi u `.playing` ili `.unavailable`.
+    /// zavisnosti. `.loading` se i dalje postavlja na pocetku svakog poziva: ne
+    /// pokriva vise mrezni delay, nego kratku skriptovanu pauzu pre protivnickog
+    /// poteza (`setup()` zakazuje `applyNextComputerMove()` posle 400ms — dok
+    /// ono ne postavi `.playing`, `phase` NE SME da ostane na vrednosti
+    /// PRETHODNOG zadatka, jer `isPlayerTurn` gejtuje `tap(position:)` i bio bi
+    /// otvoren prozor da igrac odigra potez pre nego sto je protivnicki uopste
+    /// prikazan).
     private func loadPuzzle() {
+        phase = .loading
         currentPuzzle = nil
+        puzzleHadError = false
 
         guard let repository else {
             phase = .unavailable(Loc("Baza zadataka nije dostupna")); return

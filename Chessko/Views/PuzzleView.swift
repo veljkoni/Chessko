@@ -148,7 +148,7 @@ struct PuzzleView: View {
                 calendarSheet
             }
         }
-        .task { await viewModel.loadDailyPuzzle() }
+        .onAppear { viewModel.loadDailyPuzzle() }
         .onChange(of: viewModel.phase) { oldPhase, newPhase in
             if newPhase == .solved {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
@@ -430,7 +430,7 @@ struct PuzzleView: View {
 
     private func errorView(message: String) -> some View {
         VStack(spacing: 20) {
-            Image(systemName: "wifi.slash")
+            Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 48))
                 .foregroundStyle(Color.secondary)
             Text(message)
@@ -438,7 +438,7 @@ struct PuzzleView: View {
                 .font(.dsBody)
                 .multilineTextAlignment(.center)
             Button {
-                Task { await viewModel.loadDailyPuzzle() }
+                viewModel.loadDailyPuzzle()
             } label: {
                 Label("Pokušaj ponovo", systemImage: "arrow.clockwise")
                     .font(.dsBody.weight(.medium))
