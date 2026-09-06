@@ -48,6 +48,7 @@
 		F6BB829DAB6F4BDEBDB7F8BA /* capture.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EF19F3B9D71945BB9A651A9D /* capture.mp3 */; };
 		10CA7A1000000000000000C2 /* nn-37f18f62d772.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */; };
 		10CA7A1000000000000000C4 /* nn-1111cefa1111.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */; };
+		953F5BE085B54B8E8B4B00D5 /* puzzles.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -88,6 +89,7 @@
 		EF19F3B9D71945BB9A651A9D /* capture.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = capture.mp3; sourceTree = "<group>"; };
 		10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-37f18f62d772.nnue"; sourceTree = "<group>"; };
 		10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-1111cefa1111.nnue"; sourceTree = "<group>"; };
+		E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = puzzles.sqlite; sourceTree = "<group>"; };
 		F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturedPiecesView.swift; sourceTree = "<group>"; };
 		F1CBFECDFF734F169829EE01 /* EvalBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvalBarView.swift; sourceTree = "<group>"; };
 		253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 				BFDE9AD864ED479FA9B3560F /* move-self.mp3 */,
 			10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */,
 			10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */,
+			E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */,
 				56675E349B49490FBF15E423 /* Logic */,
 				36769A74D0654206BE9E76DC /* Models */,
 				1854FE7087F64184AAA4ED29 /* ViewModels */,
@@ -275,6 +278,7 @@
 				0EDF68A95E104F4FBC084E78 /* move-self.mp3 in Resources */,
 				10CA7A1000000000000000C2 /* nn-37f18f62d772.nnue in Resources */,
 				10CA7A1000000000000000C4 /* nn-1111cefa1111.nnue in Resources */,
+				953F5BE085B54B8E8B4B00D5 /* puzzles.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

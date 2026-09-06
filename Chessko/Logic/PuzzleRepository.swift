@@ -1,0 +1,202 @@
+import Foundation
+import SQLite3
+
+// MARK: - Puzzle Repository
+//
+// Cita zadatke iz lokalne, u aplikaciju upakovane SQLite baze
+// (Chessko/puzzles.sqlite — 20 000 Lichess zadataka, CC0). Baza se
+// otvara ISKLJUCIVO za citanje (SQLITE_OPEN_READONLY); nema mrezne
+// zavisnosti niti SPM paketa — `SQLite3` je sistemski modul, dostupan
+// i na iOS-u i na macOS-u (SwiftPM test paket).
+//
+// Sema baze:
+//   CREATE TABLE puzzles (id TEXT PRIMARY KEY, fen TEXT, moves TEXT,
+//                          rating INTEGER, themes TEXT);
+//   CREATE TABLE puzzle_themes (theme TEXT, puzzle_id TEXT);
+//
+// `puzzles.themes` je denormalizovan (razmakom odvojen) string koji
+// direktno popunjava `ChessPuzzle.themes`; `puzzle_themes` je razlozena
+// tabela koja postoji SAMO radi brzog filtriranja po temi (JOIN + IN).
+
+/// Swift nema ugradjenu `SQLITE_TRANSIENT` konstantu. Bez nje
+/// `sqlite3_bind_text` pamti pokazivac na Swift-ov privremeni bafer
+/// koji moze biti oslobodjen pre nego sto se upit izvrsi — ispravno
+/// ponasanje zahteva da SQLite ODMAH napravi sopstvenu kopiju stringa.
+private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+
+// `@unchecked Sendable`: obavija OpaquePointer ka SQLite handle-u, koji sam
+// Swift compiler ne moze da proveri kao Sendable. Bezbedno je jer je klasa
+// namenjena upotrebi sa jedne niti (glavne, iz `PuzzleViewModel`-a) — upiti
+// su mikrosekundni nad 20k redova pa nema potrebe za internim zakljucavanjem;
+// ovo samo dozvoljava `static let bundled` kao globalnu konstantu pod Swift 6
+// strogim concurrency proverama.
+final class PuzzleRepository: @unchecked Sendable {
+
+    private let db: OpaquePointer
+
+    /// Baza upakovana u glavni bundle aplikacije (`puzzles.sqlite`).
+    /// `nil` ako resurs nije registrovan/nedostupan — pozivaoci moraju
+    /// da se ponasaju korektno kad zadaci nisu dostupni.
+    static let bundled: PuzzleRepository? = {
+        guard let url = Bundle.main.url(forResource: "puzzles", withExtension: "sqlite") else {
+            return nil
+        }
+        return PuzzleRepository(databaseURL: url)
+    }()
+
+    /// Otvara bazu na datoj putanji, isključivo za čitanje.
+    /// Vraća `nil` ako fajl ne postoji ili se ne može otvoriti kao SQLite baza.
+    init?(databaseURL: URL) {
+        guard FileManager.default.fileExists(atPath: databaseURL.path) else { return nil }
+
+        var handle: OpaquePointer?
+        let rc = sqlite3_open_v2(databaseURL.path, &handle, SQLITE_OPEN_READONLY, nil)
+        guard rc == SQLITE_OK, let handle else {
+            if let handle { sqlite3_close(handle) }
+            return nil
+        }
+        self.db = handle
+    }
+
+    deinit {
+        sqlite3_close(db)
+    }
+
+    // MARK: - Broj zadataka
+
+    /// Ukupan broj zadataka u bazi. Racuna se lenjo i kesira — upit je
+    /// jeftin (COUNT preko primary key indeksa) ali nema razloga da se
+    /// ponavlja na svaki pristup.
+    private(set) lazy var count: Int = {
+        let sql = "SELECT COUNT(*) FROM puzzles;"
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK,
+              sqlite3_step(stmt) == SQLITE_ROW else {
+            return 0
+        }
+        return Int(sqlite3_column_int(stmt, 0))
+    }()
+
+    // MARK: - Pojedinacni zadatak po ID-ju
+
+    func puzzle(id: String) -> ChessPuzzle? {
+        let sql = "SELECT id, fen, moves, rating, themes FROM puzzles WHERE id = ? LIMIT 1;"
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return nil }
+
+        sqlite3_bind_text(stmt, 1, id, -1, SQLITE_TRANSIENT)
+
+        guard sqlite3_step(stmt) == SQLITE_ROW else { return nil }
+        return puzzleFromRow(stmt)
+    }
+
+    // MARK: - Zadatak dana
+
+    /// Deterministicki, stabilan izbor po datumu: redni broj dana od
+    /// pocetka ere modulo ukupan broj zadataka daje OFFSET u upitu koji
+    /// je EKSPLICITNO sortiran po `id`. Bez `ORDER BY` SQLite ne
+    /// garantuje redosled vracenih redova (isti upit moze da vrati
+    /// razlicite redove izmedju pokretanja aplikacije ili posle
+    /// VACUUM-a), pa bi "zadatak dana" mogao da se promeni bez razloga.
+    func dailyPuzzle(for date: Date) -> ChessPuzzle? {
+        guard count > 0 else { return nil }
+        guard let dayIndex = Calendar.current.ordinality(of: .day, in: .era, for: date) else {
+            return nil
+        }
+        let offset = dayIndex % count
+
+        let sql = "SELECT id, fen, moves, rating, themes FROM puzzles ORDER BY id LIMIT 1 OFFSET ?;"
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return nil }
+
+        sqlite3_bind_int(stmt, 1, Int32(offset))
+
+        guard sqlite3_step(stmt) == SQLITE_ROW else { return nil }
+        return puzzleFromRow(stmt)
+    }
+
+    // MARK: - Filtriranje po temama/rejtingu
+
+    /// Vraca do `limit` zadataka koji imaju BAR JEDNU od trazenih tema
+    /// (razlozena `puzzle_themes` tabela — ne pogadja npr. "mate" na
+    /// "mateIn2" jer se poredi ceo string preko IN, ne LIKE), sa
+    /// rejtingom u opsegu i bez id-jeva iz `excluding`. Ako `themes` je
+    /// prazna lista, filter po temi se preskace (bilo koja tema).
+    func puzzles(themes: [String], ratingRange: ClosedRange<Int>, excluding: Set<String>, limit: Int) -> [ChessPuzzle] {
+        guard limit > 0 else { return [] }
+
+        var sql = """
+        SELECT p.id, p.fen, p.moves, p.rating, p.themes
+        FROM puzzles p
+        """
+        if !themes.isEmpty {
+            sql += "\nJOIN puzzle_themes t ON t.puzzle_id = p.id"
+        }
+        sql += "\nWHERE p.rating BETWEEN ? AND ?"
+        if !themes.isEmpty {
+            let placeholders = Array(repeating: "?", count: themes.count).joined(separator: ", ")
+            sql += "\nAND t.theme IN (\(placeholders))"
+        }
+        if !excluding.isEmpty {
+            let placeholders = Array(repeating: "?", count: excluding.count).joined(separator: ", ")
+            sql += "\nAND p.id NOT IN (\(placeholders))"
+        }
+        sql += "\nGROUP BY p.id\nORDER BY RANDOM()\nLIMIT ?;"
+
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+
+        var index: Int32 = 1
+        sqlite3_bind_int(stmt, index, Int32(ratingRange.lowerBound)); index += 1
+        sqlite3_bind_int(stmt, index, Int32(ratingRange.upperBound)); index += 1
+        for theme in themes {
+            sqlite3_bind_text(stmt, index, theme, -1, SQLITE_TRANSIENT)
+            index += 1
+        }
+        for excludedId in excluding {
+            sqlite3_bind_text(stmt, index, excludedId, -1, SQLITE_TRANSIENT)
+            index += 1
+        }
+        sqlite3_bind_int(stmt, index, Int32(limit))
+
+        var results: [ChessPuzzle] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            if let puzzle = puzzleFromRow(stmt) {
+                results.append(puzzle)
+            }
+        }
+        return results
+    }
+
+    // MARK: - Nasumican zadatak
+
+    func randomPuzzle(ratingRange: ClosedRange<Int>, excluding: Set<String>) -> ChessPuzzle? {
+        puzzles(themes: [], ratingRange: ratingRange, excluding: excluding, limit: 1).first
+    }
+
+    // MARK: - Pomocna funkcija
+
+    /// Cita kolone tekuceg reda `SELECT id, fen, moves, rating, themes ...`
+    /// u `ChessPuzzle`. Vraca nil ako je `fen`/`moves` prazan (test na
+    /// "neprazan fen i bar jedan potez" u repozitorijumu je odgovornost
+    /// pozivaoca/testova, ovde samo bezbedno citamo kolone).
+    private func puzzleFromRow(_ stmt: OpaquePointer?) -> ChessPuzzle? {
+        guard let idCString = sqlite3_column_text(stmt, 0),
+              let fenCString = sqlite3_column_text(stmt, 1),
+              let movesCString = sqlite3_column_text(stmt, 2),
+              let themesCString = sqlite3_column_text(stmt, 4) else {
+            return nil
+        }
+        let id = String(cString: idCString)
+        let fen = String(cString: fenCString)
+        let moves = String(cString: movesCString)
+        let rating = Int(sqlite3_column_int(stmt, 3))
+        let themes = String(cString: themesCString)
+
+        return ChessPuzzle(puzzleId: id, fen: fen, moves: moves, rating: rating, themes: themes)
+    }
+}
