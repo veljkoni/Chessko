@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct EvalBarView: View {
+    static let width: CGFloat = 10
+
     let evaluation: Double
     var mateIn: Int? = nil
     var isFlipped: Bool = false
@@ -44,6 +46,6 @@ struct EvalBarView: View {
                     .stroke(DS.line, lineWidth: 1)
             )
         }
-        .frame(width: 10)
+        .frame(width: Self.width)
     }
 }

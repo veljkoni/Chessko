@@ -88,19 +88,24 @@ struct GameView: View {
                     .padding(.horizontal, 16)
                 } else {
                     GeometryReader { portraitGeo in
+                        // Tabla je kvadrat: sirina ekrana minus vodoravni padding, minus eval traka i razmak.
+                        let evalWidth: CGFloat = showEvalBar ? EvalBarView.width + DS.Space.s : 0
+                        let side = max(0, portraitGeo.size.width - DS.Space.s * 2 - evalWidth)
+
                         ScrollView {
                             VStack(spacing: DS.Space.m) {
                                 Spacer(minLength: 0)
 
                                 topHeader
 
-                                HStack(spacing: 8) {
+                                HStack(spacing: DS.Space.s) {
                                     if showEvalBar {
                                         EvalBarView(
                                             evaluation: viewModel.evaluationScore,
                                             mateIn: viewModel.evaluationMateIn,
                                             isFlipped: viewModel.isFlipped
                                         )
+                                        .frame(height: side)
                                     }
 
                                     BoardView(
@@ -116,8 +121,7 @@ struct GameView: View {
                                         gameStatus:       viewModel.displayState.status,
                                         onTap:            { viewModel.tap(position: $0) }
                                     )
-                                    .frame(maxWidth: .infinity)
-                                    .aspectRatio(1, contentMode: .fit)
+                                    .frame(width: side, height: side)
                                 }
 
                                 bottomHeader
