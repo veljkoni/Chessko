@@ -91,16 +91,12 @@ struct LearnView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
 
-                        // Header
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(Loc("Nauči šah"))
-                                .font(.appFont(.title2).weight(.bold))
-                                .foregroundStyle(.primary)
-                            Text(Loc("4 lekcije od osnova do završnice"))
-                                .font(.appFont(.subheadline))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.top, 4)
+                        // Podnaslov — naslov ekrana nosi nativni veliki naslov
+                        // u nav baru, kao i na tabu Zadaci.
+                        Text(Loc("4 lekcije od osnova do završnice"))
+                            .font(.dsBody)
+                            .foregroundStyle(DS.inkMuted)
+                            .padding(.top, 4)
 
                         // Lesson cards
                         ForEach(LessonInfo.all) { lesson in
@@ -119,8 +115,8 @@ struct LearnView: View {
                 }
                 .safeAreaPadding(.bottom, 24)
             }
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(Loc("Učenje"))
+            .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }

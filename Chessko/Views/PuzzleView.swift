@@ -75,7 +75,15 @@ struct PuzzleView: View {
                             .frame(width: geo.size.width, height: geo.size.height)
                         } else {
                             ScrollView {
-                                puzzleContent
+                                // Spacer-i na oba kraja + minHeight: kratak sadrzaj se
+                                // centrira po visini, dug normalno skroluje. Bez minHeight-a
+                                // ovo ne radi nista — ScrollView predlaze neogranicenu visinu.
+                                VStack(spacing: 0) {
+                                    Spacer(minLength: 0)
+                                    puzzleContent
+                                    Spacer(minLength: 0)
+                                }
+                                .frame(minHeight: geo.size.height)
                             }
                             .scrollBounceBehavior(.basedOnSize)
                             .safeAreaPadding(.bottom, 24)
@@ -281,10 +289,9 @@ struct PuzzleView: View {
             
 
             actionButtons
-
-            Spacer(minLength: DS.Space.l)
         }
         .padding(.horizontal, 16)
+        .padding(.bottom, DS.Space.l)
     }
 
     // MARK: - Puzzle Header
