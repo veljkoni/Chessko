@@ -1,0 +1,83 @@
+import SwiftUI
+
+// MARK: - Dizajn tokeni
+//
+// Jedan izvor istine za boje, tipografiju i razmake.
+// Pravac „Tiho i precizno" (spec 5.6): neutralne podloge, jedan uzdržan
+// akcent izveden iz #17234f, tabla je jedina zasićena stvar na ekranu.
+//
+// Akcent je FIKSAN — ne menja se sa temom table. Boje vezane za tablu
+// (polja, poslednji potez, legalni potezi, šah) i dalje dolaze iz BoardTheme.
+
+extension Color {
+    /// Boja koja se sama razrešava po svetloj/tamnoj temi.
+    static func adaptive(light: String, dark: String) -> Color {
+        Color(UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(Color(hex: dark))
+                : UIColor(Color(hex: light))
+        })
+    }
+}
+
+enum DS {
+
+    // MARK: Boje
+
+    static let accent   = Color.adaptive(light: "#2E4A8A", dark: "#7EA0E8")
+    static let ground   = Color.adaptive(light: "#F2F3F7", dark: "#0E1428")
+    static let surface  = Color.adaptive(light: "#FFFFFF", dark: "#161D33")
+    static let navBar   = Color.adaptive(light: "#FFFFFF", dark: "#131A2E")
+    static let fill     = Color.adaptive(light: "#E7EAF1", dark: "#1E2740")
+    static let line     = Color.adaptive(light: "#DFE3EC", dark: "#232C46")
+    static let ink      = Color.adaptive(light: "#161A22", dark: "#EEF1F7")
+    static let inkMuted = Color.adaptive(light: "#6B7280", dark: "#8B93A7")
+
+    /// Semantičke boje — nose značenje, nisu ukras. Ostaju u boji i u
+    /// dizajnu koji je inače neutralan.
+    static let success = Color.adaptive(light: "#2F7D4F", dark: "#6FCF97")
+    static let warning = Color.adaptive(light: "#B07D2B", dark: "#E0B252")
+    static let danger  = Color.adaptive(light: "#B3261E", dark: "#F2857A")
+
+    /// Zatamnjenje ispod modalnih preklopa (promocija, izbor boje, kraj
+    /// partije). Namerno isto u obe teme — preklop je uvek taman.
+    static let scrim   = Color.black.opacity(0.55)
+    /// Tekst i ikone NA scrim-u. Namerno bela u obe teme.
+    static let onScrim = Color.white
+
+    // MARK: Razmaci
+
+    enum Space {
+        static let xs: CGFloat = 4
+        static let s:  CGFloat = 8
+        static let m:  CGFloat = 12
+        static let l:  CGFloat = 16
+        static let xl: CGFloat = 24
+    }
+
+    // MARK: Radijusi
+
+    enum Radius {
+        static let s: CGFloat = 8
+        static let m: CGFloat = 12
+        static let l: CGFloat = 16
+    }
+}
+
+// MARK: - Tipografska skala
+//
+// Sve ide kroz Font.appFont da bi se zadržale uvećane veličine na Mac-u
+// (vidi Chessko/Logic/PlatformHelper.swift).
+
+extension Font {
+    /// Naslov ekrana.
+    static var dsTitle: Font { .appFont(.title2).weight(.bold) }
+    /// Naslov sekcije ili kartice.
+    static var dsHeading: Font { .appFont(.headline) }
+    /// Osnovni tekst.
+    static var dsBody: Font { .appFont(.subheadline) }
+    /// Prigušen, sitan tekst — podnaslovi, oznake.
+    static var dsCaption: Font { .appFont(.caption) }
+    /// Cifre koje se poravnavaju u kolone (sat, eval, notacija).
+    static var dsMono: Font { .system(.footnote, design: .monospaced) }
+}
