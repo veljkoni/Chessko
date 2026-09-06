@@ -14,7 +14,10 @@
 
 - **Swift 6.0**, iOS deployment target **18.0**, Xcode 26.
 - **NIKADA ne pokretati `create_xcode_project.py`** — regeneriše `project.pbxproj` i ne zna za `chesskit-engine` SPM zavisnost; pokretanje obara Stockfish.
-- **Ne dirati `Chessko.xcodeproj/project.pbxproj`.** Nov Swift fajl u `Chessko/Views/` Xcode pokupi sam preko folder reference; ako se pri buildu ispostavi da nije, STATI i prijaviti — ne krpiti pbxproj ručno.
+- **`project.pbxproj` se ne REGENERIŠE**, ali se sme hirurški dopuniti. Projekat
+  nema sinhronizovane foldere — svih 33 Swift fajla su eksplicitno navedena, pa
+  nov fajl mora da se doda ručno na 4 mesta (Task 1, Step 2). Obrazac je
+  `EvalBarView.swift`. Nikakva druga izmena pbxproj-a nije dozvoljena.
 - **Ne dirati `ChesskoAndroid/`.** Android prati u zasebnom ciklusu.
 - **Akcent je fiksan** i ne zavisi od teme table (spec 5.6).
 - **Boje table se NE menjaju.** `BoardTheme` (8 tema), `Color.squareLight/squareDark/boardBackground`, boja šaha `#EF4444`, oznaka poslednjeg poteza i legalnih poteza ostaju kakve jesu.
@@ -58,6 +61,7 @@ Nema izmena na ekranima. Samo se uvodi rečnik koji naredni zadaci troše.
 
 **Files:**
 - Create: `Chessko/Views/DesignSystem.swift`
+- Modify: `Chessko.xcodeproj/project.pbxproj` (4 reda — registracija novog fajla)
 
 **Interfaces:**
 - Consumes: `Color(hex:)` iz `Chessko/Views/SquareView.swift`, `Font.appFont(_:)` iz `Chessko/Logic/PlatformHelper.swift`
@@ -153,23 +157,56 @@ extension Font {
 }
 ```
 
-- [ ] **Step 2: Build**
+- [ ] **Step 2: Dodati fajl u `project.pbxproj`**
+
+Projekat nema sinhronizovane foldere, pa se nov fajl NE pokupi sam. Dodati ga na
+ista četiri mesta na kojima figurira `EvalBarView.swift` (linije 35, 91, 120, 309).
+
+Koristiti ove ID-jeve (generisani za ovaj fajl, ne smeju se poklopiti s postojećim):
+
+1. U `PBXBuildFile` sekciju, uz ostale (oko linije 35):
+```
+		DFF4981773CA469D8413546E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */; };
+```
+
+2. U `PBXFileReference` sekciju (oko linije 91):
+```
+		253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+```
+
+3. U `children` grupe `Views`, odmah uz `EvalBarView.swift` (oko linije 120):
+```
+				253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */,
+```
+
+4. U `files` liste `PBXSourcesBuildPhase` (oko linije 309):
+```
+				DFF4981773CA469D8413546E /* DesignSystem.swift in Sources */,
+```
+
+Posle izmene proveriti da su zagrade i dalje uravnotežene:
+```bash
+python3 -c "s=open('Chessko.xcodeproj/project.pbxproj').read(); print('balans:', s.count('{')-s.count('}'))"
+```
+Expected: `balans: 0`
+
+- [ ] **Step 3: Build**
 
 Run: `xcodebuild -project Chessko.xcodeproj -scheme Chessko -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`
 
 Expected: `** BUILD SUCCEEDED **`
 
-Ako build prijavi da `DesignSystem.swift` nije deo target-a, **STATI i prijaviti** — ne dirati `project.pbxproj` ručno.
+Ako linker prijavi da `DS` nije pronađen, fajl nije stigao u Sources fazu — proveriti tačku 4.
 
-- [ ] **Step 3: Testovi (regresiona provera)**
+- [ ] **Step 4: Testovi (regresiona provera)**
 
 Run: `swift test`
 Expected: 11 testova prolazi. Motor nije diran; ovo samo potvrđuje da ništa nije slučajno pomereno.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add Chessko/Views/DesignSystem.swift
+git add Chessko/Views/DesignSystem.swift Chessko.xcodeproj/project.pbxproj
 git commit -m "feat: sloj dizajn tokena (boje, tipografska skala, razmaci)
 
 Pravac 'Tiho i precizno' iz spec 5.6. Akcent je fiksan i nezavisan od
