@@ -32,12 +32,12 @@ import Testing
 // na 0; dakle ogranicava ga celobrojno zaokruzivanje, ne asimptota ka 800.
 // Plan je ispravljen.
 //
-// Stvarno svojstvo koje ovde treba tvrditi je da PRIRAST strogo opada: kako
+// Stvarno svojstvo koje ovde treba tvrditi je da PRIRAST NE RASTE: kako
 // rejting igraca raste a rejting zadatka ostaje 800, `E` se primice 1 pa je
 // `K*(1-E)` sve manji. To se testira direktno; granica na samoj vrednosti je
 // samo gruba zastita od linearnog rasta (pokvaren, nepromenljiv prirast od +16
 // po zadatku dao bi 2400).
-@Test func consecutiveSolvesYieldStrictlyShrinkingGains() {
+@Test func consecutiveSolvesYieldNonIncreasingGains() {
     var rating = 800
     var previousGain = Int.max
 
@@ -45,7 +45,9 @@ import Testing
         let next = StatsManager.newRating(current: rating, puzzleRating: 800, solved: true)
         let gain = next - rating
         #expect(gain > 0, "prirast mora ostati pozitivan dok je rejting ispod ~1520")
-        #expect(gain <= previousGain, "prirast mora opadati, bio je \(previousGain) pa \(gain)")
+        // `<=`, ne `<`: celobrojno zaokruzivanje pravi platoe (…16, 16, 15…),
+        // pa bi strogo opadanje palo iako je formula ispravna.
+        #expect(gain <= previousGain, "prirast ne sme da poraste, bio je \(previousGain) pa \(gain)")
         previousGain = gain
         rating = next
     }

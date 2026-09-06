@@ -575,8 +575,13 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   pošto je rejting zadatka fiksiran na 800 dok rejting igrača raste, `E` raste ka 1 ali
   nikad ga ne dostiže, pa je svaki prirast pozitivan; posle 100 ponavljanja rejting je
   1288, a stvarna fiksna tačka niza (gde `round(32*(1-E))` prvi put padne na 0) je oko
-  1520, ne 800. Test je zadržan kao provera da rast nije neograničen/linearan (granica
-  1600, komentar u fajlu objašnjava računicu) umesto tvrdnje iz plana koja ne važi.
+  1520, ne 800. Plan (`docs/superpowers/plans/2026-09-06-faza-2-offline-zadaci.md`) je
+  ispravljen eksplicitnom napomenom, ne tihom izmenom. Peti test je zatim prepisan da
+  tvrdi **svojstvo** koje Elo formula stvarno garantuje: prirast po rešenom zadatku je
+  pozitivan i **ne raste** kroz svih 100 iteracija. `<=`, ne `<` — celobrojno
+  zaokruživanje pravi platoe (…16, 16, 15…), pa bi strogo opadanje palo iako je formula
+  ispravna. Granica `< 1600` je ostala samo kao gruba zaštita od linearnog rasta; sama
+  za sebe prolazi i kad je formula pokvarena na više načina.
   `swift test`: 23/23 prošlo. `xcodebuild` (simulator `iPhone 17` — `iPhone 16` ne postoji
   na ovoj mašini): BUILD SUCCEEDED. `project.pbxproj` nije dirran (test fajlovi i
   `StatsManager.swift` već registrovani).

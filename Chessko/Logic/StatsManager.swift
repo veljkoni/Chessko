@@ -102,6 +102,9 @@ final class StatsManager {
         return Int((Double(r) + 32.0 * (score - expected)).rounded())
     }
 
+    /// PAZNJA na dva razlicita znacenja istog imena: svojstvo `puzzleRating`
+    /// je rejting IGRACA, a parametar `puzzleRating` (`rp`) je rejting
+    /// RESAVANOG ZADATKA. Red ispod cita jedno a pise drugo.
     func applyPuzzleResult(puzzleRating rp: Int, solved: Bool) {
         puzzleRating = StatsManager.newRating(current: puzzleRating,
                                               puzzleRating: rp,
