@@ -126,7 +126,7 @@ struct LessonDetailView: View {
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                 }
-                                .foregroundStyle(active ? DS.onScrimInk : Color.primary)
+                                .foregroundStyle(active ? DS.inkFixed : Color.primary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 9)
                                 .background(

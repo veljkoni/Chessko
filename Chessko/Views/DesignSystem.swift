@@ -44,11 +44,11 @@ enum DS {
     static let scrim   = Color.black.opacity(0.55)
     /// Tekst i ikone NA scrim-u. Namerno bela u obe teme.
     static let onScrim = Color.white
-    /// Tekst na površini boje `onScrim` — beli taster koji stoji na scrim-u.
-    /// Namerno taman u obe teme, iz istog razloga iz kog je `onScrim` uvek beo:
-    /// podloga ispod njega ne prati temu. Vrednost je svetla varijanta `ink`-a,
-    /// zakovana — ne sme da se invertuje.
-    static let onScrimInk = Color(hex: "#161A22")
+    /// Taman tekst zakovan tako da se NE invertuje u tamnoj temi.
+    /// Za površine koje same ne prate temu: beli taster na scrim-u, čip u boji
+    /// upozorenja, i slično — tamo `DS.ink` ne valja jer bi u tamnoj temi
+    /// postao skoro beo na svetloj podlozi. Vrednost je svetla varijanta `ink`-a.
+    static let inkFixed = Color(hex: "#161A22")
 
     // MARK: Razmaci
 

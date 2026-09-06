@@ -578,7 +578,7 @@ struct GameView: View {
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
                                 .background(DS.onScrim)
-                                .foregroundStyle(DS.onScrimInk)
+                                .foregroundStyle(DS.inkFixed)
                                 .clipShape(Capsule())
                         }
                     }
