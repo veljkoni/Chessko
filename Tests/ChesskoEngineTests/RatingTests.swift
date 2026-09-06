@@ -25,21 +25,30 @@ import Testing
     #expect(result == 771)
 }
 
-// Brief (task-4-brief.md) states this should stay below 1000. Verified against
-// the SAME formula that produces the four checked values above: it does not,
-// it reaches 1288 after 100 solves. That is expected, not a bug — the puzzle
-// rating (rp) stays fixed at 800 while the player's rating (r) climbs, so E
-// keeps rising and the per-solve increment keeps shrinking, but never to zero;
-// the sequence has a real fixed point only around r ≈ 1520 (where round(32*(1-E))
-// first hits 0), not near 800. This test keeps the brief's actual intent — the
-// increment-shrinking property preventing unbounded/linear growth — using a
-// bound that is true: 100 solves reach ~1288, well short of the ~1520 ceiling,
-// and nowhere near the ~2400 a broken (non-shrinking, constant +16) increment
-// would produce.
-@Test func hundredConsecutiveSolvesDoNotGrowUnbounded() {
+// Plan (task-4-brief.md) je tvrdio da rejting ostaje ispod 1000 jer se
+// "asimptotski primice 800 odozgo". To je NETACNO i uhvaceno je pri izvrsavanju
+// ovog zadatka: rejting raste iznad 800 — posle 100 resenih je 1288, posle 1000
+// je 1520. Niz se zaustavlja tek oko 1520, gde `round(32*(1-E))` prvi put padne
+// na 0; dakle ogranicava ga celobrojno zaokruzivanje, ne asimptota ka 800.
+// Plan je ispravljen.
+//
+// Stvarno svojstvo koje ovde treba tvrditi je da PRIRAST strogo opada: kako
+// rejting igraca raste a rejting zadatka ostaje 800, `E` se primice 1 pa je
+// `K*(1-E)` sve manji. To se testira direktno; granica na samoj vrednosti je
+// samo gruba zastita od linearnog rasta (pokvaren, nepromenljiv prirast od +16
+// po zadatku dao bi 2400).
+@Test func consecutiveSolvesYieldStrictlyShrinkingGains() {
     var rating = 800
+    var previousGain = Int.max
+
     for _ in 0..<100 {
-        rating = StatsManager.newRating(current: rating, puzzleRating: 800, solved: true)
+        let next = StatsManager.newRating(current: rating, puzzleRating: 800, solved: true)
+        let gain = next - rating
+        #expect(gain > 0, "prirast mora ostati pozitivan dok je rejting ispod ~1520")
+        #expect(gain <= previousGain, "prirast mora opadati, bio je \(previousGain) pa \(gain)")
+        previousGain = gain
+        rating = next
     }
+
     #expect(rating < 1600)
 }
