@@ -74,9 +74,11 @@ struct PuzzleView: View {
                             .padding(.horizontal, 16)
                             .frame(width: geo.size.width, height: geo.size.height)
                         } else {
-                            VStack(spacing: 0) {
+                            ScrollView {
                                 puzzleContent
                             }
+                            .scrollBounceBehavior(.basedOnSize)
+                            .safeAreaPadding(.bottom, 24)
                             .frame(width: geo.size.width, height: geo.size.height)
                         }
                     }
@@ -105,16 +107,16 @@ struct PuzzleView: View {
                         } label: {
                             HStack(spacing: 5) {
                                 Image(systemName: "calendar")
-                                    .font(.subheadline)
+                                    .font(.dsCaption)
                                     .foregroundStyle(Color.secondary)
                                     .symbolEffect(.bounce, value: bounceCalendar)
                                 Text(dateTitle)
-                                    .font(.subheadline.weight(.semibold))
+                                    .font(.dsCaption.weight(.semibold))
                                     .foregroundStyle(Color.primary)
                                 if viewModel.isSolved(viewModel.selectedDate) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(.green)
+                                        .font(.dsCaption)
+                                        .foregroundStyle(DS.success)
                                         .symbolEffect(.bounce, value: bounceCheckmark)
                                 }
                             }
@@ -183,7 +185,7 @@ struct PuzzleView: View {
                         displayedComponents: .date
                     )
                     .datePickerStyle(.graphical)
-                    .tint(.blue)
+                    .tint(DS.accent)
                     .padding(.horizontal, 8)
 
                     // Solved dates legend
@@ -218,7 +220,7 @@ struct PuzzleView: View {
         return AnyView(
             VStack(alignment: .leading, spacing: 10) {
                 Text(Loc("Rešeni zadaci"))
-                    .font(.subheadline.weight(.semibold))
+                    .font(.dsHeading)
                     .foregroundStyle(.secondary)
 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7),
@@ -229,16 +231,16 @@ struct PuzzleView: View {
                         } label: {
                             VStack(spacing: 2) {
                                 Text(dayNumber(date))
-                                    .font(.caption2.weight(.semibold))
+                                    .font(.dsCaption.weight(.semibold))
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.green)
+                                    .font(.dsCaption)
+                                    .foregroundStyle(DS.success)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 6)
                             .background(
                                 calendarDate == date
-                                    ? Color.blue.opacity(0.15)
+                                    ? DS.accent.opacity(0.15)
                                     : Color.secondary.opacity(0.08),
                                 in: RoundedRectangle(cornerRadius: 8)
                             )
@@ -280,7 +282,7 @@ struct PuzzleView: View {
 
             actionButtons
 
-            Spacer(minLength: 0)
+            Spacer(minLength: DS.Space.l)
         }
         .padding(.horizontal, 16)
     }
@@ -291,9 +293,9 @@ struct PuzzleView: View {
         HStack(spacing: 12) {
             HStack(spacing: 4) {
                 Image(systemName: "star.fill")
-                    .font(.caption2)
+                    .font(.dsCaption)
                 Text("\(puzzle.rating)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.dsMono.weight(.semibold))
             }
             .foregroundStyle(ratingColor(puzzle.rating))
             .padding(.horizontal, 10)
@@ -303,7 +305,7 @@ struct PuzzleView: View {
             let themes = Array(puzzle.themeList.map(localizeTheme).filter { !$0.isEmpty }.prefix(2))
             ForEach(Array(themes.enumerated()), id: \.offset) { _, label in
                 Text(label)
-                    .font(.caption2)
+                    .font(.dsCaption)
                     .foregroundStyle(Color.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
@@ -319,10 +321,10 @@ struct PuzzleView: View {
     private var statusCard: some View {
         HStack(spacing: 10) {
             Image(systemName: statusIcon)
-                .font(.subheadline)
+                .font(.dsBody)
                 .foregroundStyle(statusColor)
             Text(viewModel.statusMessage)
-                .font(.subheadline)
+                .font(.dsBody)
                 .foregroundStyle(statusColor)
                 .animation(.default, value: viewModel.statusMessage)
             Spacer()
@@ -349,9 +351,9 @@ struct PuzzleView: View {
 
     private var statusColor: Color {
         switch viewModel.phase {
-        case .wrongMove:       return .red
-        case .solved:          return .green
-        case .showingSolution: return .orange
+        case .wrongMove:       return DS.danger
+        case .solved:          return DS.success
+        case .showingSolution: return DS.warning
         default:               return Color.primary.opacity(0.9)
         }
     }
@@ -366,7 +368,7 @@ struct PuzzleView: View {
                 viewModel.showSolution()
             } label: {
                 Label("Prikaži rešenje", systemImage: "eye")
-                    .font(.subheadline.weight(.medium))
+                    .font(.dsBody.weight(.medium))
                     .foregroundStyle(Color.primary.opacity(0.8))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -379,7 +381,7 @@ struct PuzzleView: View {
                     viewModel.goToNext()
                 } label: {
                     Label("Sledeći dan", systemImage: "chevron.right")
-                        .font(.subheadline.weight(.medium))
+                        .font(.dsBody.weight(.medium))
                         .foregroundStyle(Color(uiColor: .systemBackground))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -389,9 +391,9 @@ struct PuzzleView: View {
                 // Today's puzzle solved — show completion
                 HStack(spacing: 8) {
                     Image(systemName: "star.fill")
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(DS.warning)
                     Text(Loc("Završio si zadatak za danas!"))
-                        .font(.subheadline.weight(.medium))
+                        .font(.dsBody.weight(.medium))
                         .foregroundStyle(Color.primary.opacity(0.85))
                 }
                 .frame(maxWidth: .infinity)
@@ -412,7 +414,7 @@ struct PuzzleView: View {
                 .scaleEffect(1.4)
             Text(Loc("Učitavam zadatak..."))
                 .foregroundStyle(Color.secondary)
-                .font(.subheadline)
+                .font(.dsBody)
         }
     }
 
@@ -423,13 +425,13 @@ struct PuzzleView: View {
                 .foregroundStyle(Color.secondary)
             Text(message)
                 .foregroundStyle(Color.primary)
-                .font(.subheadline)
+                .font(.dsBody)
                 .multilineTextAlignment(.center)
             Button {
                 Task { await viewModel.loadDailyPuzzle() }
             } label: {
                 Label("Pokušaj ponovo", systemImage: "arrow.clockwise")
-                    .font(.subheadline.weight(.medium))
+                    .font(.dsBody.weight(.medium))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
                     .background(Color.primary)
@@ -482,9 +484,9 @@ struct PuzzleView: View {
 
     private func ratingColor(_ rating: Int) -> Color {
         switch rating {
-        case ..<1200: return .green
-        case 1200..<1600: return .yellow
-        default: return .red
+        case ..<1200: return DS.success
+        case 1200..<1600: return DS.warning
+        default: return DS.danger
         }
     }
 
