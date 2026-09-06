@@ -44,15 +44,15 @@ struct LessonDetailView: View {
                     .fill(lesson.accentColor.opacity(0.18))
                     .frame(width: 60, height: 60)
                 Image(systemName: lesson.systemIcon)
-                    .font(.appFont(.title2).weight(.medium))
+                    .font(.dsTitle.weight(.medium))
                     .foregroundStyle(lesson.accentColor)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(Loc(lesson.title))
-                    .font(.appFont(.headline).weight(.bold))
+                    .font(.dsHeading.weight(.bold))
                     .foregroundStyle(.primary)
                 Text(Loc(lesson.subtitle))
-                    .font(.appFont(.subheadline))
+                    .font(.dsBody)
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -101,13 +101,13 @@ struct LessonDetailView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 6) {
                         Image(systemName: "star.fill")
-                            .font(.appFont(.caption).weight(.semibold))
-                            .foregroundStyle(.yellow)
+                            .font(.dsCaption.weight(.semibold))
+                            .foregroundStyle(DS.warning)
                         Text(Loc("Specijalna pravila"))
-                            .font(.appFont(.subheadline).weight(.semibold))
+                            .font(.dsBody.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text(Loc("— izaberi i istraži na tabli"))
-                            .font(.appFont(.caption))
+                            .font(.dsCaption)
                             .foregroundStyle(.secondary)
                     }
                     HStack(spacing: 10) {
@@ -120,23 +120,23 @@ struct LessonDetailView: View {
                             } label: {
                                 HStack(spacing: 5) {
                                     Image(systemName: active ? "checkmark.circle.fill" : "circle")
-                                        .font(.appFont(.caption).weight(.semibold))
+                                        .font(.dsCaption.weight(.semibold))
                                     Text(s.label)
-                                        .font(.appFont(.subheadline).weight(.semibold))
+                                        .font(.dsBody.weight(.semibold))
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                 }
-                                .foregroundStyle(active ? .black : Color.primary)
+                                .foregroundStyle(active ? DS.onScrimInk : Color.primary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 9)
                                 .background(
-                                    active ? Color.yellow : Color.primary.opacity(0.08),
+                                    active ? DS.warning : Color.primary.opacity(0.08),
                                     in: RoundedRectangle(cornerRadius: 10)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
                                         .strokeBorder(
-                                            active ? Color.yellow : Color.primary.opacity(0.14),
+                                            active ? DS.warning : Color.primary.opacity(0.14),
                                             lineWidth: 1
                                         )
                                 )
@@ -146,16 +146,16 @@ struct LessonDetailView: View {
                     }
                 }
                 .padding(14)
-                .background(.yellow.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+                .background(DS.warning.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(.yellow.opacity(0.25), lineWidth: 1)
+                        .strokeBorder(DS.warning.opacity(0.25), lineWidth: 1)
                 )
             }
 
             HStack(spacing: 5) {
-                Image(systemName: "hand.point.up.left").font(.appFont(.caption2))
-                Text(Loc("Tapni figuru da je promeniš · Tapni polje da je premestiš")).font(.appFont(.caption))
+                Image(systemName: "hand.point.up.left").font(.appFont(.caption2))  // van skale — caption2 nema DS ekvivalent
+                Text(Loc("Tapni figuru da je promeniš · Tapni polje da je premestiš")).font(.dsCaption)
             }
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -169,7 +169,7 @@ struct LessonDetailView: View {
         lesson1Rokada
 
         // Piece values (Capablanca)
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "scalemass.fill", title: "Relativna vrednost figura", color: lesson.accentColor)
 
         L_Para("Kapablanka kaže: vrednost nije fiksna — menja se zavisno od pozicije. Ipak, ove brojke služe kao vodič u razmeni figura.")
@@ -185,7 +185,7 @@ struct LessonDetailView: View {
                  text: "U otvaranju i središnjici Kralj je isključivo odbrambena figura. U završnici, kada nestane većina figura, mora aktivno da učestvuje u borbi.")
 
         // Elementary mates
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "checkmark.seal.fill", title: "Elementarni matovi", color: lesson.accentColor)
 
         L_Para("Pre nego što naučiš otvaranja i strategiju, nauči ove tri osnovne mat pozicije. Za svaki od njih potrebna je saradnja Kralja!")
@@ -196,7 +196,7 @@ struct LessonDetailView: View {
             title: "Vežba 1 — Kralj + Top",
             hint:  "Oteraj crnog Kralja na ivicu table. Top i Kralj moraju da sarađuju!",
             icon:  "rectangle.portrait.fill",
-            color: .blue
+            color: DS.accent
         )
         .padding(.horizontal, 16).padding(.bottom, 16)
 
@@ -205,7 +205,7 @@ struct LessonDetailView: View {
             title: "Vežba 2 — Kralj + dva Lovca",
             hint:  "Oteraj Kralja ne samo na ivicu već i u ugao iste boje kao tvoji lovci.",
             icon:  "rhombus.fill",
-            color: .purple
+            color: DS.accent
         )
         .padding(.horizontal, 16).padding(.bottom, 16)
 
@@ -214,7 +214,7 @@ struct LessonDetailView: View {
             title: "Vežba 3 — Kralj + Dama",
             hint:  "Najlakše! Dama odmah sužava prostor. Pazi na pat!",
             icon:  "crown.fill",
-            color: .yellow
+            color: DS.accent
         )
         .padding(.horizontal, 16).padding(.bottom, 8)
     }
@@ -253,59 +253,59 @@ struct LessonDetailView: View {
         L_PieceRow(type: .pawn, name: "Pion (Pešak)", count: "× 8")
         L_Para("Na početku imaš 8 piona — oni su tvoja \"pešadija\". Kapablanka napominje: **dobitak jednog piona je najmanji materijalni dobitak i često je dovoljan za pobedu**.")
             .padding(.horizontal, 20).padding(.bottom, 4)
-        L_Bullet(icon: "arrow.up", color: .blue, title: "Kretanje",
+        L_Bullet(icon: "arrow.up", color: DS.accent, title: "Kretanje",
                  text: "Ide isključivo napred, po jedno polje. Na prvom potezu može da preskoči dva polja. **Pioni ne mogu da idu unazad.**")
-        L_Bullet(icon: "arrow.up.left.and.arrow.up.right", color: .blue, title: "Napad",
+        L_Bullet(icon: "arrow.up.left.and.arrow.up.right", color: DS.accent, title: "Napad",
                  text: "Jede protivničke figure isključivo po dijagonali jedno polje unapred.")
-        L_Box(icon: "crown.fill", color: .yellow,
+        L_Box(icon: "crown.fill", color: DS.warning,
               title: "Promocija",
               text: "Ako pion stigne do poslednjeg reda — pretvara se u bilo koju figuru, najčešće Damu. Ovo je moćno oružje u završnici!")
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
 
         L_PieceRow(type: .rook, name: "Top (Kula)", count: "× 2")
         L_Para("Stoji u uglovima table na početku. Efikasan je tek na otvorenim linijama — koliko god radi sa pioima koji blokiraju put, toliko je ograničen.")
             .padding(.horizontal, 20).padding(.bottom, 4)
-        L_Bullet(icon: "arrow.up.and.down.and.arrow.left.and.right", color: .blue, title: "Kretanje",
+        L_Bullet(icon: "arrow.up.and.down.and.arrow.left.and.right", color: DS.accent, title: "Kretanje",
                  text: "Kreće se po pravim linijama (napred-nazad, levo-desno) koliko god polja želi. Zajedno, dva Topa su neznatno jača od Dame.")
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
 
         L_PieceRow(type: .bishop, name: "Lovac (Iber)", count: "× 2")
         L_Para("Jedan lovac uvek ostaje na belim, drugi na crnim poljima. Kapablanka smatra da je **u većini pozicija Lovac vredniji od Skakača**.")
             .padding(.horizontal, 20).padding(.bottom, 4)
-        L_Bullet(icon: "arrow.up.right.and.arrow.up.left", color: .blue, title: "Kretanje",
+        L_Bullet(icon: "arrow.up.right.and.arrow.up.left", color: DS.accent, title: "Kretanje",
                  text: "Kreće se isključivo po dijagonalama. Slabost: \"Topov pion koji promovira na polju suprotne boje od Lovca\" najčešće vodi remiju umesto pobede.")
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
 
         L_PieceRow(type: .knight, name: "Skakač (Konj)", count: "× 2")
         L_Para("Jedina figura koja preskače ostale. Snažan je u **zatvorenim pozicijama** — kada su linije blokirane pionima. Na ivici table gubi na snazi.")
             .padding(.horizontal, 20).padding(.bottom, 4)
-        L_Bullet(icon: "l.joystick.fill", color: .blue, title: "Kretanje",
+        L_Bullet(icon: "l.joystick.fill", color: DS.accent, title: "Kretanje",
                  text: "Kreće se u obliku slova \"L\": dva polja pravo pa jedno u stranu.")
-        L_Box(icon: "star.fill", color: .yellow,
+        L_Box(icon: "star.fill", color: DS.warning,
               title: "Jedinstven!",
               text: "Jedina figura koja može da preskače druge figure — i svoje i protivničke!")
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
 
         L_PieceRow(type: .queen, name: "Kraljica (Dama)", count: "× 1")
         L_Para("Stoji na polju **svoje boje** — bela Dama na belom polju, crna na crnom. Najmoćnija figura, ali ne treba je odmah izvoditi u otvaranju.")
             .padding(.horizontal, 20).padding(.bottom, 4)
-        L_Bullet(icon: "arrow.up.and.down.and.arrow.left.and.right", color: .blue, title: "Kretanje",
+        L_Bullet(icon: "arrow.up.and.down.and.arrow.left.and.right", color: DS.accent, title: "Kretanje",
                  text: "Kombinuje kretanje Topa i Lovca — kreće se u svim pravcima, koliko god polja želi.")
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
 
         L_PieceRow(type: .king, name: "Kralj", count: "× 1")
         L_Para("Najvažnija figura — njen gubitak znači kraj igre. U otvaranju je **pasivna odbrambena figura**, ali u završnici postaje moćan napadač.")
             .padding(.horizontal, 20).padding(.bottom, 4)
-        L_Bullet(icon: "dot.square.fill", color: .blue, title: "Kretanje",
+        L_Bullet(icon: "dot.square.fill", color: DS.accent, title: "Kretanje",
                  text: "Kreće se samo jedno polje u bilo kom pravcu. **Ne sme da stane na napadnuto polje!**")
     }
 
     @ViewBuilder private var lesson1Rokada: some View {
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "arrow.left.arrow.right", title: "Poseban potez: Rokada", color: lesson.accentColor)
         L_Para("Jednom u partiji možeš pomeriti **dve figure istovremeno** — Kralja i Topa. Kralj skoči dva polja ka Topu, a Top preskače Kralja i staje pored njega. Ovo služi da skloniš Kralja na sigurno i ubaciš Top u igru.")
             .padding(.horizontal, 20).padding(.bottom, 8)
-        L_Box(icon: "exclamationmark.triangle.fill", color: .yellow,
+        L_Box(icon: "exclamationmark.triangle.fill", color: DS.warning,
               title: "Uslovi za rokadu",
               text: "Ni Kralj ni Top se do tada **nisu pomerali** · Između njih **nema nijedne figure** · Kralj se ne nalazi u šahu i ne prolazi kroz napadnuto polje")
     }
@@ -336,17 +336,17 @@ struct LessonDetailView: View {
                        title: "Zaštiti kralja — uradi rokadu!",
                        text: "Rokadu odigraj što pre je moguće. Kralj na otvorenom je laka meta. Kapablanka sam uvek rokira rano i preporučuje isto svim igračima, posebno početnicima.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "exclamationmark.triangle.fill", title: "Tipične greške u otvaranju", color: lesson.accentColor)
 
-        L_Bullet(icon: "xmark.circle.fill", color: .red, title: "Prerano izvođenje Dame",
+        L_Bullet(icon: "xmark.circle.fill", color: DS.danger, title: "Prerano izvođenje Dame",
                  text: "Dama je snažna, ali ako je izvedeš rano, protivnik je napada pešacima i figurama — a svaki napad na Damu znači izgubljeni tempo jer mora da beži.")
-        L_Bullet(icon: "xmark.circle.fill", color: .red, title: "Pasivna odbrana pionima",
+        L_Bullet(icon: "xmark.circle.fill", color: DS.danger, title: "Pasivna odbrana pionima",
                  text: "\"Filipidorski\" stil — odmah igrati P-d6 kao odgovor na e4 — daje protivniku slobodan razvoj i prostranstvo. Kapablanka pokazuje kako beli tada lako gradi superiornu poziciju.")
-        L_Bullet(icon: "xmark.circle.fill", color: .red, title: "Zakasnela rokada",
+        L_Bullet(icon: "xmark.circle.fill", color: DS.danger, title: "Zakasnela rokada",
                  text: "Svaki potez bez rokade kada su linije otvorene je rizik. Protivnik može otvoriti igru i napasti tvog kralja pre nego što se skloni.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 16)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 16)
         L_SectionHeader(icon: "book.fill", title: "Poznata otvaranja", color: lesson.accentColor)
 
         lesson2Openings
@@ -370,7 +370,7 @@ struct LessonDetailView: View {
             uciMoves: ["e2e4", "e7e5", "g1f3", "b8c6", "f1c4"],
             hint: "1.e4 e5 2.Sf3 Sc6 3.Lc4 — lovac nišani tačku f7",
             icon: "flame.fill",
-            accentColor: .orange
+            accentColor: DS.accent
         ))
         .padding(.horizontal, 16).padding(.bottom, 16)
 
@@ -379,7 +379,7 @@ struct LessonDetailView: View {
             uciMoves: ["e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4"],
             hint: "1.e4 c5 2.Sf3 d6 3.d4 cxd4 4.Sxd4 — asimetrična borba",
             icon: "shield.fill",
-            accentColor: .purple
+            accentColor: DS.accent
         ))
         .padding(.horizontal, 16).padding(.bottom, 8)
     }
@@ -408,13 +408,13 @@ struct LessonDetailView: View {
         L_Bullet(icon: "exclamationmark.circle.fill", color: lesson.accentColor, title: "Ne napadaj bez sigurnosti",
                  text: "Kapablanka upozorava: direktan napad na Kralja nikada ne treba voditi do krajnosti ako nema apsolutne sigurnosti da će uspeti. Neuspeo napad znači katastrofu.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "scalemass.fill", title: "Vrednosti figura", color: lesson.accentColor)
         L_Para("U središnjici, vrednost figure zavisi od pozicije. Uvek pazi šta razmenjuješ!")
             .padding(.horizontal, 20).padding(.bottom, 8)
         L_PieceValueTable()
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "bolt.fill", title: "Osnovna taktička motiva", color: lesson.accentColor)
 
         L_Box(icon: "tuningfork", color: lesson.accentColor,
@@ -427,7 +427,7 @@ struct LessonDetailView: View {
               title: "Otkriveni napad",
               text: "Pomeriš jednu figuru i time otkriješ napad druge figure iza nje na protivnikovu vrednu figuru. Posebno opasan kada je i sama figura koja se pomera napadačka.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "person.2.fill", title: "Koordinacija figura", color: lesson.accentColor)
 
         L_Para("Kapablanka stalno naglašava: figure moraju da rade zajedno kao tim.")
@@ -440,7 +440,7 @@ struct LessonDetailView: View {
         L_Bullet(icon: "arrow.up.right", color: lesson.accentColor, title: "Lovci vole otvorene dijagonale",
                  text: "Lovac koji blokira sopstveni pion je ograničen. Pione postavljaj na polja **suprotne boje** od svog lovca.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "chart.line.uptrend.xyaxis", title: "Prednost od jednog piona", color: lesson.accentColor)
 
         L_Box(icon: "info.circle.fill", color: lesson.accentColor,
@@ -472,7 +472,7 @@ struct LessonDetailView: View {
         L_Bullet(icon: "arrow.up.circle.fill", color: lesson.accentColor, title: "Pioni su budući Kraljevi",
                  text: "Svaki pion koji stigne do poslednjeg reda postaje Dama (ili druga figura). Ovo je glavni cilj u pešačkim završnicama.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "arrow.up.circle.fill", title: "Pravilo o promociji piona", color: lesson.accentColor)
 
         L_Para("Kapablanka objašnjava ovo pravilo jasno i precizno:")
@@ -486,14 +486,14 @@ struct LessonDetailView: View {
         L_Bullet(icon: "ruler.fill", color: lesson.accentColor, title: "Tajno oružje — \"Opozicija\"",
                  text: "Kada su dva Kralja međusobno licem u lice sa neparnim brojem polja između, igrač koji je **prethodno poterao** ima prednost. Zove se opozicija — i ključna je za sve pešačke završnice.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "bolt.fill", title: "Kardinalno načelo", color: lesson.accentColor)
 
-        L_Box(icon: "star.fill", color: .yellow,
+        L_Box(icon: "star.fill", color: DS.warning,
               title: "Jedno drži dvoje — Kapablankovo načelo",
               text: "\"Pion koji drži dva protivnička piona je jedno od glavnih oruđa majstora.\" Ako tvoj pion blokira dva protivnička, ti si faktički figuru ispred — iskoristi tu prednost na drugoj strani table!")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "scalemass.fill", title: "Lovac vs. Skakač u završnici", color: lesson.accentColor)
 
         L_Bullet(icon: "arrow.up.right", color: lesson.accentColor, title: "Lovac je jači kada su pioni na obe strane",
@@ -504,13 +504,13 @@ struct LessonDetailView: View {
               title: "Slabost lovca — Topov pion",
               text: "Ako tvoj pion ide do h8 (ili a8) i to polje je suprotne boje od tvog lovca, protivnik drži ugao i igra je remi! Kapablanka ovo posebno ističe kao izvor mnogih propuštenih pobeda.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "trophy.fill", title: "Šah-Mat i Remi", color: lesson.accentColor)
 
-        L_Box(icon: "exclamationmark.triangle.fill", color: .yellow,
+        L_Box(icon: "exclamationmark.triangle.fill", color: DS.warning,
               title: "Šah",
               text: "Situacija kada je Kralj napadnut. Igrač **mora** da se odbrani — pomeri kralja, pojede napadača, ili postavi štit između.")
-        L_Box(icon: "xmark.shield.fill", color: .red,
+        L_Box(icon: "xmark.shield.fill", color: DS.danger,
               title: "Šah-Mat — Kraj igre",
               text: "Kralj je napadnut, a nema nijedan legalan način odbrane. Partija se završava ovde — Kralj se nikada zapravo ne jede.")
         L_Box(icon: "exclamationmark.2", color: lesson.accentColor,
@@ -522,7 +522,7 @@ struct LessonDetailView: View {
                  text: "Samo Kraljevi, ili Kralj + Lovac/Skakač protiv Kralja — nije moguće dati mat. Automatski remi.")
 
         // ─── Mini finalni test ───
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "trophy.fill", title: "Mini finalni test", color: lesson.accentColor)
 
         L_Para("Primeni sve što si naučio! Reši 5 zadataka — mat u najmanji broj poteza. Svaki koristi drugu kombinaciju figura.")
@@ -535,7 +535,7 @@ struct LessonDetailView: View {
             title:       "Zadatak 1 — Dama na zadnjoj liniji",
             hint:        "Crni Kralj je zarobljen. Dama ima slobodan put...",
             icon:        "crown.fill",
-            accentColor: .yellow,
+            accentColor: DS.accent,
             mateIn:      1
         )
         .padding(.horizontal, 16)
@@ -547,7 +547,7 @@ struct LessonDetailView: View {
             title:       "Zadatak 2 — Top na 8. liniji",
             hint:        "Pešaci blokiraju sopstvenog Kralja. Top pronalazi put...",
             icon:        "rectangle.portrait.fill",
-            accentColor: .blue,
+            accentColor: DS.accent,
             mateIn:      1
         )
         .padding(.horizontal, 16)
@@ -559,7 +559,7 @@ struct LessonDetailView: View {
             title:       "Zadatak 3 — Žrtva Topa!",
             hint:        "Top ide na e8 i daje šah. Crni Top mora da uzme — a onda Dama?",
             icon:        "rectangle.portrait.fill",
-            accentColor: .orange,
+            accentColor: DS.accent,
             mateIn:      2
         )
         .padding(.horizontal, 16)
@@ -571,7 +571,7 @@ struct LessonDetailView: View {
             title:       "Zadatak 4 — Lovac + Top",
             hint:        "Lovac daje šah i tera Kralja na g8. Zašto je to pogubno?",
             icon:        "rhombus.fill",
-            accentColor: .green,
+            accentColor: DS.accent,
             mateIn:      2
         )
         .padding(.horizontal, 16)
@@ -583,14 +583,14 @@ struct LessonDetailView: View {
             title:       "Zadatak 5 (težak) — Žrtva Dame, Lovac mat",
             hint:        "Greet – Hanley, Liverpool 2008. Dama se žrtvuje na h6. Zašto Kralj mora da uzme?",
             icon:        "crown.fill",
-            accentColor: .purple,
+            accentColor: DS.accent,
             mateIn:      2
         )
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
 
         // ─── O autoru ───
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "person.fill", title: "O autoru", color: lesson.accentColor)
 
         L_Box(icon: "person.fill", color: lesson.accentColor,
@@ -608,7 +608,7 @@ struct LessonDetailView: View {
         L_Bullet(icon: "person.2.fill", color: lesson.accentColor, title: "Popularizator šaha",
                  text: "\"Chess Fundamentals\" (1921) je pisao upravo za početnike i amatere.")
 
-        Divider().background(.white.opacity(0.1)).padding(.horizontal, 20).padding(.vertical, 12)
+        Divider().background(DS.line).padding(.horizontal, 20).padding(.vertical, 12)
         L_SectionHeader(icon: "text.book.closed.fill", title: "Izvor: Project Gutenberg", color: lesson.accentColor)
 
         L_Para("Sav sadržaj lekcija preuzet je iz digitalne verzije knjige dostupne na **Project Gutenberg** — neprofitnoj biblioteci knjiga u javnom domenu.")
@@ -636,10 +636,10 @@ private struct L_SectionHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.appFont(.subheadline).weight(.semibold))
+                .font(.dsBody.weight(.semibold))
                 .foregroundStyle(color)
             Text(Loc(title))
-                .font(.appFont(.subheadline).weight(.bold))
+                .font(.dsBody.weight(.bold))
                 .foregroundStyle(.primary)
         }
         .padding(.horizontal, 20)
@@ -668,7 +668,7 @@ private struct L_Para: View {
 
     var body: some View {
         mdText(Loc(text))
-            .font(.appFont(.subheadline))
+            .font(.dsBody)
             .foregroundStyle(.primary.opacity(0.85))
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -683,16 +683,16 @@ private struct L_Bullet: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .font(.appFont(.caption).weight(.semibold))
+                .font(.dsCaption.weight(.semibold))
                 .foregroundStyle(color)
                 .frame(width: 18)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 3) {
                 Text(Loc(title))
-                    .font(.appFont(.subheadline).weight(.semibold))
+                    .font(.dsBody.weight(.semibold))
                     .foregroundStyle(.primary)
                 mdText(Loc(text))
-                    .font(.appFont(.subheadline))
+                    .font(.dsBody)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -713,14 +713,14 @@ private struct L_Box: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.appFont(.caption).weight(.bold))
+                    .font(.dsCaption.weight(.bold))
                     .foregroundStyle(color)
                 Text(Loc(title))
-                    .font(.appFont(.caption).weight(.bold))
+                    .font(.dsCaption.weight(.bold))
                     .foregroundStyle(color)
             }
             mdText(Loc(text))
-                .font(.appFont(.subheadline))
+                .font(.dsBody)
                 .foregroundStyle(.primary.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -743,11 +743,11 @@ private struct L_PieceRow: View {
             PieceImageView(piece: ChessPiece(type: type, color: .white))
                 .frame(width: 32, height: 32)
             Text(Loc(name))
-                .font(.appFont(.subheadline).weight(.bold))
+                .font(.dsBody.weight(.bold))
                 .foregroundStyle(.primary)
             Spacer()
             Text(count)
-                .font(.appFont(.caption).weight(.medium))
+                .font(.dsCaption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(Color.primary.opacity(0.06), in: Capsule())
@@ -768,15 +768,15 @@ private struct L_NumberedRule: View {
             ZStack {
                 Circle().fill(color.opacity(0.2)).frame(width: 32, height: 32)
                 Text("\(number)")
-                    .font(.appFont(.subheadline).weight(.bold))
+                    .font(.dsBody.weight(.bold))
                     .foregroundStyle(color)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(Loc(title))
-                    .font(.appFont(.subheadline).weight(.bold))
+                    .font(.dsBody.weight(.bold))
                     .foregroundStyle(.primary)
                 mdText(Loc(text))
-                    .font(.appFont(.subheadline))
+                    .font(.dsBody)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -795,16 +795,16 @@ private struct L_OpeningCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(name)
-                .font(.appFont(.subheadline).weight(.bold))
+                .font(.dsBody.weight(.bold))
                 .foregroundStyle(.primary)
             ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                 HStack(alignment: .top, spacing: 8) {
                     Text(item.0 + ":")
-                        .font(.appFont(.caption).weight(.semibold))
+                        .font(.dsCaption.weight(.semibold))
                         .foregroundStyle(accentColor)
                         .fixedSize()
                     Text(item.1)
-                        .font(.appFont(.caption))
+                        .font(.dsCaption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -837,12 +837,12 @@ private struct L_PieceValueTable: View {
                     PieceImageView(piece: ChessPiece(type: row.0, color: .white))
                         .frame(width: 28, height: 28)
                     Text(Loc(row.1))
-                        .font(.appFont(.subheadline))
+                        .font(.dsBody)
                         .foregroundStyle(.primary)
                     Spacer()
                     Text(Loc(row.2 == "∞" ? "∞" : "\(row.2) bod\(row.2 == "1" ? "" : row.2 == "9" ? "ova" : "a")"))
-                        .font(.appFont(.subheadline).weight(.semibold))
-                        .foregroundStyle(row.2 == "∞" ? Color.yellow : .primary)
+                        .font(.dsBody.weight(.semibold))
+                        .foregroundStyle(row.2 == "∞" ? DS.accent : .primary)
                 }
                 .padding(.vertical, 9)
                 .padding(.horizontal, 14)
@@ -892,30 +892,30 @@ struct MatePuzzleCard: View {
                         .fill(vm.line.accentColor.opacity(0.2))
                         .frame(width: 32, height: 32)
                     Image(systemName: vm.line.icon)
-                        .font(.appFont(.caption).weight(.semibold))
+                        .font(.dsCaption.weight(.semibold))
                         .foregroundStyle(vm.line.accentColor)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text(Loc(vm.line.name))
-                            .font(.appFont(.subheadline).weight(.semibold))
+                            .font(.dsBody.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text(LocF("Mat u %lld", mateIn))
-                            .font(.appFont(.caption2).weight(.bold))
+                            .font(.appFont(.caption2).weight(.bold))  // van skale — caption2 nema DS ekvivalent
                             .foregroundStyle(vm.line.accentColor)
                             .padding(.horizontal, 6).padding(.vertical, 2)
                             .background(vm.line.accentColor.opacity(0.18), in: Capsule())
                     }
                     Text(Loc(vm.line.hint))
-                        .font(.appFont(.caption))
+                        .font(.dsCaption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
                 Spacer(minLength: 0)
                 if vm.phase == .solved {
                     Image(systemName: "trophy.fill")
-                        .foregroundStyle(.yellow)
-                        .font(.appFont(.title3))
+                        .foregroundStyle(DS.success)
+                        .font(.appFont(.title3))  // van skale — ikonica statusa, title3 nema DS ekvivalent
                         .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -943,7 +943,7 @@ struct MatePuzzleCard: View {
             // Status bar
             HStack(spacing: 6) {
                 Text(vm.statusMessage)
-                    .font(.appFont(.caption).weight(.medium))
+                    .font(.dsCaption.weight(.medium))
                     .foregroundStyle(puzzleStatusColor)
                     .lineLimit(1).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
@@ -951,7 +951,7 @@ struct MatePuzzleCard: View {
                     withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.appFont(.caption).weight(.medium))
+                        .font(.dsCaption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 10).padding(.vertical, 5)
                         .background(Color.primary.opacity(0.06), in: Capsule())
@@ -971,16 +971,16 @@ struct MatePuzzleCard: View {
 
     private var puzzleStatusColor: Color {
         switch vm.phase {
-        case .solved:    return .yellow
-        case .wrongMove: return .red
+        case .solved:    return DS.success
+        case .wrongMove: return DS.danger
         case .playing:   return .secondary
         }
     }
 
     private var puzzleBorderColor: Color {
         switch vm.phase {
-        case .solved:    return .yellow.opacity(0.6)
-        case .wrongMove: return .red.opacity(0.5)
+        case .solved:    return DS.success.opacity(0.6)
+        case .wrongMove: return DS.danger.opacity(0.5)
         case .playing:   return vm.line.accentColor.opacity(0.3)
         }
     }
@@ -1009,15 +1009,15 @@ struct OpeningExerciseCard: View {
                         .fill(line.accentColor.opacity(0.2))
                         .frame(width: 32, height: 32)
                     Image(systemName: line.icon)
-                        .font(.appFont(.caption).weight(.semibold))
+                        .font(.dsCaption.weight(.semibold))
                         .foregroundStyle(line.accentColor)
                 }
                 VStack(alignment: .leading, spacing: 1) {
                     Text(Loc(line.name))
-                        .font(.appFont(.subheadline).weight(.semibold))
+                        .font(.dsBody.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(Loc(line.hint))
-                        .font(.appFont(.caption))
+                        .font(.dsCaption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
@@ -1025,8 +1025,8 @@ struct OpeningExerciseCard: View {
                 Spacer(minLength: 0)
                 if vm.phase == .solved {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.appFont(.title3))
+                        .foregroundStyle(DS.success)
+                        .font(.appFont(.title3))  // van skale — ikonica statusa, title3 nema DS ekvivalent
                 }
             }
             .padding(.horizontal, 14)
@@ -1064,7 +1064,7 @@ struct OpeningExerciseCard: View {
                 }
 
                 Text(vm.statusMessage)
-                    .font(.appFont(.caption).weight(.medium))
+                    .font(.dsCaption.weight(.medium))
                     .foregroundStyle(openingStatusColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -1075,7 +1075,7 @@ struct OpeningExerciseCard: View {
                     withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.appFont(.caption).weight(.medium))
+                        .font(.dsCaption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -1095,16 +1095,16 @@ struct OpeningExerciseCard: View {
 
     private var openingStatusColor: Color {
         switch vm.phase {
-        case .solved:    return .green
-        case .wrongMove: return .red
+        case .solved:    return DS.success
+        case .wrongMove: return DS.danger
         case .playing:   return .secondary
         }
     }
 
     private var openingBorderColor: Color {
         switch vm.phase {
-        case .solved:    return .green.opacity(0.5)
-        case .wrongMove: return .red.opacity(0.4)
+        case .solved:    return DS.success.opacity(0.5)
+        case .wrongMove: return DS.danger.opacity(0.4)
         case .playing:   return line.accentColor.opacity(0.3)
         }
     }
@@ -1141,23 +1141,23 @@ struct MateExerciseCard: View {
                         .fill(color.opacity(0.2))
                         .frame(width: 32, height: 32)
                     Image(systemName: icon)
-                        .font(.appFont(.caption).weight(.semibold))
+                        .font(.dsCaption.weight(.semibold))
                         .foregroundStyle(color)
                 }
                 VStack(alignment: .leading, spacing: 1) {
                     Text(Loc(title))
-                        .font(.appFont(.subheadline).weight(.semibold))
+                        .font(.dsBody.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(Loc(hint))
-                        .font(.appFont(.caption))
+                        .font(.dsCaption)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Spacer(minLength: 0)
                 if vm.isSolved {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.appFont(.title3))
+                        .foregroundStyle(DS.success)
+                        .font(.appFont(.title3))  // van skale — ikonica statusa, title3 nema DS ekvivalent
                 }
             }
             .padding(.horizontal, 14)
@@ -1190,14 +1190,14 @@ struct MateExerciseCard: View {
                         .tint(color)
                 }
                 Text(vm.statusMessage)
-                    .font(.appFont(.caption).weight(.medium))
+                    .font(.dsCaption.weight(.medium))
                     .foregroundStyle(statusColor)
                 Spacer(minLength: 0)
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.appFont(.caption).weight(.medium))
+                        .font(.dsCaption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -1216,15 +1216,15 @@ struct MateExerciseCard: View {
     }
 
     private var statusColor: Color {
-        if vm.isSolved { return .green }
-        if case .draw = vm.gameState.status { return .orange }
-        if case .checkmate(let c) = vm.gameState.status, c == .white { return .red }
-        if case .check = vm.gameState.status { return .orange }
+        if vm.isSolved { return DS.success }
+        if case .draw = vm.gameState.status { return DS.warning }
+        if case .checkmate(let c) = vm.gameState.status, c == .white { return DS.danger }
+        if case .check = vm.gameState.status { return DS.warning }
         return .secondary
     }
 
     private var borderColor: Color {
-        if vm.isSolved { return .green.opacity(0.5) }
+        if vm.isSolved { return DS.success.opacity(0.5) }
         return color.opacity(0.3)
     }
 }

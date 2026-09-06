@@ -14,22 +14,22 @@ struct LessonInfo: Identifiable {
                    title: "Tabla, figure i kretanje",
                    subtitle: "Osnove šaha za početnike",
                    systemIcon: "square.grid.3x3.fill",
-                   accentColor: .blue),
+                   accentColor: DS.accent),
         LessonInfo(id: 2,
                    title: "Početak igre (Otvaranja)",
                    subtitle: "Zlatna pravila i poznata otvaranja",
                    systemIcon: "flag.fill",
-                   accentColor: .green),
+                   accentColor: DS.accent),
         LessonInfo(id: 3,
                    title: "Središnjica",
                    subtitle: "Taktika i srce bitke",
                    systemIcon: "bolt.fill",
-                   accentColor: .orange),
+                   accentColor: DS.accent),
         LessonInfo(id: 4,
                    title: "Završnica",
                    subtitle: "Šah-mat, pat i remi",
                    systemIcon: "flag.checkered",
-                   accentColor: .red),
+                   accentColor: DS.accent),
     ]
 }
 
@@ -119,7 +119,7 @@ struct LearnView: View {
                 }
                 .safeAreaPadding(.bottom, 24)
             }
-            .navigationTitle(Loc("Učenje"))
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.appBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
