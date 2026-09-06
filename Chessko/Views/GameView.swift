@@ -88,7 +88,7 @@ struct GameView: View {
                     .padding(.horizontal, 16)
                 } else {
                     ScrollView {
-                        VStack(spacing: 12) {
+                        VStack(spacing: DS.Space.m) {
                             topHeader
 
                             HStack(spacing: 8) {
@@ -136,8 +136,11 @@ struct GameView: View {
                                     )
                                 }
                             }
+
+                            Spacer(minLength: 0)
                         }
-                        .padding(.horizontal, 8)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .padding(.horizontal, DS.Space.l)
                         .padding(.top, 4)
                         .padding(.bottom, 16)
                     }
@@ -177,7 +180,7 @@ struct GameView: View {
                             showResignConfirm = true
                         } label: {
                             Image(systemName: "flag.fill")
-                                .foregroundStyle(.red.opacity(0.85))
+                                .foregroundStyle(DS.danger)
                         }
                     }
                 }
@@ -336,7 +339,7 @@ struct GameView: View {
         if viewModel.gameMode == .localFriend {
             return color == .white ? Loc("Beli") : Loc("Crni")
         } else {
-            return color == viewModel.playerColor ? Loc("Ti") : viewModel.difficulty.label
+            return color == viewModel.playerColor ? Loc("Ti") : Loc("Računar")
         }
     }
 
@@ -351,9 +354,7 @@ struct GameView: View {
             // King avatar
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(color == .white
-                          ? Color.white.opacity(0.13)
-                          : Color.black.opacity(0.28))
+                    .fill(DS.fill)
                     .frame(width: 38, height: 38)
                 PieceImageView(piece: ChessPiece(type: .king, color: color))
                     .frame(width: 26, height: 26)
@@ -370,35 +371,29 @@ struct GameView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    // Evaluation score badge
-                    if showEvalBar, let evalStr = evalTextForPlayer(color: color) {
-                        Text(evalStr)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(isMateForPlayer(color: color) ? Color.yellow : Color.primary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
-                            )
-                    }
                     // Turn / thinking indicator (right-aligned)
                     if isActive {
                         if isComputer && viewModel.isThinking {
                             ThinkingIndicator(isActive: true)
                         } else {
                             Circle()
-                                .fill(Color.green)
+                                .fill(DS.success)
                                 .frame(width: 7, height: 7)
                         }
                     }
                 }
-                CapturedPiecesView(
-                    pieces: capturedPieces,
-                    capturedByColor: color,
-                    flyingCapture: viewModel.flyingCapture
-                )
+                if isComputer {
+                    Text(viewModel.difficulty.label)
+                        .font(.dsCaption)
+                        .foregroundStyle(DS.inkMuted)
+                }
+                if !capturedPieces.isEmpty {
+                    CapturedPiecesView(
+                        pieces: capturedPieces,
+                        capturedByColor: color,
+                        flyingCapture: viewModel.flyingCapture
+                    )
+                }
             }
         }
         .padding(.horizontal, 12)
@@ -414,36 +409,6 @@ struct GameView: View {
         .animation(.easeInOut(duration: 0.2), value: isActive)
     }
 
-    private func evalTextForPlayer(color: PieceColor) -> String? {
-        if let mate = viewModel.evaluationMateIn {
-            if color == .white && mate > 0 {
-                return "M\(mate)"
-            } else if color == .black && mate < 0 {
-                return "M\(abs(mate))"
-            }
-            return nil
-        }
-        let score = viewModel.evaluationScore
-        if color == .white {
-            if score >= 0.1 {
-                return String(format: "+%.1f", score)
-            } else if abs(score) < 0.1 {
-                return "0.0"
-            }
-            return nil
-        } else {
-            if score <= -0.1 {
-                return String(format: "+%.1f", abs(score))
-            }
-            return nil
-        }
-    }
-
-    private func isMateForPlayer(color: PieceColor) -> Bool {
-        guard let mate = viewModel.evaluationMateIn else { return false }
-        return (color == .white && mate > 0) || (color == .black && mate < 0)
-    }
-
     /// Razlika u vrednosti uzetih figura za datog igrača (0 ako je negativna).
     private func materialAdvantage(for color: PieceColor) -> Int {
         let w = viewModel.gameState.capturedByWhite.reduce(0) { $0 + $1.type.materialValue / 100 }
@@ -457,7 +422,7 @@ struct GameView: View {
     private var colorPickerOverlay: some View {
         if showColorPicker {
             ZStack {
-                Color.black.opacity(0.55).ignoresSafeArea()
+                DS.scrim.ignoresSafeArea()
                     .onTapGesture {
                         withAnimation(.spring(duration: 0.25)) { showColorPicker = false }
                     }
@@ -465,7 +430,7 @@ struct GameView: View {
                 VStack(spacing: 24) {
                     Text(Loc("Izaberi stranu"))
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.onScrim)
 
                     HStack(spacing: 20) {
                         colorButton(color: .white)
@@ -515,9 +480,7 @@ struct GameView: View {
                     .frame(width: 64, height: 64)
                     .padding(12)
                     .background(
-                        color == .white
-                            ? Color.white.opacity(0.18)
-                            : Color.black.opacity(0.35),
+                        DS.onScrim.opacity(0.18),
                         in: RoundedRectangle(cornerRadius: 14)
                     )
                     .overlay(
@@ -526,7 +489,7 @@ struct GameView: View {
                     )
                 Text(color.srbAdjective.capitalized)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(DS.onScrim)
             }
         }
     }
@@ -537,12 +500,12 @@ struct GameView: View {
     private var promotionOverlay: some View {
         if viewModel.showPromotion {
             ZStack {
-                Color.black.opacity(0.5).ignoresSafeArea()
+                DS.scrim.ignoresSafeArea()
 
                 VStack(spacing: 20) {
                     Text(Loc("Izaberi figuru"))
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.onScrim)
 
                     HStack(spacing: 12) {
                         ForEach([PieceType.queen, .rook, .bishop, .knight], id: \.self) { type in
@@ -575,13 +538,13 @@ struct GameView: View {
     private var gameOverOverlay: some View {
         if viewModel.isGameOver && !dismissGameOverOverlay {
             ZStack {
-                Color.black.opacity(0.55).ignoresSafeArea()
+                DS.scrim.ignoresSafeArea()
                 VStack(spacing: 18) {
                     Text(gameOverEmoji)
                         .font(.system(size: 60))
                     Text(viewModel.statusMessage)
                         .font(.title2.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.onScrim)
                         .multilineTextAlignment(.center)
 
                     HStack(spacing: 12) {
@@ -595,7 +558,7 @@ struct GameView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
                                 .background(.white.opacity(0.15))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(DS.onScrim)
                                 .clipShape(Capsule())
                         }
 

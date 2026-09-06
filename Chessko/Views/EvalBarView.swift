@@ -22,8 +22,8 @@ struct EvalBarView: View {
             let topFraction = topIsWhite ? whiteFraction : (1.0 - whiteFraction)
             let bottomFraction = 1.0 - topFraction
 
-            let whiteColor = Color(red: 0.94, green: 0.96, blue: 0.98)
-            let blackColor = Color(red: 0.12, green: 0.16, blue: 0.23)
+            let whiteColor = Color.squareLight
+            let blackColor = Color.boardBackground
 
             let topColor = topIsWhite ? whiteColor : blackColor
             let bottomColor = topIsWhite ? blackColor : whiteColor
@@ -41,9 +41,9 @@ struct EvalBarView: View {
             .clipShape(RoundedRectangle(cornerRadius: 3))
             .overlay(
                 RoundedRectangle(cornerRadius: 3)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    .stroke(DS.line, lineWidth: 1)
             )
         }
-        .frame(width: 6)
+        .frame(width: 10)
     }
 }
