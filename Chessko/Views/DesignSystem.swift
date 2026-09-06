@@ -60,6 +60,10 @@ enum DS {
         static let xl: CGFloat = 24
     }
 
+    /// Najveca stranica table. Na iPhone-u se nikad ne dostigne; na iPad-u
+    /// sprecava da tabla proguta ceo ekran i da raspored izgleda kao uvecan telefon.
+    static let maxBoardSide: CGFloat = 560
+
     // MARK: Radijusi
 
     enum Radius {

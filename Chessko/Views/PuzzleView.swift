@@ -285,6 +285,8 @@ struct PuzzleView: View {
                 onTap:            { viewModel.tap(position: $0) }
             )
             .aspectRatio(1, contentMode: .fit)
+            .frame(maxWidth: DS.maxBoardSide)
+            .frame(maxWidth: .infinity)
             .padding(.horizontal, 4)
 
             

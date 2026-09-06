@@ -90,7 +90,10 @@ struct GameView: View {
                     GeometryReader { portraitGeo in
                         // Tabla je kvadrat: sirina ekrana minus vodoravni padding, minus eval traka i razmak.
                         let evalWidth: CGFloat = showEvalBar ? EvalBarView.width + DS.Space.xs : 0
-                        let side = max(0, portraitGeo.size.width - DS.Space.s * 2 - evalWidth)
+                        let available = max(0, portraitGeo.size.width - DS.Space.s * 2 - evalWidth)
+                        // Na sirokim ekranima tabla se ne razvlaci preko cele sirine — inace
+                        // iPad izgleda kao uvecan telefon. Ogranicena i centrirana.
+                        let side = min(available, DS.maxBoardSide)
 
                         ScrollView {
                             VStack(spacing: DS.Space.m) {
