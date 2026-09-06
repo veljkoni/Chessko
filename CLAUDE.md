@@ -51,6 +51,36 @@ početnu do dubine 5, 4.865.609 čvorova, ~85s) i 4 testa prava rokade
 pravo). `Chessko/TestSupport/LocShim.swift` postoji samo zbog paketa i
 zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u aplikaciji se ne kompajlira.
 
+## Dizajn sistem
+
+Od Faze 1 sve boje, tipografija i razmaci idu kroz `Chessko/Views/DesignSystem.swift`
+(`enum DS`). Pravac je „Tiho i precizno" iz spec 5.6: neutralne podloge, **jedan
+uzdržan akcent**, tabla je jedina zasićena stvar na ekranu.
+
+| Token | Svetla | Tamna |
+|---|---|---|
+| `DS.accent` | `#2E4A8A` | `#7EA0E8` |
+| `DS.ground` / `DS.surface` | `#F2F3F7` / `#FFFFFF` | `#0E1428` / `#161D33` |
+| `DS.fill` / `DS.line` | `#E7EAF1` / `#DFE3EC` | `#1E2740` / `#232C46` |
+| `DS.ink` / `DS.inkMuted` | `#161A22` / `#6B7280` | `#EEF1F7` / `#8B93A7` |
+
+Uz njih: `DS.success/warning/danger` (nose značenje, ne ukras), `DS.scrim`/`DS.onScrim`
+(modalni preklopi, namerno isti u obe teme), `DS.inkFixed` (taman tekst koji se NE
+invertuje — za podloge koje same ne prate temu), `DS.Space.*`, `DS.Radius.*`,
+`DS.maxBoardSide`, i tipografska skala `Font.dsTitle/dsHeading/dsBody/dsCaption/dsMono`.
+
+**Akcent je fiksan i ne menja se sa temom table.** Osam tema table i dalje bira
+korisnik; tabla ostaje jedini šaroliki element.
+
+Šta NAMERNO nije token, i zašto:
+- boje table (`Color.squareLight/squareDark/boardBackground`, `#EF4444` za šah,
+  oznake poslednjeg i legalnih poteza) — bira ih tema table
+- crna i bela polovina šahovskog sata (`#121212`, `#2C2C2E`, `#E5E5EA`) — te boje
+  prate STRANU sata, ne sistemsku temu. Sa tokenom bi u svetloj temi crna polovina
+  postala skoro bela ispod belog teksta
+- prikaz tema table i stilova figura u podešavanjima — to je sadržaj, ne hrom
+- `PieceColor.white/.black` nisu boje nego strane u igri
+
 ## Arhitektura (MVVM)
 
 ```
@@ -476,3 +506,24 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `prefix(2)`. (5) `Logic/ZobristTable.swift` dodat u `sources:` liste `Package.swift`
   (kompajlira se samo sa Foundation) da kasnija faza može da mu piše test bez izmene
   build konfiguracije. Perft nepromenjen (potvrđeno `swift test`); build zelen.
+
+- **2026-09-06** — Faza 1 (dizajn sistem). Uveden `Chessko/Views/DesignSystem.swift`
+  sa `enum DS` (boje, `DS.Space`, `DS.Radius`, `DS.maxBoardSide`) i tipografskom
+  skalom `Font.ds*` koja ide kroz `appFont` da zadrži Mac veličine. Sva tri taba,
+  sat i podešavanja prevedeni na tokene; per-lekcijske boje (plava/zelena/narandžasta/
+  crvena) svedene na jedan akcent, a boja zadržana samo tamo gde nosi značenje.
+  Ikone tabova: `square.grid.3x3.fill` / `puzzlepiece.fill` / `book.fill` (`chessboard`
+  ne postoji na ovom SDK). Uklonjen `–` placeholder iz kartica igrača, protivnik se
+  zove „Računar" a ne po težini, eval bar prosiren na 10pt i uzima boje table umesto
+  dupliranog broja u kartici. Mrtav prostor **preuređen, ne popunjen**: Igra i Zadaci
+  koriste `GeometryReader` + `.frame(minHeight:)` + `Spacer` na oba kraja pa se kratak
+  sadržaj centrira; Učenje namerno ostaje poravnato uz vrh jer je lista. Duplirani
+  naslov na Učenju rešen sakrivanjem nav bara — nativni veliki naslov se tu ne
+  iscrtava jer je `ScrollView` umotan u `ZStack`. `DS.maxBoardSide` (560pt) sprečava
+  da tabla proguta ceo iPad ekran.
+  Tri greške su bile u planu, ne u izvršenju, i ispravljene su usput:
+  `.frame(maxHeight: .infinity)` na detetu `ScrollView`-a ne radi ništa; aritmetika
+  širine table pošla je od pogrešne osnovice; i obe neaktivne polovine sata mapirane
+  su na jedan tema-adaptivan token, što bi u svetloj temi obojilo crnu polovinu skoro
+  belo ispod belog teksta. Vizuelno provereno na iPhone 17 Pro (svetla i tamna) i
+  iPad Pro 11" — osim liste Učenja u tamnoj temi, sata i pejzažnog režima.
