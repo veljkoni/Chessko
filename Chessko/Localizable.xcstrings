@@ -3022,59 +3022,6 @@
         }
       }
     },
-    "Neispravan URL": {
-      "extractionState": "manual",
-      "localizations": {
-        "sr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Neispravan URL"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invalid URL"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL invalide"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültige URL"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL non valido"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Неверный URL"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无效的网址"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "अमान्य URL"
-          }
-        }
-      }
-    },
     "Nema dostupnih zadataka": {
       "extractionState": "manual",
       "localizations": {
@@ -3128,59 +3075,6 @@
         }
       }
     },
-    "Greška mreže: %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "sr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Greška mreže: %@"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Network error: %@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erreur réseau : %@"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Netzwerkfehler: %@"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Errore di rete: %@"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сетевая ошибка: %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "网络错误：%@"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "नेटवर्क त्रुटि: %@"
-          }
-        }
-      }
-    },
     "Neispravan FEN": {
       "extractionState": "manual",
       "localizations": {
@@ -3230,6 +3124,59 @@
           "stringUnit": {
             "state": "translated",
             "value": "अमान्य FEN"
+          }
+        }
+      }
+    },
+    "Baza zadataka nije dostupna": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baza zadataka nije dostupna"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puzzle database unavailable"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base de problèmes indisponible"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufgabendatenbank nicht verfügbar"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Database dei problemi non disponibile"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "База задач недоступна"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "题目数据库不可用"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहेली डेटाबेस उपलब्ध नहीं"
           }
         }
       }

@@ -29,6 +29,7 @@
 		80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59755406843949CDA29BF61D /* SoundManager.swift */; };
 		10CA7A1000000000000000S1 /* StatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000S2 /* StatsManager.swift */; };
 		10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000P2 /* PlatformHelper.swift */; };
+		10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000R2 /* PuzzleRepository.swift */; };
 		89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */; };
 		8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */; };
 		8F9ABCE715DD4B4A8218DDF2 /* CapturedPiecesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */; };
@@ -67,6 +68,7 @@
 		59755406843949CDA29BF61D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000S2 /* StatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsManager.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000P2 /* PlatformHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelper.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000R2 /* PuzzleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleRepository.swift; sourceTree = "<group>"; };
 		5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
 		5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningExerciseViewModel.swift; sourceTree = "<group>"; };
 		6A7DFB91567E4FFD869A7B7F /* ChesskoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChesskoApp.swift; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 				EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */,
 				E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */,
 			10CA7A1000000000000000B1 /* LocalizationManager.swift */,
+			10CA7A1000000000000000R2 /* PuzzleRepository.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -298,6 +301,7 @@
 				80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */,
 				10CA7A1000000000000000S1 /* StatsManager.swift in Sources */,
 				10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */,
+				10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */,
 				89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */,
 				B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,

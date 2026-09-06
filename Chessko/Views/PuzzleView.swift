@@ -27,7 +27,7 @@ struct PuzzleView: View {
                             Spacer()
                         }
                         .frame(width: geo.size.width, height: geo.size.height)
-                    } else if case .networkError(let msg) = viewModel.phase {
+                    } else if case .unavailable(let msg) = viewModel.phase {
                         VStack {
                             Spacer()
                             errorView(message: msg)
@@ -351,7 +351,7 @@ struct PuzzleView: View {
     private var statusIcon: String {
         switch viewModel.phase {
         case .loading:         return "arrow.clockwise"
-        case .networkError:    return "wifi.slash"
+        case .unavailable:     return "exclamationmark.triangle"
         case .playing:         return "lightbulb"
         case .wrongMove:       return "xmark.circle.fill"
         case .solved:          return "checkmark.seal.fill"

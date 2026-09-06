@@ -4,7 +4,7 @@ import SwiftUI
 
 enum PuzzlePhase: Equatable {
     case loading
-    case networkError(String)
+    case unavailable(String)
     case playing          // waiting for player's move
     case wrongMove        // player just tried the wrong move
     case solved           // all moves found correctly
@@ -30,6 +30,10 @@ final class PuzzleViewModel {
     var currentPuzzle: ChessPuzzle?
     var phase: PuzzlePhase = .loading
     private var puzzleHadError: Bool = false
+
+    /// `nil` kad `puzzles.sqlite` nedostaje iz bundle-a — `loadPuzzle()` tada
+    /// odmah javlja `.unavailable` umesto praznog ekrana.
+    private let repository = PuzzleRepository.bundled
 
     // MARK: - Date Navigation
 
@@ -72,7 +76,7 @@ final class PuzzleViewModel {
 
     func load(date: Date) {
         selectedDate = Self.cal.startOfDay(for: date)
-        Task { await fetchPuzzle() }
+        loadPuzzle()
     }
 
     func dateKey(_ date: Date) -> String {
@@ -111,7 +115,7 @@ final class PuzzleViewModel {
     var statusMessage: String {
         switch phase {
         case .loading:         return Loc("Učitavam zadatak...")
-        case .networkError:    return Loc("Greška pri učitavanju.")
+        case .unavailable:     return Loc("Greška pri učitavanju.")
         case .playing:
             return playerColor == .white
                 ? Loc("Pronađi pravi potez za bele")
@@ -127,36 +131,31 @@ final class PuzzleViewModel {
     func loadDailyPuzzle() async {
         loadSolvedDates()
         puzzleHadError = false
-        await fetchPuzzle()
+        loadPuzzle()
     }
 
-    private func fetchPuzzle() async {
-        phase = .loading
+    /// Cita zadatak dana direktno iz `PuzzleRepository` — sinhrono, bez mrezne
+    /// zavisnosti. `.loading` ostaje samo pocetna vrednost `phase`-a pre prvog
+    /// poziva; posle toga svaki poziv odmah razresi u `.playing` ili `.unavailable`.
+    private func loadPuzzle() {
         currentPuzzle = nil
 
-        let dayIndex = Self.cal.ordinality(of: .day, in: .era, for: selectedDate) ?? 1
-
-        guard let url = URL(string:
-            "https://chess-puzzles-api.vercel.app/puzzles?start=\(dayIndex % 10_000)&limit=1")
-        else { phase = .networkError(Loc("Neispravan URL")); return }
-
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let puzzles   = try JSONDecoder().decode([ChessPuzzle].self, from: data)
-            guard let puzzle = puzzles.first else {
-                phase = .networkError(Loc("Nema dostupnih zadataka")); return
-            }
-            setup(puzzle: puzzle)
-        } catch {
-            phase = .networkError(LocF("Greška mreže: %@", error.localizedDescription))
+        guard let repository else {
+            phase = .unavailable(Loc("Baza zadataka nije dostupna")); return
         }
+
+        guard let puzzle = repository.dailyPuzzle(for: selectedDate) else {
+            phase = .unavailable(Loc("Nema dostupnih zadataka")); return
+        }
+
+        setup(puzzle: puzzle)
     }
 
     // MARK: - Setup
 
     private func setup(puzzle: ChessPuzzle) {
         guard let state = GameState.fromFEN(puzzle.fen) else {
-            phase = .networkError(Loc("Neispravan FEN")); return
+            phase = .unavailable(Loc("Neispravan FEN")); return
         }
 
         currentPuzzle = puzzle

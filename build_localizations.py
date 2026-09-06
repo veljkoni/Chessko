@@ -103,10 +103,9 @@ add("Prikaži rešenje", "Show solution", "Voir la solution", "Lösung anzeigen"
 add("Sledeći dan", "Next day", "Jour suivant", "Nächster Tag", "Giorno successivo", "Следующий день", "下一天", "अगला दिन")
 add("Završio si zadatak za danas!", "You finished today’s puzzle!", "Vous avez terminé le problème du jour !", "Du hast die heutige Aufgabe gelöst!", "Hai completato il problema di oggi!", "Вы решили сегодняшнюю задачу!", "你完成了今天的谜题！", "आपने आज की पहेली पूरी कर ली!")
 add("Pokušaj ponovo", "Try again", "Réessayer", "Erneut versuchen", "Riprova", "Попробовать снова", "重试", "फिर कोशिश करें")
-add("Neispravan URL", "Invalid URL", "URL invalide", "Ungültige URL", "URL non valido", "Неверный URL", "无效的网址", "अमान्य URL")
 add("Nema dostupnih zadataka", "No puzzles available", "Aucun problème disponible", "Keine Aufgaben verfügbar", "Nessun problema disponibile", "Нет доступных задач", "暂无可用谜题", "कोई पहेली उपलब्ध नहीं")
-add("Greška mreže: %@", "Network error: %@", "Erreur réseau : %@", "Netzwerkfehler: %@", "Errore di rete: %@", "Сетевая ошибка: %@", "网络错误：%@", "नेटवर्क त्रुटि: %@")
 add("Neispravan FEN", "Invalid FEN", "FEN invalide", "Ungültiges FEN", "FEN non valido", "Неверный FEN", "无效的 FEN", "अमान्य FEN")
+add("Baza zadataka nije dostupna", "Puzzle database unavailable", "Base de problèmes indisponible", "Aufgabendatenbank nicht verfügbar", "Database dei problemi non disponibile", "База задач недоступна", "题目数据库不可用", "पहेली डेटाबेस उपलब्ध नहीं")
 
 # ── Puzzle themes ───────────────────────────────────────────────────────────
 add("Otvaranje", "Opening", "Ouverture", "Eröffnung", "Apertura", "Дебют", "开局", "ओपनिंग")
