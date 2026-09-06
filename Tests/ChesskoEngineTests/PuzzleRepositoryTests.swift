@@ -5,6 +5,7 @@ import Foundation
 // Baza `Chessko/puzzles.sqlite` se otvara po relativnoj putanji iz korena
 // repozitorijuma — `swift test` se pokreće iz korena, pa je ova putanja
 // stabilna nezavisno od radnog direktorijuma test runnera.
+@MainActor
 private func openTestRepository() -> PuzzleRepository {
     let url = URL(fileURLWithPath: "Chessko/puzzles.sqlite")
     guard let repo = PuzzleRepository(databaseURL: url) else {
@@ -14,12 +15,12 @@ private func openTestRepository() -> PuzzleRepository {
     return repo
 }
 
-@Test func repositoryOpensAndReportsExpectedCount() {
+@Test @MainActor func repositoryOpensAndReportsExpectedCount() {
     let repo = openTestRepository()
     #expect(repo.count >= 15_000)
 }
 
-@Test func dailyPuzzleIsDeterministicForSameDateAndVariesAcrossDates() {
+@Test @MainActor func dailyPuzzleIsDeterministicForSameDateAndVariesAcrossDates() {
     let repo = openTestRepository()
 
     let day1 = Date(timeIntervalSince1970: 1_700_000_000) // fiksan datum
@@ -35,7 +36,7 @@ private func openTestRepository() -> PuzzleRepository {
     #expect(other?.puzzleId != first?.puzzleId)
 }
 
-@Test func themeFilterOnlyMatchesExactThemeNotSubstring() {
+@Test @MainActor func themeFilterOnlyMatchesExactThemeNotSubstring() {
     let repo = openTestRepository()
 
     let forkPuzzles = repo.puzzles(themes: ["fork"], ratingRange: 600...2200, excluding: [], limit: 50)
@@ -52,7 +53,7 @@ private func openTestRepository() -> PuzzleRepository {
     }
 }
 
-@Test func excludingSetIsRespected() {
+@Test @MainActor func excludingSetIsRespected() {
     let repo = openTestRepository()
 
     guard let sample = repo.randomPuzzle(ratingRange: 600...2200, excluding: []) else {
@@ -68,21 +69,30 @@ private func openTestRepository() -> PuzzleRepository {
     #expect(anotherRandom?.puzzleId != sample.puzzleId)
 }
 
-@Test func everyReturnedPuzzleHasValidFenAndAtLeastOneMove() {
+// Validira CELU bazu, ne uzorak: los red bi se u nasumicnom uzorku od 500
+// od 20 000 redova pojavio u ~2.5% pokretanja, sto znaci da bi test prakticno
+// uvek prolazio i pored pokvarenih podataka. Prolaz je deterministican
+// (`ORDER BY id`), a prvi neispravan red se prijavljuje po `id`-ju.
+@Test @MainActor func everyPuzzleInDatabaseHasValidFenAndAtLeastOneMove() {
     let repo = openTestRepository()
 
-    let sample = repo.puzzles(themes: [], ratingRange: 600...2200, excluding: [], limit: 500)
-    #expect(sample.count == 500)
+    let all = repo.allPuzzlesOrderedById()
+    // Ako `puzzleFromRow` odbije red (NULL kolona), on tiho ispada iz liste —
+    // poredjenje sa COUNT(*) hvata i taj slucaj.
+    #expect(all.count == repo.count, "Ocitano \(all.count) redova, baza ima \(repo.count)")
+    #expect(all.count >= 15_000)
 
-    for puzzle in sample {
-        #expect(!puzzle.fen.isEmpty)
-        #expect(!puzzle.uciMoves.isEmpty)
-        let state = GameState.fromFEN(puzzle.fen)
-        #expect(state != nil, "GameState.fromFEN nije uspeo za puzzle \(puzzle.puzzleId): \(puzzle.fen)")
+    var invalid: [String] = []
+    for puzzle in all {
+        if puzzle.fen.isEmpty || puzzle.uciMoves.isEmpty || GameState.fromFEN(puzzle.fen) == nil {
+            invalid.append(puzzle.puzzleId)
+            if invalid.count >= 5 { break }
+        }
     }
+    #expect(invalid.isEmpty, "Neispravan FEN ili prazna lista poteza kod zadataka: \(invalid)")
 }
 
-@Test func puzzleByIdRoundTripsAndUnknownIdReturnsNil() {
+@Test @MainActor func puzzleByIdRoundTripsAndUnknownIdReturnsNil() {
     let repo = openTestRepository()
 
     guard let sample = repo.randomPuzzle(ratingRange: 600...2200, excluding: []) else {
@@ -97,7 +107,7 @@ private func openTestRepository() -> PuzzleRepository {
     #expect(repo.puzzle(id: "ovaj-id-ne-postoji-nikako") == nil)
 }
 
-@Test func databaseURLThatDoesNotExistFailsToInit() {
+@Test @MainActor func databaseURLThatDoesNotExistFailsToInit() {
     let bogus = URL(fileURLWithPath: "Chessko/does-not-exist.sqlite")
     #expect(PuzzleRepository(databaseURL: bogus) == nil)
 }

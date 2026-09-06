@@ -24,15 +24,22 @@ import SQLite3
 /// ponasanje zahteva da SQLite ODMAH napravi sopstvenu kopiju stringa.
 private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
-// `@unchecked Sendable`: obavija OpaquePointer ka SQLite handle-u, koji sam
-// Swift compiler ne moze da proveri kao Sendable. Bezbedno je jer je klasa
-// namenjena upotrebi sa jedne niti (glavne, iz `PuzzleViewModel`-a) — upiti
-// su mikrosekundni nad 20k redova pa nema potrebe za internim zakljucavanjem;
-// ovo samo dozvoljava `static let bundled` kao globalnu konstantu pod Swift 6
-// strogim concurrency proverama.
-final class PuzzleRepository: @unchecked Sendable {
+// `@MainActor`: klasa cuva neizolovan `OpaquePointer` ka SQLite handle-u i
+// kesira `count` u `lazy var` — oboje bi bilo trka da im se pristupa sa vise
+// niti. Umesto `@unchecked Sendable` (koji samo utisava kompajler), izolacija
+// na glavni actor odgovara stvarnom pozivnom grafu (sve ide iz
+// `PuzzleViewModel`-a, koji je `@MainActor`) i pretvara svakog buduceg
+// pozivaoca sa pozadinske niti u gresku pri kompajliranju umesto u tihu trku.
+// Upiti su mikrosekundni nad 20k redova, pa glavna nit nije usko grlo.
+@MainActor
+final class PuzzleRepository {
 
-    private let db: OpaquePointer
+    /// `nonisolated(unsafe)` je potreban SAMO zbog `deinit`-a: deinit je uvek
+    /// neizolovan, a `OpaquePointer` nije `Sendable`. Bezbedno je jer deinit
+    /// po definiciji radi kad vise nijedna referenca na objekat ne postoji,
+    /// dakle bez ijednog konkurentnog citaoca. Svaki drugi pristup ide kroz
+    /// `@MainActor` izolaciju klase.
+    nonisolated(unsafe) private let db: OpaquePointer
 
     /// Baza upakovana u glavni bundle aplikacije (`puzzles.sqlite`).
     /// `nil` ako resurs nije registrovan/nedostupan — pozivaoci moraju
@@ -164,6 +171,28 @@ final class PuzzleRepository: @unchecked Sendable {
         sqlite3_bind_int(stmt, index, Int32(limit))
 
         var results: [ChessPuzzle] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            if let puzzle = puzzleFromRow(stmt) {
+                results.append(puzzle)
+            }
+        }
+        return results
+    }
+
+    // MARK: - Cela baza (validacija integriteta)
+
+    /// Svi zadaci iz baze, deterministicki sortirani po `id`. Postoji radi
+    /// testova integriteta koji moraju da provere SVAKI red (nasumican uzorak
+    /// bi propustao los red vecinu pokretanja). Aplikacija ovo nikad ne zove
+    /// u toku rada — zadaci se citaju pojedinacno ili u malim serijama.
+    func allPuzzlesOrderedById() -> [ChessPuzzle] {
+        let sql = "SELECT id, fen, moves, rating, themes FROM puzzles ORDER BY id;"
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+
+        var results: [ChessPuzzle] = []
+        results.reserveCapacity(count)
         while sqlite3_step(stmt) == SQLITE_ROW {
             if let puzzle = puzzleFromRow(stmt) {
                 results.append(puzzle)
