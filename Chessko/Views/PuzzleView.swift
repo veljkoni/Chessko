@@ -284,6 +284,7 @@ struct PuzzleView: View {
                 gameStatus:       viewModel.gameState.status,
                 onTap:            { viewModel.tap(position: $0) }
             )
+            .aspectRatio(1, contentMode: .fit)
             .padding(.horizontal, 4)
 
             

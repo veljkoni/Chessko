@@ -153,7 +153,10 @@ struct ChessClockView: View {
                 textColor = .white
                 subtextColor = .white.opacity(0.7)
             } else {
-                bgColor = DS.fill
+                // Neaktivna crna polovina. NAMERNO fiksna, ne token — DS.fill prati
+                // sistemsku temu, a ova boja mora da prati STRANU sata. Sa tokenom
+                // bi u svetloj temi postala skoro bela ispod belog teksta.
+                bgColor = Color(hex: "#2C2C2E")
                 textColor = .white.opacity(0.5)
                 subtextColor = .white.opacity(0.3)
             }
@@ -168,7 +171,9 @@ struct ChessClockView: View {
                 textColor = .black
                 subtextColor = .black.opacity(0.6)
             } else {
-                bgColor = DS.fill
+                // Neaktivna bela polovina. Fiksna iz istog razloga kao crna:
+                // sa tokenom bi u tamnoj temi postala tamnoplava ispod crnog teksta.
+                bgColor = Color(hex: "#E5E5EA")
                 textColor = .black.opacity(0.5)
                 subtextColor = .black.opacity(0.3)
             }
