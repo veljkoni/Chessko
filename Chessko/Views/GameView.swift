@@ -89,7 +89,7 @@ struct GameView: View {
                 } else {
                     GeometryReader { portraitGeo in
                         // Tabla je kvadrat: sirina ekrana minus vodoravni padding, minus eval traka i razmak.
-                        let evalWidth: CGFloat = showEvalBar ? EvalBarView.width + DS.Space.s : 0
+                        let evalWidth: CGFloat = showEvalBar ? EvalBarView.width + DS.Space.xs : 0
                         let side = max(0, portraitGeo.size.width - DS.Space.s * 2 - evalWidth)
 
                         ScrollView {
@@ -98,7 +98,7 @@ struct GameView: View {
 
                                 topHeader
 
-                                HStack(spacing: DS.Space.s) {
+                                HStack(spacing: DS.Space.xs) {
                                     if showEvalBar {
                                         EvalBarView(
                                             evaluation: viewModel.evaluationScore,
