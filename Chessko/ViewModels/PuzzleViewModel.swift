@@ -223,6 +223,11 @@ final class PuzzleViewModel {
     /// ignorise `excluding` i ponovi vec resen zadatak — ponavljanje je
     /// bolje od praznog ekrana ili greske.
     func nextPuzzle() {
+        // `showSolution()` namerno NE upisuje u `solvedPuzzleIds` (prati pravilo
+        // za kalendar), pa bi bez ovoga sledece izvlacenje moglo da vrati bas
+        // zadatak koji je upravo bio na ekranu.
+        let justShown = currentPuzzle?.puzzleId
+
         mode = .practice
         phase = .loading
         currentPuzzle = nil
@@ -240,9 +245,11 @@ final class PuzzleViewModel {
             PuzzleRepository.minRating...PuzzleRepository.maxRating
         ]
 
+        let excluded = justShown.map { solvedPuzzleIds.union([$0]) } ?? solvedPuzzleIds
+
         var found: ChessPuzzle?
         for window in windows {
-            if let puzzle = repository.randomPuzzle(ratingRange: window, excluding: solvedPuzzleIds) {
+            if let puzzle = repository.randomPuzzle(ratingRange: window, excluding: excluded) {
                 found = puzzle
                 break
             }
@@ -253,7 +260,7 @@ final class PuzzleViewModel {
         if found == nil {
             found = repository.randomPuzzle(
                 ratingRange: PuzzleRepository.minRating...PuzzleRepository.maxRating,
-                excluding: []
+                excluding: justShown.map { [$0] } ?? []
             )
         }
 
@@ -374,9 +381,19 @@ final class PuzzleViewModel {
     // MARK: - Computer Move
 
     private func applyNextComputerMove() {
-        guard movePointer < rawMoves.count,
-              let move = ChessMove.fromUCI(rawMoves[movePointer], in: gameState)
-        else { return }
+        // Iscrpljena lista poteza je NORMALAN kraj zadatka, ne greska.
+        guard movePointer < rawMoves.count else { return }
+
+        // Potez koji se ne razresi jeste greska, i ne sme da se preskoci u
+        // tisini: `phase` bi ostao na `.loading`, gde su sve kontrole
+        // onemogucene a `actionButtons` prazan — ekran bez izlaza do restarta
+        // aplikacije. (Za isporucenu bazu ovo je nedostizno: test
+        // `everyPuzzleFirstMoveParsesInItsOwnPosition` proverava svih 20 000
+        // prvih poteza. Guard stoji zbog buduce regeneracije baze.)
+        guard let move = ChessMove.fromUCI(rawMoves[movePointer], in: gameState) else {
+            phase = .unavailable(Loc("Nema dostupnih zadataka"))
+            return
+        }
 
         apply(move: move, isPlayerMove: false)
         movePointer += 1

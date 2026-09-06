@@ -394,7 +394,7 @@ struct PuzzleView: View {
                 } label: {
                     Label("Sledeći zadatak", systemImage: "arrow.triangle.2.circlepath")
                         .font(.dsBody.weight(.medium))
-                        .foregroundStyle(DS.onScrim)
+                        .foregroundStyle(DS.onAccent)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                         .background(DS.accent, in: RoundedRectangle(cornerRadius: 12))

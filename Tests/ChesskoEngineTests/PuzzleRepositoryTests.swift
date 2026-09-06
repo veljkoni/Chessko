@@ -145,3 +145,27 @@ private func openTestRepository() -> PuzzleRepository {
     #expect(window.lowerBound <= window.upperBound)
     #expect(window.lowerBound >= PuzzleRepository.minRating)
 }
+
+// Integritet baze nije samo "FEN se parsira". `applyNextComputerMove()` odigrava
+// PRVI potez zadatka preko `ChessMove.fromUCI` i, ako taj potez ne prodje, tiho
+// izlazi ostavljajuci `phase` na `.loading` — ekran bez ijedne aktivne kontrole.
+// Zato se ovde proverava da svaki zadatak u bazi ima prvi potez koji se zaista
+// razresi u svojoj FEN poziciji.
+@Test @MainActor func everyPuzzleFirstMoveParsesInItsOwnPosition() {
+    let repo = openTestRepository()
+
+    var broken: [String] = []
+    for puzzle in repo.allPuzzlesOrderedById() {
+        guard let state = GameState.fromFEN(puzzle.fen),
+              let first = puzzle.uciMoves.first else {
+            broken.append("\(puzzle.puzzleId) (FEN/potezi)")
+            if broken.count >= 5 { break }
+            continue
+        }
+        if ChessMove.fromUCI(first, in: state) == nil {
+            broken.append("\(puzzle.puzzleId) (\(first))")
+            if broken.count >= 5 { break }
+        }
+    }
+    #expect(broken.isEmpty, "Prvi potez se ne razresava kod zadataka: \(broken)")
+}
