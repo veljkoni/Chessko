@@ -26,6 +26,13 @@ struct GameView: View {
                 let isLandscape = geo.size.width > geo.size.height
 
                 if isLandscape {
+                    // Landscape je visinski ogranicen (ne sirinski kao portret) — strana
+                    // table se racuna iz raspolozive VISINE, isto kao sto se u portretu
+                    // racuna iz sirine. Bez ovoga EvalBarView nema visinsku granicu i
+                    // HStack.frame(maxHeight: .infinity) ga razvlaci iznad table.
+                    let available = max(0, geo.size.height - DS.Space.s * 2)
+                    let side = min(available, DS.maxBoardSide)
+
                     HStack(alignment: .top, spacing: 12) {
                         // Left side: EvalBar (optional) + Board
                         HStack(spacing: 8) {
@@ -35,7 +42,7 @@ struct GameView: View {
                                     mateIn: viewModel.evaluationMateIn,
                                     isFlipped: viewModel.isFlipped
                                 )
-                                .padding(.vertical, 8)
+                                .frame(height: side)
                             }
 
                             BoardView(
@@ -51,10 +58,9 @@ struct GameView: View {
                                 gameStatus:       viewModel.displayState.status,
                                 onTap:            { viewModel.tap(position: $0) }
                             )
-                            .aspectRatio(1, contentMode: .fit)
-                            .padding(.vertical, 8)
+                            .frame(width: side, height: side)
                         }
-                        .frame(maxHeight: .infinity)
+                        .padding(.vertical, DS.Space.s)
 
                         // Right side: Info, Review Controls and History
                         ScrollView {
@@ -413,7 +419,7 @@ struct GameView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(
-                    isActive ? Color.accentColor.opacity(0.55) : Color.primary.opacity(0.07),
+                    isActive ? DS.accent.opacity(0.55) : Color.primary.opacity(0.07),
                     lineWidth: isActive ? 1.5 : 1
                 )
         )

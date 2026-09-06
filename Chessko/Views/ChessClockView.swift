@@ -145,7 +145,11 @@ struct ChessClockView: View {
         if playerNumber == 2 {
             // Player 2 (Black) - rotated, top half
             if isTimeOut {
-                bgColor = DS.danger
+                // Istek vremena na crnoj polovini. NAMERNO fiksna, ne token — ista
+                // priča kao neaktivna polovina ispod: boja prati STRANU sata, ne temu.
+                // U tamnoj temi je DS.danger svetlo-lososi (#F2857A) pa beli tekst
+                // pada na ~2.5:1 kontrast — nečitljivo.
+                bgColor = Color(hex: "#8C2525")
                 textColor = .white
                 subtextColor = .white.opacity(0.7)
             } else if isActive {
@@ -163,7 +167,11 @@ struct ChessClockView: View {
         } else {
             // Player 1 (White) - bottom half
             if isTimeOut {
-                bgColor = DS.danger.opacity(0.18)
+                // Istek vremena na beloj polovini. NAMERNO fiksna, ne token — na
+                // 18% providnosti DS.danger komponuje se sa pozadinom iza njega,
+                // pa bi u tamnoj temi BELA polovina sata postala tamna (tačno greška
+                // koju je revert neaktivnih polovina trebalo da spreči).
+                bgColor = Color(hex: "#FADAD8")
                 textColor = Color(uiColor: .systemRed)
                 subtextColor = Color(uiColor: .systemRed).opacity(0.7)
             } else if isActive {
@@ -267,7 +275,7 @@ struct ChessClockView: View {
                         .font(.headline)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color.accentColor.opacity(0.12), in: Capsule())
+                        .background(DS.accent.opacity(0.12), in: Capsule())
                     }
 
                     Button {
@@ -276,7 +284,7 @@ struct ChessClockView: View {
                     } label: {
                         Image(systemName: "info.circle")
                             .font(.title2)
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(DS.accent)
                     }
                 }
             } else {
@@ -289,8 +297,8 @@ struct ChessClockView: View {
                         .font(.title)
                         .foregroundStyle(DS.onScrim)
                         .frame(width: 56, height: 56)
-                        .background(Color.accentColor, in: Circle())
-                        .shadow(color: Color.accentColor.opacity(0.3), radius: 6, y: 3)
+                        .background(DS.accent, in: Circle())
+                        .shadow(color: DS.accent.opacity(0.3), radius: 6, y: 3)
                 }
             }
 

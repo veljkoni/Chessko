@@ -527,3 +527,33 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   su na jedan tema-adaptivan token, što bi u svetloj temi obojilo crnu polovinu skoro
   belo ispod belog teksta. Vizuelno provereno na iPhone 17 Pro (svetla i tamna) i
   iPad Pro 11" — osim liste Učenja u tamnoj temi, sata i pejzažnog režima.
+- **2026-09-06** — Faza 1, talas ispravki posle celokupnog pregleda grane (šest nalaza,
+  izveštaj u `.superpowers/sdd/2026-09-06-faza-1-dizajn-sistem/final-fix-report.md`).
+  (1) `ChessClockView.swift`: timeout boje na oba polutimera vraćene na fiksne hex
+  literale (`#8C2525` crna, `#FADAD8` bela) — bile su promašene u prethodnom revertu
+  neaktivnih polovina i pravile isti bag (DS.danger je adaptivan, pa je u tamnoj temi
+  beli tekst na crnoj polovini bio ~2.5:1, a bela polovina je na 18% providnosti
+  postajala tamna). Sat sada nema nijedan adaptivni token u fiksnom dvo-tonskom bloku.
+  (2) Svih pet `Color.accentColor`/`.accentColor` mesta (`GameView.swift:416` — bordura
+  aktivne kartice igrača; `ChessClockView.swift` — 4 kontrole sata) prebačeno na
+  `DS.accent`; dodat `.tint(DS.accent)` na `TabView` u `ContentView.swift` (bez tog
+  tint-a tab bar i dalje čita sistemsko plavo iz nepostojećeg `AccentColor` colorset-a).
+  `AccentColor` colorset i `project.pbxproj` namerno nisu dirani — sledeći korak izvan
+  ovog talasa. (3) `MoveHistoryView.swift`: sve četiri `Color.cyan` selekcije → `DS.accent`
+  (fajl nije bio ni u jednom task listu pa je promašen u fazi 1; sudario se vizuelno sa
+  `reviewControlsView` odmah ispod, već na `DS.accent`). (4) `SettingsSheet.swift`:
+  uklonjena tri modifikatora (`.listRowBackground(DS.surface)`, `.scrollContentBackground(.hidden)`,
+  `.background(DS.ground)`) — `listRowBackground` je row-scoped pa primenjen na `List`
+  ne radi ništa; ostavljena nativna grouped-list pozadina. (5) Pejzažni eval bar u
+  `GameView.swift` razvlačio se preko table (ista greška kao u portretu, ispravljena
+  4 puta pre nego što je stigla u pejzaž — nikad vizuelno provereno); strana table se
+  sada u pejzažu računa iz raspoložive VISINE (`geo.size.height`), isto kao što se u
+  portretu računa iz širine, i eval bar/tabla dobijaju `.frame(height:)`/`.frame(width:height:)`
+  umesto `.aspectRatio` + `.frame(maxHeight: .infinity)`. (6) `DesignSystem.swift`:
+  ispravljena dva netačna komentara (tipografski header sad navodi `dsMono` kao izuzetak
+  jer `appFont` nema `design:` parametar; `dsMono` dokumentacija sad navodi stvarnog
+  jedinog potrošača — rejting bedž na Zadacima — umesto netačnog "sat, eval, notacija").
+  Verifikovano širokim grep-om po `Chessko/ContentView.swift` + `Chessko/Views/*.swift`:
+  jedini preostali pogodak je multi-color konfeti paleta u `BoardView.swift:347`
+  (van dometa — boje table/figura). Build (`iPhone 17 Pro` simulator) uspešan,
+  `swift test` 11/11 prošlo (~84s).

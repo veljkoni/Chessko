@@ -119,10 +119,10 @@ struct MoveHistoryView: View {
             } label: {
                 Text(pair.white)
                     .fontWeight(whiteSelected ? .bold : .regular)
-                    .foregroundStyle(whiteSelected ? Color.cyan : Color.primary.opacity(0.85))
+                    .foregroundStyle(whiteSelected ? DS.accent : Color.primary.opacity(0.85))
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
-                    .background(whiteSelected ? Color.cyan.opacity(0.18) : Color.clear)
+                    .background(whiteSelected ? DS.accent.opacity(0.18) : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             }
             .buttonStyle(.plain)
@@ -136,10 +136,10 @@ struct MoveHistoryView: View {
                     } label: {
                         Text(black)
                             .fontWeight(blackSelected ? .bold : .regular)
-                            .foregroundStyle(blackSelected ? Color.cyan : Color.primary.opacity(0.85))
+                            .foregroundStyle(blackSelected ? DS.accent : Color.primary.opacity(0.85))
                             .padding(.horizontal, 4)
                             .padding(.vertical, 2)
-                            .background(blackSelected ? Color.cyan.opacity(0.18) : Color.clear)
+                            .background(blackSelected ? DS.accent.opacity(0.18) : Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                     }
                     .buttonStyle(.plain)

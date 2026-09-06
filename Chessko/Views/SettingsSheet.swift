@@ -373,9 +373,6 @@ struct SettingsSheet: View {
                     .padding(.vertical, 4)
                 }
             }
-            .listRowBackground(DS.surface)
-            .scrollContentBackground(.hidden)
-            .background(DS.ground)
             .listSectionSpacing(.compact)
             .navigationTitle(Loc("Podešavanja"))
             .navigationBarTitleDisplayMode(.inline)

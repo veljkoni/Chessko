@@ -34,6 +34,7 @@ struct ContentView: View {
                     Label("Učenje", systemImage: "book.fill")
                 }
         }
+        .tint(DS.accent)
         .preferredColorScheme(preferredColorScheme)
         // Rebuild the whole tree when the language changes so every Text
         // re-resolves against the newly selected .lproj bundle.

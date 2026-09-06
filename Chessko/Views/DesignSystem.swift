@@ -75,8 +75,9 @@ enum DS {
 
 // MARK: - Tipografska skala
 //
-// Sve ide kroz Font.appFont da bi se zadržale uvećane veličine na Mac-u
-// (vidi Chessko/Logic/PlatformHelper.swift).
+// Sve, osim dsMono, ide kroz Font.appFont da bi se zadržale uvećane veličine
+// na Mac-u (vidi Chessko/Logic/PlatformHelper.swift). dsMono je izuzetak jer
+// appFont nema design: parametar potreban za monospaced cifre.
 
 extension Font {
     /// Naslov ekrana.
@@ -87,6 +88,7 @@ extension Font {
     static var dsBody: Font { .appFont(.subheadline) }
     /// Prigušen, sitan tekst — podnaslovi, oznake.
     static var dsCaption: Font { .appFont(.caption) }
-    /// Cifre koje se poravnavaju u kolone (sat, eval, notacija).
+    /// Monospaced cifre malog obima — trenutno rejting bedž na ekranu Zadaci.
+    /// Sat, eval traka i istorija poteza imaju sopstvene fontove, ne ovaj.
     static var dsMono: Font { .system(.footnote, design: .monospaced) }
 }
