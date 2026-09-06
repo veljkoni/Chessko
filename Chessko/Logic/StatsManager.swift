@@ -36,6 +36,11 @@ final class StatsManager {
         didSet { UserDefaults.standard.set(bestPuzzleStreak, forKey: "stats_bestPuzzleStreak") }
     }
 
+    /// Elo-stil rejting igraca za zadatke. Pocinje na 800 (spec 5.4).
+    var puzzleRating: Int {
+        didSet { UserDefaults.standard.set(puzzleRating, forKey: "stats_puzzleRating") }
+    }
+
     var winRate: Int {
         gamesPlayed > 0 ? Int((Double(gamesWon) / Double(gamesPlayed)) * 100.0) : 0
     }
@@ -50,6 +55,11 @@ final class StatsManager {
         self.puzzlesSolved = UserDefaults.standard.integer(forKey: "stats_puzzlesSolved")
         self.currentPuzzleStreak = UserDefaults.standard.integer(forKey: "stats_currentPuzzleStreak")
         self.bestPuzzleStreak = UserDefaults.standard.integer(forKey: "stats_bestPuzzleStreak")
+        if UserDefaults.standard.object(forKey: "stats_puzzleRating") == nil {
+            self.puzzleRating = 800
+        } else {
+            self.puzzleRating = UserDefaults.standard.integer(forKey: "stats_puzzleRating")
+        }
     }
 
     func recordGameWon() {
@@ -84,6 +94,20 @@ final class StatsManager {
         currentPuzzleStreak = 0
     }
 
+    /// E = 1 / (1 + 10^((Rp - R)/400));  R' = R + K*(S - E),  K = 32
+    /// Cista funkcija — nema stanja, testira se direktno.
+    nonisolated static func newRating(current r: Int, puzzleRating rp: Int, solved: Bool) -> Int {
+        let expected = 1.0 / (1.0 + pow(10.0, (Double(rp) - Double(r)) / 400.0))
+        let score = solved ? 1.0 : 0.0
+        return Int((Double(r) + 32.0 * (score - expected)).rounded())
+    }
+
+    func applyPuzzleResult(puzzleRating rp: Int, solved: Bool) {
+        puzzleRating = StatsManager.newRating(current: puzzleRating,
+                                              puzzleRating: rp,
+                                              solved: solved)
+    }
+
     func resetStats() {
         gamesPlayed = 0
         gamesWon = 0
@@ -94,5 +118,6 @@ final class StatsManager {
         puzzlesSolved = 0
         currentPuzzleStreak = 0
         bestPuzzleStreak = 0
+        puzzleRating = 800
     }
 }

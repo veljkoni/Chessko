@@ -220,6 +220,9 @@ final class PuzzleViewModel {
             if !puzzleHadError {
                 puzzleHadError = true
                 StatsManager.shared.recordPuzzleFailed()
+                if let currentPuzzle {
+                    StatsManager.shared.applyPuzzleResult(puzzleRating: currentPuzzle.rating, solved: false)
+                }
             }
             return
         }
@@ -234,6 +237,9 @@ final class PuzzleViewModel {
             markCurrentSolved()
             if !puzzleHadError {
                 StatsManager.shared.recordPuzzleSolved()
+                if let currentPuzzle {
+                    StatsManager.shared.applyPuzzleResult(puzzleRating: currentPuzzle.rating, solved: true)
+                }
             }
             return
         }
@@ -265,6 +271,9 @@ final class PuzzleViewModel {
         if !puzzleHadError {
             puzzleHadError = true
             StatsManager.shared.recordPuzzleFailed()
+            if let currentPuzzle {
+                StatsManager.shared.applyPuzzleResult(puzzleRating: currentPuzzle.rating, solved: false)
+            }
         }
 
         Task {

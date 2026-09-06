@@ -557,3 +557,26 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   jedini preostali pogodak je multi-color konfeti paleta u `BoardView.swift:347`
   (van dometa — boje table/figura). Build (`iPhone 17 Pro` simulator) uspešan,
   `swift test` 11/11 prošlo (~84s).
+- **2026-09-06** — Faza 2, Task 4 (rejting igrača). `StatsManager` dobija Elo-stil
+  `puzzleRating: Int` (default 800, ceo obrazac za razlikovanje „nema vrednosti" od
+  0 kao `resetStats()`) i `nonisolated static func newRating(current:puzzleRating:solved:)`
+  — čista funkcija (`E = 1/(1+10^((Rp-R)/400))`, `R' = R + 32*(S-E)`), namerno `nonisolated`
+  da izbegne MainActor izolaciju nasleđenu od klase i ostane testabilna bez `UserDefaults`;
+  instanca `applyPuzzleResult(puzzleRating:solved:)` je zove i upisuje. `PuzzleViewModel`
+  poziva `applyPuzzleResult` na sva tri mesta gde već postoji `recordPuzzleSolved()`/
+  `recordPuzzleFailed()` (pogrešan potez, rešeno, `showSolution()`), uzimajući rejting iz
+  `currentPuzzle?.rating` — ako je `currentPuzzle` nil, rejting se ne ažurira.
+  `Logic/StatsManager.swift` dodat u `Package.swift` `sources:` (kompajlira se čisto sa
+  Foundation, bez app-only zavisnosti). Novi `Tests/ChesskoEngineTests/RatingTests.swift`,
+  5 testova: 4 fiksne vrednosti iz spec-a (800/800/rešeno→816, 800/800/nerešeno→784,
+  800/1600/rešeno→832, 800/400/nerešeno→771) i peti kao svojstvo (property test).
+  **Nalaz:** peti test u planu je tražio da rejting posle 100 uzastopnih rešenih zadataka
+  ocene 800 ostane ispod 1000 — provereno istom (verifikovanom) formulom da to nije tačno:
+  pošto je rejting zadatka fiksiran na 800 dok rejting igrača raste, `E` raste ka 1 ali
+  nikad ga ne dostiže, pa je svaki prirast pozitivan; posle 100 ponavljanja rejting je
+  1288, a stvarna fiksna tačka niza (gde `round(32*(1-E))` prvi put padne na 0) je oko
+  1520, ne 800. Test je zadržan kao provera da rast nije neograničen/linearan (granica
+  1600, komentar u fajlu objašnjava računicu) umesto tvrdnje iz plana koja ne važi.
+  `swift test`: 23/23 prošlo. `xcodebuild` (simulator `iPhone 17` — `iPhone 16` ne postoji
+  na ovoj mašini): BUILD SUCCEEDED. `project.pbxproj` nije dirran (test fajlovi i
+  `StatsManager.swift` već registrovani).
