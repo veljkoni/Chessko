@@ -87,65 +87,69 @@ struct GameView: View {
                     }
                     .padding(.horizontal, 16)
                 } else {
-                    ScrollView {
-                        VStack(spacing: DS.Space.m) {
-                            topHeader
+                    GeometryReader { portraitGeo in
+                        ScrollView {
+                            VStack(spacing: DS.Space.m) {
+                                Spacer(minLength: 0)
 
-                            HStack(spacing: 8) {
-                                if showEvalBar {
-                                    EvalBarView(
-                                        evaluation: viewModel.evaluationScore,
-                                        mateIn: viewModel.evaluationMateIn,
-                                        isFlipped: viewModel.isFlipped
+                                topHeader
+
+                                HStack(spacing: 8) {
+                                    if showEvalBar {
+                                        EvalBarView(
+                                            evaluation: viewModel.evaluationScore,
+                                            mateIn: viewModel.evaluationMateIn,
+                                            isFlipped: viewModel.isFlipped
+                                        )
+                                    }
+
+                                    BoardView(
+                                        board:            viewModel.displayState.board,
+                                        isFlipped:        viewModel.isFlipped,
+                                        selectedPosition: viewModel.isReviewing ? nil : viewModel.selectedPosition,
+                                        legalMoves:       viewModel.isReviewing ? [] : viewModel.legalMovesForSelected,
+                                        lastMove:         viewModel.displayLastMove,
+                                        animatingPiece:   viewModel.animatingPiece,
+                                        flyingCapture:    viewModel.flyingCapture,
+                                        playerColor:      viewModel.activePlayerColor,
+                                        isPlayerTurn:     viewModel.isPlayerTurn,
+                                        gameStatus:       viewModel.displayState.status,
+                                        onTap:            { viewModel.tap(position: $0) }
                                     )
+                                    .frame(maxWidth: .infinity)
+                                    .aspectRatio(1, contentMode: .fit)
                                 }
 
-                                BoardView(
-                                    board:            viewModel.displayState.board,
-                                    isFlipped:        viewModel.isFlipped,
-                                    selectedPosition: viewModel.isReviewing ? nil : viewModel.selectedPosition,
-                                    legalMoves:       viewModel.isReviewing ? [] : viewModel.legalMovesForSelected,
-                                    lastMove:         viewModel.displayLastMove,
-                                    animatingPiece:   viewModel.animatingPiece,
-                                    flyingCapture:    viewModel.flyingCapture,
-                                    playerColor:      viewModel.activePlayerColor,
-                                    isPlayerTurn:     viewModel.isPlayerTurn,
-                                    gameStatus:       viewModel.displayState.status,
-                                    onTap:            { viewModel.tap(position: $0) }
-                                )
-                                .frame(maxWidth: .infinity)
-                                .aspectRatio(1, contentMode: .fit)
-                            }
+                                bottomHeader
 
-                            bottomHeader
-
-                            if viewModel.totalReviewMoves > 0 {
-                                reviewControlsView
-                            }
-
-                            if !viewModel.gameState.moveNotations.isEmpty {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(Loc("Potezi"))
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(.secondary)
-                                        .padding(.leading, 4)
-                                    MoveHistoryView(
-                                        notations: viewModel.gameState.moveNotations,
-                                        selectedMoveIndex: viewModel.viewingMoveIndex,
-                                        onSelectMove: { viewModel.goToMove($0) }
-                                    )
+                                if viewModel.totalReviewMoves > 0 {
+                                    reviewControlsView
                                 }
-                            }
 
-                            Spacer(minLength: 0)
+                                if !viewModel.gameState.moveNotations.isEmpty {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text(Loc("Potezi"))
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.leading, 4)
+                                        MoveHistoryView(
+                                            notations: viewModel.gameState.moveNotations,
+                                            selectedMoveIndex: viewModel.viewingMoveIndex,
+                                            onSelectMove: { viewModel.goToMove($0) }
+                                        )
+                                    }
+                                }
+
+                                Spacer(minLength: 0)
+                            }
+                            .frame(minHeight: portraitGeo.size.height)
+                            .padding(.horizontal, DS.Space.s)
+                            .padding(.top, 4)
+                            .padding(.bottom, 16)
                         }
-                        .frame(maxHeight: .infinity, alignment: .top)
-                        .padding(.horizontal, DS.Space.l)
-                        .padding(.top, 4)
-                        .padding(.bottom, 16)
+                        .scrollBounceBehavior(.basedOnSize)
+                        .safeAreaPadding(.bottom, 24)
                     }
-                    .scrollBounceBehavior(.basedOnSize)
-                    .safeAreaPadding(.bottom, 24)
                 }
             }
             .navigationTitle("Chessko")
@@ -277,7 +281,7 @@ struct GameView: View {
 
             Text(label)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(viewModel.isReviewing ? Color.cyan : Color.primary)
+                .foregroundStyle(viewModel.isReviewing ? DS.accent : DS.ink)
 
             Spacer()
 
@@ -485,7 +489,7 @@ struct GameView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(.white.opacity(0.35), lineWidth: 1)
+                            .stroke(DS.onScrim.opacity(0.35), lineWidth: 1)
                     )
                 Text(color.srbAdjective.capitalized)
                     .font(.subheadline.weight(.medium))
@@ -515,10 +519,10 @@ struct GameView: View {
                                 PieceImageView(piece: ChessPiece(type: type, color: viewModel.playerColor))
                                     .frame(width: 64, height: 64)
                                     .padding(10)
-                                    .background(.white.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                                    .background(DS.onScrim.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
-                                            .stroke(.white.opacity(0.3), lineWidth: 1)
+                                            .stroke(DS.onScrim.opacity(0.3), lineWidth: 1)
                                     )
                             }
                         }
@@ -557,7 +561,7 @@ struct GameView: View {
                                 .font(.subheadline.weight(.semibold))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
-                                .background(.white.opacity(0.15))
+                                .background(DS.onScrim.opacity(0.15))
                                 .foregroundStyle(DS.onScrim)
                                 .clipShape(Capsule())
                         }
@@ -569,7 +573,7 @@ struct GameView: View {
                                 .font(.subheadline.weight(.bold))
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
-                                .background(.white)
+                                .background(DS.onScrim)
                                 .foregroundStyle(.black)
                                 .clipShape(Capsule())
                         }
