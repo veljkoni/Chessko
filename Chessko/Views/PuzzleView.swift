@@ -386,28 +386,43 @@ struct PuzzleView: View {
             }
 
         case .solved:
-            if viewModel.canGoNext {
+            VStack(spacing: 10) {
+                // Primarna akcija: nastavi da vezbaš bez dnevnog ograničenja
+                // (Task 5) — dostupna i posle dnevnog i posle vežbovnog zadatka.
                 Button {
-                    viewModel.goToNext()
+                    viewModel.nextPuzzle()
                 } label: {
-                    Label("Sledeći dan", systemImage: "chevron.right")
+                    Label("Sledeći zadatak", systemImage: "arrow.triangle.2.circlepath")
                         .font(.dsBody.weight(.medium))
-                        .foregroundStyle(Color(uiColor: .systemBackground))
+                        .foregroundStyle(DS.onScrim)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.primary, in: RoundedRectangle(cornerRadius: 12))
+                        .background(DS.accent, in: RoundedRectangle(cornerRadius: 12))
                 }
-            } else {
-                // Today's puzzle solved — show completion
-                HStack(spacing: 8) {
-                    Image(systemName: "star.fill")
-                        .foregroundStyle(DS.warning)
-                    Text(Loc("Završio si zadatak za danas!"))
-                        .font(.dsBody.weight(.medium))
-                        .foregroundStyle(Color.primary.opacity(0.85))
+
+                if viewModel.canGoNext {
+                    Button {
+                        viewModel.goToNext()
+                    } label: {
+                        Label("Sledeći dan", systemImage: "chevron.right")
+                            .font(.dsBody.weight(.medium))
+                            .foregroundStyle(Color.primary.opacity(0.8))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                } else {
+                    // Today's puzzle solved — show completion
+                    HStack(spacing: 8) {
+                        Image(systemName: "star.fill")
+                            .foregroundStyle(DS.warning)
+                        Text(Loc("Završio si zadatak za danas!"))
+                            .font(.dsBody.weight(.medium))
+                            .foregroundStyle(Color.primary.opacity(0.85))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
             }
 
         default:

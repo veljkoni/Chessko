@@ -11,6 +11,20 @@ enum PuzzlePhase: Equatable {
     case showingSolution  // auto-playing remaining moves
 }
 
+// MARK: - Puzzle Mode
+
+/// Razlikuje zadatak dana (vezan za `selectedDate`, kalendar i dnevni
+/// limit) od slobodnog vezbanja (Task 5, "Sledeći zadatak"). Bitno je
+/// zbog `markCurrentSolved()`: on upisuje `dateKey(selectedDate)` u
+/// `solvedDates` — u praksi to ima smisla SAMO za zadatak dana. Da to
+/// radi i u `.practice` rezimu, resen vezbovni zadatak bi lazno oznacio
+/// KALENDARSKI DAN kao resen (obrise legitimnu informaciju o tome da li
+/// je korisnik resio bas TAJ dnevni zadatak).
+enum PuzzleMode {
+    case daily
+    case practice
+}
+
 // MARK: - Puzzle View Model
 
 @Observable
@@ -31,9 +45,31 @@ final class PuzzleViewModel {
     var phase: PuzzlePhase = .loading
     private var puzzleHadError: Bool = false
 
+    /// Da li je tekuci zadatak dnevni (vezan za `selectedDate`/kalendar) ili
+    /// slobodno vezbanje (`nextPuzzle()`). Vidi `PuzzleMode` za zasto.
+    private(set) var mode: PuzzleMode = .daily
+
     /// `nil` kad `puzzles.sqlite` nedostaje iz bundle-a — `loadPuzzle()` tada
     /// odmah javlja `.unavailable` umesto praznog ekrana.
     private let repository = PuzzleRepository.bundled
+
+    // MARK: - Solved Puzzle IDs (Task 5 — "Sledeći zadatak")
+
+    /// Id-jevi svih zadataka koje je korisnik ikad uspesno resio, u OBA
+    /// rezima (dnevni i vezbanje) — koristi se kao `excluding` skup u
+    /// `nextPuzzle()` da se isti zadatak ne ponavlja iznova. Ucitava se
+    /// JEDNOM iz `UserDefaults` (kljuc `solvedPuzzleIds`, niz stringova).
+    /// Najgori slucaj je ~20 000 kratkih id-jeva (~200 KB serijalizovano) —
+    /// prihvatljivo, bez potrebe za cisceniem/rotacijom.
+    private(set) var solvedPuzzleIds: Set<String> = {
+        let arr = UserDefaults.standard.stringArray(forKey: "solvedPuzzleIds") ?? []
+        return Set(arr)
+    }()
+
+    private func recordPuzzleIdSolved(_ id: String) {
+        guard solvedPuzzleIds.insert(id).inserted else { return }
+        UserDefaults.standard.set(Array(solvedPuzzleIds), forKey: "solvedPuzzleIds")
+    }
 
     // MARK: - Date Navigation
 
@@ -128,9 +164,24 @@ final class PuzzleViewModel {
 
     // MARK: - Load
 
+    /// Zove se iz `.onAppear` na SVAKI povratak na tab Zadaci — NE sme
+    /// bezuslovno da resetuje vec ucitan zadatak (ranije je "yank"-ovalo
+    /// korisnika iz upola resenog zadatka pri svakom prelasku taba, a od
+    /// Task-a 5 bi isto ponasanje izbacilo korisnika i iz vezbovnog zadatka).
+    /// Ucitava SAMO kad nema tekuceg zadatka (prvi start) ili kad je faza
+    /// `.unavailable` (retry put i dalje mora da forsira ponovni pokusaj).
+    /// `load(date:)` i dugme "Pokusaj ponovo" i dalje idu direktno na
+    /// `loadPuzzle()`/ovu funkciju bez ovog gejta kad korisnik EKSPLICITNO
+    /// trazi ucitavanje.
     func loadDailyPuzzle() {
+        guard currentPuzzle == nil || isUnavailable else { return }
         loadSolvedDates()
         loadPuzzle()
+    }
+
+    private var isUnavailable: Bool {
+        if case .unavailable = phase { return true }
+        return false
     }
 
     /// Cita zadatak dana direktno iz `PuzzleRepository` — sinhrono, bez mrezne
@@ -142,6 +193,7 @@ final class PuzzleViewModel {
     /// otvoren prozor da igrac odigra potez pre nego sto je protivnicki uopste
     /// prikazan).
     private func loadPuzzle() {
+        mode = .daily
         phase = .loading
         currentPuzzle = nil
         puzzleHadError = false
@@ -155,6 +207,67 @@ final class PuzzleViewModel {
         }
 
         setup(puzzle: puzzle)
+    }
+
+    // MARK: - Sledeći zadatak (Task 5 — vežbanje bez dnevnog ograničenja)
+
+    /// Ucitava nasumican zadatak iz prozora rejtinga oko trenutnog rejtinga
+    /// igraca (spec 5.4), iskljucujuci vec resene id-jeve. Rejting se cita
+    /// OVDE, u trenutku poziva — ne kesira se — da prozor prati igraca kako
+    /// napreduje/nazaduje unutar iste sesije.
+    ///
+    /// Progresivno prosirenje kad prozor ne vrati nista (korisnik je resio
+    /// sve u opsegu): base (`practiceRatingWindow`, -200/+100) → ±400 → ±800
+    /// → cela baza (600...2200). Ako je i cela baza sa iskljucivanjem prazna
+    /// (korisnik je resio SVIH ~20 000 zadataka), poslednje pribezište
+    /// ignorise `excluding` i ponovi vec resen zadatak — ponavljanje je
+    /// bolje od praznog ekrana ili greske.
+    func nextPuzzle() {
+        mode = .practice
+        phase = .loading
+        currentPuzzle = nil
+        puzzleHadError = false
+
+        guard let repository else {
+            phase = .unavailable(Loc("Baza zadataka nije dostupna")); return
+        }
+
+        let playerRating = StatsManager.shared.puzzleRating
+        let windows: [ClosedRange<Int>] = [
+            PuzzleRepository.practiceRatingWindow(playerRating: playerRating),
+            Self.clampedWindow(center: playerRating, radius: 400),
+            Self.clampedWindow(center: playerRating, radius: 800),
+            PuzzleRepository.minRating...PuzzleRepository.maxRating
+        ]
+
+        var found: ChessPuzzle?
+        for window in windows {
+            if let puzzle = repository.randomPuzzle(ratingRange: window, excluding: solvedPuzzleIds) {
+                found = puzzle
+                break
+            }
+        }
+
+        // Krajnje pribezište: cela baza je vec resena. Bolje ponoviti nego
+        // prazan ekran.
+        if found == nil {
+            found = repository.randomPuzzle(
+                ratingRange: PuzzleRepository.minRating...PuzzleRepository.maxRating,
+                excluding: []
+            )
+        }
+
+        guard let puzzle = found else {
+            phase = .unavailable(Loc("Nema dostupnih zadataka")); return
+        }
+
+        setup(puzzle: puzzle)
+    }
+
+    private static func clampedWindow(center r: Int, radius: Int) -> ClosedRange<Int> {
+        let lo = max(PuzzleRepository.minRating, r - radius)
+        let hi = max(lo, min(PuzzleRepository.maxRating, r + radius))
+        return lo...hi
     }
 
     // MARK: - Setup
@@ -234,7 +347,14 @@ final class PuzzleViewModel {
         if movePointer >= rawMoves.count {
             phase = .solved
             Haptics.notification(.success)
-            markCurrentSolved()
+            if let currentPuzzle {
+                recordPuzzleIdSolved(currentPuzzle.puzzleId)
+            }
+            // Kalendarski dan se oznacava resenim SAMO u .daily rezimu —
+            // vezbovni zadatak (Task 5) nije vezan ni za jedan datum.
+            if mode == .daily {
+                markCurrentSolved()
+            }
             if !puzzleHadError {
                 StatsManager.shared.recordPuzzleSolved()
                 if let currentPuzzle {

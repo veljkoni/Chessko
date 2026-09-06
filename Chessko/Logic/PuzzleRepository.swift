@@ -207,6 +207,32 @@ final class PuzzleRepository {
         puzzles(themes: [], ratingRange: ratingRange, excluding: excluding, limit: 1).first
     }
 
+    // MARK: - Prozor rejtinga za "Sledeći zadatak" (vezbanje bez ogranicenja)
+
+    /// Granice rejtinga zadataka u isporucenoj bazi (`puzzles.sqlite`, 20 000
+    /// Lichess zadataka). Javne jer ih `PuzzleViewModel` koristi i za
+    /// progresivno prosirenje prozora kad je osnovni prazan (vidi Task 5).
+    nonisolated static let minRating = 600
+    nonisolated static let maxRating = 2200
+
+    /// Prozor rejtinga za vezbanje bez dnevnog ogranicenja (spec 5.4):
+    /// `playerRating - 200 ... playerRating + 100`, ali BEZBEDNO klampovan na
+    /// granice baze.
+    ///
+    /// Bez klampovanja ovo puca: rejting igraca nije ogranicen ni odozgo ni
+    /// odozdo (dug niz neuspeha ga vodi ka ~80-100), pa bi npr. za rejting 80
+    /// naivan prozor bio `-120...180` (baza pocinje od 600 — prazan rezultat),
+    /// a klampovanje SAMO donje granice bi dalo `600...180` — `ClosedRange` sa
+    /// donjom granicom vecom od gornje PUCA pri kreiranju (runtime trap), ne
+    /// samo vraca prazan niz. Zato se prvo klampuje donja granica, pa se gornja
+    /// klampuje na `max(lo, ...)` — rezultat je uvek validan opseg, za svaki
+    /// mogud ulaz (probano i na 80 i na 3000 u testovima).
+    nonisolated static func practiceRatingWindow(playerRating r: Int) -> ClosedRange<Int> {
+        let lo = max(minRating, r - 200)
+        let hi = max(lo, min(maxRating, r + 100))
+        return lo...hi
+    }
+
     // MARK: - Pomocna funkcija
 
     /// Cita kolone tekuceg reda `SELECT id, fen, moves, rating, themes ...`

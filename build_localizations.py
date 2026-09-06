@@ -101,6 +101,7 @@ add("Odlično! Zadatak rešen! 🎉", "Excellent! Puzzle solved! 🎉", "Excelle
 add("Rešenje...", "Solution…", "Solution…", "Lösung…", "Soluzione…", "Решение…", "解答…", "समाधान…")
 add("Prikaži rešenje", "Show solution", "Voir la solution", "Lösung anzeigen", "Mostra soluzione", "Показать решение", "显示解答", "समाधान दिखाएँ")
 add("Sledeći dan", "Next day", "Jour suivant", "Nächster Tag", "Giorno successivo", "Следующий день", "下一天", "अगला दिन")
+add("Sledeći zadatak", "Next puzzle", "Problème suivant", "Nächste Aufgabe", "Prossimo problema", "Следующая задача", "下一题", "अगली पहेली")
 add("Završio si zadatak za danas!", "You finished today’s puzzle!", "Vous avez terminé le problème du jour !", "Du hast die heutige Aufgabe gelöst!", "Hai completato il problema di oggi!", "Вы решили сегодняшнюю задачу!", "你完成了今天的谜题！", "आपने आज की पहेली पूरी कर ली!")
 add("Pokušaj ponovo", "Try again", "Réessayer", "Erneut versuchen", "Riprova", "Попробовать снова", "重试", "फिर कोशिश करें")
 add("Nema dostupnih zadataka", "No puzzles available", "Aucun problème disponible", "Keine Aufgaben verfügbar", "Nessun problema disponibile", "Нет доступных задач", "暂无可用谜题", "कोई पहेली उपलब्ध नहीं")

@@ -111,3 +111,37 @@ private func openTestRepository() -> PuzzleRepository {
     let bogus = URL(fileURLWithPath: "Chessko/does-not-exist.sqlite")
     #expect(PuzzleRepository(databaseURL: bogus) == nil)
 }
+
+// MARK: - practiceRatingWindow (Task 5)
+//
+// Klamp je fix za crash, ne kozmetika: bez njega bi rejting igraca ispod
+// ~700 ili iznad ~2100 mogao da proizvede `ClosedRange` sa donjom granicom
+// vecom od gornje, sto puca pri kreiranju (runtime trap), ne samo vraca
+// prazan rezultat.
+
+@Test func practiceRatingWindowForMidRangeRatingMatchesSpec() {
+    // Spec 5.4: playerRating - 200 ... playerRating + 100, bez dodira granica baze.
+    let window = PuzzleRepository.practiceRatingWindow(playerRating: 1200)
+    #expect(window == 1000...1300)
+}
+
+@Test func practiceRatingWindowForRatingFarBelowFloorDoesNotTrapAndStaysValid() {
+    // Naivno: (80-200)...(80+100) = -120...180 — baza pocinje od 600, prazno.
+    // Klampovana samo donja granica bi dala 600...180 i PUCALA bi pri kreiranju.
+    let window = PuzzleRepository.practiceRatingWindow(playerRating: 80)
+    #expect(window.lowerBound <= window.upperBound)
+    #expect(window.lowerBound == PuzzleRepository.minRating)
+    #expect(window.upperBound >= PuzzleRepository.minRating)
+}
+
+@Test func practiceRatingWindowForRatingFarAboveCeilingDoesNotTrapAndStaysValid() {
+    // Naivno: (3000-200)...(3000+100) = 2800...3100 — iznad baze u celosti.
+    // `lo` (2800) je vec iznad `maxRating` (2200) pre nego sto se `hi` uopste
+    // klampuje, pa formula ispravno vraca 2800...2800 (validan, ne-prazan
+    // ClosedRange koji jednostavno ne pogadja nijedan red u bazi — na to se
+    // oslanja progresivno prosirenje prozora u `PuzzleViewModel.nextPuzzle()`).
+    // Bitno je SAMO da ne pukne pri kreiranju.
+    let window = PuzzleRepository.practiceRatingWindow(playerRating: 3000)
+    #expect(window.lowerBound <= window.upperBound)
+    #expect(window.lowerBound >= PuzzleRepository.minRating)
+}

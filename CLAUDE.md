@@ -585,3 +585,48 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `swift test`: 23/23 prošlo. `xcodebuild` (simulator `iPhone 17` — `iPhone 16` ne postoji
   na ovoj mašini): BUILD SUCCEEDED. `project.pbxproj` nije dirran (test fajlovi i
   `StatsManager.swift` već registrovani).
+- **2026-09-06** — Faza 2, Task 5: neograničeno rešavanje zadataka ("Sledeći zadatak").
+  `PuzzleRepository`: `nonisolated static let minRating = 600` / `maxRating = 2200`
+  (granice isporučene baze) i `nonisolated static func practiceRatingWindow(playerRating:)`
+  — čista funkcija, `lo = max(minRating, r-200)`, `hi = max(lo, min(maxRating, r+100))`.
+  Ovo NIJE kozmetika nego fix za crash: rejting igrača nije ograničen (dug niz neuspeha
+  ga vodi ka ~80), pa bi naivan prozor za rejting 80 bio `-120...180` (baza počinje od
+  600 — prazno), a klampovanje SAMO donje granice dalo bi `600...180`, `ClosedRange` sa
+  donjom granicom većom od gornje — puca pri kreiranju, ne samo vraća prazan niz. Tri nova
+  testa u `PuzzleRepositoryTests.swift` (srednji rejting, 80, 3000) — za rejting 3000
+  formula ispravno vraća `2800...2800` (validan ali prazan u bazi; na to se oslanja
+  progresivno proširenje niže).
+  `PuzzleViewModel`: novi `enum PuzzleMode { daily, practice }` + `private(set) var mode`.
+  `loadPuzzle()` postavlja `.daily` (pokriva i `load(date:)`, koji ga zove); novi
+  `nextPuzzle()` postavlja `.practice`, čita `StatsManager.shared.puzzleRating` U TRENUTKU
+  poziva (ne kešira se — prati igrača kako napreduje unutar sesije) i pokušava
+  `randomPuzzle` kroz 4 sve šira prozora: `practiceRatingWindow` → `±400` → `±800` →
+  cela baza `600...2200`, uz `excluding: solvedPuzzleIds`; ako je i cela baza sa
+  isključivanjem prazna (korisnik rešio svih ~20 000), poslednje pribežište ignoriše
+  `excluding` i ponovi već rešen zadatak (bolje ponavljanje nego prazan ekran).
+  Novi `solvedPuzzleIds: Set<String>` (UserDefaults ključ `solvedPuzzleIds`, niz stringova,
+  učitan jednom pri inicijalizaciji svojstva — najgori slučaj ~20 000 kratkih id-jeva,
+  ~200 KB, prihvatljivo bez čišćenja) upisuje se u OBA režima kad zadatak bude uspešno
+  rešen kroz `attempt()`; `markCurrentSolved()` (kalendarski dan) i dalje se zove SAMO
+  kad je `mode == .daily` — u `.practice` bi lažno označio kalendarski dan kao rešen.
+  `showSolution()` namerno NE upisuje ni `solvedPuzzleIds` ni kalendar (isti obrazac kao
+  postojeći komentar "Ne označavamo kao rešeno kad se prikaže rešenje") — sopstvena odluka,
+  van eksplicitnog obima brief-a.
+  Fix defekta koji bi ovaj task pogoršao: `.onAppear { viewModel.loadDailyPuzzle() }` u
+  `PuzzleView` se okidao na SVAKI povratak na tab Zadaci i bezuslovno je restartovao
+  zadatak (do sada je to tiho brisalo upola rešen dnevni zadatak; sa `.practice` bi
+  izbacilo korisnika i iz vežbovnog zadatka). `loadDailyPuzzle()` sada učitava SAMO kad
+  `currentPuzzle == nil` ili je `phase == .unavailable` (retry dugme i dalje radi jer je u
+  tom stanju `currentPuzzle` već `nil`); `load(date:)` i retry i dalje prisilno učitavaju,
+  nedirani.
+  UI: `.solved` grana `actionButtons` u `PuzzleView.swift` sad je `VStack` — nova primarna
+  akcija "Sledeći zadatak" (`DS.accent` pozadina + `DS.onScrim` tekst, isti par kao dugme
+  za pauzu u `ChessClockView`) uvek na vrhu, dostupna i posle dnevnog i posle vežbovnog
+  zadatka; postojeće "Sledeći dan"/"Završio si zadatak za danas!" ispod, nepromenjene
+  funkcionalno (samo "Sledeći dan" prebačen na sekundarni stil — `Color.primary.opacity`,
+  isti kao "Prikaži rešenje" — da ustupi mesto novoj primarnoj akciji). Nov ključ
+  "Sledeći zadatak" dodat u `build_localizations.py` (za `add("Sledeći dan", ...)`) i
+  katalog regenerisan: 406 → 407 ključeva (tačno +1), svih 8 jezika po ključu potvrđeno
+  python skriptom.
+  `swift test`: 26/26 prošlo (23 postojeća + 3 nova za `practiceRatingWindow`). `xcodebuild`
+  (simulator `iPhone 17`): BUILD SUCCEEDED. `project.pbxproj` nije dirran — nema novih fajlova.
