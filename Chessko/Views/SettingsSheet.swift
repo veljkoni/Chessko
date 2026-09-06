@@ -104,23 +104,23 @@ struct SettingsSheet: View {
                     let stats = StatsManager.shared
                     VStack(spacing: 12) {
                         HStack {
-                            StatBox(label: Loc("Odigrano"), value: "\(stats.gamesPlayed)", color: .primary)
+                            StatBox(label: Loc("Odigrano"), value: "\(stats.gamesPlayed)", color: DS.ink)
                             Spacer()
-                            StatBox(label: Loc("Pobede"), value: "\(stats.gamesWon)", color: .green)
+                            StatBox(label: Loc("Pobede"), value: "\(stats.gamesWon)", color: DS.success)
                             Spacer()
-                            StatBox(label: Loc("Porazi"), value: "\(stats.gamesLost)", color: .red)
+                            StatBox(label: Loc("Porazi"), value: "\(stats.gamesLost)", color: DS.danger)
                             Spacer()
-                            StatBox(label: Loc("Remi"), value: "\(stats.gamesDrawn)", color: .orange)
+                            StatBox(label: Loc("Remi"), value: "\(stats.gamesDrawn)", color: DS.warning)
                         }
 
                         Divider()
 
                         HStack {
-                            StatBox(label: Loc("Uspešnost"), value: "\(stats.winRate)%", color: .cyan)
+                            StatBox(label: Loc("Uspešnost"), value: "\(stats.winRate)%", color: DS.accent)
                             Spacer()
-                            StatBox(label: Loc("Najbolji niz"), value: "\(stats.bestWinStreak) 🔥", color: .orange)
+                            StatBox(label: Loc("Najbolji niz"), value: "\(stats.bestWinStreak) 🔥", color: DS.warning)
                             Spacer()
-                            StatBox(label: Loc("Rešeno zadataka"), value: "\(stats.puzzlesSolved) 🧩", color: .purple)
+                            StatBox(label: Loc("Rešeno zadataka"), value: "\(stats.puzzlesSolved) 🧩", color: DS.accent)
                         }
 
                         if stats.gamesPlayed > 0 || stats.puzzlesSolved > 0 {
@@ -148,11 +148,11 @@ struct SettingsSheet: View {
                                     Text(diff.title)
                                         .font(.subheadline)
                                         .bold(gameViewModel.difficulty == diff)
-                                        .foregroundStyle(gameViewModel.difficulty == diff ? Color.accentColor : Color.primary)
+                                        .foregroundStyle(gameViewModel.difficulty == diff ? DS.accent : DS.ink)
 
                                     Text(diff.subtitle)
                                         .font(.caption2)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(DS.inkMuted)
                                 }
 
                                 Spacer()
@@ -171,7 +171,7 @@ struct SettingsSheet: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(Loc("Tema table"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(DS.inkMuted)
                         
                         LazyVGrid(columns: columns, spacing: 14) {
                             ForEach(BoardTheme.allCases) { theme in
@@ -197,13 +197,13 @@ struct SettingsSheet: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 6))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 6)
-                                                .stroke(boardTheme == theme.rawValue ? Color.accentColor : Color.primary.opacity(0.12), lineWidth: boardTheme == theme.rawValue ? 2.5 : 1)
+                                                .stroke(boardTheme == theme.rawValue ? DS.accent : Color.primary.opacity(0.12), lineWidth: boardTheme == theme.rawValue ? 2.5 : 1)
                                         )
                                         .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
-                                        
+
                                         Text(theme.label)
                                             .font(.caption.weight(boardTheme == theme.rawValue ? .semibold : .medium))
-                                            .foregroundStyle(boardTheme == theme.rawValue ? Color.accentColor : .primary)
+                                            .foregroundStyle(boardTheme == theme.rawValue ? DS.accent : DS.ink)
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.8)
                                     }
@@ -236,7 +236,7 @@ struct SettingsSheet: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(Loc("Stil"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(DS.inkMuted)
                         
                         LazyVGrid(columns: columns, spacing: 14) {
                             ForEach(PieceStyle.allCases) { style in
@@ -251,9 +251,9 @@ struct SettingsSheet: View {
                                                 .frame(width: 44, height: 44)
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 8)
-                                                        .stroke(pieceStyle == style.rawValue ? Color.accentColor : Color.primary.opacity(0.10), lineWidth: pieceStyle == style.rawValue ? 2 : 1)
+                                                        .stroke(pieceStyle == style.rawValue ? DS.accent : Color.primary.opacity(0.10), lineWidth: pieceStyle == style.rawValue ? 2 : 1)
                                                 )
-                                            
+
                                             PieceImageView(
                                                 piece: ChessPiece(type: .knight, color: .white),
                                                 styleOverride: style
@@ -264,7 +264,7 @@ struct SettingsSheet: View {
                                         
                                         Text(style.label)
                                             .font(.caption.weight(pieceStyle == style.rawValue ? .semibold : .medium))
-                                            .foregroundStyle(pieceStyle == style.rawValue ? Color.accentColor : .primary)
+                                            .foregroundStyle(pieceStyle == style.rawValue ? DS.accent : DS.ink)
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.8)
                                     }
@@ -314,7 +314,7 @@ struct SettingsSheet: View {
                             if !isLanguageExpanded {
                                 Text(currentLanguageLabel)
                                     .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(DS.inkMuted)
                             }
                         }
                     }
@@ -342,17 +342,17 @@ struct SettingsSheet: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Chessko")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(DS.ink)
                         Text(Loc("Verzija 1.0.0"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        
+                            .foregroundStyle(DS.inkMuted)
+
                         Divider()
                             .padding(.vertical, 4)
-                        
+
                         Text(Loc("Ova aplikacija je otvorenog koda, koristi Stockfish šahovski pokretač pod GPLv3 licencom i preuzima šahovske zadatke iz slobodne Lichess baze."))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(DS.inkMuted)
                             .lineLimit(nil)
                             .fixedSize(horizontal: false, vertical: true)
                         
@@ -373,6 +373,9 @@ struct SettingsSheet: View {
                     .padding(.vertical, 4)
                 }
             }
+            .listRowBackground(DS.surface)
+            .scrollContentBackground(.hidden)
+            .background(DS.ground)
             .listSectionSpacing(.compact)
             .navigationTitle(Loc("Podešavanja"))
             .navigationBarTitleDisplayMode(.inline)
@@ -390,6 +393,7 @@ struct SettingsSheet: View {
                 Text(Loc("Da li želite da resetujete sve statistike?"))
             }
         }
+        .tint(DS.accent)
         .preferredColorScheme(preferredColorScheme)
     }
 
@@ -417,7 +421,7 @@ struct SettingsSheet: View {
             colorScheme = value
         } label: {
             HStack {
-                Label(label, systemImage: icon).foregroundStyle(.primary)
+                Label(label, systemImage: icon).foregroundStyle(DS.ink)
                 Spacer()
                 if colorScheme == value {
                     Image(systemName: "checkmark").foregroundStyle(.tint)
@@ -433,7 +437,7 @@ struct SettingsSheet: View {
         } label: {
             HStack {
                 Text(name)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(DS.ink)
                 Spacer()
                 if localization.languageCode == code {
                     Image(systemName: "checkmark")

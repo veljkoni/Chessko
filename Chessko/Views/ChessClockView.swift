@@ -145,7 +145,7 @@ struct ChessClockView: View {
         if playerNumber == 2 {
             // Player 2 (Black) - rotated, top half
             if isTimeOut {
-                bgColor = Color(hex: "#8C2525")
+                bgColor = DS.danger
                 textColor = .white
                 subtextColor = .white.opacity(0.7)
             } else if isActive {
@@ -153,14 +153,14 @@ struct ChessClockView: View {
                 textColor = .white
                 subtextColor = .white.opacity(0.7)
             } else {
-                bgColor = Color(hex: "#2C2C2E")
+                bgColor = DS.fill
                 textColor = .white.opacity(0.5)
                 subtextColor = .white.opacity(0.3)
             }
         } else {
             // Player 1 (White) - bottom half
             if isTimeOut {
-                bgColor = Color(hex: "#FADAD8")
+                bgColor = DS.danger.opacity(0.18)
                 textColor = Color(uiColor: .systemRed)
                 subtextColor = Color(uiColor: .systemRed).opacity(0.7)
             } else if isActive {
@@ -168,7 +168,7 @@ struct ChessClockView: View {
                 textColor = .black
                 subtextColor = .black.opacity(0.6)
             } else {
-                bgColor = Color(hex: "#E5E5EA")
+                bgColor = DS.fill
                 textColor = .black.opacity(0.5)
                 subtextColor = .black.opacity(0.3)
             }
@@ -282,7 +282,7 @@ struct ChessClockView: View {
                 } label: {
                     Image(systemName: isPaused ? "play.fill" : "pause.fill")
                         .font(.title)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.onScrim)
                         .frame(width: 56, height: 56)
                         .background(Color.accentColor, in: Circle())
                         .shadow(color: Color.accentColor.opacity(0.3), radius: 6, y: 3)

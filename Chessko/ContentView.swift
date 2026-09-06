@@ -21,12 +21,12 @@ struct ContentView: View {
         TabView {
             GameView(viewModel: gameViewModel, localization: localization)
                 .tabItem {
-                    Label("Igra", systemImage: "play.house.fill")
+                    Label("Igra", systemImage: "square.grid.3x3.fill")
                 }
 
             PuzzleView(viewModel: puzzleViewModel)
                 .tabItem {
-                    Label("Zadaci", systemImage: "play.rectangle.on.rectangle")
+                    Label("Zadaci", systemImage: "puzzlepiece.fill")
                 }
 
             LearnView(viewModel: learnViewModel)
