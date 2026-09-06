@@ -391,7 +391,7 @@ final class PuzzleViewModel {
         // `everyPuzzleFirstMoveParsesInItsOwnPosition` proverava svih 20 000
         // prvih poteza. Guard stoji zbog buduce regeneracije baze.)
         guard let move = ChessMove.fromUCI(rawMoves[movePointer], in: gameState) else {
-            phase = .unavailable(Loc("Nema dostupnih zadataka"))
+            phase = .unavailable(Loc("Zadatak je oštećen"))
             return
         }
 

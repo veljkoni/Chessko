@@ -105,6 +105,7 @@ add("Sledeći zadatak", "Next puzzle", "Problème suivant", "Nächste Aufgabe", 
 add("Završio si zadatak za danas!", "You finished today’s puzzle!", "Vous avez terminé le problème du jour !", "Du hast die heutige Aufgabe gelöst!", "Hai completato il problema di oggi!", "Вы решили сегодняшнюю задачу!", "你完成了今天的谜题！", "आपने आज की पहेली पूरी कर ली!")
 add("Pokušaj ponovo", "Try again", "Réessayer", "Erneut versuchen", "Riprova", "Попробовать снова", "重试", "फिर कोशिश करें")
 add("Nema dostupnih zadataka", "No puzzles available", "Aucun problème disponible", "Keine Aufgaben verfügbar", "Nessun problema disponibile", "Нет доступных задач", "暂无可用谜题", "कोई पहेली उपलब्ध नहीं")
+add("Zadatak je oštećen", "This puzzle is corrupted", "Ce problème est corrompu", "Diese Aufgabe ist beschädigt", "Questo problema è danneggiato", "Задача повреждена", "该题目已损坏", "यह पहेली क्षतिग्रस्त है")
 add("Neispravan FEN", "Invalid FEN", "FEN invalide", "Ungültiges FEN", "FEN non valido", "Неверный FEN", "无效的 FEN", "अमान्य FEN")
 add("Baza zadataka nije dostupna", "Puzzle database unavailable", "Base de problèmes indisponible", "Aufgabendatenbank nicht verfügbar", "Database dei problemi non disponibile", "База задач недоступна", "题目数据库不可用", "पहेली डेटाबेस उपलब्ध नहीं")
 

@@ -295,7 +295,10 @@ struct ChessClockView: View {
                 } label: {
                     Image(systemName: isPaused ? "play.fill" : "pause.fill")
                         .font(.title)
-                        .foregroundStyle(DS.onScrim)
+                        // `onAccent`, ne `onScrim`: podloga je `DS.accent`, koji
+                        // menja svetlinu izmedju tema. Fiksna bela je ovde davala
+                        // 2.6:1 u tamnoj temi.
+                        .foregroundStyle(DS.onAccent)
                         .frame(width: 56, height: 56)
                         .background(DS.accent, in: Circle())
                         .shadow(color: DS.accent.opacity(0.3), radius: 6, y: 3)

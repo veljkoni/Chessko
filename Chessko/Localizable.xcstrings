@@ -3128,6 +3128,59 @@
         }
       }
     },
+    "Zadatak je oštećen": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zadatak je oštećen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This puzzle is corrupted"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce problème est corrompu"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Aufgabe ist beschädigt"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Questo problema è danneggiato"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Задача повреждена"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该题目已损坏"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह पहेली क्षतिग्रस्त है"
+          }
+        }
+      }
+    },
     "Neispravan FEN": {
       "extractionState": "manual",
       "localizations": {
