@@ -63,6 +63,9 @@
       "text": "Ako pion stigne do poslednjeg reda — pretvara se u bilo koju figuru, najčešće Damu. Ovo je moćno oružje u završnici!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "rook",
       "name": "Top (Kula)",
@@ -84,6 +87,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "bishop",
       "name": "Lovac (Iber)",
@@ -103,6 +109,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -133,6 +142,9 @@
       "text": "Jedina figura koja može da preskače druge figure — i svoje i protivničke!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "queen",
       "name": "Kraljica (Dama)",
@@ -152,6 +164,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -175,6 +190,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Poseban potez: Rokada",
       "icon": "arrow.left.arrow.right"
@@ -189,6 +207,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "Uslovi za rokadu",
       "text": "Ni Kralj ni Top se do tada **nisu pomerali** · Između njih **nema nijedne figure** · Kralj se ne nalazi u šahu i ne prolazi kroz napadnuto polje"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -256,6 +277,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

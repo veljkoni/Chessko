@@ -39,6 +39,9 @@
       "text": "Roquez le plus tôt possible. Un roi à découvert est une cible facile. Capablanca lui-même roquait toujours tôt et le recommande à tous, surtout aux débutants."
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Erreurs typiques en ouverture",
       "icon": "exclamationmark.triangle.fill"
@@ -65,6 +68,9 @@
           "style": "warning"
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Die Regel der Bauernumwandlung",
       "icon": "arrow.up.circle.fill"
@@ -75,6 +78,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Ein Grundprinzip",
       "icon": "bolt.fill"
@@ -85,6 +91,9 @@
       "icon": "star.fill",
       "title": "Einer hält zwei — Capablancas Prinzip",
       "text": "„Ein Bauer, der zwei gegnerische Bauern hält, ist eines der Hauptwerkzeuge des Meisters.“ Blockiert dein Bauer zwei gegnerische, bist du praktisch eine Figur voraus — nutze diesen Vorteil auf der anderen Brettseite!"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -114,6 +123,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "Die Schwäche des Läufers — der Turmbauer",
       "text": "Strebt dein Bauer nach h8 (oder a8) und ist dieses Feld die Gegenfarbe deines Läufers, hält der Gegner die Ecke und es ist remis! Capablanca hebt dies besonders als Quelle vieler verpasster Siege hervor."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -157,6 +169,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -249,6 +264,9 @@
       "mateIn": 2
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Über den Autor",
       "icon": "person.fill"
@@ -284,6 +302,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

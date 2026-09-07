@@ -63,6 +63,9 @@
       "text": "यदि कोई प्यादा अंतिम रैंक तक पहुँचता है, तो वह किसी भी मोहरे में, अक्सर वज़ीर में बदल जाता है। यह अंत खेल में शक्तिशाली हथियार है!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "rook",
       "name": "हाथी",
@@ -84,6 +87,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "bishop",
       "name": "ऊँट",
@@ -103,6 +109,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -133,6 +142,9 @@
       "text": "एकमात्र मोहरा जो अन्य मोहरों के ऊपर से कूद सकता है — अपने और विरोधी दोनों के!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "queen",
       "name": "वज़ीर",
@@ -152,6 +164,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -175,6 +190,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "विशेष चाल: कैसलिंग",
       "icon": "arrow.left.arrow.right"
@@ -189,6 +207,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "कैसलिंग की शर्तें",
       "text": "न राजा न हाथी **पहले हिले हों** · उनके बीच **कोई मोहरा न हो** · राजा शह में न हो और किसी हमलाग्रस्त खाने से होकर न गुजरे"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -256,6 +277,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

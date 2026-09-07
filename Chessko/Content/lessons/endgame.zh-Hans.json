@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "兵的升变规则",
       "icon": "arrow.up.circle.fill"
@@ -75,6 +78,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "核心原则",
       "icon": "bolt.fill"
@@ -85,6 +91,9 @@
       "icon": "star.fill",
       "title": "一子牵制二子——卡帕布兰卡的原则",
       "text": "“一个能牵制对方两个兵的兵，是大师的主要武器之一。”如果你的兵挡住对方两个兵，你实际上就多了一个子——在棋盘另一侧利用这个优势！"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -114,6 +123,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "象的弱点——车兵",
       "text": "如果你的兵奔向 h8（或 a8），而该格与你的象异色，对手便能守住角落，结果是和棋！卡帕布兰卡特别指出这是许多错失胜局的根源。"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -157,6 +169,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -249,6 +264,9 @@
       "mateIn": 2
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "关于作者",
       "icon": "person.fill"
@@ -284,6 +302,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

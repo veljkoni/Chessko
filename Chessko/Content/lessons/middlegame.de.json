@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Figurenwerte",
       "icon": "scalemass.fill"
@@ -86,6 +89,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Grundlegende taktische Motive",
       "icon": "bolt.fill"
@@ -110,6 +116,9 @@
       "icon": "arrow.triangle.2.circlepath",
       "title": "Abzugsangriff",
       "text": "Du ziehst eine Figur und entfesselst dadurch den Angriff einer Figur dahinter auf eine wertvolle gegnerische Figur. Besonders gefährlich, wenn die ziehende Figur selbst ebenfalls angreift."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -142,6 +151,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

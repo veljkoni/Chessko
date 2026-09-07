@@ -63,6 +63,9 @@
       "text": "如果兵到达底线，它会升变为任意棋子，通常是后。这是残局中的强力武器！"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "rook",
       "name": "车",
@@ -84,6 +87,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "bishop",
       "name": "象",
@@ -103,6 +109,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -133,6 +142,9 @@
       "text": "唯一能跳过其他棋子的棋子——无论己方还是对方！"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "queen",
       "name": "皇后",
@@ -152,6 +164,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -175,6 +190,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "特殊走法：王车易位",
       "icon": "arrow.left.arrow.right"
@@ -189,6 +207,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "王车易位的条件",
       "text": "王和车此前**都未移动过** · 它们之间**没有任何棋子** · 王不在被将状态，且不经过被攻击的格子"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -256,6 +277,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

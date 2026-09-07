@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Vrednosti figura",
       "icon": "scalemass.fill"
@@ -86,6 +89,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Osnovna taktička motiva",
       "icon": "bolt.fill"
@@ -110,6 +116,9 @@
       "icon": "arrow.triangle.2.circlepath",
       "title": "Otkriveni napad",
       "text": "Pomeriš jednu figuru i time otkriješ napad druge figure iza nje na protivnikovu vrednu figuru. Posebno opasan kada je i sama figura koja se pomera napadačka."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -142,6 +151,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Valore dei pezzi",
       "icon": "scalemass.fill"
@@ -86,6 +89,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Motivi tattici di base",
       "icon": "bolt.fill"
@@ -110,6 +116,9 @@
       "icon": "arrow.triangle.2.circlepath",
       "title": "Attacco di scoperta",
       "text": "Muovi un pezzo e così scateni l’attacco di un altro pezzo dietro di esso su un pezzo avversario di valore. Particolarmente pericoloso quando anche il pezzo che si muove attacca."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -142,6 +151,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

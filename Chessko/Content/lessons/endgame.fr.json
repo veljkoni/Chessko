@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "La règle de la promotion du pion",
       "icon": "arrow.up.circle.fill"
@@ -75,6 +78,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Un principe cardinal",
       "icon": "bolt.fill"
@@ -85,6 +91,9 @@
       "icon": "star.fill",
       "title": "Un en tient deux — le principe de Capablanca",
       "text": "« Un pion qui en tient deux est l’un des principaux outils du maître. » Si votre pion en bloque deux à l’adversaire, vous avez en fait une pièce d’avance — exploitez cet avantage de l’autre côté de l’échiquier !"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -114,6 +123,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "La faiblesse du fou — le pion de tour",
       "text": "Si votre pion va vers h8 (ou a8) et que cette case est de couleur opposée à votre fou, l’adversaire tient le coin et c’est nulle ! Capablanca le souligne comme la source de bien des gains manqués."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -157,6 +169,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -249,6 +264,9 @@
       "mateIn": 2
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "À propos de l’auteur",
       "icon": "person.fill"
@@ -284,6 +302,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

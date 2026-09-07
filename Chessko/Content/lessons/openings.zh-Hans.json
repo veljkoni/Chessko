@@ -39,6 +39,9 @@
       "text": "尽早王车易位。暴露的国王是容易的靶子。卡帕布兰卡本人总是早早易位，并建议所有人尤其是初学者也这样做。"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "常见的开局错误",
       "icon": "exclamationmark.triangle.fill"
@@ -65,6 +68,9 @@
           "style": "warning"
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

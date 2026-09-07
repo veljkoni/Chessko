@@ -63,6 +63,9 @@
       "text": "Если пешка доходит до последней горизонтали, она превращается в любую фигуру, чаще всего в ферзя. Это мощное оружие в эндшпиле!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "rook",
       "name": "Ладья",
@@ -84,6 +87,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "bishop",
       "name": "Слон",
@@ -103,6 +109,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -133,6 +142,9 @@
       "text": "Единственная фигура, которая может перепрыгивать через другие — и свои, и чужие!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "queen",
       "name": "Ферзь",
@@ -152,6 +164,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -175,6 +190,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Особый ход: рокировка",
       "icon": "arrow.left.arrow.right"
@@ -189,6 +207,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "Условия рокировки",
       "text": "Ни король, ни ладья **ранее не ходили** · Между ними **нет фигур** · Король не под шахом и не проходит через атакованное поле"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -256,6 +277,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

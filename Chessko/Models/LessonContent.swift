@@ -81,6 +81,11 @@ enum LessonBlock: Codable, Equatable {
     case board(fen: String, caption: String, interactive: Bool)
     case explorer
     case exercise(ExerciseSpec)
+    /// Vodoravna linija. Eksplicitan blok, a NE nesto sto renderer zakljucuje
+    /// iz susedstva: od 21 linije u izvoru 16 stoji ispred naslova, 5 razdvaja
+    /// unose u listi figura (ispred `pieceRow`, ne naslova), a 5 naslova nema
+    /// liniju ispred sebe — nijedno pravilo „linija pre naslova" to ne pogadja.
+    case divider
 
     private enum CodingKeys: String, CodingKey {
         case type, text, icon, items, style, title, author, piece, name, count
@@ -125,6 +130,8 @@ enum LessonBlock: Codable, Equatable {
                           interactive: try c.decode(Bool.self, forKey: .interactive))
         case "explorer":
             self = .explorer
+        case "divider":
+            self = .divider
         case "exercise":
             self = .exercise(ExerciseSpec(
                 kind:          try c.decode(ExerciseKind.self, forKey: .kind),
@@ -174,6 +181,8 @@ enum LessonBlock: Codable, Equatable {
             try c.encode(caption, forKey: .caption); try c.encode(interactive, forKey: .interactive)
         case .explorer:
             try c.encode("explorer", forKey: .type)
+        case .divider:
+            try c.encode("divider", forKey: .type)
         case .exercise(let spec):
             try c.encode("exercise", forKey: .type)
             try c.encode(spec.kind, forKey: .kind); try c.encode(spec.title, forKey: .title)

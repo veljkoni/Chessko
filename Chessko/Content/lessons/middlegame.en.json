@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Piece values",
       "icon": "scalemass.fill"
@@ -86,6 +89,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Basic tactical motifs",
       "icon": "bolt.fill"
@@ -110,6 +116,9 @@
       "icon": "arrow.triangle.2.circlepath",
       "title": "Discovered attack",
       "text": "You move one piece and thereby unleash the attack of another piece behind it on the opponent’s valuable piece. Especially dangerous when the moving piece itself also attacks something."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -142,6 +151,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

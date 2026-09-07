@@ -115,6 +115,11 @@ def exercise(kind, title, hint, icon, uci=None, fen=None,
 
 EXPLORER = {"type": "explorer"}
 
+# `Divider().background(DS.line)` iz izvora. Prenosi se eksplicitno jer ne prati
+# nijedno pravilo koje bi renderer mogao da pogodi — vidi komentar uz
+# `LessonBlock.divider`.
+DIVIDER = {"type": "divider"}
+
 # Podrazumevane poruke `OpeningLine` (OpeningExerciseViewModel.swift:11-12).
 # Otvaranja ih u Swift-u ne navode eksplicitno; ovde se upisuju da JSON bude
 # samodovoljan. `playingPrompt` ostaje null jer ga VM racuna po broju poteza.
@@ -158,6 +163,7 @@ LESSON_1 = {
         box("rule", "crown.fill", "Promocija",
             "Ako pion stigne do poslednjeg reda — pretvara se u bilo koju figuru, najčešće Damu. Ovo je moćno oružje u završnici!"),
 
+        DIVIDER,
         piece_row("rook", "Top (Kula)", "× 2"),
         para("Stoji u uglovima table na početku. Efikasan je tek na otvorenim linijama — koliko god radi sa pioima koji blokiraju put, toliko je ograničen."),
         bullets(
@@ -165,6 +171,7 @@ LESSON_1 = {
                    "Kreće se po pravim linijama (napred-nazad, levo-desno) koliko god polja želi. Zajedno, dva Topa su neznatno jača od Dame."),
         ),
 
+        DIVIDER,
         piece_row("bishop", "Lovac (Iber)", "× 2"),
         para("Jedan lovac uvek ostaje na belim, drugi na crnim poljima. Kapablanka smatra da je **u većini pozicija Lovac vredniji od Skakača**."),
         bullets(
@@ -172,6 +179,7 @@ LESSON_1 = {
                    'Kreće se isključivo po dijagonalama. Slabost: "Topov pion koji promovira na polju suprotne boje od Lovca" najčešće vodi remiju umesto pobede.'),
         ),
 
+        DIVIDER,
         piece_row("knight", "Skakač (Konj)", "× 2"),
         para("Jedina figura koja preskače ostale. Snažan je u **zatvorenim pozicijama** — kada su linije blokirane pionima. Na ivici table gubi na snazi."),
         bullets(
@@ -181,6 +189,7 @@ LESSON_1 = {
         box("rule", "star.fill", "Jedinstven!",
             "Jedina figura koja može da preskače druge figure — i svoje i protivničke!"),
 
+        DIVIDER,
         piece_row("queen", "Kraljica (Dama)", "× 1"),
         para("Stoji na polju **svoje boje** — bela Dama na belom polju, crna na crnom. Najmoćnija figura, ali ne treba je odmah izvoditi u otvaranju."),
         bullets(
@@ -188,6 +197,7 @@ LESSON_1 = {
                    "Kombinuje kretanje Topa i Lovca — kreće se u svim pravcima, koliko god polja želi."),
         ),
 
+        DIVIDER,
         piece_row("king", "Kralj", "× 1"),
         para("Najvažnija figura — njen gubitak znači kraj igre. U otvaranju je **pasivna odbrambena figura**, ali u završnici postaje moćan napadač."),
         bullets(
@@ -196,12 +206,14 @@ LESSON_1 = {
         ),
 
         # ── lesson1Rokada ──
+        DIVIDER,
         heading("arrow.left.arrow.right", "Poseban potez: Rokada"),
         para("Jednom u partiji možeš pomeriti **dve figure istovremeno** — Kralja i Topa. Kralj skoči dva polja ka Topu, a Top preskače Kralja i staje pored njega. Ovo služi da skloniš Kralja na sigurno i ubaciš Top u igru."),
         box("rule", "exclamationmark.triangle.fill", "Uslovi za rokadu",
             "Ni Kralj ni Top se do tada **nisu pomerali** · Između njih **nema nijedne figure** · Kralj se ne nalazi u šahu i ne prolazi kroz napadnuto polje"),
 
         # ── vrednosti figura ──
+        DIVIDER,
         heading("scalemass.fill", "Relativna vrednost figura"),
         para("Kapablanka kaže: vrednost nije fiksna — menja se zavisno od pozicije. Ipak, ove brojke služe kao vodič u razmeni figura."),
         piece_value_table(),
@@ -215,6 +227,7 @@ LESSON_1 = {
         ),
 
         # ── elementarni matovi ──
+        DIVIDER,
         heading("checkmark.seal.fill", "Elementarni matovi"),
         para("Pre nego što naučiš otvaranja i strategiju, nauči ove tri osnovne mat pozicije. Za svaki od njih potrebna je saradnja Kralja!"),
         exercise("vsEngine", "Vežba 1 — Kralj + Top",
@@ -254,6 +267,7 @@ LESSON_2 = {
         numbered_rule(3, "Zaštiti kralja — uradi rokadu!",
                       "Rokadu odigraj što pre je moguće. Kralj na otvorenom je laka meta. Kapablanka sam uvek rokira rano i preporučuje isto svim igračima, posebno početnicima."),
 
+        DIVIDER,
         heading("exclamationmark.triangle.fill", "Tipične greške u otvaranju"),
         # Ove tri stavke su u Swift-u DS.danger (crvene), ne u akcentu lekcije.
         bullets(
@@ -268,6 +282,7 @@ LESSON_2 = {
                    style="warning"),
         ),
 
+        DIVIDER,
         heading("book.fill", "Poznata otvaranja"),
         para("Odigraj svaki potez belih na tabli — crni odgovara automatski po teorijskoj liniji."),
         exercise("scripted", "Španska partija (Ruy Lopez)",
@@ -308,10 +323,12 @@ LESSON_3 = {
                    "Kapablanka upozorava: direktan napad na Kralja nikada ne treba voditi do krajnosti ako nema apsolutne sigurnosti da će uspeti. Neuspeo napad znači katastrofu."),
         ),
 
+        DIVIDER,
         heading("scalemass.fill", "Vrednosti figura"),
         para("U središnjici, vrednost figure zavisi od pozicije. Uvek pazi šta razmenjuješ!"),
         piece_value_table(),
 
+        DIVIDER,
         heading("bolt.fill", "Osnovna taktička motiva"),
         box("info", "tuningfork", "Viljuška (Rašlje)",
             "Jedna figura napadne **dve protivničke figure istovremeno**. Protivnik može da spasi samo jednu. Skakači su posebno opasni za viljuške — skaču na polje odakle napadaju Damu i Topa u isto vreme."),
@@ -320,6 +337,7 @@ LESSON_3 = {
         box("info", "arrow.triangle.2.circlepath", "Otkriveni napad",
             "Pomeriš jednu figuru i time otkriješ napad druge figure iza nje na protivnikovu vrednu figuru. Posebno opasan kada je i sama figura koja se pomera napadačka."),
 
+        DIVIDER,
         heading("person.2.fill", "Koordinacija figura"),
         para("Kapablanka stalno naglašava: figure moraju da rade zajedno kao tim."),
         bullets(
@@ -331,6 +349,7 @@ LESSON_3 = {
                    "Lovac koji blokira sopstveni pion je ograničen. Pione postavljaj na polja **suprotne boje** od svog lovca."),
         ),
 
+        DIVIDER,
         heading("chart.line.uptrend.xyaxis", "Prednost od jednog piona"),
         box("info", "info.circle.fill", "Kapablankovo zlatno pravilo",
             '"Dobitak jednog piona između jednako jakih igrača najčešće znači pobedu." Ne potcenjuj pion — u završnici je on često odlučujući. Svaka sitna prednost se akumulira!'),
@@ -360,6 +379,7 @@ LESSON_4 = {
                    "Svaki pion koji stigne do poslednjeg reda postaje Dama (ili druga figura). Ovo je glavni cilj u pešačkim završnicama."),
         ),
 
+        DIVIDER,
         heading("arrow.up.circle.fill", "Pravilo o promociji piona"),
         para("Kapablanka objašnjava ovo pravilo jasno i precizno:"),
         box("info", "checkmark.circle.fill", "Ključno pravilo",
@@ -371,10 +391,12 @@ LESSON_4 = {
                    "Kada su dva Kralja međusobno licem u lice sa neparnim brojem polja između, igrač koji je **prethodno poterao** ima prednost. Zove se opozicija — i ključna je za sve pešačke završnice."),
         ),
 
+        DIVIDER,
         heading("bolt.fill", "Kardinalno načelo"),
         box("rule", "star.fill", "Jedno drži dvoje — Kapablankovo načelo",
             '"Pion koji drži dva protivnička piona je jedno od glavnih oruđa majstora." Ako tvoj pion blokira dva protivnička, ti si faktički figuru ispred — iskoristi tu prednost na drugoj strani table!'),
 
+        DIVIDER,
         heading("scalemass.fill", "Lovac vs. Skakač u završnici"),
         bullets(
             bullet("arrow.up.right", "Lovac je jači kada su pioni na obe strane",
@@ -385,6 +407,7 @@ LESSON_4 = {
         box("info", "exclamationmark.triangle.fill", "Slabost lovca — Topov pion",
             "Ako tvoj pion ide do h8 (ili a8) i to polje je suprotne boje od tvog lovca, protivnik drži ugao i igra je remi! Kapablanka ovo posebno ističe kao izvor mnogih propuštenih pobeda."),
 
+        DIVIDER,
         heading("trophy.fill", "Šah-Mat i Remi"),
         box("rule", "exclamationmark.triangle.fill", "Šah",
             "Situacija kada je Kralj napadnut. Igrač **mora** da se odbrani — pomeri kralja, pojede napadača, ili postavi štit između."),
@@ -400,6 +423,7 @@ LESSON_4 = {
         ),
 
         # ── Mini finalni test ──
+        DIVIDER,
         heading("trophy.fill", "Mini finalni test"),
         para("Primeni sve što si naučio! Reši 5 zadataka — mat u najmanji broj poteza. Svaki koristi drugu kombinaciju figura."),
         exercise("scripted", "Zadatak 1 — Dama na zadnjoj liniji",
@@ -436,6 +460,7 @@ LESSON_4 = {
                  prompt=MATE_PROMPT_N, mate_in=2),
 
         # ── O autoru ──
+        DIVIDER,
         heading("person.fill", "O autoru"),
         box("info", "person.fill", "Hoze Raul Kapablanka (1888–1942)",
             "Kubanski šahista, treći zvanični svetski prvak u šahu. Važi za jednog od najvećih šahiskih genija svih vremena — poznat po kristalno čistom stilu igre i intuitivnom razumevanju pozicije."),
@@ -448,6 +473,7 @@ LESSON_4 = {
                    '"Chess Fundamentals" (1921) je pisao upravo za početnike i amatere.'),
         ),
 
+        DIVIDER,
         heading("text.book.closed.fill", "Izvor: Project Gutenberg"),
         para("Sav sadržaj lekcija preuzet je iz digitalne verzije knjige dostupne na **Project Gutenberg** — neprofitnoj biblioteci knjiga u javnom domenu."),
         # Naslov je URL — nije u katalogu i namerno se ne prevodi.

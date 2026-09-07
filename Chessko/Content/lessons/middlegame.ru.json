@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Ценность фигур",
       "icon": "scalemass.fill"
@@ -86,6 +89,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Базовые тактические мотивы",
       "icon": "bolt.fill"
@@ -110,6 +116,9 @@
       "icon": "arrow.triangle.2.circlepath",
       "title": "Вскрытое нападение",
       "text": "Вы передвигаете одну фигуру и тем самым открываете нападение другой фигуры позади неё на ценную фигуру соперника. Особенно опасно, когда и сама уходящая фигура атакует."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -142,6 +151,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

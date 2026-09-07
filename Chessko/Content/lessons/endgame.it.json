@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "La regola della promozione del pedone",
       "icon": "arrow.up.circle.fill"
@@ -75,6 +78,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Un principio cardine",
       "icon": "bolt.fill"
@@ -85,6 +91,9 @@
       "icon": "star.fill",
       "title": "Uno ne tiene due — il principio di Capablanca",
       "text": "\"Un pedone che ne tiene due avversari è uno degli strumenti principali del maestro.\" Se il tuo pedone ne blocca due dell’avversario, sei di fatto un pezzo avanti — sfrutta quel vantaggio sull’altro lato della scacchiera!"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -114,6 +123,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "La debolezza dell’alfiere — il pedone di torre",
       "text": "Se il tuo pedone va verso h8 (o a8) e quella casa è di colore opposto al tuo alfiere, l’avversario tiene l’angolo ed è patta! Capablanca lo sottolinea come fonte di molte vittorie mancate."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -157,6 +169,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -249,6 +264,9 @@
       "mateIn": 2
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Sull’autore",
       "icon": "person.fill"
@@ -284,6 +302,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

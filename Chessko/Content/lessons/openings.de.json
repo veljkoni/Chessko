@@ -39,6 +39,9 @@
       "text": "Rochiere so früh wie möglich. Ein König im Freien ist ein leichtes Ziel. Capablanca selbst rochierte stets früh und empfiehlt dasselbe allen Spielern, besonders Anfängern."
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Typische Eröffnungsfehler",
       "icon": "exclamationmark.triangle.fill"
@@ -65,6 +68,9 @@
           "style": "warning"
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

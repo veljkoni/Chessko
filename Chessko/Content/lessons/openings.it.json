@@ -39,6 +39,9 @@
       "text": "Arrocca il prima possibile. Un re allo scoperto è un bersaglio facile. Capablanca stesso arroccava sempre presto e consiglia lo stesso a tutti, soprattutto ai principianti."
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Errori tipici in apertura",
       "icon": "exclamationmark.triangle.fill"
@@ -65,6 +68,9 @@
           "style": "warning"
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

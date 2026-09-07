@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Pravilo o promociji piona",
       "icon": "arrow.up.circle.fill"
@@ -75,6 +78,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Kardinalno načelo",
       "icon": "bolt.fill"
@@ -85,6 +91,9 @@
       "icon": "star.fill",
       "title": "Jedno drži dvoje — Kapablankovo načelo",
       "text": "\"Pion koji drži dva protivnička piona je jedno od glavnih oruđa majstora.\" Ako tvoj pion blokira dva protivnička, ti si faktički figuru ispred — iskoristi tu prednost na drugoj strani table!"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -114,6 +123,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "Slabost lovca — Topov pion",
       "text": "Ako tvoj pion ide do h8 (ili a8) i to polje je suprotne boje od tvog lovca, protivnik drži ugao i igra je remi! Kapablanka ovo posebno ističe kao izvor mnogih propuštenih pobeda."
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -157,6 +169,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -249,6 +264,9 @@
       "mateIn": 2
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "O autoru",
       "icon": "person.fill"
@@ -284,6 +302,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

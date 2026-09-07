@@ -42,6 +42,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "मोहरों का मूल्य",
       "icon": "scalemass.fill"
@@ -86,6 +89,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "बुनियादी रणनीतिक तरीके",
       "icon": "bolt.fill"
@@ -110,6 +116,9 @@
       "icon": "arrow.triangle.2.circlepath",
       "title": "खुला हमला",
       "text": "आप एक मोहरा हिलाते हैं और इस तरह उसके पीछे के दूसरे मोहरे का हमला विरोधी के मूल्यवान मोहरे पर खुल जाता है। जब हिलने वाला मोहरा स्वयं भी हमला करे तो यह विशेष रूप से खतरनाक होता है।"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -142,6 +151,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

@@ -63,6 +63,9 @@
       "text": "If a pawn reaches the last rank it turns into any piece, most often a queen. This is a powerful weapon in the endgame!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "rook",
       "name": "Rook",
@@ -84,6 +87,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "bishop",
       "name": "Bishop",
@@ -103,6 +109,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -133,6 +142,9 @@
       "text": "The only piece that can jump over other pieces — both its own and the opponent’s!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "queen",
       "name": "Queen",
@@ -152,6 +164,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -175,6 +190,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "A special move: Castling",
       "icon": "arrow.left.arrow.right"
@@ -189,6 +207,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "Conditions for castling",
       "text": "Neither king nor rook has **moved before** · There are **no pieces between them** · The king is not in check and does not pass through an attacked square"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -256,6 +277,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

@@ -27,6 +27,7 @@ import Foundation
         ] },
         { "type": "board", "fen": "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", "caption": "Rokada", "interactive": false },
         { "type": "explorer" },
+        { "type": "divider" },
         { "type": "exercise", "kind": "scripted", "title": "Španska",
           "hint": "Odigraj e4", "icon": "flame.fill",
           "uciMoves": ["e2e4", "e7e5"], "startFEN": null,
@@ -45,7 +46,7 @@ import Foundation
     #expect(doc.id == "test-lesson")
     #expect(doc.language == "sr")
     #expect(doc.title == "Naslov")
-    #expect(doc.blocks.count == 12)
+    #expect(doc.blocks.count == 13)
 
     guard case .heading(let text, let icon) = doc.blocks[0] else {
         Issue.record("blok 0 nije heading"); return
@@ -66,14 +67,18 @@ import Foundation
     }
     #expect(style == .rule)
 
-    guard case .exercise(let scripted) = doc.blocks[10] else {
-        Issue.record("blok 10 nije exercise"); return
+    guard case .divider = doc.blocks[10] else {
+        Issue.record("blok 10 nije divider"); return
+    }
+
+    guard case .exercise(let scripted) = doc.blocks[11] else {
+        Issue.record("blok 11 nije exercise"); return
     }
     #expect(scripted.kind == .scripted)
     #expect(scripted.uciMoves == ["e2e4", "e7e5"])
 
-    guard case .exercise(let vsEngine) = doc.blocks[11] else {
-        Issue.record("blok 11 nije exercise"); return
+    guard case .exercise(let vsEngine) = doc.blocks[12] else {
+        Issue.record("blok 12 nije exercise"); return
     }
     #expect(vsEngine.kind == .vsEngine)
     #expect(vsEngine.startFEN == "8/8/4k3/8/4K3/8/8/R7 w - - 0 1")
@@ -108,6 +113,7 @@ import Foundation
                                     PieceValueRow(piece: "king", name: "Kralj", value: "∞")]),
         .board(fen: "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", caption: "Rokada", interactive: true),
         .explorer,
+        .divider,
         .exercise(ExerciseSpec(kind: .scripted, title: "Španska", hint: "H", icon: "flame.fill",
                                uciMoves: ["e2e4", "e7e5"], startFEN: nil,
                                solvedMessage: "S", wrongMessage: "W",

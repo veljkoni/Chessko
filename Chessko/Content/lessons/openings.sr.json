@@ -39,6 +39,9 @@
       "text": "Rokadu odigraj što pre je moguće. Kralj na otvorenom je laka meta. Kapablanka sam uvek rokira rano i preporučuje isto svim igračima, posebno početnicima."
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Tipične greške u otvaranju",
       "icon": "exclamationmark.triangle.fill"
@@ -65,6 +68,9 @@
           "style": "warning"
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

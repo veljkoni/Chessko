@@ -63,6 +63,9 @@
       "text": "Erreicht ein Bauer die letzte Reihe, verwandelt er sich in eine beliebige Figur, meist in eine Dame. Im Endspiel ist das eine mächtige Waffe!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "rook",
       "name": "Der Turm",
@@ -84,6 +87,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "bishop",
       "name": "Der Läufer",
@@ -103,6 +109,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -133,6 +142,9 @@
       "text": "Die einzige Figur, die über andere Figuren springen kann — eigene wie gegnerische!"
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "pieceRow",
       "piece": "queen",
       "name": "Die Dame",
@@ -152,6 +164,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "pieceRow",
@@ -175,6 +190,9 @@
       ]
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Ein besonderer Zug: Rochade",
       "icon": "arrow.left.arrow.right"
@@ -189,6 +207,9 @@
       "icon": "exclamationmark.triangle.fill",
       "title": "Bedingungen für die Rochade",
       "text": "Weder König noch Turm haben sich **zuvor bewegt** · Zwischen ihnen steht **keine Figur** · Der König steht nicht im Schach und zieht nicht über ein angegriffenes Feld"
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
@@ -256,6 +277,9 @@
           "style": null
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",

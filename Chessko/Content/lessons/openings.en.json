@@ -39,6 +39,9 @@
       "text": "Castle as early as possible. A king in the open is an easy target. Capablanca himself always castled early and recommends the same to all players, especially beginners."
     },
     {
+      "type": "divider"
+    },
+    {
       "type": "heading",
       "text": "Typical opening mistakes",
       "icon": "exclamationmark.triangle.fill"
@@ -65,6 +68,9 @@
           "style": "warning"
         }
       ]
+    },
+    {
+      "type": "divider"
     },
     {
       "type": "heading",
