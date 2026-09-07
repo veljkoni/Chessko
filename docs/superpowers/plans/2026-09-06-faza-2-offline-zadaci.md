@@ -426,6 +426,11 @@ Nova sekcija o bazi zadataka: odakle je, kako se regeneriše, zašto je `puzzle_
 - [ ] `xcodebuild … build` → `** BUILD SUCCEEDED **`
 - [ ] `git status --short` prazan
 - [ ] Grep za mrežom nad `Chessko/` bez pogodaka
-- [ ] `Chessko/puzzles.sqlite` ispod 6 MB i commit-ovan
+- [ ] `Chessko/puzzles.sqlite` commit-ovan i ispod praga iz Task-a 1 (8 MB)
+
+> **Ispravka plana (2026-09-07).** Ova stavka je ranije tražila „ispod 6 MB", što je
+> u sukobu sa samim Task-om 1, gde je prag za prekid rada bio 8 MB. Stvarna baza je
+> **7,0 MB** — prošla je Task 1 i njegov pregled. Merodavan je prag iz Task-a 1;
+> ovde je 6 MB bilo omaška.
 - [ ] Tab Zadaci pregledan u obe teme
 
