@@ -217,6 +217,9 @@ struct BulletItem: Codable, Equatable {
     let icon: String
     let title: String
     let text: String
+    /// `nil` znaci akcent lekcije. Postoji jer tri stavke ("Tipicne greske" u
+    /// lekciji 2) NISU u akcentu nego crvene.
+    let style: BoxStyle?
 }
 
 struct PieceValueRow: Codable, Equatable {
@@ -399,7 +402,7 @@ Expected: broj **veći od nule**. Ako je nula, fajl NIJE u target-u — STATI i 
 - [ ] **Step 6: Pokrenuti testove**
 
 Run: `swift test`
-Expected: **29 testova prolazi** (27 + 2 nova).
+Expected: **30 testova prolazi** (27 + 3 nova).
 
 - [ ] **Step 7: Commit**
 
@@ -518,7 +521,7 @@ if __name__ == "__main__":
 |---|---|
 | `L_SectionHeader(icon: I, title: X, color:)` | `{"type":"heading","text":T(X),"icon":I}` |
 | `L_Para(X)` | `{"type":"paragraph","text":T(X)}` |
-| uzastopni `L_Bullet(icon: I, title: A, text: B)` | jedan `bullets` blok sa svim susednim stavkama |
+| uzastopni `L_Bullet(icon: I, color: C, title: A, text: B)` | jedan `bullets` blok sa svim susednim stavkama; `style` je `null` kad je `C` = `DS.accent`/`lesson.accentColor`, a `"warning"` kad je `C` = `DS.danger` (tri stavke „Tipične greške" u lekciji 2) |
 | `L_Box(icon: I, color: .yellow, title: A, text: B)` | `{"type":"box","style":"rule",...}` |
 | `L_Box(icon: I, color: .red, ...)` | `style: "warning"` |
 | `L_Box` sa `lesson.accentColor` | `style: "info"` |
@@ -607,7 +610,7 @@ U `Tests/ChesskoEngineTests/LessonContentTests.swift` dodati:
 - [ ] **Step 5: Pokrenuti testove**
 
 Run: `swift test`
-Expected: **30 testova prolazi**.
+Expected: **31 testova prolazi**.
 
 - [ ] **Step 6: Commit**
 
@@ -734,7 +737,7 @@ Expected: broj veći od nule. Ako je nula, fajl NIJE u target-u — STATI i prij
 
 - [ ] **Step 5: Testovi i commit**
 
-Run: `swift test` → 30 prolazi (repozitorijum zavisi od `Bundle.main` pa se ne testira u paketu; pokrivenost daje Step 2 i Step 4).
+Run: `swift test` → 31 prolazi (repozitorijum zavisi od `Bundle.main` pa se ne testira u paketu; pokrivenost daje Step 2 i Step 4).
 
 ```bash
 git add Chessko/Logic/LessonRepository.swift Chessko.xcodeproj/project.pbxproj
@@ -793,7 +796,8 @@ struct LessonRenderer: View {
 
         case .bullets(let items):
             ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                L_Bullet(icon: item.icon, color: DS.accent,
+                L_Bullet(icon: item.icon,
+                         color: item.style.map(color(for:)) ?? DS.accent,
                          title: item.title, text: item.text)
             }
 
@@ -1096,7 +1100,7 @@ Katalog vise ne raste sa sadrzajem, samo sa interfejsom."
 
 ## Završna provera faze
 
-- [ ] `swift test` prolazi (27 postojećih + 3 nova = 30)
+- [ ] `swift test` prolazi (27 postojećih + 4 nova = 31)
 - [ ] `xcodebuild … build` → `** BUILD SUCCEEDED **`
 - [ ] `git status --short` prazan
 - [ ] `ls "$APP/Content/lessons" | wc -l` = **32** unutar izgrađenog `.app`

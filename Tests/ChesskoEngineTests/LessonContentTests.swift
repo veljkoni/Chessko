@@ -14,7 +14,8 @@ import Foundation
         { "type": "heading", "text": "Sekcija", "icon": "star.fill" },
         { "type": "paragraph", "text": "Tekst sa **podebljanim**." },
         { "type": "bullets", "items": [
-            { "icon": "checkmark", "title": "Prvo", "text": "Opis prvog" }
+            { "icon": "checkmark", "title": "Prvo", "text": "Opis prvog", "style": null },
+            { "icon": "xmark.circle.fill", "title": "Greška", "text": "Opis greške", "style": "warning" }
         ] },
         { "type": "box", "style": "rule", "icon": "lightbulb", "title": "Pravilo", "text": "Telo" },
         { "type": "quote", "text": "Citat", "author": "Kapablanka" },
@@ -54,8 +55,10 @@ import Foundation
     guard case .bullets(let items) = doc.blocks[2] else {
         Issue.record("blok 2 nije bullets"); return
     }
-    #expect(items.count == 1)
+    #expect(items.count == 2)
     #expect(items[0].title == "Prvo")
+    #expect(items[0].style == nil, "stavka bez stila mora da ostane nil, ne podrazumevani slucaj")
+    #expect(items[1].style == .warning)
 
     guard case .box(let style, _, _, _) = doc.blocks[3] else {
         Issue.record("blok 3 nije box"); return
@@ -82,5 +85,45 @@ import Foundation
     """
     #expect(throws: (any Error).self) {
         try JSONDecoder().decode(LessonDocument.self, from: Data(json.utf8))
+    }
+}
+
+// `encode(to:)` nije koristio nijedan test, pa bi buducu izmenu koja rasklopi
+// par kljuceva (dekodira se pod jednim imenom, kodira pod drugim) primetio tek
+// generator u Task-u 2 — daleko od uzroka. Ovaj test to hvata odmah.
+@Test func everyBlockTypeSurvivesEncodeDecodeRoundTrip() throws {
+    let blocks: [LessonBlock] = [
+        .heading(text: "Sekcija", icon: "star.fill"),
+        .paragraph(text: "Tekst"),
+        .bullets(items: [
+            BulletItem(icon: "checkmark", title: "A", text: "B", style: nil),
+            BulletItem(icon: "xmark", title: "C", text: "D", style: .warning),
+        ]),
+        .box(style: .rule, icon: "lightbulb", title: "T", text: "X"),
+        .quote(text: "Citat", author: "Kapablanka"),
+        .pieceRow(piece: "knight", name: "Skakač", count: "2"),
+        .numberedRule(number: 3, title: "Naslov", text: "Telo"),
+        .pieceValueTable(rows: [PieceValueRow(piece: "pawn", name: "Pion", value: 1)]),
+        .board(fen: "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", caption: "Rokada", interactive: true),
+        .explorer,
+        .exercise(ExerciseSpec(kind: .scripted, title: "Španska", hint: "H", icon: "flame.fill",
+                               uciMoves: ["e2e4", "e7e5"], startFEN: nil,
+                               solvedMessage: "S", wrongMessage: "W",
+                               playingPrompt: "P", mateIn: 2)),
+        .exercise(ExerciseSpec(kind: .vsEngine, title: "Kralj + Top", hint: "H",
+                               icon: "rectangle.portrait.fill", uciMoves: nil,
+                               startFEN: "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
+                               solvedMessage: nil, wrongMessage: nil,
+                               playingPrompt: nil, mateIn: nil)),
+    ]
+
+    let doc = LessonDocument(id: "rt", language: "sr", title: "T", subtitle: "S",
+                             icon: "book.fill", blocks: blocks)
+    let data = try JSONEncoder().encode(doc)
+    let back = try JSONDecoder().decode(LessonDocument.self, from: data)
+
+    #expect(back == doc)
+    for (i, (a, b)) in zip(doc.blocks, back.blocks).enumerated() {
+        #expect(a == b, "blok \(i) se ne vraca isti kroz enkodiranje")
     }
 }

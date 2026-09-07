@@ -28,6 +28,11 @@ struct BulletItem: Codable, Equatable {
     let icon: String
     let title: String
     let text: String
+    /// `nil` znaci akcent lekcije, sto je slucaj za vecinu stavki. Postoji jer
+    /// tri stavke ("Tipicne greske" u lekciji o otvaranjima) NISU u akcentu
+    /// nego crvene; bez ovog polja bi verno prenosenje tiho izgubilo tu
+    /// razliku, a renderer bi morao da njuska imena ikona.
+    let style: BoxStyle?
 }
 
 struct PieceValueRow: Codable, Equatable {
