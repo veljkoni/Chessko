@@ -6,6 +6,19 @@ import SwiftUI
 final class StatsManager {
     static let shared = StatsManager()
 
+    // MARK: - Kljucevi napretka na zadacima
+    //
+    // Zive OVDE, a ne u `PuzzleViewModel`, jer `resetStats()` mora da ih obrise,
+    // a `StatsManager.swift` se kompajlira i u `ChesskoEngine` SwiftPM target
+    // gde `PuzzleViewModel` ne postoji (referenca na njega bi oborila
+    // `swift test`). `PuzzleViewModel` koristi bas ove konstante.
+
+    /// Id-jevi svih ikad resenih zadataka (niz stringova).
+    nonisolated static let solvedPuzzleIdsKey = "solvedPuzzleIds"
+
+    /// Datumi ("yyyy-MM-dd") za koje je resen zadatak dana.
+    nonisolated static let solvedDatesKey = "chessko.solvedDates"
+
     var gamesPlayed: Int {
         didSet { UserDefaults.standard.set(gamesPlayed, forKey: "stats_gamesPlayed") }
     }
@@ -122,5 +135,12 @@ final class StatsManager {
         currentPuzzleStreak = 0
         bestPuzzleStreak = 0
         puzzleRating = 800
+
+        // Rejting nazad na 800 nema smisla ako napredak na zadacima ostane:
+        // vezbanje bi i dalje iskljucivalo svaki ikad resen zadatak, a
+        // kalendar bi ostao zelen. `PuzzleViewModel` oba skupa drzi u kesu i
+        // ponovo ih cita pri sledecem ucitavanju zadatka.
+        UserDefaults.standard.removeObject(forKey: Self.solvedPuzzleIdsKey)
+        UserDefaults.standard.removeObject(forKey: Self.solvedDatesKey)
     }
 }

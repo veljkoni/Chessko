@@ -121,6 +121,8 @@ struct SettingsSheet: View {
                             StatBox(label: Loc("Najbolji niz"), value: "\(stats.bestWinStreak) 🔥", color: DS.warning)
                             Spacer()
                             StatBox(label: Loc("Rešeno zadataka"), value: "\(stats.puzzlesSolved) 🧩", color: DS.accent)
+                            Spacer()
+                            StatBox(label: Loc("Rejting zadataka"), value: "\(stats.puzzleRating)", color: DS.accent)
                         }
 
                         if stats.gamesPlayed > 0 || stats.puzzlesSolved > 0 {

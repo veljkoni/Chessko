@@ -780,6 +780,7 @@ add("Remi", "Draws", "Nulles", "Remis", "Patte", "Ничьи", "平局", "ड्
 add("Uspešnost", "Win Rate", "Taux de victoire", "Siegesrate", "Percentuale di vittorie", "Процент побед", "胜率", "जीत दर")
 add("Najbolji niz", "Best Streak", "Meilleure série", "Beste Serie", "Miglior serie", "Лучшая серия", "最佳连胜", "सर्वश्रेष्ठ सिलसिला")
 add("Rešeno zadataka", "Puzzles Solved", "Problèmes résolus", "Gelöste Rätsel", "Problemi risolti", "Решено задач", "已解谜题", "हल की गई पहेलियाँ")
+add("Rejting zadataka", "Puzzle rating", "Classement des problèmes", "Aufgaben-Wertung", "Punteggio problemi", "Рейтинг задач", "谜题评分", "पहेली रेटिंग")
 add("Resetuj statistiku", "Reset Statistics", "Réinitialiser les statistiques", "Statistiken zurücksetzen", "Reimposta statistiche", "Сбросить статистику", "重置统计", "सांख्यिकी रीसेट करें")
 add("Da li želite da resetujete sve statistike?", "Do you want to reset all statistics?", "Voulez-vous réinitialiser toutes les statistiques ?", "Möchten Sie alle Statistiken zurücksetzen?", "Vuoi reimpostare tutte le statistiche?", "Вы хотите сбросить всю статистику?", "您想重置所有统计数据吗？", "क्या आप सभी सांख्यिकी रीसेट करना चाहते हैं?")
 add("Ako se ista pozicija ponovi **tri puta**, može se tražiti remi.",

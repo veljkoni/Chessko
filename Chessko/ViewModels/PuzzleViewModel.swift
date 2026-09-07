@@ -62,13 +62,25 @@ final class PuzzleViewModel {
     /// Najgori slucaj je ~20 000 kratkih id-jeva (~200 KB serijalizovano) —
     /// prihvatljivo, bez potrebe za cisceniem/rotacijom.
     private(set) var solvedPuzzleIds: Set<String> = {
-        let arr = UserDefaults.standard.stringArray(forKey: "solvedPuzzleIds") ?? []
+        let arr = UserDefaults.standard.stringArray(forKey: StatsManager.solvedPuzzleIdsKey) ?? []
         return Set(arr)
     }()
 
     private func recordPuzzleIdSolved(_ id: String) {
         guard solvedPuzzleIds.insert(id).inserted else { return }
-        UserDefaults.standard.set(Array(solvedPuzzleIds), forKey: "solvedPuzzleIds")
+        UserDefaults.standard.set(Array(solvedPuzzleIds), forKey: StatsManager.solvedPuzzleIdsKey)
+    }
+
+    /// Oba skupa (`solvedPuzzleIds`, `solvedDates`) se kesiraju u memoriji, a
+    /// "Resetuj statistiku" (`StatsManager.resetStats()`) brise njihove kljuceve
+    /// direktno iz `UserDefaults` — bez ovog ponovnog citanja kes bi prezive
+    /// reset, pa bi vezbanje i dalje iskljucivalo sve ranije resene zadatke a
+    /// kalendar ostao zelen. Poziva se jednom po ucitavanju zadatka (ne po
+    /// tapu), pa je cena zanemarljiva.
+    private func reloadPersistedProgress() {
+        let ids = UserDefaults.standard.stringArray(forKey: StatsManager.solvedPuzzleIdsKey) ?? []
+        solvedPuzzleIds = Set(ids)
+        loadSolvedDates()
     }
 
     // MARK: - Date Navigation
@@ -77,7 +89,7 @@ final class PuzzleViewModel {
     private(set) var solvedDates: Set<String> = []
 
     private static let cal = Calendar.current
-    private let solvedKey = "chessko.solvedDates"
+    private let solvedKey = StatsManager.solvedDatesKey
 
     var canGoPrevious: Bool {
         selectedDate > minSelectableDate
@@ -140,12 +152,21 @@ final class PuzzleViewModel {
     private var rawMoves: [String] = []  // all UCI moves from the puzzle
     private var movePointer: Int = 0     // index of the next move to apply/find
 
+    /// `true` dok traje skriptovana pauza (600ms) izmedu igracevog tacnog
+    /// poteza i protivnickog odgovora. Bez ovoga bi `isPlayerTurn` bio `true`
+    /// u tom prozoru, pa bi brz korisnik odigrao potez koji `attempt()` poredi
+    /// sa PROTIVNICKIM potezom iz `rawMoves` — greska koju korisnik nije
+    /// napravio, a kosta ga rejtinga i oznacava zadatak kao promasen.
+    /// `.loading` se ovde NE sme koristiti (kao u `loadPuzzle()`) jer
+    /// `PuzzleView` u toj fazi crta ekran ucitavanja umesto table.
+    private var awaitingOpponent = false
+
     // MARK: - Computed
 
     var isFlipped: Bool { playerColor == .black }
 
     var isPlayerTurn: Bool {
-        phase == .playing || phase == .wrongMove
+        !awaitingOpponent && (phase == .playing || phase == .wrongMove)
     }
 
     var statusMessage: String {
@@ -175,8 +196,7 @@ final class PuzzleViewModel {
     /// trazi ucitavanje.
     func loadDailyPuzzle() {
         guard currentPuzzle == nil || isUnavailable else { return }
-        loadSolvedDates()
-        loadPuzzle()
+        loadPuzzle()   // sam osvezava `solvedDates` preko `reloadPersistedProgress()`
     }
 
     private var isUnavailable: Bool {
@@ -193,10 +213,12 @@ final class PuzzleViewModel {
     /// otvoren prozor da igrac odigra potez pre nego sto je protivnicki uopste
     /// prikazan).
     private func loadPuzzle() {
+        reloadPersistedProgress()
         mode = .daily
         phase = .loading
         currentPuzzle = nil
         puzzleHadError = false
+        awaitingOpponent = false
 
         guard let repository else {
             phase = .unavailable(Loc("Baza zadataka nije dostupna")); return
@@ -228,10 +250,17 @@ final class PuzzleViewModel {
         // zadatak koji je upravo bio na ekranu.
         let justShown = currentPuzzle?.puzzleId
 
+        // Isti razlog kao u `loadPuzzle()`: reset statistike brise kljuc
+        // direktno iz `UserDefaults`, a `solvedPuzzleIds` je ovde `excluding`
+        // skup — bez osvezavanja bi vezbanje i posle reseta iskljucivalo
+        // sve ranije resene zadatke.
+        reloadPersistedProgress()
+
         mode = .practice
         phase = .loading
         currentPuzzle = nil
         puzzleHadError = false
+        awaitingOpponent = false
 
         guard let repository else {
             phase = .unavailable(Loc("Baza zadataka nije dostupna")); return
@@ -372,6 +401,7 @@ final class PuzzleViewModel {
         }
 
         phase = .playing
+        awaitingOpponent = true
         Task {
             try? await Task.sleep(for: .milliseconds(600))
             applyNextComputerMove()
@@ -381,6 +411,9 @@ final class PuzzleViewModel {
     // MARK: - Computer Move
 
     private func applyNextComputerMove() {
+        // Prozor u kome tabla ne prima tapove se zatvara na SVAKOM izlazu.
+        defer { awaitingOpponent = false }
+
         // Iscrpljena lista poteza je NORMALAN kraj zadatka, ne greska.
         guard movePointer < rawMoves.count else { return }
 

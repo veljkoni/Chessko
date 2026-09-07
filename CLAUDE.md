@@ -184,15 +184,14 @@ Chessko/
   (grane `CastleKingside`/`CastleQueenside` i blok koji oduzima prava rokade
   gledaju samo `move.from`, tačno ono što je iOS imao pre Faze 0). Popravka je
   planirana za Fazu 6.
-- `PuzzleView` portretni raspored je `VStack` bez `ScrollView`-a, sa svega
-  ~10–20pt rezerve ispod poslednje kontrole — rizik od sečenja sadržaja na
-  većem Dynamic Type-u ili na manjim ekranima.
-- **Dnevni „hrom" stoji i nad vežbovnim zadatkom.** Kad se preko „Sledeći
-  zadatak" pređe u vežbanje, u traci i dalje piše „Danas", kvačica rešenosti i
-  dugme „Sledeći dan" ostaju vidljivi, a animacija koja posle 3s vuče pažnju ka
-  strelicama za datum i dalje se okida. Stanje se **ne** kvari (upis u kalendar
-  je gejtovan na `mode == .daily`) — reč je samo o pogrešnoj etiketi. Popravka
-  traži dodirivanje date UI-ja, što je Faza 2 namerno izostavila.
+- **Traka datuma stoji i nad vežbovnim zadatkom.** Kad se preko „Sledeći
+  zadatak" pređe u vežbanje, u traci i dalje piše datum (npr. „Danas"), kvačica
+  rešenosti tog DANA ostaje vidljiva i strelice za datum rade. Netačne tvrdnje
+  su uklonjene u završnom talasu Faze 2 („Sledeći dan", poruka „Završio si
+  zadatak za danas!" i animacija koja vuče pažnju ka strelicama sad su gejtovani
+  na `mode == .daily`), a stanje se nikad nije kvarilo (upis u kalendar je od
+  početka gejtovan isto). Ostaje samo to što traka opisuje datum, a ne zadatak
+  na ekranu.
 - **Napredak u rešavanju ne preživi gašenje aplikacije**, i do Faze 2 nije
   preživljavao ni prebacivanje taba (sad preživljava — `.onAppear` učitava samo
   kad zadatka nema).
@@ -679,7 +678,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   tom stanju `currentPuzzle` već `nil`); `load(date:)` i retry i dalje prisilno učitavaju,
   nedirani.
   UI: `.solved` grana `actionButtons` u `PuzzleView.swift` sad je `VStack` — nova primarna
-  akcija "Sledeći zadatak" (`DS.accent` pozadina + `DS.onScrim` tekst, isti par kao dugme
+  akcija "Sledeći zadatak" (`DS.accent` pozadina + `DS.onAccent` tekst, isti par kao dugme
   za pauzu u `ChessClockView`) uvek na vrhu, dostupna i posle dnevnog i posle vežbovnog
   zadatka; postojeće "Sledeći dan"/"Završio si zadatak za danas!" ispod, nepromenjene
   funkcionalno (samo "Sledeći dan" prebačen na sekundarni stil — `Color.primary.opacity`,
@@ -714,3 +713,45 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
     svetloj ali 2,6:1 u tamnoj. Pogođena su bila dva mesta — novo dugme „Sledeći zadatak"
     i dugme pauze u satu. **`DS.onScrim` (fiksna bela) sme samo na `DS.scrim`; na `DS.accent`
     ide `DS.onAccent`.**
+
+- **2026-09-07** — Faza 2, talas ispravki iz finalnog pregleda cele grane (šest nalaza,
+  izveštaj u `.superpowers/sdd/2026-09-06-faza-2-offline-zadaci/final-fix-report.md`).
+  (1) **Rupa u unosu od 600 ms posle svakog tačnog poteza**, koja je korisnika koštala
+  rejtinga: `attempt()` je posle tačnog poteza vraćao `phase = .playing` i tek za 600 ms
+  odigravao protivnički odgovor, a `isPlayerTurn` je u tom prozoru bio `true` — brz tap
+  je poređen sa PROTIVNIČKIM potezom iz `rawMoves`, pa je padao kao greška (−16…−32 Elo,
+  `puzzleHadError = true`, tačno rešenje se posle toga više nije brojalo). Rešenje: novi
+  `awaitingOpponent` flag u `PuzzleViewModel` (postavlja se pre `Task`-a, briše se
+  `defer`-om na svim izlazima `applyNextComputerMove()`) uključen u `isPlayerTurn`.
+  `.loading` se ovde NE sme koristiti (kao u `loadPuzzle()`) jer `PuzzleView` u toj fazi
+  crta ekran učitavanja umesto table; odloženi poziv iz `setup()` je već pokriven
+  `.loading`-om koji obe ulazne tačke postavljaju pre njega.
+  (2) **Rejting zadataka se računao i čuvao, a nigde nije bio prikazan** (spec §6 traži
+  vidljiv rejting i njegovo kretanje) — dodat `StatBox(Loc("Rejting zadataka"))` u
+  statističku mrežu u `SettingsSheet.swift` (drugi red sad ima 4 kolone, kao prvi); ključ
+  dodat u `build_localizations.py`, katalog 408 → 409 ključeva × 8 jezika (provereno).
+  (3) **Režim vežbanja je tvrdio da je dnevni zadatak završen** — `.solved` grana u
+  `PuzzleView` je gledala samo `canGoNext`/`selectedDate`, pa je posle rešenog vežbovnog
+  zadatka pisalo „Završio si zadatak za danas!" dok je kvačica u traci na istom ekranu
+  govorila suprotno, a „Sledeći dan" je tiho izbacivao korisnika iz vežbanja. Ceo blok je
+  gejtovan na `viewModel.mode == .daily`; „Sledeći zadatak" ostaje vidljiv u oba režima.
+  (4) **„Resetuj statistiku" nije resetovao napredak na zadacima** — `resetStats()` je
+  vraćao rejting na 800 ali ostavljao `solvedPuzzleIds` i `chessko.solvedDates`. Oba imena
+  ključa su sad `nonisolated static let` na `StatsManager` (ne mogu da žive u
+  `PuzzleViewModel` — `StatsManager.swift` se kompajlira i u `ChesskoEngine` SwiftPM target
+  gde `PuzzleViewModel` ne postoji), `resetStats()` ih briše, a `PuzzleViewModel` ih koristi
+  umesto svojih literala i ponovo čita oba skupa iz `UserDefaults` u novom
+  `reloadPersistedProgress()` (jednom po učitavanju zadatka — iz `loadPuzzle()` **i**
+  `nextPuzzle()`, jer je vežbanje baš ono što `solvedPuzzleIds` isključuje).
+  (5) **Animacija koja vuče pažnju ka strelicama za datum okidala se i posle vežbovnih
+  rešenja** (četiri haptika 3 s kasnije, usred sledećeg zadatka) — gejtovana na
+  `mode == .daily`, uz dodatnu proveru stanja unutar odloženog bloka jer se sekvenca ne
+  može otkazati.
+  (6) Tri zastarela mesta u dokumentaciji: komentar mape tema u `PuzzleView.swift` više ne
+  obećava dopunu „u Fazi 2" nego navodi zašto 21 od 73 teme dovoljno (0 od 20.000 zadataka
+  bez ijednog čipa, 184 sa jednim); iz „Poznatih ograničenja" uklonjen netačan unos o
+  `PuzzleView` portretnom rasporedu bez `ScrollView`-a (netačno od Faze 1, vidi
+  `PuzzleView.swift:77`) i preformulisan unos o dnevnom „hromu" nad vežbanjem (delovi koje
+  ovaj talas popravlja); u changelog unosu za Task 5 `DS.onScrim` ispravljen na `DS.onAccent`.
+  `swift test` 27/27 prošlo (~85 s), `xcodebuild` (iPhone 17 Pro simulator) BUILD SUCCEEDED.
+  `project.pbxproj` nije diran (nema novih fajlova).

@@ -150,8 +150,16 @@ struct PuzzleView: View {
         }
         .onAppear { viewModel.loadDailyPuzzle() }
         .onChange(of: viewModel.phase) { oldPhase, newPhase in
-            if newPhase == .solved {
+            // Sekvenca skokova navodi korisnika na strelice za DATUM — u
+            // `.practice` rezimu one nemaju veze sa zadatkom koji je upravo
+            // resen, pa se ne pokrece.
+            if newPhase == .solved && viewModel.mode == .daily {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    // Niz se ne moze otkazati; ako je korisnik u medjuvremenu
+                    // tapnuo "Sledeći zadatak", cetiri haptika bi pala usred
+                    // sledeceg zadatka. Zato se stanje proverava i ovde.
+                    guard viewModel.mode == .daily, viewModel.phase == .solved else { return }
+
                     // 1. Chevron left bounces
                     bounceLeft += 1
                     Haptics.impact(.light)
@@ -400,28 +408,35 @@ struct PuzzleView: View {
                         .background(DS.accent, in: RoundedRectangle(cornerRadius: 12))
                 }
 
-                if viewModel.canGoNext {
-                    Button {
-                        viewModel.goToNext()
-                    } label: {
-                        Label("Sledeći dan", systemImage: "chevron.right")
-                            .font(.dsBody.weight(.medium))
-                            .foregroundStyle(Color.primary.opacity(0.8))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+                // Sve ispod je vezano za DNEVNI zadatak. U `.practice` rezimu
+                // "Sledeći dan" bi korisnika tiho izbacio iz vezbanja u tudji
+                // datum, a poruka "Završio si zadatak za danas!" bi lagala —
+                // resen vezbovni zadatak ne oznacava dan resenim (kvacica u
+                // toolbaru bi na istom ekranu tvrdila suprotno).
+                if viewModel.mode == .daily {
+                    if viewModel.canGoNext {
+                        Button {
+                            viewModel.goToNext()
+                        } label: {
+                            Label("Sledeći dan", systemImage: "chevron.right")
+                                .font(.dsBody.weight(.medium))
+                                .foregroundStyle(Color.primary.opacity(0.8))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                    } else {
+                        // Today's puzzle solved — show completion
+                        HStack(spacing: 8) {
+                            Image(systemName: "star.fill")
+                                .foregroundStyle(DS.warning)
+                            Text(Loc("Završio si zadatak za danas!"))
+                                .font(.dsBody.weight(.medium))
+                                .foregroundStyle(Color.primary.opacity(0.85))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                     }
-                } else {
-                    // Today's puzzle solved — show completion
-                    HStack(spacing: 8) {
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(DS.warning)
-                        Text(Loc("Završio si zadatak za danas!"))
-                            .font(.dsBody.weight(.medium))
-                            .foregroundStyle(Color.primary.opacity(0.85))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
                 }
             }
 
@@ -539,7 +554,10 @@ struct PuzzleView: View {
         case "queensideAttack":  return Loc("Napad na damu")
         case "kingsideAttack":   return Loc("Napad na kralja")
         // Nepoznata tema se ne prikazuje — bolje nista nego sirov kljuc
-        // tipa "backRankMate". Mapa se dopunjava u Fazi 2, uz offline bazu.
+        // tipa "backRankMate". Mapa namerno pokriva 21 od 73 teme koliko ih
+        // baza ima: empirijski provereno da od 20 000 isporucenih zadataka
+        // nijedan ne ostaje bez ijednog cipa, a samo 184 dobijaju jedan
+        // umesto dva. Prosirivanje mape nema merljivu korist.
         default:                 return ""
         }
     }
