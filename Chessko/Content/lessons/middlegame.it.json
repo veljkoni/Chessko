@@ -1,0 +1,160 @@
+{
+  "id": "middlegame",
+  "title": "Il mediogioco",
+  "subtitle": "La tattica e il cuore della battaglia",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca scrive",
+      "text": "\"Il mediogioco ideale: tutti i pezzi lanciati all’attacco come una massa, coordinati con precisione meccanica. L’obiettivo di ogni maestro è raggiungere proprio tale armonia.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Quando i pezzi sono sviluppati e i re al sicuro, inizia il **mediogioco** — la parte più creativa e complessa degli scacchi."
+    },
+    {
+      "type": "heading",
+      "text": "Iniziativa",
+      "icon": "flag.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca spiega: il Bianco ha un vantaggio iniziale grazie alla prima mossa. Questo vantaggio va **conservato il più a lungo possibile** — cedilo solo se in cambio ottieni materiale o una posizione migliore."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.forward.circle.fill",
+          "title": "Chi attacca detta il ritmo",
+          "text": "Il giocatore con l’iniziativa sceglie dove e come attaccare. L’avversario deve reagire invece di attuare il proprio piano.",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "Non attaccare senza certezza",
+          "text": "Capablanca avverte: un attacco diretto al re non va mai spinto all’estremo senza l’assoluta certezza che riesca. Un attacco fallito è un disastro.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Valore dei pezzi",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Nel mediogioco il valore di un pezzo dipende dalla posizione. Fai sempre attenzione a cosa scambi!"
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pedone",
+          "value": 1
+        },
+        {
+          "piece": "knight",
+          "name": "Cavallo",
+          "value": 3
+        },
+        {
+          "piece": "bishop",
+          "name": "Alfiere",
+          "value": 3
+        },
+        {
+          "piece": "rook",
+          "name": "Torre",
+          "value": 5
+        },
+        {
+          "piece": "queen",
+          "name": "Donna",
+          "value": 9
+        },
+        {
+          "piece": "king",
+          "name": "Re",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Motivi tattici di base",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "tuningfork",
+      "title": "La forchetta",
+      "text": "Un pezzo attacca **due pezzi avversari contemporaneamente**. L’avversario può salvarne solo uno. I cavalli sono particolarmente pericolosi per le forchette — saltano su una casa da cui attaccano donna e torre allo stesso tempo."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "link",
+      "title": "L’inchiodatura",
+      "text": "Attacchi un pezzo che **non può muoversi** perché esporrebbe un pezzo di valore dietro di sé (il re o la donna). Un pezzo inchiodato è praticamente fuori gioco — sfruttalo!"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "arrow.triangle.2.circlepath",
+      "title": "Attacco di scoperta",
+      "text": "Muovi un pezzo e così scateni l’attacco di un altro pezzo dietro di esso su un pezzo avversario di valore. Particolarmente pericoloso quando anche il pezzo che si muove attacca."
+    },
+    {
+      "type": "heading",
+      "text": "Coordinazione dei pezzi",
+      "icon": "person.2.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca sottolinea sempre: i pezzi devono lavorare insieme come una squadra."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down",
+          "title": "Le torri cercano colonne aperte",
+          "text": "Mettile su una colonna aperta o sulla settima traversa. Una torre chiusa dietro i propri pedoni è un pezzo passivo.",
+          "style": null
+        },
+        {
+          "icon": "circle.fill",
+          "title": "I cavalli sono più forti al centro",
+          "text": "\"Un cavallo sul bordo è un cavallo scarso\", dice Capablanca. Al centro controlla fino a 8 case, sul bordo solo 2–4.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.right",
+          "title": "Gli alfieri amano le diagonali aperte",
+          "text": "Un alfiere bloccato dal proprio pedone è limitato. Metti i pedoni su case di **colore opposto** al tuo alfiere.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Il vantaggio di un pedone",
+      "icon": "chart.line.uptrend.xyaxis"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "info.circle.fill",
+      "title": "La regola d’oro di Capablanca",
+      "text": "\"Guadagnare un solo pedone tra giocatori di pari forza significa quasi sempre la vittoria.\" Non sottovalutare un pedone — nel finale è spesso decisivo. Ogni piccolo vantaggio si accumula!"
+    }
+  ],
+  "language": "it"
+}

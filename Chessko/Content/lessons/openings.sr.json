@@ -1,0 +1,139 @@
+{
+  "id": "openings",
+  "title": "Početak igre (Otvaranja)",
+  "subtitle": "Zlatna pravila i poznata otvaranja",
+  "icon": "flag.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Kapablanka piše",
+      "text": "\"Najvažnija stvar u otvaranju je brzo razviti figure. Nijedno parče ne treba pomeriti više od jednom pre nego što je razvoj završen, osim ako je to apsolutno neophodno.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "U šahu **Beli uvek igra prvi** i zbog toga ima blagu inicijalnu prednost. Zadatak oba igrača u otvaranju je isti: što brže dovesti figure u igru i zauzeti kontrolu nad centrom."
+    },
+    {
+      "type": "heading",
+      "text": "Zlatna pravila otvaranja",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "numberedRule",
+      "number": 1,
+      "title": "Razvijaj figure brzo",
+      "text": "Kapablanka savetuje: skakače razvijaj pre lovaca. Ne pomeraj istu figuru dva puta u otvaranju ako nisi primoran. Svaki potez treba da razvija novu figuru ili kontroliše centar."
+    },
+    {
+      "type": "numberedRule",
+      "number": 2,
+      "title": "Kontroliši centar",
+      "text": "Četiri centralna polja (e4, d4, e5, d5) su najvažnija na tabli. Ko vlada centrom ima više prostora za manevar. Kapablanka: \"Nijedan žestok napad ne može uspeti bez kontrole bar dva centralna polja.\""
+    },
+    {
+      "type": "numberedRule",
+      "number": 3,
+      "title": "Zaštiti kralja — uradi rokadu!",
+      "text": "Rokadu odigraj što pre je moguće. Kralj na otvorenom je laka meta. Kapablanka sam uvek rokira rano i preporučuje isto svim igračima, posebno početnicima."
+    },
+    {
+      "type": "heading",
+      "text": "Tipične greške u otvaranju",
+      "icon": "exclamationmark.triangle.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Prerano izvođenje Dame",
+          "text": "Dama je snažna, ali ako je izvedeš rano, protivnik je napada pešacima i figurama — a svaki napad na Damu znači izgubljeni tempo jer mora da beži.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Pasivna odbrana pionima",
+          "text": "\"Filipidorski\" stil — odmah igrati P-d6 kao odgovor na e4 — daje protivniku slobodan razvoj i prostranstvo. Kapablanka pokazuje kako beli tada lako gradi superiornu poziciju.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Zakasnela rokada",
+          "text": "Svaki potez bez rokade kada su linije otvorene je rizik. Protivnik može otvoriti igru i napasti tvog kralja pre nego što se skloni.",
+          "style": "warning"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Poznata otvaranja",
+      "icon": "book.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Odigraj svaki potez belih na tabli — crni odgovara automatski po teorijskoj liniji."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Španska partija (Ruy Lopez)",
+      "hint": "1.e4 e5 2.Sf3 Sc6 3.Lb5 — Kapablankova omiljena",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1b5"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Otvaranje savladano! ✓",
+      "wrongMessage": "Pogrešan potez — pokušaj ponovo.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Italijanska partija",
+      "hint": "1.e4 e5 2.Sf3 Sc6 3.Lc4 — lovac nišani tačku f7",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Otvaranje savladano! ✓",
+      "wrongMessage": "Pogrešan potez — pokušaj ponovo.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Sicilijanska odbrana",
+      "hint": "1.e4 c5 2.Sf3 d6 3.d4 cxd4 4.Sxd4 — asimetrična borba",
+      "icon": "shield.fill",
+      "uciMoves": [
+        "e2e4",
+        "c7c5",
+        "g1f3",
+        "d7d6",
+        "d2d4",
+        "c5d4",
+        "f3d4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Otvaranje savladano! ✓",
+      "wrongMessage": "Pogrešan potez — pokušaj ponovo.",
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "sr"
+}

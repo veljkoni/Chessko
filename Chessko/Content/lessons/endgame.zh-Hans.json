@@ -1,0 +1,313 @@
+{
+  "id": "endgame",
+  "title": "残局",
+  "subtitle": "将杀、逼和与平局",
+  "icon": "flag.checkered",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "卡帕布兰卡写道",
+      "text": "“在为开局或中局的胜利而战之前，你必须精通残局。不懂残局的人成不了强手。”"
+    },
+    {
+      "type": "paragraph",
+      "text": "当最重要的棋子离开棋盘，只剩下双王、兵以及或许一两个轻子时，残局便开始了。"
+    },
+    {
+      "type": "heading",
+      "text": "国王成为进攻者",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "这是残局中**最大的变化**。整盘棋都在逃跑的国王现在必须主动进攻。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "crown.fill",
+          "title": "立刻把国王带到中心",
+          "text": "一旦感到残局临近，就开始把国王移向棋盘中心。位居中心的国王压制处于边缘的国王。",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "兵是未来的皇后",
+          "text": "每个到达底线的兵都会变成后（或其他棋子）。这是兵类残局的主要目标。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "兵的升变规则",
+      "icon": "arrow.up.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "卡帕布兰卡清晰而精确地解释了这一规则："
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "checkmark.circle.fill",
+      "title": "关键规则",
+      "text": "要让兵类残局获胜，**国王必须走在自己兵的前面**，且两者之间至少隔一个空格。如果对方国王正好挡在兵的前面——就是和棋！"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "推进国王，而非兵",
+          "text": "卡帕布兰卡建议：在不危及兵的前提下尽量推进国王。只有在必须保护兵时才推进兵。",
+          "style": null
+        },
+        {
+          "icon": "ruler.fill",
+          "title": "秘密武器——“对王”",
+          "text": "当两个国王面对面、之间有奇数个空格时，**刚走完棋**的一方占有优势。这称为对王（opposition）——它是所有兵类残局的关键。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "核心原则",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "一子牵制二子——卡帕布兰卡的原则",
+      "text": "“一个能牵制对方两个兵的兵，是大师的主要武器之一。”如果你的兵挡住对方两个兵，你实际上就多了一个子——在棋盘另一侧利用这个优势！"
+    },
+    {
+      "type": "heading",
+      "text": "残局中的象对马",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right",
+          "title": "兵在两侧时象更强",
+          "text": "凭借射程，象能同时攻击两翼的兵。马很慢，无法兼顾各处。",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "马在封闭局面中更强",
+          "text": "当兵被锁住、局面封闭时，马更出色，因为它能跳过兵到达理想的格子。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "象的弱点——车兵",
+      "text": "如果你的兵奔向 h8（或 a8），而该格与你的象异色，对手便能守住角落，结果是和棋！卡帕布兰卡特别指出这是许多错失胜局的根源。"
+    },
+    {
+      "type": "heading",
+      "text": "将杀与平局",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "将军",
+      "text": "国王受到攻击的局面。该方**必须**应对——移动国王、吃掉攻击者，或在中间放置屏障。"
+    },
+    {
+      "type": "box",
+      "style": "warning",
+      "icon": "xmark.shield.fill",
+      "title": "将杀——对局结束",
+      "text": "国王被攻击，且没有任何合法的防御办法。对局到此结束——国王实际上永远不会被吃掉。"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.2",
+      "title": "逼和——胜者的噩梦！",
+      "text": "轮到走棋的一方**没有被将**，却没有任何合法着法。立即和棋！这是残局中最危险的错误——一步坏棋把胜局变成和棋。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.clockwise",
+          "title": "重复局面",
+          "text": "如果同一局面出现**三次**，可以要求和棋。",
+          "style": null
+        },
+        {
+          "icon": "minus.circle.fill",
+          "title": "子力不足",
+          "text": "只剩双王，或王 + 象/马 对王——无法将杀。自动和棋。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "迷你结业测试",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "运用你学到的一切！解开 5 道谜题——用最少的步数将杀。每道使用不同的棋子组合。"
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "谜题 1——后在底线",
+      "hint": "黑王被困。后有畅通的路线……",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2d8"
+      ],
+      "startFEN": "6k1/5ppp/8/8/8/8/3Q4/4R1K1 w - - 0 1",
+      "solvedMessage": "太棒了！找到将杀！🏆",
+      "wrongMessage": "不对——寻找关键的一步！",
+      "playingPrompt": "找出一步杀！",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "谜题 2——车到第 8 横线",
+      "hint": "अपने ही राजा को प्यादे रोक रहे हैं। हाथी रास्ता खोज लेता है…",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "b5b8"
+      ],
+      "startFEN": "6k1/5ppp/8/1R6/8/8/8/6K1 w - - 0 1",
+      "solvedMessage": "太棒了！找到将杀！🏆",
+      "wrongMessage": "不对——寻找关键的一步！",
+      "playingPrompt": "找出一步杀！",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "谜题 3——弃车！",
+      "hint": "车到 e8 将军。黑车必须吃——然后是后？",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "e1e8",
+        "c8e8",
+        "a4e8"
+      ],
+      "startFEN": "2r3k1/5ppp/8/8/Q7/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "太棒了！找到将杀！🏆",
+      "wrongMessage": "不对——寻找关键的一步！",
+      "playingPrompt": "找出关键的一步！",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "谜题 4——象 + 车",
+      "hint": "象将军，把国王逼到 g8。为什么这是致命的？",
+      "icon": "rhombus.fill",
+      "uciMoves": [
+        "e5d6",
+        "f8g8",
+        "e1e8"
+      ],
+      "startFEN": "5k2/5ppp/8/4B3/8/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "太棒了！找到将杀！🏆",
+      "wrongMessage": "不对——寻找关键的一步！",
+      "playingPrompt": "找出关键的一步！",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "谜题 5（困难）——弃后，象将杀",
+      "hint": "Greet – Hanley，利物浦 2008。后在 h6 弃身。为什么国王必须吃？",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2h6",
+        "g7h6",
+        "h4f6"
+      ],
+      "startFEN": "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w KQ - 0 1",
+      "solvedMessage": "太棒了！找到将杀！🏆",
+      "wrongMessage": "不对——寻找关键的一步！",
+      "playingPrompt": "找出关键的一步！",
+      "mateIn": 2
+    },
+    {
+      "type": "heading",
+      "text": "关于作者",
+      "icon": "person.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "person.fill",
+      "title": "何塞·劳尔·卡帕布兰卡 (1888–1942)",
+      "text": "古巴棋手，第三位正式国际象棋世界冠军。被视为有史以来最伟大的国际象棋天才之一——以清澈如水的棋风和对局面的直觉理解著称。"
+    },
+    {
+      "type": "paragraph",
+      "text": "卡帕布兰卡年仅**四岁**便通过观看父亲下棋学会了国际象棋。他从未上过棋校——全靠自己在对弈中学会。年仅 13 岁，他便击败古巴冠军胡安·科尔索，成为全国轰动人物。"
+    },
+    {
+      "type": "paragraph",
+      "text": "在 **1916–1924 年** 间，他没有输掉一盘棋。1921 年，他击败统治棋坛长达 27 年的传奇人物埃马努埃尔·拉斯克，夺得世界冠军头衔。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "eye.fill",
+          "title": "照相般的精确",
+          "text": "他靠简洁和完美的技术取胜——而非凶猛进攻。",
+          "style": null
+        },
+        {
+          "icon": "person.2.fill",
+          "title": "国际象棋的普及者",
+          "text": "他写《国际象棋基础》(1921) 正是为了初学者和业余爱好者。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "来源：古腾堡计划",
+      "icon": "text.book.closed.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "所有课程内容均取自 **古腾堡计划** 上提供的该书数字版——一个收录公共领域图书的非营利图书馆。"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "globe",
+      "title": "gutenberg.org/ebooks/33870",
+      "text": "你可以免费、无需注册地完整阅读它。"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "heart.fill",
+      "title": "致谢",
+      "text": "Chessko 感谢卡帕布兰卡留下的永恒原则，也感谢古腾堡计划的志愿者社区，他们数字化了这本书及成千上万本其他书籍。"
+    }
+  ],
+  "language": "zh-Hans"
+}

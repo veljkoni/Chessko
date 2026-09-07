@@ -1,0 +1,313 @@
+{
+  "id": "endgame",
+  "title": "Endgame",
+  "subtitle": "Checkmate, stalemate and draw",
+  "icon": "flag.checkered",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca writes",
+      "text": "\"Before you fight for victory in the opening or middlegame, you must master the endgame. One who does not know the endgame cannot be a strong player.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "The endgame begins when the most important pieces have left the board and only the kings remain with pawns and perhaps one or two minor pieces."
+    },
+    {
+      "type": "heading",
+      "text": "The king becomes an attacker",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "This is the **biggest change** in the endgame. The king that fled all game must now actively attack."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "crown.fill",
+          "title": "Bring the king to the centre right away",
+          "text": "As soon as you sense the endgame approaching, start moving the king toward the centre of the board. A central king dominates a marginal one.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Pawns are future queens",
+          "text": "Every pawn that reaches the last rank becomes a queen (or another piece). This is the main goal in pawn endgames.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "The rule of pawn promotion",
+      "icon": "arrow.up.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca explains this rule clearly and precisely:"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "checkmark.circle.fill",
+      "title": "The key rule",
+      "text": "For a pawn endgame to be winning, **the king must be ahead of its pawn** with at least one empty square between them. If the enemy king is directly in front of the pawn — it’s a draw!"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Advance the king, not the pawn",
+          "text": "Capablanca advises: advance the king as far as possible without endangering the pawn. Move the pawn only when it is necessary for its protection.",
+          "style": null
+        },
+        {
+          "icon": "ruler.fill",
+          "title": "The secret weapon — \"the Opposition\"",
+          "text": "When two kings face each other with an odd number of squares between them, the player who **moved last** has the advantage. It is called the opposition — and it is key to all pawn endgames.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "A cardinal principle",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "One holds two — Capablanca’s principle",
+      "text": "\"A pawn that holds two enemy pawns is one of the master’s main tools.\" If your pawn blocks two of the opponent’s, you are effectively a piece ahead — use that advantage on the other side of the board!"
+    },
+    {
+      "type": "heading",
+      "text": "Bishop vs. Knight in the endgame",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right",
+          "title": "The bishop is stronger when pawns are on both sides",
+          "text": "Thanks to its range the bishop can attack pawns on both wings at once. The knight is slow and cannot reach everywhere.",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "The knight is stronger in closed positions",
+          "text": "When the pawns are locked and the position is closed, the knight is better because it can jump over pawns and reach the ideal square.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "The bishop’s weakness — the rook pawn",
+      "text": "If your pawn heads to h8 (or a8) and that square is the opposite colour to your bishop, the opponent holds the corner and it’s a draw! Capablanca especially highlights this as the source of many missed wins."
+    },
+    {
+      "type": "heading",
+      "text": "Checkmate and draw",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Check",
+      "text": "A situation where the king is under attack. The player **must** defend — move the king, capture the attacker, or place a shield in between."
+    },
+    {
+      "type": "box",
+      "style": "warning",
+      "icon": "xmark.shield.fill",
+      "title": "Checkmate — end of the game",
+      "text": "The king is under attack and there is no legal way to defend. The game ends here — the king is never actually captured."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.2",
+      "title": "Stalemate — the winner’s nightmare!",
+      "text": "The player to move is **not in check**, but has no legal move. It’s an immediate draw! This is the most dangerous mistake in the endgame — turning a winning position into a draw with one bad move."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.clockwise",
+          "title": "Repetition of position",
+          "text": "If the same position occurs **three times**, a draw can be claimed.",
+          "style": null
+        },
+        {
+          "icon": "minus.circle.fill",
+          "title": "Insufficient material",
+          "text": "Only kings, or king + bishop/knight against king — checkmate is impossible. Automatic draw.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Mini final test",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Apply everything you’ve learned! Solve 5 puzzles — mate in the fewest moves. Each uses a different combination of pieces."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Puzzle 1 — Queen on the back rank",
+      "hint": "The black king is trapped. The queen has a clear path…",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2d8"
+      ],
+      "startFEN": "6k1/5ppp/8/8/8/8/3Q4/4R1K1 w - - 0 1",
+      "solvedMessage": "Great! Mate found! 🏆",
+      "wrongMessage": "Not quite — look for the key move!",
+      "playingPrompt": "Find mate in 1!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Puzzle 2 — Rook on the 8th rank",
+      "hint": "The pawns block their own king. The rook finds the way…",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "b5b8"
+      ],
+      "startFEN": "6k1/5ppp/8/1R6/8/8/8/6K1 w - - 0 1",
+      "solvedMessage": "Great! Mate found! 🏆",
+      "wrongMessage": "Not quite — look for the key move!",
+      "playingPrompt": "Find mate in 1!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Puzzle 3 — Rook sacrifice!",
+      "hint": "The rook goes to e8 with check. The black rook must take — and then the queen?",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "e1e8",
+        "c8e8",
+        "a4e8"
+      ],
+      "startFEN": "2r3k1/5ppp/8/8/Q7/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Great! Mate found! 🏆",
+      "wrongMessage": "Not quite — look for the key move!",
+      "playingPrompt": "Find the key move!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Puzzle 4 — Bishop + Rook",
+      "hint": "The bishop gives check and drives the king to g8. Why is that fatal?",
+      "icon": "rhombus.fill",
+      "uciMoves": [
+        "e5d6",
+        "f8g8",
+        "e1e8"
+      ],
+      "startFEN": "5k2/5ppp/8/4B3/8/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Great! Mate found! 🏆",
+      "wrongMessage": "Not quite — look for the key move!",
+      "playingPrompt": "Find the key move!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Puzzle 5 (hard) — Queen sacrifice, bishop mate",
+      "hint": "Greet – Hanley, Liverpool 2008. The queen is sacrificed on h6. Why must the king take?",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2h6",
+        "g7h6",
+        "h4f6"
+      ],
+      "startFEN": "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w KQ - 0 1",
+      "solvedMessage": "Great! Mate found! 🏆",
+      "wrongMessage": "Not quite — look for the key move!",
+      "playingPrompt": "Find the key move!",
+      "mateIn": 2
+    },
+    {
+      "type": "heading",
+      "text": "About the author",
+      "icon": "person.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "person.fill",
+      "title": "José Raúl Capablanca (1888–1942)",
+      "text": "A Cuban chess player, the third official World Chess Champion. Regarded as one of the greatest chess geniuses of all time — known for a crystal-clear playing style and intuitive understanding of position."
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca learned chess at just **four years old** by watching his father. He never attended a chess school — he learned it all himself, by playing. At only 13 he beat the Cuban champion Juan Corzo and became a national sensation."
+    },
+    {
+      "type": "paragraph",
+      "text": "In the period **1916–1924** he did not lose a single game. He won the world championship title in 1921, defeating the legendary Emanuel Lasker, who had been champion for a full 27 years."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "eye.fill",
+          "title": "Photographic precision",
+          "text": "He won through simplicity and perfect technique — not aggression.",
+          "style": null
+        },
+        {
+          "icon": "person.2.fill",
+          "title": "A populariser of chess",
+          "text": "He wrote \"Chess Fundamentals\" (1921) precisely for beginners and amateurs.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Source: Project Gutenberg",
+      "icon": "text.book.closed.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "All lesson content is taken from the digital version of the book available on **Project Gutenberg** — a non-profit library of public-domain books."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "globe",
+      "title": "gutenberg.org/ebooks/33870",
+      "text": "You can read it in full for free, without registration."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "heart.fill",
+      "title": "Acknowledgement",
+      "text": "Chessko owes thanks to Capablanca for his timeless principles and to the Project Gutenberg community of volunteers who digitised this and thousands of other books."
+    }
+  ],
+  "language": "en"
+}

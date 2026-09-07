@@ -1,0 +1,139 @@
+{
+  "id": "openings",
+  "title": "对局开始（开局）",
+  "subtitle": "黄金法则与著名开局",
+  "icon": "flag.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "卡帕布兰卡写道",
+      "text": "“开局最重要的是快速出动棋子。在完成出子之前，除非绝对必要，任何棋子都不应移动超过一次。”"
+    },
+    {
+      "type": "paragraph",
+      "text": "在国际象棋中，**白方总是先走**，因此拥有微小的先手优势。双方在开局的任务相同：尽快出动棋子并控制中心。"
+    },
+    {
+      "type": "heading",
+      "text": "开局的黄金法则",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "numberedRule",
+      "number": 1,
+      "title": "快速出动棋子",
+      "text": "卡帕布兰卡建议：先出马后出象。开局中除非被迫，不要让同一棋子走两次。每一步都应出动新棋子或控制中心。"
+    },
+    {
+      "type": "numberedRule",
+      "number": 2,
+      "title": "控制中心",
+      "text": "四个中心格（e4、d4、e5、d5）是棋盘上最重要的。掌控中心者拥有更多回旋空间。卡帕布兰卡：“任何猛烈的进攻，若不控制至少两个中心格，都无法成功。”"
+    },
+    {
+      "type": "numberedRule",
+      "number": 3,
+      "title": "保护国王——王车易位！",
+      "text": "尽早王车易位。暴露的国王是容易的靶子。卡帕布兰卡本人总是早早易位，并建议所有人尤其是初学者也这样做。"
+    },
+    {
+      "type": "heading",
+      "text": "常见的开局错误",
+      "icon": "exclamationmark.triangle.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "xmark.circle.fill",
+          "title": "过早出动皇后",
+          "text": "皇后很强，但若过早出动，对手会用兵和子力攻击它——每次攻击皇后都意味着损失一步，因为它必须逃跑。",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "用兵被动防守",
+          "text": "“费利多尔”式——对 e4 立刻以 P-d6 应对——会让对手获得自由出子和空间。卡帕布兰卡展示了白方如何因此轻松建立优势局面。",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "王车易位太晚",
+          "text": "在线路开放时每走一步而不易位都是冒险。对手可能打开局面，在你的国王到达安全之前发起攻击。",
+          "style": "warning"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "著名开局",
+      "icon": "book.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "在棋盘上走出白方的每一步——黑方按理论线路自动应着。"
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "西班牙开局（鲁伊·洛佩斯）",
+      "hint": "1.e4 e5 2.Nf3 Nc6 3.Bb5 — 卡帕布兰卡的最爱",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1b5"
+      ],
+      "startFEN": null,
+      "solvedMessage": "太棒了！开局已掌握！✓",
+      "wrongMessage": "走错了——再试一次。",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "意大利开局",
+      "hint": "1.e4 e5 2.Nf3 Nc6 3.Bc4 — 象瞄准 f7",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "太棒了！开局已掌握！✓",
+      "wrongMessage": "走错了——再试一次。",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "西西里防御",
+      "hint": "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 — 不对称的较量",
+      "icon": "shield.fill",
+      "uciMoves": [
+        "e2e4",
+        "c7c5",
+        "g1f3",
+        "d7d6",
+        "d2d4",
+        "c5d4",
+        "f3d4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "太棒了！开局已掌握！✓",
+      "wrongMessage": "走错了——再试一次。",
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "zh-Hans"
+}

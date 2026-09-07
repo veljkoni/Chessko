@@ -1,0 +1,160 @@
+{
+  "id": "middlegame",
+  "title": "中局",
+  "subtitle": "战术与战斗的核心",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "卡帕布兰卡写道",
+      "text": "“理想的中局：所有棋子如同整体般投入进攻，以机器般的精度协调配合。每位大师的目标正是达到这样的和谐。”"
+    },
+    {
+      "type": "paragraph",
+      "text": "当棋子出动、双方国王安全后，**中局**便开始了——这是国际象棋中最富创造性、最复杂的阶段。"
+    },
+    {
+      "type": "heading",
+      "text": "主动权",
+      "icon": "flag.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "卡帕布兰卡解释：白方因先手而拥有初始优势。这一优势应**尽可能长久地保持**——只有在换取子力或更好局面时才放弃它。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.forward.circle.fill",
+          "title": "进攻者主导节奏",
+          "text": "掌握主动权的一方决定在何处、以何种方式进攻。对手只能被动应对，而无法执行自己的计划。",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "没有把握不要进攻",
+          "text": "卡帕布兰卡告诫：除非有绝对把握成功，否则对国王的直接进攻绝不应推向极端。进攻失败便是灾难。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "棋子价值",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "在中局中，棋子的价值取决于局面。务必留意你在兑换什么！"
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "兵",
+          "value": 1
+        },
+        {
+          "piece": "knight",
+          "name": "马",
+          "value": 3
+        },
+        {
+          "piece": "bishop",
+          "name": "象",
+          "value": 3
+        },
+        {
+          "piece": "rook",
+          "name": "车",
+          "value": 5
+        },
+        {
+          "piece": "queen",
+          "name": "皇后",
+          "value": 9
+        },
+        {
+          "piece": "king",
+          "name": "国王",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "基本战术手段",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "tuningfork",
+      "title": "双叫（叉攻）",
+      "text": "一个棋子**同时攻击两个对方棋子**。对手只能救一个。马尤其擅长双叫——它跳到某格，同时攻击后和车。"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "link",
+      "title": "牵制",
+      "text": "你攻击一个**不能移动**的棋子，因为移动会暴露其身后宝贵的棋子（王或后）。被牵制的棋子几乎被排除在对局之外——好好利用！"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "arrow.triangle.2.circlepath",
+      "title": "闪击",
+      "text": "你移动一个棋子，从而释放其身后另一棋子对对方贵重棋子的攻击。当移动的棋子本身也发起攻击时尤其危险。"
+    },
+    {
+      "type": "heading",
+      "text": "棋子的协调",
+      "icon": "person.2.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "卡帕布兰卡反复强调：棋子必须像团队一样协同作战。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down",
+          "title": "车寻找开放线",
+          "text": "把它们放在开放线或第七横线上。被自己兵困住的车是被动棋子。",
+          "style": null
+        },
+        {
+          "icon": "circle.fill",
+          "title": "马在中心最强",
+          "text": "“边缘的马是糟糕的马”，卡帕布兰卡如是说。在中心它能控制多达 8 个格子，在边缘只有 2–4 个。",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.right",
+          "title": "象喜欢开放的斜线",
+          "text": "被自己兵挡住的象会受限。把你的兵放在与你象**异色**的格子上。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "一兵的优势",
+      "icon": "chart.line.uptrend.xyaxis"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "info.circle.fill",
+      "title": "卡帕布兰卡的黄金法则",
+      "text": "“在实力相当的对手之间，多赢一个兵往往就意味着胜利。”不要小看一个兵——在残局中它常常是决定性的。每一点微小优势都会积累！"
+    }
+  ],
+  "language": "zh-Hans"
+}

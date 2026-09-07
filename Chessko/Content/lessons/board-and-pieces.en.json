@@ -1,0 +1,310 @@
+{
+  "id": "board-and-pieces",
+  "title": "The board, pieces and movement",
+  "subtitle": "Chess basics for beginners",
+  "icon": "square.grid.3x3.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca writes",
+      "text": "\"The first thing a student must do is become acquainted with the power of the pieces. This is best done by learning how to deliver checkmate quickly.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Chess is played on a board of **64 squares** that alternate light and dark. Always remember: **the bottom-right square must be light**. Each player starts with **16 pieces**."
+    },
+    {
+      "type": "heading",
+      "text": "Explore the pieces interactively",
+      "icon": "hand.point.up.left.fill"
+    },
+    {
+      "type": "explorer"
+    },
+    {
+      "type": "heading",
+      "text": "How each piece moves",
+      "icon": "square.grid.2x2.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "pawn",
+      "name": "Pawn",
+      "count": "× 8"
+    },
+    {
+      "type": "paragraph",
+      "text": "At the start you have 8 pawns — they are your \"infantry\". Capablanca notes: **winning a single pawn is the smallest material gain and is often enough to win**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Movement",
+          "text": "It moves only forward, one square at a time. On its first move it may advance two squares. **Pawns cannot move backward.**",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.left.and.arrow.up.right",
+          "title": "Attack",
+          "text": "It captures enemy pieces only diagonally, one square ahead.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "crown.fill",
+      "title": "Promotion",
+      "text": "If a pawn reaches the last rank it turns into any piece, most often a queen. This is a powerful weapon in the endgame!"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "Rook",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "It starts in the corners of the board. It becomes effective only on open lines — the more pawns block its path, the more limited it is."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Movement",
+          "text": "It moves in straight lines (up-down, left-right) as many squares as it likes. Together, two rooks are slightly stronger than a queen.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "Bishop",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "One bishop always stays on the light squares, the other on the dark. Capablanca holds that **in most positions the bishop is worth more than the knight**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right.and.arrow.up.left",
+          "title": "Movement",
+          "text": "It moves only along diagonals. Weakness: \"a rook pawn that promotes on a square of the opposite colour to the bishop\" most often leads to a draw instead of a win.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "Knight",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "The only piece that jumps over others. It is strong in **closed positions** — when the lines are blocked by pawns. On the edge of the board it loses strength."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "l.joystick.fill",
+          "title": "Movement",
+          "text": "It moves in an \"L\" shape: two squares straight, then one to the side.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Unique!",
+      "text": "The only piece that can jump over other pieces — both its own and the opponent’s!"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "Queen",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "It stands on a square of **its own colour** — the white queen on a light square, the black on a dark one. The most powerful piece, but you shouldn’t develop it too early in the opening."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Movement",
+          "text": "It combines the rook’s and bishop’s movement — moving in all directions, as many squares as it likes.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "King",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "The most important piece — its loss means the end of the game. In the opening it is a **passive defensive piece**, but in the endgame it becomes a powerful attacker."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "dot.square.fill",
+          "title": "Movement",
+          "text": "It moves only one square in any direction. **It must not step onto an attacked square!**",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "A special move: Castling",
+      "icon": "arrow.left.arrow.right"
+    },
+    {
+      "type": "paragraph",
+      "text": "Once per game you may move **two pieces at the same time** — the king and a rook. The king jumps two squares toward the rook, and the rook hops over the king to its side. This is used to put the king to safety and bring the rook into play."
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Conditions for castling",
+      "text": "Neither king nor rook has **moved before** · There are **no pieces between them** · The king is not in check and does not pass through an attacked square"
+    },
+    {
+      "type": "heading",
+      "text": "Relative value of the pieces",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca says: value is not fixed — it changes with the position. Still, these numbers serve as a guide when exchanging pieces."
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pawn",
+          "value": 1
+        },
+        {
+          "piece": "knight",
+          "name": "Knight",
+          "value": 3
+        },
+        {
+          "piece": "bishop",
+          "name": "Bishop",
+          "value": 3
+        },
+        {
+          "piece": "rook",
+          "name": "Rook",
+          "value": 5
+        },
+        {
+          "piece": "queen",
+          "name": "Queen",
+          "value": 9
+        },
+        {
+          "piece": "king",
+          "name": "King",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "info.circle.fill",
+          "title": "Two bishops are almost always stronger than two knights",
+          "text": "The bishop is especially strong when there are pawns on both sides of the board and the lines are open.",
+          "style": null
+        },
+        {
+          "icon": "info.circle.fill",
+          "title": "A rook is worth a knight plus two pawns",
+          "text": "Or a bishop plus two pawns. That is why giving up a minor piece for a rook without compensation is called \"losing the exchange\".",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "In the endgame the king becomes an attacking piece",
+          "text": "In the opening and middlegame the king is purely a defensive piece. In the endgame, once most pieces are gone, it must take an active part in the fight.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Elementary checkmates",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Before learning openings and strategy, master these three basic mating positions. Each of them needs the king’s cooperation!"
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Exercise 1 — King + Rook",
+      "hint": "Drive the black king to the edge of the board. Rook and king must cooperate!",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": null,
+      "startFEN": "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Exercise 2 — King + two Bishops",
+      "hint": "Drive the king not only to the edge but into a corner of the same colour as your bishops.",
+      "icon": "rhombus.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Exercise 3 — King + Queen",
+      "hint": "The easiest! The queen immediately limits the space. Watch out for stalemate!",
+      "icon": "crown.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "en"
+}

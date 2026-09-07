@@ -1,0 +1,313 @@
+{
+  "id": "endgame",
+  "title": "Endspiel",
+  "subtitle": "Schachmatt, Patt und Remis",
+  "icon": "flag.checkered",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca schreibt",
+      "text": "„Bevor du in Eröffnung oder Mittelspiel um den Sieg kämpfst, musst du das Endspiel beherrschen. Wer das Endspiel nicht kennt, kann kein starker Spieler sein.“"
+    },
+    {
+      "type": "paragraph",
+      "text": "Das Endspiel beginnt, wenn die wichtigsten Figuren das Brett verlassen haben und nur die Könige mit Bauern und vielleicht ein oder zwei Leichtfiguren bleiben."
+    },
+    {
+      "type": "heading",
+      "text": "Der König wird zum Angreifer",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Das ist die **größte Veränderung** im Endspiel. Der König, der die ganze Partie geflohen ist, muss jetzt aktiv angreifen."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "crown.fill",
+          "title": "Bring den König sofort ins Zentrum",
+          "text": "Sobald du das Endspiel nahen spürst, beginne, den König zur Brettmitte zu führen. Ein zentraler König beherrscht einen randständigen.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Bauern sind künftige Damen",
+          "text": "Jeder Bauer, der die letzte Reihe erreicht, wird zur Dame (oder einer anderen Figur). Das ist das Hauptziel in Bauernendspielen.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Die Regel der Bauernumwandlung",
+      "icon": "arrow.up.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca erklärt diese Regel klar und präzise:"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "checkmark.circle.fill",
+      "title": "Die Schlüsselregel",
+      "text": "Damit ein Bauernendspiel gewonnen ist, **muss der König vor seinem Bauern stehen** mit mindestens einem leeren Feld dazwischen. Steht der gegnerische König direkt vor dem Bauern — ist es remis!"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Rücke den König vor, nicht den Bauern",
+          "text": "Capablanca rät: rücke den König so weit wie möglich vor, ohne den Bauern zu gefährden. Ziehe den Bauern erst, wenn es zu seinem Schutz nötig ist.",
+          "style": null
+        },
+        {
+          "icon": "ruler.fill",
+          "title": "Die Geheimwaffe — „die Opposition“",
+          "text": "Stehen sich zwei Könige mit einer ungeraden Zahl von Feldern dazwischen gegenüber, hat der Spieler im Vorteil, der **zuletzt gezogen** hat. Das nennt man die Opposition — sie ist der Schlüssel zu allen Bauernendspielen.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Ein Grundprinzip",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Einer hält zwei — Capablancas Prinzip",
+      "text": "„Ein Bauer, der zwei gegnerische Bauern hält, ist eines der Hauptwerkzeuge des Meisters.“ Blockiert dein Bauer zwei gegnerische, bist du praktisch eine Figur voraus — nutze diesen Vorteil auf der anderen Brettseite!"
+    },
+    {
+      "type": "heading",
+      "text": "Läufer vs. Springer im Endspiel",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right",
+          "title": "Der Läufer ist stärker, wenn auf beiden Seiten Bauern stehen",
+          "text": "Dank seiner Reichweite kann der Läufer Bauern auf beiden Flügeln gleichzeitig angreifen. Der Springer ist langsam und kann nicht überallhin gelangen.",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "Der Springer ist stärker in geschlossenen Stellungen",
+          "text": "Wenn die Bauern blockiert und die Stellung geschlossen ist, ist der Springer besser, weil er über Bauern springen und das ideale Feld erreichen kann.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Die Schwäche des Läufers — der Turmbauer",
+      "text": "Strebt dein Bauer nach h8 (oder a8) und ist dieses Feld die Gegenfarbe deines Läufers, hält der Gegner die Ecke und es ist remis! Capablanca hebt dies besonders als Quelle vieler verpasster Siege hervor."
+    },
+    {
+      "type": "heading",
+      "text": "Schachmatt und Remis",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Schach",
+      "text": "Eine Situation, in der der König angegriffen wird. Der Spieler **muss** sich verteidigen — den König ziehen, den Angreifer schlagen oder einen Schild dazwischenstellen."
+    },
+    {
+      "type": "box",
+      "style": "warning",
+      "icon": "xmark.shield.fill",
+      "title": "Schachmatt — Ende der Partie",
+      "text": "Der König wird angegriffen und es gibt keine legale Verteidigung. Die Partie endet hier — der König wird nie tatsächlich geschlagen."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.2",
+      "title": "Patt — der Albtraum des Siegers!",
+      "text": "Der Spieler am Zug steht **nicht im Schach**, hat aber keinen legalen Zug. Sofort remis! Das ist der gefährlichste Fehler im Endspiel — eine Gewinnstellung mit einem schlechten Zug ins Remis zu verwandeln."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.clockwise",
+          "title": "Stellungswiederholung",
+          "text": "Wiederholt sich dieselbe Stellung **dreimal**, kann Remis beansprucht werden.",
+          "style": null
+        },
+        {
+          "icon": "minus.circle.fill",
+          "title": "Ungenügendes Material",
+          "text": "Nur Könige, oder König + Läufer/Springer gegen König — Matt ist unmöglich. Automatisches Remis.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Mini-Abschlusstest",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Wende alles an, was du gelernt hast! Löse 5 Aufgaben — Matt in möglichst wenigen Zügen. Jede nutzt eine andere Figurenkombination."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Aufgabe 1 — Dame auf der Grundreihe",
+      "hint": "Der schwarze König ist gefangen. Die Dame hat freie Bahn…",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2d8"
+      ],
+      "startFEN": "6k1/5ppp/8/8/8/8/3Q4/4R1K1 w - - 0 1",
+      "solvedMessage": "Großartig! Matt gefunden! 🏆",
+      "wrongMessage": "Nicht ganz — suche den Schlüsselzug!",
+      "playingPrompt": "Finde Matt in 1!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Aufgabe 2 — Turm auf der 8. Reihe",
+      "hint": "Die Bauern blockieren ihren eigenen König. Der Turm findet den Weg…",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "b5b8"
+      ],
+      "startFEN": "6k1/5ppp/8/1R6/8/8/8/6K1 w - - 0 1",
+      "solvedMessage": "Großartig! Matt gefunden! 🏆",
+      "wrongMessage": "Nicht ganz — suche den Schlüsselzug!",
+      "playingPrompt": "Finde Matt in 1!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Aufgabe 3 — Turmopfer!",
+      "hint": "Der Turm geht mit Schach nach e8. Der schwarze Turm muss schlagen — und dann die Dame?",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "e1e8",
+        "c8e8",
+        "a4e8"
+      ],
+      "startFEN": "2r3k1/5ppp/8/8/Q7/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Großartig! Matt gefunden! 🏆",
+      "wrongMessage": "Nicht ganz — suche den Schlüsselzug!",
+      "playingPrompt": "Finde den Schlüsselzug!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Aufgabe 4 — Läufer + Turm",
+      "hint": "Der Läufer gibt Schach und treibt den König nach g8. Warum ist das verhängnisvoll?",
+      "icon": "rhombus.fill",
+      "uciMoves": [
+        "e5d6",
+        "f8g8",
+        "e1e8"
+      ],
+      "startFEN": "5k2/5ppp/8/4B3/8/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Großartig! Matt gefunden! 🏆",
+      "wrongMessage": "Nicht ganz — suche den Schlüsselzug!",
+      "playingPrompt": "Finde den Schlüsselzug!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Aufgabe 5 (schwer) — Damenopfer, Läufermatt",
+      "hint": "Greet – Hanley, Liverpool 2008. Die Dame opfert sich auf h6. Warum muss der König schlagen?",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2h6",
+        "g7h6",
+        "h4f6"
+      ],
+      "startFEN": "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w KQ - 0 1",
+      "solvedMessage": "Großartig! Matt gefunden! 🏆",
+      "wrongMessage": "Nicht ganz — suche den Schlüsselzug!",
+      "playingPrompt": "Finde den Schlüsselzug!",
+      "mateIn": 2
+    },
+    {
+      "type": "heading",
+      "text": "Über den Autor",
+      "icon": "person.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "person.fill",
+      "title": "José Raúl Capablanca (1888–1942)",
+      "text": "Ein kubanischer Schachspieler, der dritte offizielle Schachweltmeister. Gilt als eines der größten Schachgenies aller Zeiten — bekannt für seinen kristallklaren Stil und sein intuitives Stellungsverständnis."
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca lernte Schach mit nur **vier Jahren**, indem er seinem Vater zusah. Er besuchte nie eine Schachschule — er lernte alles selbst durchs Spielen. Mit nur 13 Jahren schlug er den kubanischen Meister Juan Corzo und wurde eine nationale Sensation."
+    },
+    {
+      "type": "paragraph",
+      "text": "Im Zeitraum **1916–1924** verlor er keine einzige Partie. Den Weltmeistertitel gewann er 1921, indem er den legendären Emanuel Lasker besiegte, der ganze 27 Jahre Weltmeister gewesen war."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "eye.fill",
+          "title": "Fotografische Präzision",
+          "text": "Er gewann durch Einfachheit und perfekte Technik — nicht durch Aggression.",
+          "style": null
+        },
+        {
+          "icon": "person.2.fill",
+          "title": "Ein Popularisierer des Schachs",
+          "text": "Er schrieb „Chess Fundamentals“ (1921) genau für Anfänger und Amateure.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Quelle: Project Gutenberg",
+      "icon": "text.book.closed.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Alle Lektionsinhalte stammen aus der digitalen Version des Buches, verfügbar bei **Project Gutenberg** — einer gemeinnützigen Bibliothek gemeinfreier Bücher."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "globe",
+      "title": "gutenberg.org/ebooks/33870",
+      "text": "Du kannst es vollständig kostenlos lesen, ohne Registrierung."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "heart.fill",
+      "title": "Danksagung",
+      "text": "Chessko schuldet Capablanca Dank für seine zeitlosen Prinzipien und der Project-Gutenberg-Gemeinschaft von Freiwilligen, die dieses und Tausende anderer Bücher digitalisiert haben."
+    }
+  ],
+  "language": "de"
+}

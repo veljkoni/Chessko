@@ -127,3 +127,30 @@ import Foundation
         #expect(a == b, "blok \(i) se ne vraca isti kroz enkodiranje")
     }
 }
+
+// Generisani sadrzaj (build_lesson_json.py) mora da prodje kroz isti dekoder
+// koji koristi aplikacija — inace se greska vidi tek kao prazna lekcija u UI-ju.
+@Test func everyGeneratedLessonFileDecodes() throws {
+    let dir = URL(fileURLWithPath: "Chessko/Content/lessons")
+    let files = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+        .filter { $0.pathExtension == "json" }
+        .sorted { $0.lastPathComponent < $1.lastPathComponent }
+
+    #expect(files.count == 32, "Ocekivano 4 lekcije × 8 jezika")
+
+    var perLesson: [String: [Int]] = [:]
+    for file in files {
+        let doc = try JSONDecoder().decode(LessonDocument.self, from: Data(contentsOf: file))
+        #expect(!doc.blocks.isEmpty, "\(file.lastPathComponent) nema nijedan blok")
+        #expect(!doc.title.isEmpty, "\(file.lastPathComponent) nema naslov")
+        perLesson[doc.id, default: []].append(doc.blocks.count)
+    }
+
+    // Svih 8 jezika iste lekcije mora da ima ISTI broj blokova — razlicit broj
+    // znaci da je prevod negde ispao ili da je struktura razlicito generisana.
+    #expect(perLesson.count == 4)
+    for (id, counts) in perLesson {
+        #expect(counts.count == 8, "\(id) nema svih 8 jezika")
+        #expect(Set(counts).count == 1, "\(id) ima razlicit broj blokova po jeziku: \(counts)")
+    }
+}

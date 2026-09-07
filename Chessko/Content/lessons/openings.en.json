@@ -1,0 +1,139 @@
+{
+  "id": "openings",
+  "title": "The start of the game (Openings)",
+  "subtitle": "Golden rules and famous openings",
+  "icon": "flag.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca writes",
+      "text": "\"The most important thing in the opening is to develop the pieces quickly. No piece should be moved more than once before development is complete, unless it is absolutely necessary.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "In chess **White always moves first** and therefore has a slight initial advantage. Both players’ task in the opening is the same: bring the pieces into play as fast as possible and take control of the centre."
+    },
+    {
+      "type": "heading",
+      "text": "Golden rules of the opening",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "numberedRule",
+      "number": 1,
+      "title": "Develop the pieces quickly",
+      "text": "Capablanca advises: develop knights before bishops. Don’t move the same piece twice in the opening unless forced. Every move should develop a new piece or control the centre."
+    },
+    {
+      "type": "numberedRule",
+      "number": 2,
+      "title": "Control the centre",
+      "text": "The four central squares (e4, d4, e5, d5) are the most important on the board. Whoever rules the centre has more room to manoeuvre. Capablanca: \"No vigorous attack can succeed without control of at least two central squares.\""
+    },
+    {
+      "type": "numberedRule",
+      "number": 3,
+      "title": "Protect the king — castle!",
+      "text": "Castle as early as possible. A king in the open is an easy target. Capablanca himself always castled early and recommends the same to all players, especially beginners."
+    },
+    {
+      "type": "heading",
+      "text": "Typical opening mistakes",
+      "icon": "exclamationmark.triangle.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Bringing the queen out too early",
+          "text": "The queen is strong, but if you bring her out early the opponent attacks her with pawns and pieces — and every attack on the queen means a lost tempo because she must flee.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Passive defence with pawns",
+          "text": "The \"Philidor\" style — answering e4 immediately with P-d6 — gives the opponent free development and space. Capablanca shows how White then easily builds a superior position.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Castling too late",
+          "text": "Every move without castling while the lines are open is a risk. The opponent can open the position and attack your king before it gets to safety.",
+          "style": "warning"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Famous openings",
+      "icon": "book.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Play each of White’s moves on the board — Black replies automatically along the theoretical line."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Ruy Lopez (Spanish Game)",
+      "hint": "1.e4 e5 2.Nf3 Nc6 3.Bb5 — Capablanca’s favourite",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1b5"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Opening mastered! ✓",
+      "wrongMessage": "Wrong move — try again.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Italian Game",
+      "hint": "1.e4 e5 2.Nf3 Nc6 3.Bc4 — the bishop targets f7",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Opening mastered! ✓",
+      "wrongMessage": "Wrong move — try again.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Sicilian Defence",
+      "hint": "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 — an asymmetrical fight",
+      "icon": "shield.fill",
+      "uciMoves": [
+        "e2e4",
+        "c7c5",
+        "g1f3",
+        "d7d6",
+        "d2d4",
+        "c5d4",
+        "f3d4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Opening mastered! ✓",
+      "wrongMessage": "Wrong move — try again.",
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "en"
+}
