@@ -22,7 +22,8 @@ import Foundation
         { "type": "pieceRow", "piece": "knight", "name": "Skakač", "count": "2 komada" },
         { "type": "numberedRule", "number": 1, "title": "Razvoj", "text": "Razvijaj figure" },
         { "type": "pieceValueTable", "rows": [
-            { "piece": "pawn", "name": "Pion", "value": 1 }
+            { "piece": "pawn", "name": "Pion", "value": "1" },
+            { "piece": "king", "name": "Kralj", "value": "∞" }
         ] },
         { "type": "board", "fen": "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", "caption": "Rokada", "interactive": false },
         { "type": "explorer" },
@@ -103,7 +104,8 @@ import Foundation
         .quote(text: "Citat", author: "Kapablanka"),
         .pieceRow(piece: "knight", name: "Skakač", count: "2"),
         .numberedRule(number: 3, title: "Naslov", text: "Telo"),
-        .pieceValueTable(rows: [PieceValueRow(piece: "pawn", name: "Pion", value: 1)]),
+        .pieceValueTable(rows: [PieceValueRow(piece: "pawn", name: "Pion", value: "1"),
+                                    PieceValueRow(piece: "king", name: "Kralj", value: "∞")]),
         .board(fen: "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", caption: "Rokada", interactive: true),
         .explorer,
         .exercise(ExerciseSpec(kind: .scripted, title: "Španska", hint: "H", icon: "flame.fill",

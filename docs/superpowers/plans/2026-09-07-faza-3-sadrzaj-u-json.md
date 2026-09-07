@@ -25,7 +25,7 @@
 ## Zatečeno stanje, provereno
 
 - `Chessko/Views/LessonDetailView.swift` = **1238 linija**; sadržaj lekcija je u `@ViewBuilder` svojstvima (L1: linije 66–313, L2: 314–387, L3: 388–451, L4: 452–627). Ostatak su komponente za prikaz.
-- **173 ključa** iz `Localizable.xcstrings` koristi se u `LessonDetailView.swift` + `LearnView.swift`. Katalog ima **409** ključeva — dakle 42% kataloga je sadržaj lekcija. Provereno: **svaki** tekst lekcije postoji kao ključ sa svih 8 jezika (uključujući one koji počinju escape-ovanim navodnikom, npr. `"\"Prva stvar koju učenik…"`).
+- **190 ključeva** iz `Localizable.xcstrings` koristi se u `LessonDetailView.swift` + `LearnView.swift`; od toga je **182 sadržaj lekcija**, a 8 je hrom koji ostaje u kodu (nabrojani u Task-u 2). Katalog ima **409** ključeva. Provereno: **svaki** tekst lekcije postoji kao ključ sa svih 8 jezika (uključujući one koji počinju escape-ovanim navodnikom, npr. `"\"Prva stvar koju učenik…"`).
 - Komponente koje lekcije stvarno koriste — brojano po lekciji:
 
   | | L1 | L2 | L3 | L4 |
@@ -110,7 +110,8 @@ import Foundation
         { "type": "pieceRow", "piece": "knight", "name": "Skakač", "count": "2 komada" },
         { "type": "numberedRule", "number": 1, "title": "Razvoj", "text": "Razvijaj figure" },
         { "type": "pieceValueTable", "rows": [
-            { "piece": "pawn", "name": "Pion", "value": 1 }
+            { "piece": "pawn", "name": "Pion", "value": "1" },
+            { "piece": "king", "name": "Kralj", "value": "∞" }
         ] },
         { "type": "board", "fen": "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", "caption": "Rokada", "interactive": false },
         { "type": "explorer" },
@@ -225,7 +226,9 @@ struct BulletItem: Codable, Equatable {
 struct PieceValueRow: Codable, Equatable {
     let piece: String   // "pawn" | "knight" | "bishop" | "rook" | "queen" | "king"
     let name: String
-    let value: Int
+    /// String, ne Int: Kralj nosi "∞". Srpsku množinu (bod/boda/bodova) računa
+    /// renderer iz ove vrednosti, kao i dosadašnja komponenta.
+    let value: String
 }
 
 enum ExerciseKind: String, Codable, Equatable {
@@ -527,7 +530,7 @@ if __name__ == "__main__":
 | `L_Box` sa `lesson.accentColor` | `style: "info"` |
 | `L_PieceRow(type: .knight, name: A, count: B)` | `{"type":"pieceRow","piece":"knight","name":T(A),"count":T(B)}` |
 | `L_NumberedRule(number: N, title: A, text: B)` | `{"type":"numberedRule","number":N,...}` |
-| `L_PieceValueTable()` | `{"type":"pieceValueTable","rows":[...]}` — vrednosti prepisati iz same komponente |
+| `L_PieceValueTable()` | `{"type":"pieceValueTable","rows":[...]}` — vrednosti prepisati iz same komponente; `value` je **String** (`"1"`…`"9"`, Kralj `"∞"`) |
 | piece explorer (picker + `BoardView`) | `{"type":"explorer"}` |
 | `MateExerciseCard(fen:title:hint:icon:color:)` | `exercise` sa `kind:"vsEngine"`, `startFEN` = `fen` |
 | `OpeningExerciseCard(line:)` / `MatePuzzleCard(line:)` | `exercise` sa `kind:"scripted"`, `uciMoves` = `line.uciMoves` |
@@ -574,7 +577,24 @@ for m in sorted(missing):
     print("   ", repr(m[:70]))
 PY
 ```
-Expected: `NEPRENESENIH: 0`. Ako nije nula, ispisani ključevi su tačno blokovi koji su ispali — dodati ih i ponoviti.
+Expected: **`NEPRENESENIH: 8`**, i to tačno ovih osam — ništa drugo:
+
+```
+4 lekcije od osnova do završnice          LearnView, podnaslov taba
+Nauči šah                                 LearnView, naslov taba
+Lekcija %lld                              zaglavlje ekrana lekcije
+Mat u %lld                                bedž na kartici zadatka
+Ponovo                                    dugme na kartici vežbe
+Specijalna pravila                        zaglavlje piece explorer-a
+— izaberi i istraži na tabli              zaglavlje piece explorer-a
+Tapni figuru da je promeniš · …           uputstvo u piece explorer-u
+```
+
+Sve osam su **hrom, ne sadržaj**: pripadaju komponentama (`LearnView`, zaglavlje lekcije, kartice vežbi, `LessonPieceExplorer`) i putuju sa njima, pa ostaju u katalogu i posle Task-a 6. `case explorer` nema teret upravo zato što ta tri stringa žive u samoj komponenti.
+
+**Bilo koji deveti ključ znači izgubljen blok** — dodati ga i ponoviti.
+
+> **Ispravka plana (2026-09-07).** Ranija verzija je tvrdila 173 korišćena ključa i očekivala `NEPRENESENIH: 0`. Oba broja su bila pogrešna: skripta iz samog plana broji 190, a osam nabrojanih se po konstrukciji ne mogu preneti. Uhvaćeno pri izvršavanju Task-a 2.
 
 - [ ] **Step 4: Dodati test koji dekodira sve generisane fajlove**
 

@@ -56,32 +56,32 @@
         {
           "piece": "pawn",
           "name": "Pešak",
-          "value": 1
+          "value": "1"
         },
         {
           "piece": "knight",
           "name": "Skakač",
-          "value": 3
+          "value": "3"
         },
         {
           "piece": "bishop",
           "name": "Lovac",
-          "value": 3
+          "value": "3"
         },
         {
           "piece": "rook",
           "name": "Top",
-          "value": 5
+          "value": "5"
         },
         {
           "piece": "queen",
           "name": "Dama",
-          "value": 9
+          "value": "9"
         },
         {
           "piece": "king",
           "name": "Kralj",
-          "value": 0
+          "value": "∞"
         }
       ]
     },

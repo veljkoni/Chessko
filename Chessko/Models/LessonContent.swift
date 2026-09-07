@@ -38,7 +38,11 @@ struct BulletItem: Codable, Equatable {
 struct PieceValueRow: Codable, Equatable {
     let piece: String   // "pawn" | "knight" | "bishop" | "rook" | "queen" | "king"
     let name: String
-    let value: Int
+    /// String, ne Int, jer Kralj u tabeli nosi "∞". Sa `Int`-om bi morala
+    /// sentinel vrednost (0) koju renderer posebno hvata — a zaboravljena
+    /// provera bi ispisala "0 bodova" za Kralja. Ostale vrednosti su "1".."9";
+    /// srpsku mnozinu (bod/boda/bodova) racuna renderer, kao i do sada.
+    let value: String
 }
 
 enum ExerciseKind: String, Codable, Equatable {

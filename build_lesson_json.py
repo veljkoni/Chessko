@@ -88,17 +88,15 @@ def numbered_rule(number, title, text):
 
 
 # `L_PieceValueTable` drzi redove u samoj komponenti; prepisani su ovde.
-# Kralj u Swift-u prikazuje "∞", a `PieceValueRow.value` je Int — 0 je
-# dogovorena oznaka za "beskonacno" i renderer je mora prikazati kao ∞.
-KING_INFINITE_VALUE = 0
+KING_INFINITE_VALUE = "∞"
 
 def piece_value_table():
     return {"type": "pieceValueTable", "rows": [
-        {"piece": "pawn",   "name": T("Pešak"),  "value": 1},
-        {"piece": "knight", "name": T("Skakač"), "value": 3},
-        {"piece": "bishop", "name": T("Lovac"),  "value": 3},
-        {"piece": "rook",   "name": T("Top"),    "value": 5},
-        {"piece": "queen",  "name": T("Dama"),   "value": 9},
+        {"piece": "pawn",   "name": T("Pešak"),  "value": "1"},
+        {"piece": "knight", "name": T("Skakač"), "value": "3"},
+        {"piece": "bishop", "name": T("Lovac"),  "value": "3"},
+        {"piece": "rook",   "name": T("Top"),    "value": "5"},
+        {"piece": "queen",  "name": T("Dama"),   "value": "9"},
         {"piece": "king",   "name": T("Kralj"),  "value": KING_INFINITE_VALUE},
     ]}
 

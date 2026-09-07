@@ -56,32 +56,32 @@
         {
           "piece": "pawn",
           "name": "Pion",
-          "value": 1
+          "value": "1"
         },
         {
           "piece": "knight",
           "name": "Cavalier",
-          "value": 3
+          "value": "3"
         },
         {
           "piece": "bishop",
           "name": "Fou",
-          "value": 3
+          "value": "3"
         },
         {
           "piece": "rook",
           "name": "Tour",
-          "value": 5
+          "value": "5"
         },
         {
           "piece": "queen",
           "name": "Dame",
-          "value": 9
+          "value": "9"
         },
         {
           "piece": "king",
           "name": "Roi",
-          "value": 0
+          "value": "∞"
         }
       ]
     },

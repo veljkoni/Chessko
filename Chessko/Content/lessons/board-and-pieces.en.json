@@ -205,32 +205,32 @@
         {
           "piece": "pawn",
           "name": "Pawn",
-          "value": 1
+          "value": "1"
         },
         {
           "piece": "knight",
           "name": "Knight",
-          "value": 3
+          "value": "3"
         },
         {
           "piece": "bishop",
           "name": "Bishop",
-          "value": 3
+          "value": "3"
         },
         {
           "piece": "rook",
           "name": "Rook",
-          "value": 5
+          "value": "5"
         },
         {
           "piece": "queen",
           "name": "Queen",
-          "value": 9
+          "value": "9"
         },
         {
           "piece": "king",
           "name": "King",
-          "value": 0
+          "value": "∞"
         }
       ]
     },
