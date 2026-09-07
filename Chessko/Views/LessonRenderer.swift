@@ -48,7 +48,11 @@ struct LessonRenderer: View {
             L_Box(icon: "quote.opening", color: DS.accent, title: author, text: text)
 
         case .pieceRow(let piece, let name, let count):
-            L_PieceRow(type: pieceType(piece), name: name, count: count)
+            if let type = Self.pieceType(lessonKey: piece) {
+                L_PieceRow(type: type, name: name, count: count)
+            } else {
+                LessonBlockError(message: "Nepoznata figura '\(piece)' u redu '\(name)'")
+            }
 
         case .numberedRule(let number, let title, let text):
             L_NumberedRule(number: number, color: DS.accent, title: title, text: text)
@@ -56,8 +60,15 @@ struct LessonRenderer: View {
         case .pieceValueTable(let rows):
             L_PieceValueTable(rows: rows)
 
-        case .board(let fen, let caption, _):
-            LessonStaticBoard(fen: fen, caption: caption)
+        case .board(let fen, let caption, let interactive):
+            // Interaktivna tabla u lekciji jos nije implementirana. Tiho crtanje
+            // staticne bi dalo mrtvu tablu bez ijednog traga; bolje da pisac
+            // lekcije odmah vidi da polje nista ne radi.
+            if interactive {
+                LessonBlockError(message: "Interaktivna tabla još nije podržana: '\(caption)'")
+            } else {
+                LessonStaticBoard(fen: fen, caption: caption)
+            }
 
         case .explorer:
             LessonPieceExplorer()
@@ -94,7 +105,10 @@ struct LessonRenderer: View {
                     if let fen = spec.startFEN {
                         MatePuzzleCard(fen: fen, moves: moves, title: spec.title,
                                        hint: spec.hint, icon: spec.icon,
-                                       accentColor: DS.accent, mateIn: mateIn)
+                                       accentColor: DS.accent, mateIn: mateIn,
+                                       solvedMessage: spec.solvedMessage,
+                                       wrongMessage: spec.wrongMessage,
+                                       playingPrompt: spec.playingPrompt)
                             // Pet zadataka finalnog testa u izvoru stoje spojeni,
                             // bez razmaka među karticama — otud nema `.bottom`.
                             .padding(.horizontal, 16)
@@ -125,14 +139,18 @@ struct LessonRenderer: View {
         }
     }
 
-    private func pieceType(_ raw: String) -> PieceType {
+    // Namerno NEMA `default: return .king`. Tipfeler u JSON-u ("knght") bi tako
+    // nacrtao Kralja — tiha rupa, tacno ono sto `LessonBlockError` postoji da
+    // sprecava. Vraca `nil`, pozivalac prijavljuje.
+    static func pieceType(lessonKey raw: String) -> PieceType? {
         switch raw {
         case "pawn":   return .pawn
         case "knight": return .knight
         case "bishop": return .bishop
         case "rook":   return .rook
         case "queen":  return .queen
-        default:       return .king
+        case "king":   return .king
+        default:       return nil
         }
     }
 }
@@ -503,8 +521,17 @@ struct L_PieceValueTable: View {
         VStack(spacing: 0) {
             ForEach(Array(rows.enumerated()), id: \.offset) { idx, row in
                 HStack(spacing: 12) {
-                    PieceImageView(piece: ChessPiece(type: pieceType(row.piece), color: .white))
-                        .frame(width: 28, height: 28)
+                    // Isto preslikavanje kao u rendereru — jedan izvor istine.
+                    // Nepoznat kljuc daje prazno mesto i vidljivu poruku umesto
+                    // tiho nacrtanog Kralja.
+                    if let type = LessonRenderer.pieceType(lessonKey: row.piece) {
+                        PieceImageView(piece: ChessPiece(type: type, color: .white))
+                            .frame(width: 28, height: 28)
+                    } else {
+                        Image(systemName: "questionmark.square.dashed")
+                            .frame(width: 28, height: 28)
+                            .foregroundStyle(DS.danger)
+                    }
                     Text(Loc(row.name))
                         .font(.dsBody)
                         .foregroundStyle(.primary)
@@ -525,16 +552,6 @@ struct L_PieceValueTable: View {
         .padding(.bottom, 16)
     }
 
-    private func pieceType(_ raw: String) -> PieceType {
-        switch raw {
-        case "pawn":   return .pawn
-        case "knight": return .knight
-        case "bishop": return .bishop
-        case "rook":   return .rook
-        case "queen":  return .queen
-        default:       return .king
-        }
-    }
 }
 
 // MARK: - Mate Puzzle Card
@@ -545,8 +562,14 @@ struct MatePuzzleCard: View {
 
     @State private var vm: OpeningExerciseViewModel
 
+    /// Poruke su parametri, ne konstante: sadrzaj je od Faze 3 u JSON-u, pa bi
+    /// zakucane vrednosti znacile da izmena `solvedMessage`/`wrongMessage` u
+    /// `endgame.*.json` prividno nista ne radi. Podrazumevane vrednosti su
+    /// dosadasnje zakucane, da ponasanje ostane isto kad ih JSON ne zada.
     init(fen: String, moves: [String], title: String, hint: String,
-         icon: String, accentColor: Color, mateIn: Int) {
+         icon: String, accentColor: Color, mateIn: Int,
+         solvedMessage: String? = nil, wrongMessage: String? = nil,
+         playingPrompt: String? = nil) {
         self.mateIn = mateIn
         let line = OpeningLine(
             name: title,
@@ -554,9 +577,11 @@ struct MatePuzzleCard: View {
             hint: hint,
             icon: icon,
             accentColor: accentColor,
-            solvedMessage: "Sjajno! Mat pronađen! 🏆",
-            wrongMessage:  "Nije to — traži pravi ključni potez!",
-            playingPrompt: mateIn == 1 ? "Pronađi mat u 1 potezu!" : "Pronađi ključni potez!",
+            solvedMessage: solvedMessage ?? Loc("Sjajno! Mat pronađen! 🏆"),
+            wrongMessage:  wrongMessage  ?? Loc("Nije to — traži pravi ključni potez!"),
+            playingPrompt: playingPrompt ?? (mateIn == 1
+                ? Loc("Pronađi mat u 1 potezu!")
+                : Loc("Pronađi ključni potez!")),
             startFEN: fen
         )
         _vm = State(initialValue: OpeningExerciseViewModel(line: line))
