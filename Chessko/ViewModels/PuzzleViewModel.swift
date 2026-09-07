@@ -161,6 +161,14 @@ final class PuzzleViewModel {
     /// `PuzzleView` u toj fazi crta ekran ucitavanja umesto table.
     private var awaitingOpponent = false
 
+    /// Raste pri SVAKOM ucitavanju zadatka. Svaki odlozeni `Task` (protivnikov
+    /// potez, automatsko prikazivanje resenja) upamti vrednost pri pokretanju i
+    /// odustaje ako se u medjuvremenu promenila. Bez toga zaostali `Task` iz
+    /// prethodnog zadatka odigra potez nad NOVIM zadatkom: `rawMoves` je vec
+    /// zamenjen, pa se odigra tudji potez i `movePointer` odmakne — zadatak
+    /// pocne sam sebe da resava.
+    private var loadGeneration = 0
+
     // MARK: - Computed
 
     var isFlipped: Bool { playerColor == .black }
@@ -219,6 +227,7 @@ final class PuzzleViewModel {
         currentPuzzle = nil
         puzzleHadError = false
         awaitingOpponent = false
+        loadGeneration += 1
 
         guard let repository else {
             phase = .unavailable(Loc("Baza zadataka nije dostupna")); return
@@ -261,6 +270,7 @@ final class PuzzleViewModel {
         currentPuzzle = nil
         puzzleHadError = false
         awaitingOpponent = false
+        loadGeneration += 1
 
         guard let repository else {
             phase = .unavailable(Loc("Baza zadataka nije dostupna")); return
@@ -325,8 +335,10 @@ final class PuzzleViewModel {
         playerColor = state.currentTurn.opposite
         gameState   = state
 
+        let generation = loadGeneration
         Task {
             try? await Task.sleep(for: .milliseconds(400))
+            guard generation == loadGeneration else { return }
             applyNextComputerMove()
         }
     }
@@ -402,8 +414,10 @@ final class PuzzleViewModel {
 
         phase = .playing
         awaitingOpponent = true
+        let generation = loadGeneration
         Task {
             try? await Task.sleep(for: .milliseconds(600))
+            guard generation == loadGeneration else { return }
             applyNextComputerMove()
         }
     }
@@ -436,7 +450,11 @@ final class PuzzleViewModel {
     // MARK: - Show Solution
 
     func showSolution() {
-        guard phase == .playing || phase == .wrongMove else { return }
+        // `!awaitingOpponent`: dok se ceka protivnikov odgovor faza je `.playing`,
+        // pa je dugme "Prikazi resenje" vidljivo. Bez ovog gejta bi odlozeni
+        // potez stigao usred reprodukcije, pregazio `.showingSolution` nazad u
+        // `.playing` i dvaput odmakao `movePointer`.
+        guard !awaitingOpponent, phase == .playing || phase == .wrongMove else { return }
         phase = .showingSolution
         if !puzzleHadError {
             puzzleHadError = true
@@ -446,14 +464,20 @@ final class PuzzleViewModel {
             }
         }
 
+        let generation = loadGeneration
         Task {
             while movePointer < rawMoves.count {
+                // Reprodukcija traje ~700ms po potezu; za to vreme strelice za
+                // datum nisu onemogucene (gase se samo na `.loading`). Bez ove
+                // provere bi petlja nastavila da igra poteze NOVOG zadatka.
+                guard generation == loadGeneration else { return }
                 guard let move = ChessMove.fromUCI(rawMoves[movePointer], in: gameState)
                 else { break }
                 apply(move: move, isPlayerMove: movePointer % 2 == 1)
                 movePointer += 1
                 try? await Task.sleep(for: .milliseconds(700))
             }
+            guard generation == loadGeneration else { return }
             phase = .solved
             // Ne označavamo kao rešeno kad se prikaže rešenje
         }

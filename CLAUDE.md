@@ -708,6 +708,16 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
     `phase` na `.loading`, gde su sve kontrole onemogućene a `actionButtons` prazan — ekran
     bez izlaza do restarta. Guard je razdvojen: prazna lista poteza = normalan kraj,
     nerazrešiv potez = `.unavailable(Loc("Zadatak je oštećen"))`.
+  - Odloženi `Task`-ovi (protivnikov potez, reprodukcija rešenja) dobili su
+    **brojač generacije**. Strelice za datum se gase samo na `.loading`, pa su
+    tokom 600ms čekanja na protivnikov potez i tokom ~700ms po potezu u
+    reprodukciji rešenja bile aktivne: promena datuma tu je ostavljala zaostali
+    `Task` koji je onda odigrao potez nad **novim** zadatkom (`rawMoves` je već
+    zamenjen), pa je zadatak počinjao sam sebe da rešava. Svaki odloženi `Task`
+    sada pamti `loadGeneration` i odustaje ako se promenio. Uz to je
+    `showSolution()` gejtovan na `!awaitingOpponent` — dugme je tokom tog
+    prozora vidljivo, a odloženi potez bi pregazio `.showingSolution` nazad u
+    `.playing`.
   - Dodat `DS.onAccent`. `DS.accent` **menja svetlinu između tema** (`#2E4A8A` svetla /
     `#7EA0E8` tamna), pa nijedna fiksna boja teksta ne radi u obe: bela je davala 8,5:1 u
     svetloj ali 2,6:1 u tamnoj. Pogođena su bila dva mesta — novo dugme „Sledeći zadatak"
