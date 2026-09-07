@@ -220,14 +220,12 @@ struct LessonStaticBoard: View {
 /// dodatak i savet o tapu) ostaju ovde jer `case explorer` nema sadržaja.
 struct LessonPieceExplorer: View {
 
-    /// `LearnView` do Task-a 5 i dalje drži jedan `LearnViewModel` podignut u
-    /// `ContentView`-u i prosleđuje ga; renderer ga nema pa pravi sopstveni.
-    private let injected: LearnViewModel?
-    @State private var owned = LearnViewModel()
-
-    init(viewModel: LearnViewModel? = nil) { self.injected = viewModel }
-
-    private var vm: LearnViewModel { injected ?? owned }
+    /// Model se ne pravi ovde: jedan `LearnViewModel` živi u `ContentView`-u
+    /// (da se ne inicijalizuje tokom animacije prelaska taba) i `LearnView` ga
+    /// ubacuje u okruženje. Kroz okruženje ide zato što bi ga inače i
+    /// `LessonDetailView` i `LessonRenderer` morali provlačiti kao parametar,
+    /// a nijedan od njih nema razloga da zna za istraživač figura.
+    @Environment(LearnViewModel.self) private var vm
 
     var body: some View {
             VStack(spacing: 10) {

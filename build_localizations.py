@@ -171,6 +171,7 @@ add("Pronađi ključni potez!", "Find the key move!", "Trouvez le coup clé !", 
 add("Ponovo", "Restart", "Recommencer", "Neu", "Ricomincia", "Заново", "重来", "फिर से")
 add("Mat u %lld", "Mate in %lld", "Mat en %lld", "Matt in %lld", "Matto in %lld", "Мат в %lld", "%lld 步杀", "%lld में मात")
 add("Lekcija %lld", "Lesson %lld", "Leçon %lld", "Lektion %lld", "Lezione %lld", "Урок %lld", "第 %lld 课", "पाठ %lld")
+add("Lekcija nije dostupna", "Lesson unavailable", "Leçon indisponible", "Lektion nicht verfügbar", "Lezione non disponibile", "Урок недоступен", "课程不可用", "पाठ उपलब्ध नहीं")
 
 # ── Lesson titles / subtitles ───────────────────────────────────────────────
 add("Tabla, figure i kretanje", "The board, pieces and movement", "L’échiquier, les pièces et les déplacements", "Brett, Figuren und Bewegung", "La scacchiera, i pezzi e il movimento", "Доска, фигуры и ходы", "棋盘、棋子与走法", "बोर्ड, मोहरे और चाल")
