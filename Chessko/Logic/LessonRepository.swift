@@ -26,19 +26,53 @@ final class LessonRepository {
         for candidate in [language, "en", "sr"] {
             let key = "\(id).\(candidate)"
             if let cached = cache[key] { return cached }
-            guard let url = Bundle.main.url(forResource: key, withExtension: "json",
-                                            subdirectory: "Content/lessons"),
-                  let data = try? Data(contentsOf: url),
-                  let doc = try? JSONDecoder().decode(LessonDocument.self, from: data)
-            else { continue }
-            cache[key] = doc
-            return doc
+            if let doc = load(key) {
+                cache[key] = doc
+                return doc
+            }
         }
         return nil
     }
 
+    /// Razdvaja DVA slucaja koja se lako slepe u jedan `try?`:
+    ///
+    /// - fajla nema  → ocekivano; nova lekcija ide samo na sr+en, pa se trazeni
+    ///   jezik uredno preskace i lanac pada na sledeci kandidata.
+    /// - fajl POSTOJI ali se ne dekodira → greska koja ne sme da se izgubi.
+    ///   `LessonBlock` namerno BACA na nepoznat tip bloka, bas da pokvarena
+    ///   lekcija ne bi prosla nezapazeno; ako bi je ovde `try?` progutao, ta
+    ///   namera bi bila ponistena — korisnik bi tiho dobio drugi jezik, a niko
+    ///   ne bi saznao da je JSON pokvaren. Sadrzaj je od Faze 3 van dometa
+    ///   kompajlera, pa je ovo jedino mesto koje moze da vikne.
+    private func load(_ key: String) -> LessonDocument? {
+        guard let url = Bundle.main.url(forResource: key, withExtension: "json",
+                                        subdirectory: "Content/lessons") else {
+            return nil
+        }
+        do {
+            return try JSONDecoder().decode(LessonDocument.self, from: Data(contentsOf: url))
+        } catch {
+            // `print` PRE `assertionFailure`: u debug build-u assertion obara
+            // proces, pa bi poruka posle njega bila nedostizna bas kad je
+            // najpotrebnija.
+            print("[Chessko] GRESKA: \(key).json se ne dekodira: \(error)")
+            assertionFailure("Lekcija \(key).json postoji ali se ne dekodira: \(error)")
+            return nil
+        }
+    }
+
     /// Sve lekcije redom, na trazenom jeziku. Koristi ekran Učenje za listu.
+    ///
+    /// `compactMap` bi tiho skratio listu ako lekcija ne prodje ceo lanac
+    /// jezika — korisnik bi video manje kartica i nista vise. Zato se skracenje
+    /// posebno prijavljuje.
     func allLessons(language: String) -> [LessonDocument] {
-        Self.lessonOrder.compactMap { lesson(id: $0, language: language) }
+        let docs = Self.lessonOrder.compactMap { lesson(id: $0, language: language) }
+        if docs.count != Self.lessonOrder.count {
+            let missing = Set(Self.lessonOrder).subtracting(docs.map(\.id))
+            print("[Chessko] GRESKA: nedostaju lekcije: \(missing.sorted())")
+            assertionFailure("Nedostaju lekcije: \(missing.sorted())")
+        }
+        return docs
     }
 }
