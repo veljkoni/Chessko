@@ -75,6 +75,7 @@
 **Files:**
 - Create: `Chessko/Models/LessonContent.swift`
 - Modify: `Package.swift` (dodati izvor u `sources:`)
+- Modify: `Chessko.xcodeproj/project.pbxproj` (registrovati izvor u Xcode target)
 - Test: `Tests/ChesskoEngineTests/LessonContentTests.swift`
 
 **Interfaces:**
@@ -376,15 +377,34 @@ U `Package.swift`, u `sources:` niz, odmah posle `"Models/ChessPuzzle.swift",`:
                 "Models/LessonContent.swift",
 ```
 
-- [ ] **Step 5: Pokrenuti testove**
+- [ ] **Step 5: Registrovati fajl u Xcode target i DOKAZATI da se kompajlira**
+
+Dodavanje u `Package.swift` čini fajl vidljivim samo testovima. Aplikacija ga ne
+kompajlira dok ne uđe i u `project.pbxproj`. Ako se ovo preskoči, `swift test`
+prolazi, `xcodebuild` prolazi (niko ga još ne referencira), a puklo bi tek u
+Task-u 3 — daleko od uzroka. Tačno to se desilo u Fazi 2 sa `PuzzleRepository.swift`.
+
+Dodati po postojećem ručnom obrascu (isti kao `StatsManager.swift`): `PBXFileReference`
++ `PBXBuildFile` + unos u grupu `Models` + unos u `PBXSourcesBuildPhase`.
+
+Zatim dokazati:
+```bash
+echo "OVO NIJE SWIFT @@@" >> Chessko/Models/LessonContent.swift
+xcodebuild -project Chessko.xcodeproj -scheme Chessko \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build 2>&1 | grep -c "error:"
+git checkout Chessko/Models/LessonContent.swift
+```
+Expected: broj **veći od nule**. Ako je nula, fajl NIJE u target-u — STATI i prijaviti.
+
+- [ ] **Step 6: Pokrenuti testove**
 
 Run: `swift test`
 Expected: **29 testova prolazi** (27 + 2 nova).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add Chessko/Models/LessonContent.swift Package.swift Tests/ChesskoEngineTests/LessonContentTests.swift
+git add Chessko/Models/LessonContent.swift Package.swift Chessko.xcodeproj/project.pbxproj Tests/ChesskoEngineTests/LessonContentTests.swift
 git commit -m "feat: sema blokova sadrzaja lekcije
 
 11 tipova blokova pokriva sve sto postojece 4 lekcije stvarno koriste.
