@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Chess Puzzle (Lichess puzzle database via chess-puzzles-api.vercel.app)
+// MARK: - Chess Puzzle (Lichess puzzle database, read locally via PuzzleRepository)
 
 struct ChessPuzzle: Codable, Sendable {
     let puzzleId: String

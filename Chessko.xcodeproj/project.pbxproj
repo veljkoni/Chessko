@@ -29,6 +29,7 @@
 		80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59755406843949CDA29BF61D /* SoundManager.swift */; };
 		10CA7A1000000000000000S1 /* StatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000S2 /* StatsManager.swift */; };
 		10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000P2 /* PlatformHelper.swift */; };
+		10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000R2 /* PuzzleRepository.swift */; };
 		89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */; };
 		8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */; };
 		8F9ABCE715DD4B4A8218DDF2 /* CapturedPiecesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */; };
@@ -48,6 +49,7 @@
 		F6BB829DAB6F4BDEBDB7F8BA /* capture.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EF19F3B9D71945BB9A651A9D /* capture.mp3 */; };
 		10CA7A1000000000000000C2 /* nn-37f18f62d772.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */; };
 		10CA7A1000000000000000C4 /* nn-1111cefa1111.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */; };
+		953F5BE085B54B8E8B4B00D5 /* puzzles.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +68,7 @@
 		59755406843949CDA29BF61D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000S2 /* StatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsManager.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000P2 /* PlatformHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelper.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000R2 /* PuzzleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleRepository.swift; sourceTree = "<group>"; };
 		5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
 		5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningExerciseViewModel.swift; sourceTree = "<group>"; };
 		6A7DFB91567E4FFD869A7B7F /* ChesskoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChesskoApp.swift; sourceTree = "<group>"; };
@@ -88,6 +91,7 @@
 		EF19F3B9D71945BB9A651A9D /* capture.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = capture.mp3; sourceTree = "<group>"; };
 		10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-37f18f62d772.nnue"; sourceTree = "<group>"; };
 		10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-1111cefa1111.nnue"; sourceTree = "<group>"; };
+		E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = puzzles.sqlite; sourceTree = "<group>"; };
 		F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturedPiecesView.swift; sourceTree = "<group>"; };
 		F1CBFECDFF734F169829EE01 /* EvalBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvalBarView.swift; sourceTree = "<group>"; };
 		253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
@@ -170,6 +174,7 @@
 				BFDE9AD864ED479FA9B3560F /* move-self.mp3 */,
 			10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */,
 			10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */,
+			E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */,
 				56675E349B49490FBF15E423 /* Logic */,
 				36769A74D0654206BE9E76DC /* Models */,
 				1854FE7087F64184AAA4ED29 /* ViewModels */,
@@ -189,6 +194,7 @@
 				EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */,
 				E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */,
 			10CA7A1000000000000000B1 /* LocalizationManager.swift */,
+			10CA7A1000000000000000R2 /* PuzzleRepository.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -275,6 +281,7 @@
 				0EDF68A95E104F4FBC084E78 /* move-self.mp3 in Resources */,
 				10CA7A1000000000000000C2 /* nn-37f18f62d772.nnue in Resources */,
 				10CA7A1000000000000000C4 /* nn-1111cefa1111.nnue in Resources */,
+				953F5BE085B54B8E8B4B00D5 /* puzzles.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,6 +301,7 @@
 				80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */,
 				10CA7A1000000000000000S1 /* StatsManager.swift in Sources */,
 				10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */,
+				10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */,
 				89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */,
 				B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,

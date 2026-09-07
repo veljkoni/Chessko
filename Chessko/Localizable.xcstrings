@@ -2916,6 +2916,59 @@
         }
       }
     },
+    "Sledeći zadatak": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sledeći zadatak"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next puzzle"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problème suivant"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nächste Aufgabe"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prossimo problema"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Следующая задача"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一题"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अगली पहेली"
+          }
+        }
+      }
+    },
     "Završio si zadatak za danas!": {
       "extractionState": "manual",
       "localizations": {
@@ -3022,59 +3075,6 @@
         }
       }
     },
-    "Neispravan URL": {
-      "extractionState": "manual",
-      "localizations": {
-        "sr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Neispravan URL"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invalid URL"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL invalide"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültige URL"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL non valido"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Неверный URL"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无效的网址"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "अमान्य URL"
-          }
-        }
-      }
-    },
     "Nema dostupnih zadataka": {
       "extractionState": "manual",
       "localizations": {
@@ -3128,55 +3128,55 @@
         }
       }
     },
-    "Greška mreže: %@": {
+    "Zadatak je oštećen": {
       "extractionState": "manual",
       "localizations": {
         "sr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Greška mreže: %@"
+            "value": "Zadatak je oštećen"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Network error: %@"
+            "value": "This puzzle is corrupted"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Erreur réseau : %@"
+            "value": "Ce problème est corrompu"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Netzwerkfehler: %@"
+            "value": "Diese Aufgabe ist beschädigt"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Errore di rete: %@"
+            "value": "Questo problema è danneggiato"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Сетевая ошибка: %@"
+            "value": "Задача повреждена"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "网络错误：%@"
+            "value": "该题目已损坏"
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "नेटवर्क त्रुटि: %@"
+            "value": "यह पहेली क्षतिग्रस्त है"
           }
         }
       }
@@ -3230,6 +3230,59 @@
           "stringUnit": {
             "state": "translated",
             "value": "अमान्य FEN"
+          }
+        }
+      }
+    },
+    "Baza zadataka nije dostupna": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baza zadataka nije dostupna"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puzzle database unavailable"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base de problèmes indisponible"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufgabendatenbank nicht verfügbar"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Database dei problemi non disponibile"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "База задач недоступна"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "题目数据库不可用"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहेली डेटाबेस उपलब्ध नहीं"
           }
         }
       }
@@ -14148,6 +14201,59 @@
           "stringUnit": {
             "state": "translated",
             "value": "हल की गई पहेलियाँ"
+          }
+        }
+      }
+    },
+    "Rejting zadataka": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rejting zadataka"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puzzle rating"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classement des problèmes"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufgaben-Wertung"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Punteggio problemi"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рейтинг задач"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "谜题评分"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पहेली रेटिंग"
           }
         }
       }

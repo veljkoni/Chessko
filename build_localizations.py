@@ -101,12 +101,13 @@ add("Odlično! Zadatak rešen! 🎉", "Excellent! Puzzle solved! 🎉", "Excelle
 add("Rešenje...", "Solution…", "Solution…", "Lösung…", "Soluzione…", "Решение…", "解答…", "समाधान…")
 add("Prikaži rešenje", "Show solution", "Voir la solution", "Lösung anzeigen", "Mostra soluzione", "Показать решение", "显示解答", "समाधान दिखाएँ")
 add("Sledeći dan", "Next day", "Jour suivant", "Nächster Tag", "Giorno successivo", "Следующий день", "下一天", "अगला दिन")
+add("Sledeći zadatak", "Next puzzle", "Problème suivant", "Nächste Aufgabe", "Prossimo problema", "Следующая задача", "下一题", "अगली पहेली")
 add("Završio si zadatak za danas!", "You finished today’s puzzle!", "Vous avez terminé le problème du jour !", "Du hast die heutige Aufgabe gelöst!", "Hai completato il problema di oggi!", "Вы решили сегодняшнюю задачу!", "你完成了今天的谜题！", "आपने आज की पहेली पूरी कर ली!")
 add("Pokušaj ponovo", "Try again", "Réessayer", "Erneut versuchen", "Riprova", "Попробовать снова", "重试", "फिर कोशिश करें")
-add("Neispravan URL", "Invalid URL", "URL invalide", "Ungültige URL", "URL non valido", "Неверный URL", "无效的网址", "अमान्य URL")
 add("Nema dostupnih zadataka", "No puzzles available", "Aucun problème disponible", "Keine Aufgaben verfügbar", "Nessun problema disponibile", "Нет доступных задач", "暂无可用谜题", "कोई पहेली उपलब्ध नहीं")
-add("Greška mreže: %@", "Network error: %@", "Erreur réseau : %@", "Netzwerkfehler: %@", "Errore di rete: %@", "Сетевая ошибка: %@", "网络错误：%@", "नेटवर्क त्रुटि: %@")
+add("Zadatak je oštećen", "This puzzle is corrupted", "Ce problème est corrompu", "Diese Aufgabe ist beschädigt", "Questo problema è danneggiato", "Задача повреждена", "该题目已损坏", "यह पहेली क्षतिग्रस्त है")
 add("Neispravan FEN", "Invalid FEN", "FEN invalide", "Ungültiges FEN", "FEN non valido", "Неверный FEN", "无效的 FEN", "अमान्य FEN")
+add("Baza zadataka nije dostupna", "Puzzle database unavailable", "Base de problèmes indisponible", "Aufgabendatenbank nicht verfügbar", "Database dei problemi non disponibile", "База задач недоступна", "题目数据库不可用", "पहेली डेटाबेस उपलब्ध नहीं")
 
 # ── Puzzle themes ───────────────────────────────────────────────────────────
 add("Otvaranje", "Opening", "Ouverture", "Eröffnung", "Apertura", "Дебют", "开局", "ओपनिंग")
@@ -779,6 +780,7 @@ add("Remi", "Draws", "Nulles", "Remis", "Patte", "Ничьи", "平局", "ड्
 add("Uspešnost", "Win Rate", "Taux de victoire", "Siegesrate", "Percentuale di vittorie", "Процент побед", "胜率", "जीत दर")
 add("Najbolji niz", "Best Streak", "Meilleure série", "Beste Serie", "Miglior serie", "Лучшая серия", "最佳连胜", "सर्वश्रेष्ठ सिलसिला")
 add("Rešeno zadataka", "Puzzles Solved", "Problèmes résolus", "Gelöste Rätsel", "Problemi risolti", "Решено задач", "已解谜题", "हल की गई पहेलियाँ")
+add("Rejting zadataka", "Puzzle rating", "Classement des problèmes", "Aufgaben-Wertung", "Punteggio problemi", "Рейтинг задач", "谜题评分", "पहेली रेटिंग")
 add("Resetuj statistiku", "Reset Statistics", "Réinitialiser les statistiques", "Statistiken zurücksetzen", "Reimposta statistiche", "Сбросить статистику", "重置统计", "सांख्यिकी रीसेट करें")
 add("Da li želite da resetujete sve statistike?", "Do you want to reset all statistics?", "Voulez-vous réinitialiser toutes les statistiques ?", "Möchten Sie alle Statistiken zurücksetzen?", "Vuoi reimpostare tutte le statistiche?", "Вы хотите сбросить всю статистику?", "您想重置所有统计数据吗？", "क्या आप सभी सांख्यिकी रीसेट करना चाहते हैं?")
 add("Ako se ista pozicija ponovi **tri puta**, može se tražiti remi.",

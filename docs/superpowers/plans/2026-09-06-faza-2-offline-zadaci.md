@@ -347,10 +347,17 @@ Create `Tests/ChesskoEngineTests/RatingTests.swift`, protiv `StatsManager.newRat
 | mnogo teži, rešen | 800 | 1600 | da | **832** |
 | mnogo lakši, nerešen | 800 | 400 | ne | **771** |
 
-Peti test: posle 100 uzastopnih rešenih zadataka rejtinga 800, rejting se
-asimptotski primiče 800 odozgo i **ne raste neograničeno** — potvrditi da
-ostaje ispod 1000. (Kad rejting igrača poraste iznad 800, `E` se primiče 1
-pa je prirast sve manji.)
+Peti test proverava **svojstvo, ne fiksnu vrednost**: prirast po rešenom
+zadatku strogo opada. Kako rejting igrača raste iznad 800 (a rejting zadatka
+ostaje 800), `E` se primiče 1 pa je `K*(1-E)` sve manji.
+
+> **Ispravka plana (2026-09-06).** Ranija verzija ovog koraka je tvrdila da se
+> rejting „asimptotski primiče 800 odozgo" i ostaje ispod 1000. To je netačno i
+> uhvaćeno je pri izvršavanju Task-a 4. Rejting *raste* iznad 800: posle 100
+> rešenih je 1288, posle 1000 je 1520. Niz se zaustavlja tek oko **1520**, gde
+> `round(32*(1-E))` prvi put padne na 0 — dakle ograničava ga celobrojno
+> zaokruživanje, ne asimptota ka 800. Test mora da tvrdi opadanje prirasta;
+> svaka granica na samoj vrednosti je samo gruba zaštita od linearnog rasta.
 
 `StatsManager` je `@MainActor` i piše u `UserDefaults`; `newRating` nije ni
 jedno ni drugo, pa se testira direktno bez ikakve pripreme.
@@ -419,6 +426,11 @@ Nova sekcija o bazi zadataka: odakle je, kako se regeneriše, zašto je `puzzle_
 - [ ] `xcodebuild … build` → `** BUILD SUCCEEDED **`
 - [ ] `git status --short` prazan
 - [ ] Grep za mrežom nad `Chessko/` bez pogodaka
-- [ ] `Chessko/puzzles.sqlite` ispod 6 MB i commit-ovan
+- [ ] `Chessko/puzzles.sqlite` commit-ovan i ispod praga iz Task-a 1 (8 MB)
+
+> **Ispravka plana (2026-09-07).** Ova stavka je ranije tražila „ispod 6 MB", što je
+> u sukobu sa samim Task-om 1, gde je prag za prekid rada bio 8 MB. Stvarna baza je
+> **7,0 MB** — prošla je Task 1 i njegov pregled. Merodavan je prag iz Task-a 1;
+> ovde je 6 MB bilo omaška.
 - [ ] Tab Zadaci pregledan u obe teme
 

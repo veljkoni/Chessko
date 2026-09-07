@@ -45,11 +45,51 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (11 testova): perft za svih 6 standardnih pozicija (uključujući
-početnu do dubine 5, 4.865.609 čvorova, ~85s) i 4 testa prava rokade
-(uzimanje topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo
-pravo). `Chessko/TestSupport/LocShim.swift` postoji samo zbog paketa i
-zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u aplikaciji se ne kompajlira.
+Pokriveno (27 testova): perft za svih 6 standardnih pozicija (uključujući
+početnu do dubine 5, 4.865.609 čvorova, ~85s), 4 testa prava rokade (uzimanje
+topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
+8 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu —
+vidi ispod) i 5 testova Elo rejtinga. `Chessko/TestSupport/LocShim.swift`
+postoji samo zbog paketa i zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u
+aplikaciji se ne kompajlira.
+
+Dva testa integriteta prolaze svih 20.000 zadataka deterministički, po `id`:
+`everyPuzzleInDatabaseHasValidFenAndAtLeastOneMove` (FEN se parsira, lista
+poteza nije prazna, broj pročitanih redova = `COUNT(*)`) i
+`everyPuzzleFirstMoveParsesInItsOwnPosition` (prvi UCI potez se razrešava u
+svojoj poziciji). Oba postoje zato što uzorak od 500 redova hvata pokvaren
+red u ~2,5% pokretanja — praktično nikad.
+
+## Baza zadataka
+
+`Chessko/puzzles.sqlite` (7,0 MB, commit-ovan) — **20.000 zadataka iz Lichess
+baze, licenca CC0**. Aplikacija od Faze 2 nema nijedan mrežni poziv za
+zadatke; radi u avionskom režimu.
+
+```bash
+# Regenerisanje (jednokratno; preuzima 304 MB, ne raspakuje na disk)
+curl -sL https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -dc \
+  | python3 build_puzzle_db.py --stdin --out Chessko/puzzles.sqlite
+```
+
+- **Filter kvaliteta**: rejting 600–2200, `NbPlays >= 200`, `Popularity >= 90`,
+  `RatingDeviation <= 80`. Propušta ~31% baze.
+- **Uzorak je stratifikovan**, 8 opsega rejtinga × 2.500. Naivnih „prvih
+  20.000" dalo bi premalo lakih zadataka — raspodela Lichess baze je nagnuta
+  ka 1400–1800, a opseg 600–799 je najtanji. Unutar opsega se bira tako da
+  svaka tema bude zastupljena (73 teme, najređa ima 137 zadataka).
+- **Determinističko**: `random.Random(seed)`, ponovno pokretanje daje istu bazu.
+- **`puzzle_themes` je razložena tabela** i postoji samo radi filtriranja po
+  temi. Bez nje bi upit morao da radi `LIKE '%mate%'` nad tekstom, što pogađa
+  i `mateIn1`, `mateIn2`, `smotheredMate`. `IN` nad razloženom tabelom poredi
+  ceo string i uklanja tu klasu greške.
+- Čita se isključivo kroz `Chessko/Logic/PuzzleRepository.swift` (`import
+  SQLite3` — sistemski modul, **bez ijedne SPM zavisnosti**), otvorena
+  `SQLITE_OPEN_READONLY`. Klasa je `@MainActor`: to nije ukras nego jedina
+  stvar koja sprečava trku oko keširanog `count`-a, i budućeg pozadinskog
+  pozivaoca pretvara u grešku pri kompajliranju.
+- `build_puzzle_db.py` drži ~1,86M kandidata u memoriji (~1–2 GB) pre
+  uzorkovanja. Radi na mašini sa dovoljno RAM-a; nije strimujuće po opsegu.
 
 ## Dizajn sistem
 
@@ -144,9 +184,27 @@ Chessko/
   (grane `CastleKingside`/`CastleQueenside` i blok koji oduzima prava rokade
   gledaju samo `move.from`, tačno ono što je iOS imao pre Faze 0). Popravka je
   planirana za Fazu 6.
-- `PuzzleView` portretni raspored je `VStack` bez `ScrollView`-a, sa svega
-  ~10–20pt rezerve ispod poslednje kontrole — rizik od sečenja sadržaja na
-  većem Dynamic Type-u ili na manjim ekranima.
+- **Traka datuma stoji i nad vežbovnim zadatkom.** Kad se preko „Sledeći
+  zadatak" pređe u vežbanje, u traci i dalje piše datum (npr. „Danas"), kvačica
+  rešenosti tog DANA ostaje vidljiva i strelice za datum rade. Netačne tvrdnje
+  su uklonjene u završnom talasu Faze 2 („Sledeći dan", poruka „Završio si
+  zadatak za danas!" i animacija koja vuče pažnju ka strelicama sad su gejtovani
+  na `mode == .daily`), a stanje se nikad nije kvarilo (upis u kalendar je od
+  početka gejtovan isto). Ostaje samo to što traka opisuje datum, a ne zadatak
+  na ekranu.
+- **Napredak u rešavanju ne preživi gašenje aplikacije**, i do Faze 2 nije
+  preživljavao ni prebacivanje taba (sad preživljava — `.onAppear` učitava samo
+  kad zadatka nema).
+- `PuzzleViewModel.nextPuzzle()` prosleđuje ceo skup rešenih id-jeva kao
+  `excluding`, a `PuzzleRepository` vezuje **jedan SQL parametar po id-ju**. Na
+  tavanici od 20.000 rešenih to je 20k bind-ova po dodiru, protiv
+  `SQLITE_MAX_VARIABLE_NUMBER` (32.766). Bezbedno je, ali rezervu drži veličina
+  baze a ne dizajn — ako baza ikad poraste, ovo treba prebaciti na privremenu
+  tabelu ili `NOT EXISTS` podupit.
+- Rejting igrača (`StatsManager.puzzleRating`) **nije ograničen** ni sa jedne
+  strane. Uzastopni padovi ga zaustave oko ~80, uzastopna rešenja oko ~1520 (tu
+  `round(32*(1-E))` padne na 0). Prozor za izbor zadatka je zato clamp-ovan
+  posebno, u `PuzzleRepository.practiceRatingWindow(playerRating:)`.
 - `build_localizations.py` pri svakom pokretanju regeneriše ceo
   `Localizable.xcstrings` i briše Xcode-ove auto-ekstraktovane ključeve iz
   izvornog koda (bez prevoda — Xcode ih sam vrati pri sledećem build-u), ali
@@ -557,3 +615,153 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   jedini preostali pogodak je multi-color konfeti paleta u `BoardView.swift:347`
   (van dometa — boje table/figura). Build (`iPhone 17 Pro` simulator) uspešan,
   `swift test` 11/11 prošlo (~84s).
+- **2026-09-06** — Faza 2, Task 4 (rejting igrača). `StatsManager` dobija Elo-stil
+  `puzzleRating: Int` (default 800, ceo obrazac za razlikovanje „nema vrednosti" od
+  0 kao `resetStats()`) i `nonisolated static func newRating(current:puzzleRating:solved:)`
+  — čista funkcija (`E = 1/(1+10^((Rp-R)/400))`, `R' = R + 32*(S-E)`), namerno `nonisolated`
+  da izbegne MainActor izolaciju nasleđenu od klase i ostane testabilna bez `UserDefaults`;
+  instanca `applyPuzzleResult(puzzleRating:solved:)` je zove i upisuje. `PuzzleViewModel`
+  poziva `applyPuzzleResult` na sva tri mesta gde već postoji `recordPuzzleSolved()`/
+  `recordPuzzleFailed()` (pogrešan potez, rešeno, `showSolution()`), uzimajući rejting iz
+  `currentPuzzle?.rating` — ako je `currentPuzzle` nil, rejting se ne ažurira.
+  `Logic/StatsManager.swift` dodat u `Package.swift` `sources:` (kompajlira se čisto sa
+  Foundation, bez app-only zavisnosti). Novi `Tests/ChesskoEngineTests/RatingTests.swift`,
+  5 testova: 4 fiksne vrednosti iz spec-a (800/800/rešeno→816, 800/800/nerešeno→784,
+  800/1600/rešeno→832, 800/400/nerešeno→771) i peti kao svojstvo (property test).
+  **Nalaz:** peti test u planu je tražio da rejting posle 100 uzastopnih rešenih zadataka
+  ocene 800 ostane ispod 1000 — provereno istom (verifikovanom) formulom da to nije tačno:
+  pošto je rejting zadatka fiksiran na 800 dok rejting igrača raste, `E` raste ka 1 ali
+  nikad ga ne dostiže, pa je svaki prirast pozitivan; posle 100 ponavljanja rejting je
+  1288, a stvarna fiksna tačka niza (gde `round(32*(1-E))` prvi put padne na 0) je oko
+  1520, ne 800. Plan (`docs/superpowers/plans/2026-09-06-faza-2-offline-zadaci.md`) je
+  ispravljen eksplicitnom napomenom, ne tihom izmenom. Peti test je zatim prepisan da
+  tvrdi **svojstvo** koje Elo formula stvarno garantuje: prirast po rešenom zadatku je
+  pozitivan i **ne raste** kroz svih 100 iteracija. `<=`, ne `<` — celobrojno
+  zaokruživanje pravi platoe (…16, 16, 15…), pa bi strogo opadanje palo iako je formula
+  ispravna. Granica `< 1600` je ostala samo kao gruba zaštita od linearnog rasta; sama
+  za sebe prolazi i kad je formula pokvarena na više načina.
+  `swift test`: 23/23 prošlo. `xcodebuild` (simulator `iPhone 17` — `iPhone 16` ne postoji
+  na ovoj mašini): BUILD SUCCEEDED. `project.pbxproj` nije dirran (test fajlovi i
+  `StatsManager.swift` već registrovani).
+- **2026-09-06** — Faza 2, Task 5: neograničeno rešavanje zadataka ("Sledeći zadatak").
+  `PuzzleRepository`: `nonisolated static let minRating = 600` / `maxRating = 2200`
+  (granice isporučene baze) i `nonisolated static func practiceRatingWindow(playerRating:)`
+  — čista funkcija, `lo = max(minRating, r-200)`, `hi = max(lo, min(maxRating, r+100))`.
+  Ovo NIJE kozmetika nego fix za crash: rejting igrača nije ograničen (dug niz neuspeha
+  ga vodi ka ~80), pa bi naivan prozor za rejting 80 bio `-120...180` (baza počinje od
+  600 — prazno), a klampovanje SAMO donje granice dalo bi `600...180`, `ClosedRange` sa
+  donjom granicom većom od gornje — puca pri kreiranju, ne samo vraća prazan niz. Tri nova
+  testa u `PuzzleRepositoryTests.swift` (srednji rejting, 80, 3000) — za rejting 3000
+  formula ispravno vraća `2800...2800` (validan ali prazan u bazi; na to se oslanja
+  progresivno proširenje niže).
+  `PuzzleViewModel`: novi `enum PuzzleMode { daily, practice }` + `private(set) var mode`.
+  `loadPuzzle()` postavlja `.daily` (pokriva i `load(date:)`, koji ga zove); novi
+  `nextPuzzle()` postavlja `.practice`, čita `StatsManager.shared.puzzleRating` U TRENUTKU
+  poziva (ne kešira se — prati igrača kako napreduje unutar sesije) i pokušava
+  `randomPuzzle` kroz 4 sve šira prozora: `practiceRatingWindow` → `±400` → `±800` →
+  cela baza `600...2200`, uz `excluding: solvedPuzzleIds`; ako je i cela baza sa
+  isključivanjem prazna (korisnik rešio svih ~20 000), poslednje pribežište ignoriše
+  `excluding` i ponovi već rešen zadatak (bolje ponavljanje nego prazan ekran).
+  Novi `solvedPuzzleIds: Set<String>` (UserDefaults ključ `solvedPuzzleIds`, niz stringova,
+  učitan jednom pri inicijalizaciji svojstva — najgori slučaj ~20 000 kratkih id-jeva,
+  ~200 KB, prihvatljivo bez čišćenja) upisuje se u OBA režima kad zadatak bude uspešno
+  rešen kroz `attempt()`; `markCurrentSolved()` (kalendarski dan) i dalje se zove SAMO
+  kad je `mode == .daily` — u `.practice` bi lažno označio kalendarski dan kao rešen.
+  `showSolution()` namerno NE upisuje ni `solvedPuzzleIds` ni kalendar (isti obrazac kao
+  postojeći komentar "Ne označavamo kao rešeno kad se prikaže rešenje") — sopstvena odluka,
+  van eksplicitnog obima brief-a.
+  Fix defekta koji bi ovaj task pogoršao: `.onAppear { viewModel.loadDailyPuzzle() }` u
+  `PuzzleView` se okidao na SVAKI povratak na tab Zadaci i bezuslovno je restartovao
+  zadatak (do sada je to tiho brisalo upola rešen dnevni zadatak; sa `.practice` bi
+  izbacilo korisnika i iz vežbovnog zadatka). `loadDailyPuzzle()` sada učitava SAMO kad
+  `currentPuzzle == nil` ili je `phase == .unavailable` (retry dugme i dalje radi jer je u
+  tom stanju `currentPuzzle` već `nil`); `load(date:)` i retry i dalje prisilno učitavaju,
+  nedirani.
+  UI: `.solved` grana `actionButtons` u `PuzzleView.swift` sad je `VStack` — nova primarna
+  akcija "Sledeći zadatak" (`DS.accent` pozadina + `DS.onAccent` tekst, isti par kao dugme
+  za pauzu u `ChessClockView`) uvek na vrhu, dostupna i posle dnevnog i posle vežbovnog
+  zadatka; postojeće "Sledeći dan"/"Završio si zadatak za danas!" ispod, nepromenjene
+  funkcionalno (samo "Sledeći dan" prebačen na sekundarni stil — `Color.primary.opacity`,
+  isti kao "Prikaži rešenje" — da ustupi mesto novoj primarnoj akciji). Nov ključ
+  "Sledeći zadatak" dodat u `build_localizations.py` (za `add("Sledeći dan", ...)`) i
+  katalog regenerisan: 406 → 407 ključeva (tačno +1), svih 8 jezika po ključu potvrđeno
+  python skriptom.
+  `swift test`: 26/26 prošlo (23 postojeća + 3 nova za `practiceRatingWindow`). `xcodebuild`
+  (simulator `iPhone 17`): BUILD SUCCEEDED. `project.pbxproj` nije dirran — nema novih fajlova.
+- **2026-09-07** — Faza 2 završena (offline zadaci). Tab Zadaci više nema nijedan mrežni
+  poziv: `chess-puzzles-api.vercel.app` je zamenjen lokalnom bazom od 20.000 Lichess
+  zadataka (CC0) koja se čita kroz `PuzzleRepository` (`import SQLite3`, bez ijedne nove
+  SPM zavisnosti). Detalji baze i njeno regenerisanje — vidi sekciju „Baza zadataka".
+  Uz to: Elo rejting igrača (start 800, K=32) i neograničeno rešavanje („Sledeći zadatak")
+  sa izborom po rejtingu. `swift test` 27/27; grep za mrežom nad `Chessko/*.swift` daje
+  samo 2 licencna komentara i 2 atribucijska linka u „O aplikaciji" (GPLv3 obaveza).
+  Vizuelno provereno na iPhone 17 Pro u obe teme (dnevni zadatak i rešeno stanje).
+
+  **Ispravke koje su ispale iz pregleda, vredne pamćenja:**
+  - `PuzzleRepository.swift` je bio dodat samo u `Package.swift`, **ne i u Xcode target**.
+    `swift test` je prolazio (paket kompajlira izvore po putanji) i `xcodebuild` je prolazio
+    (fajla nije ni bilo za target) — aplikacija ga nikad nije kompajlirala. Ista klasa greške
+    kao `.nnue` mreže 2026-06-26. Otkriveno tek u Task-u 3, kad je nešto počelo da ga zove.
+    **Pouka: kad se doda nov izvorni fajl, dokazati da se kompajlira u aplikaciju** —
+    ubaciti sintaksnu grešku i videti da build pada.
+  - `applyNextComputerMove()` je pri neuspehu `ChessMove.fromUCI` ćutke izlazio i ostavljao
+    `phase` na `.loading`, gde su sve kontrole onemogućene a `actionButtons` prazan — ekran
+    bez izlaza do restarta. Guard je razdvojen: prazna lista poteza = normalan kraj,
+    nerazrešiv potez = `.unavailable(Loc("Zadatak je oštećen"))`.
+  - Odloženi `Task`-ovi (protivnikov potez, reprodukcija rešenja) dobili su
+    **brojač generacije**. Strelice za datum se gase samo na `.loading`, pa su
+    tokom 600ms čekanja na protivnikov potez i tokom ~700ms po potezu u
+    reprodukciji rešenja bile aktivne: promena datuma tu je ostavljala zaostali
+    `Task` koji je onda odigrao potez nad **novim** zadatkom (`rawMoves` je već
+    zamenjen), pa je zadatak počinjao sam sebe da rešava. Svaki odloženi `Task`
+    sada pamti `loadGeneration` i odustaje ako se promenio. Uz to je
+    `showSolution()` gejtovan na `!awaitingOpponent` — dugme je tokom tog
+    prozora vidljivo, a odloženi potez bi pregazio `.showingSolution` nazad u
+    `.playing`.
+  - Dodat `DS.onAccent`. `DS.accent` **menja svetlinu između tema** (`#2E4A8A` svetla /
+    `#7EA0E8` tamna), pa nijedna fiksna boja teksta ne radi u obe: bela je davala 8,5:1 u
+    svetloj ali 2,6:1 u tamnoj. Pogođena su bila dva mesta — novo dugme „Sledeći zadatak"
+    i dugme pauze u satu. **`DS.onScrim` (fiksna bela) sme samo na `DS.scrim`; na `DS.accent`
+    ide `DS.onAccent`.**
+
+- **2026-09-07** — Faza 2, talas ispravki iz finalnog pregleda cele grane (šest nalaza,
+  izveštaj u `.superpowers/sdd/2026-09-06-faza-2-offline-zadaci/final-fix-report.md`).
+  (1) **Rupa u unosu od 600 ms posle svakog tačnog poteza**, koja je korisnika koštala
+  rejtinga: `attempt()` je posle tačnog poteza vraćao `phase = .playing` i tek za 600 ms
+  odigravao protivnički odgovor, a `isPlayerTurn` je u tom prozoru bio `true` — brz tap
+  je poređen sa PROTIVNIČKIM potezom iz `rawMoves`, pa je padao kao greška (−16…−32 Elo,
+  `puzzleHadError = true`, tačno rešenje se posle toga više nije brojalo). Rešenje: novi
+  `awaitingOpponent` flag u `PuzzleViewModel` (postavlja se pre `Task`-a, briše se
+  `defer`-om na svim izlazima `applyNextComputerMove()`) uključen u `isPlayerTurn`.
+  `.loading` se ovde NE sme koristiti (kao u `loadPuzzle()`) jer `PuzzleView` u toj fazi
+  crta ekran učitavanja umesto table; odloženi poziv iz `setup()` je već pokriven
+  `.loading`-om koji obe ulazne tačke postavljaju pre njega.
+  (2) **Rejting zadataka se računao i čuvao, a nigde nije bio prikazan** (spec §6 traži
+  vidljiv rejting i njegovo kretanje) — dodat `StatBox(Loc("Rejting zadataka"))` u
+  statističku mrežu u `SettingsSheet.swift` (drugi red sad ima 4 kolone, kao prvi); ključ
+  dodat u `build_localizations.py`, katalog 408 → 409 ključeva × 8 jezika (provereno).
+  (3) **Režim vežbanja je tvrdio da je dnevni zadatak završen** — `.solved` grana u
+  `PuzzleView` je gledala samo `canGoNext`/`selectedDate`, pa je posle rešenog vežbovnog
+  zadatka pisalo „Završio si zadatak za danas!" dok je kvačica u traci na istom ekranu
+  govorila suprotno, a „Sledeći dan" je tiho izbacivao korisnika iz vežbanja. Ceo blok je
+  gejtovan na `viewModel.mode == .daily`; „Sledeći zadatak" ostaje vidljiv u oba režima.
+  (4) **„Resetuj statistiku" nije resetovao napredak na zadacima** — `resetStats()` je
+  vraćao rejting na 800 ali ostavljao `solvedPuzzleIds` i `chessko.solvedDates`. Oba imena
+  ključa su sad `nonisolated static let` na `StatsManager` (ne mogu da žive u
+  `PuzzleViewModel` — `StatsManager.swift` se kompajlira i u `ChesskoEngine` SwiftPM target
+  gde `PuzzleViewModel` ne postoji), `resetStats()` ih briše, a `PuzzleViewModel` ih koristi
+  umesto svojih literala i ponovo čita oba skupa iz `UserDefaults` u novom
+  `reloadPersistedProgress()` (jednom po učitavanju zadatka — iz `loadPuzzle()` **i**
+  `nextPuzzle()`, jer je vežbanje baš ono što `solvedPuzzleIds` isključuje).
+  (5) **Animacija koja vuče pažnju ka strelicama za datum okidala se i posle vežbovnih
+  rešenja** (četiri haptika 3 s kasnije, usred sledećeg zadatka) — gejtovana na
+  `mode == .daily`, uz dodatnu proveru stanja unutar odloženog bloka jer se sekvenca ne
+  može otkazati.
+  (6) Tri zastarela mesta u dokumentaciji: komentar mape tema u `PuzzleView.swift` više ne
+  obećava dopunu „u Fazi 2" nego navodi zašto 21 od 73 teme dovoljno (0 od 20.000 zadataka
+  bez ijednog čipa, 184 sa jednim); iz „Poznatih ograničenja" uklonjen netačan unos o
+  `PuzzleView` portretnom rasporedu bez `ScrollView`-a (netačno od Faze 1, vidi
+  `PuzzleView.swift:77`) i preformulisan unos o dnevnom „hromu" nad vežbanjem (delovi koje
+  ovaj talas popravlja); u changelog unosu za Task 5 `DS.onScrim` ispravljen na `DS.onAccent`.
+  `swift test` 27/27 prošlo (~85 s), `xcodebuild` (iPhone 17 Pro simulator) BUILD SUCCEEDED.
+  `project.pbxproj` nije diran (nema novih fajlova).

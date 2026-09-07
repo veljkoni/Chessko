@@ -50,6 +50,13 @@ enum DS {
     /// postao skoro beo na svetloj podlozi. Vrednost je svetla varijanta `ink`-a.
     static let inkFixed = Color(hex: "#161A22")
 
+    /// Tekst i ikone NA `DS.accent` podlozi. MORA da bude adaptivan, za razliku
+    /// od `onScrim`-a: `accent` menja svetlinu izmedju tema (taman `#2E4A8A` u
+    /// svetloj, svetao `#7EA0E8` u tamnoj), pa nijedna fiksna boja teksta ne
+    /// radi u obe. Bela na tamnoj varijanti daje 8.5:1, ali na svetloj samo
+    /// 2.6:1 — ispod AA. Tamno mastilo na svetloj varijanti daje 6.7:1.
+    static let onAccent = Color.adaptive(light: "#FFFFFF", dark: "#161A22")
+
     // MARK: Razmaci
 
     enum Space {
