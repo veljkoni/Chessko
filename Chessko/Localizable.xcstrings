@@ -1432,6 +1432,907 @@
         }
       }
     },
+    "Beli igra": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beli igra"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "White to move"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aux blancs de jouer"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiß am Zug"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muove il Bianco"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ход белых"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "白方走棋"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सफ़ेद की चाल"
+          }
+        }
+      }
+    },
+    "Crni igra": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crni igra"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black to move"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aux noirs de jouer"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schwarz am Zug"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muove il Nero"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ход чёрных"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "黑方走棋"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "काली की चाल"
+          }
+        }
+      }
+    },
+    "Mat! Beli je pobedio! 🎉": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mat! Beli je pobedio! 🎉"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checkmate! White wins! 🎉"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec et mat ! Les blancs gagnent ! 🎉"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schachmatt! Weiß gewinnt! 🎉"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scacco matto! Vince il Bianco! 🎉"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мат! Белые победили! 🎉"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将死！白方获胜！🎉"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शहमात! सफ़ेद जीता! 🎉"
+          }
+        }
+      }
+    },
+    "Mat! Crni je pobedio! 🎉": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mat! Crni je pobedio! 🎉"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checkmate! Black wins! 🎉"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec et mat ! Les noirs gagnent ! 🎉"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schachmatt! Schwarz gewinnt! 🎉"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scacco matto! Vince il Nero! 🎉"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мат! Чёрные победили! 🎉"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将死！黑方获胜！🎉"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शहमात! काला जीता! 🎉"
+          }
+        }
+      }
+    },
+    "Šah! Beli kralj je napadnut.": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Šah! Beli kralj je napadnut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check! The white king is under attack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec ! Le roi blanc est attaqué."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schach! Der weiße König wird angegriffen."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scacco! Il re bianco è sotto attacco."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шах! Белый король под боем."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将军！白王受到攻击。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शह! सफ़ेद राजा पर हमला है।"
+          }
+        }
+      }
+    },
+    "Šah! Crni kralj je napadnut.": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Šah! Crni kralj je napadnut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check! The black king is under attack."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec ! Le roi noir est attaqué."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schach! Der schwarze König wird angegriffen."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scacco! Il re nero è sotto attacco."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шах! Чёрный король под боем."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将军！黑王受到攻击。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शह! काले राजा पर हमला है।"
+          }
+        }
+      }
+    },
+    "Predati partiju?": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Predati partiju?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resign the game?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abandonner la partie ?"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partie aufgeben?"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbandonare la partita?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сдать партию?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "认输？"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बाज़ी छोड़ें?"
+          }
+        }
+      }
+    },
+    "Da li ste sigurni da želite da predate trenutnu partiju?": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Da li ste sigurni da želite da predate trenutnu partiju?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Are you sure you want to resign the current game?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voulez-vous vraiment abandonner la partie en cours ?"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Möchtest du die laufende Partie wirklich aufgeben?"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuoi davvero abbandonare la partita in corso?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вы уверены, что хотите сдать текущую партию?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确定要认输当前对局吗？"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्या आप वाकई मौजूदा बाज़ी छोड़ना चाहते हैं?"
+          }
+        }
+      }
+    },
+    "Pregledaj partiju": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pregledaj partiju"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review the game"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revoir la partie"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partie analysieren"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rivedi la partita"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разобрать партию"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复盘对局"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बाज़ी की समीक्षा करें"
+          }
+        }
+      }
+    },
+    "Potvrda": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potvrda"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmer"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bestätigen"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conferma"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подтвердить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्टि करें"
+          }
+        }
+      }
+    },
+    "Resetuj": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resetuj"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialiser"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zurücksetzen"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reimposta"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сбросить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "रीसेट करें"
+          }
+        }
+      }
+    },
+    "Zatvori": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zatvori"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fermer"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiudi"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрыть"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बंद करें"
+          }
+        }
+      }
+    },
+    "Klasični": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klasični"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classic"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classiques"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klassisch"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classici"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Классические"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "经典"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्लासिक"
+          }
+        }
+      }
+    },
+    "Neonski": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neonski"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Néon"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Неоновые"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "霓虹"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नियॉन"
+          }
+        }
+      }
+    },
+    "Drvene": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drvene"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wooden"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En bois"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Holz"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In legno"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Деревянные"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "木质"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लकड़ी"
+          }
+        }
+      }
+    },
+    "Metalne": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metalne"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Métal"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metall"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metallo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Металлические"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金属"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "धातु"
+          }
+        }
+      }
+    },
+    "Ravne": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ravne"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flat"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plates"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flach"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piatte"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Плоские"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扁平"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सपाट"
+          }
+        }
+      }
+    },
     "Lak": {
       "extractionState": "manual",
       "localizations": {

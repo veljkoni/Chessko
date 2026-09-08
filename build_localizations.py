@@ -72,6 +72,30 @@ add("Stockfish zahteva NNUE fajlove", "Stockfish requires NNUE files", "Stockfis
 add("Računar", "Computer", "Ordinateur", "Computer", "Computer", "Компьютер", "电脑", "कंप्यूटर")
 add("Ti", "You", "Vous", "Du", "Tu", "Вы", "你", "आप")
 
+# ── Stringovi koji su ranije ostali bez kljuca (Faza 3.1) ────────────────────
+# Nadjeni kontrolnom proverom "svaki Loc() ima kljuc". Bez njih `Loc(_:)` vraca
+# sam kljuc, pa je korisnik na svih 7 stranih jezika video srpski tekst — i to
+# na objavama koje se vide u SVAKOJ partiji (sah, mat).
+# "Beli"/"Crni" NISU ovde: kljucevi "beli"/"crni" postoje, a generisanje simbola
+# im pravi isti simbol pa build puca. GameView zato koristi `.capitalized`.
+add("Beli igra", "White to move", "Aux blancs de jouer", "Weiß am Zug", "Muove il Bianco", "Ход белых", "白方走棋", "सफ़ेद की चाल")
+add("Crni igra", "Black to move", "Aux noirs de jouer", "Schwarz am Zug", "Muove il Nero", "Ход чёрных", "黑方走棋", "काली की चाल")
+add("Mat! Beli je pobedio! 🎉", "Checkmate! White wins! 🎉", "Échec et mat ! Les blancs gagnent ! 🎉", "Schachmatt! Weiß gewinnt! 🎉", "Scacco matto! Vince il Bianco! 🎉", "Мат! Белые победили! 🎉", "将死！白方获胜！🎉", "शहमात! सफ़ेद जीता! 🎉")
+add("Mat! Crni je pobedio! 🎉", "Checkmate! Black wins! 🎉", "Échec et mat ! Les noirs gagnent ! 🎉", "Schachmatt! Schwarz gewinnt! 🎉", "Scacco matto! Vince il Nero! 🎉", "Мат! Чёрные победили! 🎉", "将死！黑方获胜！🎉", "शहमात! काला जीता! 🎉")
+add("Šah! Beli kralj je napadnut.", "Check! The white king is under attack.", "Échec ! Le roi blanc est attaqué.", "Schach! Der weiße König wird angegriffen.", "Scacco! Il re bianco è sotto attacco.", "Шах! Белый король под боем.", "将军！白王受到攻击。", "शह! सफ़ेद राजा पर हमला है।")
+add("Šah! Crni kralj je napadnut.", "Check! The black king is under attack.", "Échec ! Le roi noir est attaqué.", "Schach! Der schwarze König wird angegriffen.", "Scacco! Il re nero è sotto attacco.", "Шах! Чёрный король под боем.", "将军！黑王受到攻击。", "शह! काले राजा पर हमला है।")
+add("Predati partiju?", "Resign the game?", "Abandonner la partie ?", "Partie aufgeben?", "Abbandonare la partita?", "Сдать партию?", "认输？", "बाज़ी छोड़ें?")
+add("Da li ste sigurni da želite da predate trenutnu partiju?", "Are you sure you want to resign the current game?", "Voulez-vous vraiment abandonner la partie en cours ?", "Möchtest du die laufende Partie wirklich aufgeben?", "Vuoi davvero abbandonare la partita in corso?", "Вы уверены, что хотите сдать текущую партию?", "确定要认输当前对局吗？", "क्या आप वाकई मौजूदा बाज़ी छोड़ना चाहते हैं?")
+add("Pregledaj partiju", "Review the game", "Revoir la partie", "Partie analysieren", "Rivedi la partita", "Разобрать партию", "复盘对局", "बाज़ी की समीक्षा करें")
+add("Potvrda", "Confirm", "Confirmer", "Bestätigen", "Conferma", "Подтвердить", "确认", "पुष्टि करें")
+add("Resetuj", "Reset", "Réinitialiser", "Zurücksetzen", "Reimposta", "Сбросить", "重置", "रीसेट करें")
+add("Zatvori", "Close", "Fermer", "Schließen", "Chiudi", "Закрыть", "关闭", "बंद करें")
+add("Klasični", "Classic", "Classiques", "Klassisch", "Classici", "Классические", "经典", "क्लासिक")
+add("Neonski", "Neon", "Néon", "Neon", "Neon", "Неоновые", "霓虹", "नियॉन")
+add("Drvene", "Wooden", "En bois", "Holz", "In legno", "Деревянные", "木质", "लकड़ी")
+add("Metalne", "Metal", "Métal", "Metall", "Metallo", "Металлические", "金属", "धातु")
+add("Ravne", "Flat", "Plates", "Flach", "Piatte", "Плоские", "扁平", "सपाट")
+
 # ── Difficulty (GameDifficulty.label) ───────────────────────────────────────
 add("Lak", "Easy", "Facile", "Leicht", "Facile", "Лёгкий", "简单", "आसान")
 add("Srednji", "Medium", "Moyen", "Mittel", "Medio", "Средний", "中等", "मध्यम")
