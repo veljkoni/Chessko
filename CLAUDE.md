@@ -267,15 +267,6 @@ Dve stvari na koje treba paziti pri pisanju JSON-a:
   strane. Uzastopni padovi ga zaustave oko ~80, uzastopna rešenja oko ~1520 (tu
   `round(32*(1-E))` padne na 0). Prozor za izbor zadatka je zato clamp-ovan
   posebno, u `PuzzleRepository.practiceRatingWindow(playerRating:)`.
-- **19 stringova korisničkog interfejsa nema ključ u katalogu**, pa ih korisnik na svim
-  jezicima osim srpskog vidi na srpskom (`Loc(_:)` za nepoznat ključ vraća sam ključ).
-  Među njima su i objave koje se vide u svakoj partiji: `„Mat! Beli je pobedio! 🎉"`,
-  `„Šah! Beli kralj je napadnut."` (`GameViewModel.swift:374-385`), zatim `„Beli"`/`„Crni"`
-  (`GameView.swift:357`), dijalog za predaju (`GameView.swift:242,248`), nazivi stilova
-  figura (`PieceImageView.swift:19-23`), `„Pregledaj partiju"`, `„Potvrda"`, `„Resetuj"`,
-  `„Zatvori"`. Nastalo ranije, dodavanjem tih funkcija bez `add(...)` linije; **nije
-  posledica Faze 3** — provereno da je isti skup od 19 postojao i pre nje. Popravka je
-  mehanička: 19 `add(...)` linija u `build_localizations.py`.
 - `build_localizations.py` pri svakom pokretanju regeneriše ceo
   `Localizable.xcstrings` i briše Xcode-ove auto-ekstraktovane ključeve iz
   izvornog koda (bez prevoda — Xcode ih sam vrati pri sledećem build-u), ali
@@ -871,3 +862,17 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   tabela vrednosti figura čita „1 bod / 3 boda / 3 boda / 5 boda / 9 bodova / ∞" na
   srpskom i „1 point / 3 points / … / ∞" na engleskom. `swift test` 31/31,
   `xcodebuild` BUILD SUCCEEDED, `project.pbxproj` nije diran.
+- **2026-09-08** — Prevedeno 19 stringova interfejsa koji su ranije ostali bez ključa u
+  katalogu, pa ih je korisnik na svih 7 stranih jezika video na srpskom — među njima objave
+  koje se vide u svakoj partiji („Mat! Beli je pobedio!", „Šah! Beli kralj je napadnut."),
+  dijalog za predaju, nazivi stilova figura, „Pregledaj partiju", „Potvrda", „Resetuj",
+  „Zatvori". Katalog 241 → 258 ključeva.
+  **Dva od 19 nisu dodata u katalog, namerno.** `„Beli"`/`„Crni"` bi sa postojećim
+  `„beli"`/`„crni"` dali ISTI simbol pod `STRING_CATALOG_GENERATE_SYMBOLS` i oborili build —
+  ista greška je već napravljena i ispravljena 2026-06-26. `GameView.headerLabel(for:)` zato
+  koristi `color.srbAdjective.capitalized`, isti obrazac kao birač boje. Provereno da
+  `.capitalized` radi na svim jezicima (`blanc→Blanc`, `weiß→Weiß`, `белый→Белый`, kineski
+  nema veličinu slova pa ostaje `白方`).
+  Provereno u **izgrađenoj aplikaciji**, ne samo u katalogu: pročitani `fr/de/ru.lproj`
+  unutar `.app` i potvrđeno da svaki nov ključ ima prevod. Kontrolna provera „svaki `Loc()`
+  ima ključ" sada daje **0**.

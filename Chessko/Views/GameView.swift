@@ -354,7 +354,12 @@ struct GameView: View {
 
     private func headerLabel(for color: PieceColor) -> String {
         if viewModel.gameMode == .localFriend {
-            return color == .white ? Loc("Beli") : Loc("Crni")
+            // NE `Loc("Beli")`/`Loc("Crni")`: kljucevi "beli"/"crni" vec postoje,
+            // a `STRING_CATALOG_GENERATE_SYMBOLS` im pravi ISTI simbol pa se
+            // build ruši na duplikatu. Zato isti obrazac kao birac boje —
+            // postojeci kljuc pa `capitalized`. (Ista greska je vec napravljena
+            // i ispravljena 2026-06-26.)
+            return color.srbAdjective.capitalized
         } else {
             return color == viewModel.playerColor ? Loc("Ti") : Loc("Računar")
         }
