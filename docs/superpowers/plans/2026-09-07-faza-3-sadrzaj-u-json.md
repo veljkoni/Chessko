@@ -1063,6 +1063,21 @@ pathlib.Path('/tmp/unused-keys.txt').write_text("\n".join(sorted(unused)))
 PY
 ```
 
+**ZADRŽATI ovih 7 ključeva bez obzira na to što skripta kaže** (nalaz iz pregleda Task-a 5):
+
+```
+1 bod          3 boda          5 boda          9 bodova
+Specijalna pravila       — izaberi i istraži na tabli
+Tapni figuru da je promeniš · Tapni polje da je premestiš
+```
+
+Prva četiri su **stvarna zamka**: `LessonRenderer.swift` ih ne piše kao literal nego ih
+**sastavlja interpolacijom** (`"\(row.value) bod\(…)"`), pa ih grep ne vidi i skripta ih
+prijavi kao nekorišćene. Obrisani, tabela vrednosti figura bi na svih 8 jezika pokazivala
+srpske oznake bodova. Preostala tri pripadaju piece explorer komponenti i jesu literali, ali
+stoje pod lekcijskim zaglavljem u skripti pa lako odu uz ostalo. (`∞` nije ključ i tako
+treba da ostane.)
+
 Obrisati te `add(...)` linije iz `build_localizations.py`, pa:
 ```bash
 python3 build_localizations.py
@@ -1101,6 +1116,24 @@ for f,k in sorted(missing): print("   ", f, repr(k[:60]))
 PY
 ```
 Expected: `BUILD SUCCEEDED` i **0** poziva bez ključa. Svaki pogodak znači obrisan UI string — vratiti ga.
+
+- [ ] **Step 3b: Skinuti `Loc()` sa sadržaja — u OVOM commit-u, uz brisanje ključeva**
+
+Renderer poziva `Loc()` nad tekstom koji iz JSON-a već stiže preveden. To danas radi samo
+zato što ne-srpski tekst nije ključ kataloga; srpski jeste, pa se re-prevodi. Brisanje
+ključeva i skidanje `Loc()` moraju u **isti commit**: odvojeno, pad na `sr` bi u prozoru
+između njih pokazivao srpski dok ključevi još postoje.
+
+Skinuti `Loc()` sa **17 sadržajnih mesta** u `Chessko/Views/LessonRenderer.swift` —
+`Loc(caption)` (`LessonStaticBoard`), `Loc(title)` (`L_SectionHeader`), `L_Para` text,
+`L_Bullet` title+text, `L_Box` title+text, `L_PieceRow` name, `L_NumberedRule` title+text,
+`Loc(row.name)`, i title+hint u sve tri kartice vežbi — i sa **3 mesta** u
+`Chessko/ViewModels/OpeningExerciseViewModel.swift` (`line.solvedMessage`, `line.wrongMessage`,
+`line.playingPrompt`).
+
+**Ne dirati 11 hrom mesta**: dva podrazumevana teksta za otvaranja, tri stringa explorer-a,
+sastavljeni `"N bod…"`/`"∞"`, četiri podrazumevana teksta u `MatePuzzleCard`, i
+`LocF("Mat u %lld")`.
 
 - [ ] **Step 4: Ažurirati `CLAUDE.md`**
 
