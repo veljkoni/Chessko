@@ -245,6 +245,15 @@ python3 build_lesson_json.py     # regeneriše svih 32 JSON-a
   strane. Uzastopni padovi ga zaustave oko ~80, uzastopna rešenja oko ~1520 (tu
   `round(32*(1-E))` padne na 0). Prozor za izbor zadatka je zato clamp-ovan
   posebno, u `PuzzleRepository.practiceRatingWindow(playerRating:)`.
+- **19 stringova korisničkog interfejsa nema ključ u katalogu**, pa ih korisnik na svim
+  jezicima osim srpskog vidi na srpskom (`Loc(_:)` za nepoznat ključ vraća sam ključ).
+  Među njima su i objave koje se vide u svakoj partiji: `„Mat! Beli je pobedio! 🎉"`,
+  `„Šah! Beli kralj je napadnut."` (`GameViewModel.swift:374-385`), zatim `„Beli"`/`„Crni"`
+  (`GameView.swift:357`), dijalog za predaju (`GameView.swift:242,248`), nazivi stilova
+  figura (`PieceImageView.swift:19-23`), `„Pregledaj partiju"`, `„Potvrda"`, `„Resetuj"`,
+  `„Zatvori"`. Nastalo ranije, dodavanjem tih funkcija bez `add(...)` linije; **nije
+  posledica Faze 3** — provereno da je isti skup od 19 postojao i pre nje. Popravka je
+  mehanička: 19 `add(...)` linija u `build_localizations.py`.
 - `build_localizations.py` pri svakom pokretanju regeneriše ceo
   `Localizable.xcstrings` i briše Xcode-ove auto-ekstraktovane ključeve iz
   izvornog koda (bez prevoda — Xcode ih sam vrati pri sledećem build-u), ali
