@@ -22,6 +22,11 @@ final class LessonRepository {
     /// `curriculum.json` u Fazi 4.
     static let lessonOrder = ["board-and-pieces", "openings", "middlegame", "endgame"]
 
+    /// Jezici koje aplikacija isporucuje. Stoji ovde, a ne cita se iz
+    /// `LocalizationManager`-a, jer taj uvozi SwiftUI a ovaj fajl mora da ostane
+    /// na nivou Foundation-a zbog testnog paketa.
+    static let supportedLanguages: Set<String> = ["sr", "en", "fr", "de", "it", "ru", "zh-Hans", "hi"]
+
     private var cache: [String: LessonDocument] = [:]
 
     /// Lekcija na trazenom jeziku. Ako tog jezika nema (nove lekcije idu samo
@@ -73,9 +78,14 @@ final class LessonRepository {
         let urls = Bundle.main.urls(forResourcesWithExtension: "json",
                                     subdirectory: "Content/lessons") ?? []
         let ids = Set(urls.compactMap { url -> String? in
-            // "openings.sr.json" -> "openings"; jezik je poslednji deo pre .json
+            // "openings.sr.json" -> "openings". Poslednji deo MORA biti podrzan
+            // jezik: bez te provere bi zalutali "openings.sr.backup.json" dao
+            // fantomsku lekciju "openings.sr", koja se onda ne razresi ni na
+            // jednom jeziku i obori `assertionFailure` u `allLessons`.
             let stem = url.deletingPathExtension().lastPathComponent
-            guard let dot = stem.lastIndex(of: ".") else { return nil }
+            guard let dot = stem.lastIndex(of: "."),
+                  Self.supportedLanguages.contains(String(stem[stem.index(after: dot)...]))
+            else { return nil }
             return String(stem[stem.startIndex..<dot])
         })
         // Poznate prvo, propisanim redom; nepoznate azbucno na kraj.

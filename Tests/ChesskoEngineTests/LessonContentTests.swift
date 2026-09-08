@@ -167,7 +167,10 @@ import Foundation
         // trazeni → en → sr bas zato sto nova lekcija sme da ide samo na sr+en.
         // Trazi se srpski (izvorni jezik) i da svi prisutni jezici imaju ISTI
         // broj blokova, sto je stvarna provera da prevod nije negde ispao.
-        #expect(languages[id]?.contains("sr") == true, "\(id) nema srpsku verziju")
+        // sr + en su minimum po spec-u za nove lekcije; cetiri prenete moraju
+        // imati svih 8, sto se proverava odvojeno ispod.
+        #expect(languages[id]?.isSuperset(of: ["sr", "en"]) == true,
+                "\(id) mora imati bar sr i en, ima: \(languages[id]?.sorted() ?? [])")
         #expect(Set(counts).count == 1, "\(id) ima razlicit broj blokova po jeziku: \(counts)")
     }
 
