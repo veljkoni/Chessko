@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Generise Chessko/Content/lessons/<id>.<lang>.json iz strukture zapisane
-ovde + prevoda koji vec postoje u Chessko/Localizable.xcstrings.
+"""JEDNOKRATNI generator, ZAMRZNUT — vise se NE MOZE pokrenuti. Ne pokusavaj.
 
-Struktura (redosled i tip blokova, ikone, FEN-ovi, UCI potezi) je verno
-prenesena iz Chessko/Views/LessonDetailView.swift — lekcija 1 (linije 66-313),
-2 (314-387), 3 (388-451), 4 (452-627). Tekst se NE prekucava: svaki string je
-T("<srpski kljuc>") i vadi se iz kataloga za svih 8 jezika.
+Napravljen je da prenese 4 lekcije iz Swift koda u JSON, tako sto je strukturu
+citao odavde a prevode vadio iz `Chessko/Localizable.xcstrings` po kljucu.
+Zadatak 6 iste faze obrisao je bas te kljuceve iz kataloga (169 komada), jer
+sadrzaj lekcija vise ne ide kroz katalog — pa `T()` sada ne moze da razresi
+nijedan. Pad je bezbedan: `sys.exit` puca pre ijednog upisa, tako da rucne
+izmene JSON-a ne mogu da se pregaze.
 
-Pokretanje:  python3 build_lesson_json.py
+IZVOR ISTINE SU OD FAZE 3 SAMI JSON FAJLOVI u `Chessko/Content/lessons/`.
+Lekcija se menja tako sto se uredi JSON, ne ovaj fajl. Ovde stoji zato sto je
+zapis kako je migracija izvedena i koji je blok dosao sa kog mesta u
+`LessonDetailView.swift`.
 """
+
 import json
 import pathlib
 import sys
@@ -41,7 +46,11 @@ def render(value, lang):
         key = value[1]
         entry = _catalog.get(key)
         if entry is None:
-            sys.exit(f"GRESKA: kljuc nije u katalogu: {key!r}")
+            sys.exit(
+                f"Ovaj generator je ZAMRZNUT i ne moze da se pokrene.\n"
+                f"Kljuc {key!r} vise ne postoji u Localizable.xcstrings — obrisan je u\n"
+                f"Fazi 3, Task 6, jer sadrzaj lekcija ne ide vise kroz katalog.\n"
+                f"Lekcije se od Faze 3 menjaju direktno u Chessko/Content/lessons/*.json.")
         loc = entry.get("localizations", {}).get(lang)
         if loc is None:
             sys.exit(f"GRESKA: kljuc {key!r} nema jezik {lang}")

@@ -56,6 +56,14 @@ struct LearnView: View {
 
     var viewModel: LearnViewModel   // passed from ContentView — pre-initialized
 
+    /// Citanje `effectiveCode` unutar `body`-ja je i pretplata na promenu jezika
+    /// (`@Observable` belezi pristup), pa lista mora da se racuna ovde, a ne da
+    /// se kesira u `@State`.
+    private var lessons: [LessonDocument] {
+        LessonRepository.shared.allLessons(
+            language: LocalizationManager.shared.effectiveCode)
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -72,17 +80,18 @@ struct LearnView: View {
                             Text(Loc("Nauči šah"))
                                 .font(.dsTitle)
                                 .foregroundStyle(DS.ink)
-                            Text(Loc("4 lekcije od osnova do završnice"))
+                            // Broj se racuna, ne zakucava: nova lekcija je od
+                            // Faze 3 samo nov JSON, pa bi zakucano "4" postalo
+                            // netacno bez ijednog upozorenja.
+                            Text(LocF("%lld lekcije od osnova do završnice", lessons.count))
                                 .font(.dsBody)
                                 .foregroundStyle(DS.inkMuted)
                         }
                         .padding(.top, 4)
 
-                        // Lista se gradi iz repozitorijuma; redosled i redni broj
-                        // dolaze iz `LessonRepository.lessonOrder`.
-                        let lessons = LessonRepository.shared.allLessons(
-                            language: LocalizationManager.shared.effectiveCode)
-
+                        // Lista se gradi iz repozitorijuma; poznate lekcije idu
+                        // redom iz `LessonRepository.lessonOrder`, nove se
+                        // otkrivaju iz bundle-a i idu na kraj.
                         ForEach(Array(lessons.enumerated()), id: \.element.id) { index, document in
                             NavigationLink {
                                 LessonDetailView(lessonId: document.id)

@@ -4612,55 +4612,55 @@
         }
       }
     },
-    "4 lekcije od osnova do završnice": {
+    "%lld lekcije od osnova do završnice": {
       "extractionState": "manual",
       "localizations": {
         "sr": {
           "stringUnit": {
             "state": "translated",
-            "value": "4 lekcije od osnova do završnice"
+            "value": "%lld lekcije od osnova do završnice"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "4 lessons from basics to the endgame"
+            "value": "%lld lessons from basics to the endgame"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "4 leçons des bases jusqu’à la finale"
+            "value": "%lld leçons des bases à la finale"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "4 Lektionen von den Grundlagen bis zum Endspiel"
+            "value": "%lld Lektionen von den Grundlagen bis zum Endspiel"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "4 lezioni dalle basi al finale"
+            "value": "%lld lezioni dalle basi al finale"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "4 урока: от основ до эндшпиля"
+            "value": "%lld уроков от основ до эндшпиля"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "从基础到残局的 4 节课"
+            "value": "%lld 节课，从基础到残局"
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "मूल बातों से अंत खेल तक 4 पाठ"
+            "value": "%lld पाठ, मूल बातों से अंत तक"
           }
         }
       }

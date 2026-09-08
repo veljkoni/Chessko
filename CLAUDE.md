@@ -68,11 +68,12 @@ red u ~2,5% pokretanja — praktično nikad.
 baze, licenca CC0**. Aplikacija od Faze 2 nema nijedan mrežni poziv za
 zadatke; radi u avionskom režimu.
 
-```bash
-# Regenerisanje (jednokratno; preuzima 304 MB, ne raspakuje na disk)
-curl -sL https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -dc \
-  | python3 build_puzzle_db.py --stdin --out Chessko/puzzles.sqlite
-```
+> **Generator je ZAMRZNUT.** `build_lesson_json.py` je prenео lekcije iz Swift-a u JSON
+> tako što je prevode vadio iz `Localizable.xcstrings`. Task 6 iste faze obrisao je baš te
+> ključeve, pa generator više **ne može da se pokrene** — i to jasno kaže ako se pokuša.
+> **Izvor istine su od Faze 3 sami JSON fajlovi**; lekcija se menja tako što se uredi
+> `Chessko/Content/lessons/<id>.<jezik>.json`. Skripta ostaje kao zapis kako je migracija
+> izvedena i koji je blok došao sa kog mesta u starom `LessonDetailView.swift`.
 
 - **Filter kvaliteta**: rejting 600–2200, `NbPlays >= 200`, `Popularity >= 90`,
   `RatingDeviation <= 80`. Propušta ~31% baze.
@@ -209,6 +210,27 @@ python3 build_lesson_json.py     # regeneriše svih 32 JSON-a
   samo sa UI-jem. Izuzetak su četiri oznake bodova (`1 bod` / `3 boda` /
   `5 boda` / `9 bodova`) koje `L_PieceValueTable` **sastavlja interpolacijom**
   iz brojne vrednosti u JSON-u, pa moraju da ostanu ključevi.
+
+### Kako se dodaje nova lekcija
+
+Bez ijedne linije Swift-a — provereno na simulatoru, ne pretpostavljeno:
+
+1. Napiši `Chessko/Content/lessons/<id>.sr.json` i `<id>.en.json` (nove lekcije idu na
+   sr + en; postojeće četiri imaju svih 8 jezika).
+2. Rebuild. `Content/` je **folder-referenca**, pa `project.pbxproj` ostaje netaknut.
+
+Lekcija se pojavljuje sama: `LessonRepository` otkriva id-jeve iz imena fajlova u bundle-u.
+`lessonOrder` je samo ključ za sortiranje — poznate lekcije idu propisanim redom, nepoznate
+azbučno na kraj. Broj lekcija u podnaslovu ekrana Učenje se računa, ne zakucava.
+
+Dve stvari na koje treba paziti pri pisanju JSON-a:
+
+- **Nepoznat `type` bloka ruši dekodiranje namerno** — bolje glasan pad nego lekcija sa
+  rupom koju niko ne primeti. Isto važi za nepoznat naziv figure i za `interactive: true`
+  (interaktivna tabla još ne postoji): oba daju vidljivu poruku u tekstu lekcije.
+- **`pieceValueTable` redovi treba da zadaju `valueLabel`** („1 bod" / „1 point"). Bez njega
+  renderer sklapa labelu iz `value` po srpskoj množini i traži ključ u katalogu — a ključevi
+  postoje samo za 1/3/5/9/∞, pa bi vrednost „2" na svim jezicima dala srpsko „2 boda".
 
 ## Poznata ograničenja / TODO kandidati
 

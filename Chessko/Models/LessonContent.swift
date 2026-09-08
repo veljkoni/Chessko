@@ -40,9 +40,13 @@ struct PieceValueRow: Codable, Equatable {
     let name: String
     /// String, ne Int, jer Kralj u tabeli nosi "∞". Sa `Int`-om bi morala
     /// sentinel vrednost (0) koju renderer posebno hvata — a zaboravljena
-    /// provera bi ispisala "0 bodova" za Kralja. Ostale vrednosti su "1".."9";
-    /// srpsku mnozinu (bod/boda/bodova) racuna renderer, kao i do sada.
+    /// provera bi ispisala "0 bodova" za Kralja.
     let value: String
+    /// Gotova labela ("1 bod", "3 points"). Kad je `nil`, renderer je sklapa iz
+    /// `value` po SRPSKOJ mnozini i trazi kljuc u katalogu — a kljucevi postoje
+    /// samo za 1/3/5/9/∞. Lekcija sa vrednoscu "2" bi tako na svih 8 jezika
+    /// pokazala srpsko "2 boda". Nove lekcije zato zadaju `valueLabel`.
+    let valueLabel: String?
 }
 
 enum ExerciseKind: String, Codable, Equatable {

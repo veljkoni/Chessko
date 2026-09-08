@@ -143,7 +143,7 @@ add("Teško", "Hard", "Difficile", "Schwer", "Difficile", "Сложно", "困�
 
 # ── Learn tab home ──────────────────────────────────────────────────────────
 add("Nauči šah", "Learn chess", "Apprendre les échecs", "Schach lernen", "Impara gli scacchi", "Учитесь играть в шахматы", "学习国际象棋", "शतरंज सीखें")
-add("4 lekcije od osnova do završnice", "4 lessons from basics to the endgame", "4 leçons des bases jusqu’à la finale", "4 Lektionen von den Grundlagen bis zum Endspiel", "4 lezioni dalle basi al finale", "4 урока: от основ до эндшпиля", "从基础到残局的 4 节课", "मूल बातों से अंत खेल तक 4 पाठ")
+add("%lld lekcije od osnova do završnice", "%lld lessons from basics to the endgame", "%lld leçons des bases à la finale", "%lld Lektionen von den Grundlagen bis zum Endspiel", "%lld lezioni dalle basi al finale", "%lld уроков от основ до эндшпиля", "%lld 节课，从基础到残局", "%lld पाठ, मूल बातों से अंत तक")
 
 # ── Learn scenarios / move count ────────────────────────────────────────────
 add("Rokada", "Castling", "Roque", "Rochade", "Arrocco", "Рокировка", "王车易位", "कैसलिंग")

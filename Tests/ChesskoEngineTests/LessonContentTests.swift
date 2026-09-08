@@ -22,8 +22,8 @@ import Foundation
         { "type": "pieceRow", "piece": "knight", "name": "Skakač", "count": "2 komada" },
         { "type": "numberedRule", "number": 1, "title": "Razvoj", "text": "Razvijaj figure" },
         { "type": "pieceValueTable", "rows": [
-            { "piece": "pawn", "name": "Pion", "value": "1" },
-            { "piece": "king", "name": "Kralj", "value": "∞" }
+            { "piece": "pawn", "name": "Pion", "value": "1", "valueLabel": "1 bod" },
+            { "piece": "king", "name": "Kralj", "value": "∞", "valueLabel": null }
         ] },
         { "type": "board", "fen": "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", "caption": "Rokada", "interactive": false },
         { "type": "explorer" },
@@ -109,8 +109,8 @@ import Foundation
         .quote(text: "Citat", author: "Kapablanka"),
         .pieceRow(piece: "knight", name: "Skakač", count: "2"),
         .numberedRule(number: 3, title: "Naslov", text: "Telo"),
-        .pieceValueTable(rows: [PieceValueRow(piece: "pawn", name: "Pion", value: "1"),
-                                    PieceValueRow(piece: "king", name: "Kralj", value: "∞")]),
+        .pieceValueTable(rows: [PieceValueRow(piece: "pawn", name: "Pion", value: "1", valueLabel: "1 bod"),
+                                    PieceValueRow(piece: "king", name: "Kralj", value: "∞", valueLabel: nil)]),
         .board(fen: "8/8/8/8/8/8/8/R3K2R w KQ - 0 1", caption: "Rokada", interactive: true),
         .explorer,
         .divider,
@@ -144,21 +144,35 @@ import Foundation
         .filter { $0.pathExtension == "json" }
         .sorted { $0.lastPathComponent < $1.lastPathComponent }
 
-    #expect(files.count == 32, "Ocekivano 4 lekcije × 8 jezika")
+    // `>=`, ne `==`: nova lekcija je od Faze 3 samo nov JSON, a spec kaze da
+    // nove idu na sr+en. Tvrdnja `== 32` bi pukla prvom osobom koja iskoristi
+    // bas ono sto je ova faza isporucila.
+    #expect(files.count >= 32, "Ocekivano bar 4 lekcije × 8 jezika")
 
     var perLesson: [String: [Int]] = [:]
+    var languages: [String: Set<String>] = [:]
     for file in files {
         let doc = try JSONDecoder().decode(LessonDocument.self, from: Data(contentsOf: file))
         #expect(!doc.blocks.isEmpty, "\(file.lastPathComponent) nema nijedan blok")
         #expect(!doc.title.isEmpty, "\(file.lastPathComponent) nema naslov")
         perLesson[doc.id, default: []].append(doc.blocks.count)
+        languages[doc.id, default: []].insert(doc.language)
     }
 
     // Svih 8 jezika iste lekcije mora da ima ISTI broj blokova — razlicit broj
     // znaci da je prevod negde ispao ili da je struktura razlicito generisana.
-    #expect(perLesson.count == 4)
+    #expect(perLesson.count >= 4)
     for (id, counts) in perLesson {
-        #expect(counts.count == 8, "\(id) nema svih 8 jezika")
+        // Ne trazi se svih 8 jezika — `LessonRepository` ima lanac
+        // trazeni → en → sr bas zato sto nova lekcija sme da ide samo na sr+en.
+        // Trazi se srpski (izvorni jezik) i da svi prisutni jezici imaju ISTI
+        // broj blokova, sto je stvarna provera da prevod nije negde ispao.
+        #expect(languages[id]?.contains("sr") == true, "\(id) nema srpsku verziju")
         #expect(Set(counts).count == 1, "\(id) ima razlicit broj blokova po jeziku: \(counts)")
+    }
+
+    // Cetiri lekcije koje su prenete u Fazi 3 i dalje moraju imati svih 8 jezika.
+    for id in ["board-and-pieces", "openings", "middlegame", "endgame"] {
+        #expect(languages[id]?.count == 8, "\(id) je prenet na 8 jezika, sada ih ima \(languages[id]?.count ?? 0)")
     }
 }

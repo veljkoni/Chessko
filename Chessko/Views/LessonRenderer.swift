@@ -537,7 +537,10 @@ struct L_PieceValueTable: View {
                         .font(.dsBody)
                         .foregroundStyle(.primary)
                     Spacer()
-                    Text(Loc(row.value == "∞" ? "∞" : "\(row.value) bod\(row.value == "1" ? "" : row.value == "9" ? "ova" : "a")"))
+                    // `valueLabel` je vec preveden (dolazi iz JSON-a na tom jeziku).
+                    // Fallback sklapa srpsku mnozinu i trazi je u katalogu — radi
+                    // samo za 1/3/5/9/∞, pa ga nove lekcije zaobilaze.
+                    Text(row.valueLabel ?? Loc(row.value == "∞" ? "∞" : "\(row.value) bod\(row.value == "1" ? "" : row.value == "9" ? "ova" : "a")"))
                         .font(.dsBody.weight(.semibold))
                         .foregroundStyle(row.value == "∞" ? DS.accent : .primary)
                 }

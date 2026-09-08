@@ -23,8 +23,10 @@ struct LessonDetailView: View {
 
     /// Redni broj u naslovu (,,Lekcija 3") dolazi iz redosleda u repozitorijumu,
     /// jer `id` je od Faze 3 string a ne broj.
-    private var lessonNumber: Int {
-        (LessonRepository.lessonOrder.firstIndex(of: lessonId) ?? 0) + 1
+    /// `nil` za lekciju koja nije u poznatom redosledu. Ranije je `?? 0` takvoj
+    /// lekciji davao broj 1 — dakle tudji broj, sto je gore od nikakvog.
+    private var lessonNumber: Int? {
+        LessonRepository.lessonOrder.firstIndex(of: lessonId).map { $0 + 1 }
     }
 
     var body: some View {
@@ -52,7 +54,8 @@ struct LessonDetailView: View {
                 .safeAreaPadding(.bottom, 24)
             }
         }
-        .navigationTitle(LocF("Lekcija %lld", lessonNumber))
+        .navigationTitle(lessonNumber.map { LocF("Lekcija %lld", $0) }
+                         ?? (document?.title ?? ""))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.appBackground, for: .navigationBar)
     }

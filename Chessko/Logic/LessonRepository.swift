@@ -14,7 +14,12 @@ import Foundation
 final class LessonRepository {
     static let shared = LessonRepository()
 
-    /// Redosled kojim se lekcije prikazuju na ekranu Učenje.
+    /// Redosled kojim se poznate lekcije stoje na ekranu Učenje. NIJE spisak
+    /// postojecih lekcija — samo kljuc za sortiranje. Lekcija koja nije ovde
+    /// i dalje se prikazuje, na kraju liste; inace bi nova lekcija ubacena u
+    /// `Content/lessons/` bila NEVIDLJIVA bez ijedne poruke, sto je tacno ona
+    /// tiha rupa koju ostatak ove faze uklanja. Pun redosled dobija
+    /// `curriculum.json` u Fazi 4.
     static let lessonOrder = ["board-and-pieces", "openings", "middlegame", "endgame"]
 
     private var cache: [String: LessonDocument] = [:]
@@ -61,15 +66,34 @@ final class LessonRepository {
         }
     }
 
+    /// Id-jevi svih lekcija koje stvarno postoje u bundle-u, otkriveni iz imena
+    /// fajlova (`<id>.<lang>.json`). Time nova lekcija = nov JSON, sto je i bila
+    /// namera cele faze.
+    private func discoveredLessonIds() -> [String] {
+        let urls = Bundle.main.urls(forResourcesWithExtension: "json",
+                                    subdirectory: "Content/lessons") ?? []
+        let ids = Set(urls.compactMap { url -> String? in
+            // "openings.sr.json" -> "openings"; jezik je poslednji deo pre .json
+            let stem = url.deletingPathExtension().lastPathComponent
+            guard let dot = stem.lastIndex(of: ".") else { return nil }
+            return String(stem[stem.startIndex..<dot])
+        })
+        // Poznate prvo, propisanim redom; nepoznate azbucno na kraj.
+        let known = Self.lessonOrder.filter(ids.contains)
+        let extra = ids.subtracting(Self.lessonOrder).sorted()
+        return known + extra
+    }
+
     /// Sve lekcije redom, na trazenom jeziku. Koristi ekran Učenje za listu.
     ///
     /// `compactMap` bi tiho skratio listu ako lekcija ne prodje ceo lanac
     /// jezika — korisnik bi video manje kartica i nista vise. Zato se skracenje
     /// posebno prijavljuje.
     func allLessons(language: String) -> [LessonDocument] {
-        let docs = Self.lessonOrder.compactMap { lesson(id: $0, language: language) }
-        if docs.count != Self.lessonOrder.count {
-            let missing = Set(Self.lessonOrder).subtracting(docs.map(\.id))
+        let ids = discoveredLessonIds()
+        let docs = ids.compactMap { lesson(id: $0, language: language) }
+        if docs.count != ids.count {
+            let missing = Set(ids).subtracting(docs.map(\.id))
             print("[Chessko] GRESKA: nedostaju lekcije: \(missing.sorted())")
             assertionFailure("Nedostaju lekcije: \(missing.sorted())")
         }
