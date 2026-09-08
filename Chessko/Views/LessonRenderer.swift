@@ -201,7 +201,7 @@ struct LessonStaticBoard: View {
                 LessonBlockError(message: "Neispravan FEN: \(fen)")
             }
             if !caption.isEmpty {
-                Text(Loc(caption))
+                Text(caption)
                     .font(.dsCaption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -360,7 +360,7 @@ struct L_SectionHeader: View {
             Image(systemName: icon)
                 .font(.dsBody.weight(.semibold))
                 .foregroundStyle(color)
-            Text(Loc(title))
+            Text(title)
                 .font(.dsBody.weight(.bold))
                 .foregroundStyle(.primary)
         }
@@ -369,9 +369,10 @@ struct L_SectionHeader: View {
     }
 }
 
-/// Parsira inline Markdown (**podebljano**, *kurziv*) u vec prevedenom stringu.
-/// Loc() vraca String, a Text(String) ne parsira Markdown — parsira ga samo
-/// Text(LocalizedStringKey), sto bi ovde znacilo drugo trazenje po katalogu.
+/// Parsira inline Markdown (**podebljano**, *kurziv*) u tekstu koji iz JSON-a
+/// stize vec na izabranom jeziku. `Text(String)` ne parsira Markdown — parsira
+/// ga samo `Text(LocalizedStringKey)`, sto bi ovde znacilo trazenje sadrzaja
+/// lekcije po katalogu prevoda, a on od Faze 3 nosi samo interfejs.
 fileprivate func mdText(_ localized: String) -> Text {
     if let attributed = try? AttributedString(
         markdown: localized,
@@ -389,7 +390,7 @@ struct L_Para: View {
     init(_ text: String) { self.text = text }
 
     var body: some View {
-        mdText(Loc(text))
+        mdText(text)
             .font(.dsBody)
             .foregroundStyle(.primary.opacity(0.85))
             .fixedSize(horizontal: false, vertical: true)
@@ -410,10 +411,10 @@ struct L_Bullet: View {
                 .frame(width: 18)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 3) {
-                Text(Loc(title))
+                Text(title)
                     .font(.dsBody.weight(.semibold))
                     .foregroundStyle(.primary)
-                mdText(Loc(text))
+                mdText(text)
                     .font(.dsBody)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -437,11 +438,11 @@ struct L_Box: View {
                 Image(systemName: icon)
                     .font(.dsCaption.weight(.bold))
                     .foregroundStyle(color)
-                Text(Loc(title))
+                Text(title)
                     .font(.dsCaption.weight(.bold))
                     .foregroundStyle(color)
             }
-            mdText(Loc(text))
+            mdText(text)
                 .font(.dsBody)
                 .foregroundStyle(.primary.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
@@ -464,7 +465,7 @@ struct L_PieceRow: View {
         HStack(spacing: 12) {
             PieceImageView(piece: ChessPiece(type: type, color: .white))
                 .frame(width: 32, height: 32)
-            Text(Loc(name))
+            Text(name)
                 .font(.dsBody.weight(.bold))
                 .foregroundStyle(.primary)
             Spacer()
@@ -494,10 +495,10 @@ struct L_NumberedRule: View {
                     .foregroundStyle(color)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(Loc(title))
+                Text(title)
                     .font(.dsBody.weight(.bold))
                     .foregroundStyle(.primary)
-                mdText(Loc(text))
+                mdText(text)
                     .font(.dsBody)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -511,7 +512,9 @@ struct L_NumberedRule: View {
 
 /// Redovi više nisu ugrađeni — dolaze iz JSON-a. Formatiranje i boja su
 /// nepromenjeni: srpska množina se računa ovde ("1 bod" / "3 boda" / "9 bodova"),
-/// a Kraljevo „∞" je jedina vrednost u akcentu.
+/// a Kraljevo „∞" je jedina vrednost u akcentu. Te četiri oznake bodova su
+/// jedini lekcijski tekst koji je OSTAO u katalogu prevoda — sastavljaju se
+/// interpolacijom, pa ih pretraga literala po izvoru ne vidi; ne brisati ih.
 struct L_PieceValueTable: View {
     let rows: [PieceValueRow]
 
@@ -530,7 +533,7 @@ struct L_PieceValueTable: View {
                             .frame(width: 28, height: 28)
                             .foregroundStyle(DS.danger)
                     }
-                    Text(Loc(row.name))
+                    Text(row.name)
                         .font(.dsBody)
                         .foregroundStyle(.primary)
                     Spacer()
@@ -600,7 +603,7 @@ struct MatePuzzleCard: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(Loc(vm.line.name))
+                        Text(vm.line.name)
                             .font(.dsBody.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text(LocF("Mat u %lld", mateIn))
@@ -609,7 +612,7 @@ struct MatePuzzleCard: View {
                             .padding(.horizontal, 6).padding(.vertical, 2)
                             .background(vm.line.accentColor.opacity(0.18), in: Capsule())
                     }
-                    Text(Loc(vm.line.hint))
+                    Text(vm.line.hint)
                         .font(.dsCaption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
@@ -716,10 +719,10 @@ struct OpeningExerciseCard: View {
                         .foregroundStyle(line.accentColor)
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(Loc(line.name))
+                    Text(line.name)
                         .font(.dsBody.weight(.semibold))
                         .foregroundStyle(.primary)
-                    Text(Loc(line.hint))
+                    Text(line.hint)
                         .font(.dsCaption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
@@ -848,10 +851,10 @@ struct MateExerciseCard: View {
                         .foregroundStyle(color)
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(Loc(title))
+                    Text(title)
                         .font(.dsBody.weight(.semibold))
                         .foregroundStyle(.primary)
-                    Text(Loc(hint))
+                    Text(hint)
                         .font(.dsCaption)
                         .foregroundStyle(.secondary)
                 }

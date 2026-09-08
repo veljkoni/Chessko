@@ -70,10 +70,10 @@ struct LessonDetailView: View {
                     .foregroundStyle(DS.accent)
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text(Loc(document.title))
+                Text(document.title)
                     .font(.dsHeading.weight(.bold))
                     .foregroundStyle(.primary)
-                Text(Loc(document.subtitle))
+                Text(document.subtitle)
                     .font(.dsBody)
                     .foregroundStyle(.secondary)
             }

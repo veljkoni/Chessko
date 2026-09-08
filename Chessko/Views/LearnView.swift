@@ -26,11 +26,11 @@ struct LessonCard: View {
                 Text(LocF("Lekcija %lld", number))
                     .font(.appFont(.caption).weight(.semibold))
                     .foregroundStyle(DS.accent.opacity(0.9))
-                Text(Loc(title))
+                Text(title)
                     .font(.appFont(.subheadline).weight(.semibold))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
-                Text(Loc(subtitle))
+                Text(subtitle)
                     .font(.appFont(.caption))
                     .foregroundStyle(.secondary)
             }
