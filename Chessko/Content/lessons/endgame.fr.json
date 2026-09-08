@@ -1,0 +1,334 @@
+{
+  "id": "endgame",
+  "title": "Finale",
+  "subtitle": "Échec et mat, pat et nulle",
+  "icon": "flag.checkered",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca écrit",
+      "text": "« Avant de lutter pour la victoire en ouverture ou en milieu de partie, vous devez maîtriser la finale. Qui ne connaît pas la finale ne peut être un joueur fort. »"
+    },
+    {
+      "type": "paragraph",
+      "text": "La finale commence quand les pièces les plus importantes ont quitté l’échiquier et qu’il ne reste que les rois avec des pions et peut-être une ou deux pièces mineures."
+    },
+    {
+      "type": "heading",
+      "text": "Le roi devient attaquant",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "C’est le **plus grand changement** en finale. Le roi qui a fui toute la partie doit maintenant attaquer activement."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "crown.fill",
+          "title": "Amenez le roi au centre tout de suite",
+          "text": "Dès que vous sentez la finale approcher, commencez à amener le roi vers le centre. Un roi central domine un roi en marge.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Les pions sont de futures dames",
+          "text": "Chaque pion qui atteint la dernière rangée devient une dame (ou une autre pièce). C’est le but principal des finales de pions.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "La règle de la promotion du pion",
+      "icon": "arrow.up.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca explique cette règle clairement et précisément :"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "checkmark.circle.fill",
+      "title": "La règle clé",
+      "text": "Pour qu’une finale de pions soit gagnante, **le roi doit précéder son pion** avec au moins une case vide entre eux. Si le roi adverse est juste devant le pion — c’est nulle !"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Avancez le roi, pas le pion",
+          "text": "Capablanca conseille : avancez le roi autant que possible sans mettre le pion en danger. Ne déplacez le pion que lorsque c’est nécessaire pour le protéger.",
+          "style": null
+        },
+        {
+          "icon": "ruler.fill",
+          "title": "L’arme secrète — « l’opposition »",
+          "text": "Quand deux rois se font face avec un nombre impair de cases entre eux, le joueur qui **vient de jouer** a l’avantage. C’est l’opposition — essentielle dans toutes les finales de pions.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Un principe cardinal",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Un en tient deux — le principe de Capablanca",
+      "text": "« Un pion qui en tient deux est l’un des principaux outils du maître. » Si votre pion en bloque deux à l’adversaire, vous avez en fait une pièce d’avance — exploitez cet avantage de l’autre côté de l’échiquier !"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Fou contre Cavalier en finale",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right",
+          "title": "Le fou est plus fort quand il y a des pions des deux côtés",
+          "text": "Grâce à sa portée, le fou peut attaquer des pions sur les deux ailes à la fois. Le cavalier est lent et ne peut pas être partout.",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "Le cavalier est plus fort dans les positions fermées",
+          "text": "Quand les pions sont bloqués et la position fermée, le cavalier est meilleur car il peut sauter par-dessus les pions et atteindre la case idéale.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "La faiblesse du fou — le pion de tour",
+      "text": "Si votre pion va vers h8 (ou a8) et que cette case est de couleur opposée à votre fou, l’adversaire tient le coin et c’est nulle ! Capablanca le souligne comme la source de bien des gains manqués."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Échec et mat et nulle",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Échec",
+      "text": "Une situation où le roi est attaqué. Le joueur **doit** se défendre — déplacer le roi, capturer l’attaquant, ou interposer un bouclier."
+    },
+    {
+      "type": "box",
+      "style": "warning",
+      "icon": "xmark.shield.fill",
+      "title": "Échec et mat — fin de la partie",
+      "text": "Le roi est attaqué et il n’y a aucun moyen légal de se défendre. La partie se termine ici — le roi n’est jamais réellement capturé."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.2",
+      "title": "Pat — le cauchemar du gagnant !",
+      "text": "Le joueur au trait **n’est pas en échec**, mais n’a aucun coup légal. C’est nulle immédiatement ! C’est l’erreur la plus dangereuse en finale — transformer une position gagnante en nulle par un mauvais coup."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.clockwise",
+          "title": "Répétition de position",
+          "text": "Si la même position se répète **trois fois**, la nulle peut être réclamée.",
+          "style": null
+        },
+        {
+          "icon": "minus.circle.fill",
+          "title": "Matériel insuffisant",
+          "text": "Seuls les rois, ou roi + fou/cavalier contre roi — le mat est impossible. Nulle automatique.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Mini test final",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Appliquez tout ce que vous avez appris ! Résolvez 5 problèmes — mat en un minimum de coups. Chacun utilise une combinaison de pièces différente."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problème 1 — Dame sur la dernière rangée",
+      "hint": "Le roi noir est piégé. La dame a la voie libre…",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2d8"
+      ],
+      "startFEN": "6k1/5ppp/8/8/8/8/3Q4/4R1K1 w - - 0 1",
+      "solvedMessage": "Génial ! Mat trouvé ! 🏆",
+      "wrongMessage": "Pas tout à fait — cherchez le coup clé !",
+      "playingPrompt": "Trouvez le mat en 1 !",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problème 2 — Tour sur la 8e rangée",
+      "hint": "Les pions bloquent leur propre roi. La tour trouve la voie…",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "b5b8"
+      ],
+      "startFEN": "6k1/5ppp/8/1R6/8/8/8/6K1 w - - 0 1",
+      "solvedMessage": "Génial ! Mat trouvé ! 🏆",
+      "wrongMessage": "Pas tout à fait — cherchez le coup clé !",
+      "playingPrompt": "Trouvez le mat en 1 !",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problème 3 — Sacrifice de tour !",
+      "hint": "La tour va en e8 avec échec. La tour noire doit prendre — et ensuite la dame ?",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "e1e8",
+        "c8e8",
+        "a4e8"
+      ],
+      "startFEN": "2r3k1/5ppp/8/8/Q7/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Génial ! Mat trouvé ! 🏆",
+      "wrongMessage": "Pas tout à fait — cherchez le coup clé !",
+      "playingPrompt": "Trouvez le coup clé !",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problème 4 — Fou + Tour",
+      "hint": "Le fou fait échec et pousse le roi en g8. Pourquoi est-ce fatal ?",
+      "icon": "rhombus.fill",
+      "uciMoves": [
+        "e5d6",
+        "f8g8",
+        "e1e8"
+      ],
+      "startFEN": "5k2/5ppp/8/4B3/8/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Génial ! Mat trouvé ! 🏆",
+      "wrongMessage": "Pas tout à fait — cherchez le coup clé !",
+      "playingPrompt": "Trouvez le coup clé !",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problème 5 (difficile) — Sacrifice de dame, mat du fou",
+      "hint": "Greet – Hanley, Liverpool 2008. La dame se sacrifie en h6. Pourquoi le roi doit-il prendre ?",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2h6",
+        "g7h6",
+        "h4f6"
+      ],
+      "startFEN": "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w KQ - 0 1",
+      "solvedMessage": "Génial ! Mat trouvé ! 🏆",
+      "wrongMessage": "Pas tout à fait — cherchez le coup clé !",
+      "playingPrompt": "Trouvez le coup clé !",
+      "mateIn": 2
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "À propos de l’auteur",
+      "icon": "person.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "person.fill",
+      "title": "José Raúl Capablanca (1888–1942)",
+      "text": "Joueur d’échecs cubain, troisième champion du monde officiel. Considéré comme l’un des plus grands génies des échecs de tous les temps — connu pour son style limpide et sa compréhension intuitive de la position."
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca a appris les échecs à seulement **quatre ans** en regardant son père. Il n’a jamais fréquenté d’école d’échecs — il a tout appris seul, en jouant. À seulement 13 ans, il a battu le champion cubain Juan Corzo et est devenu une sensation nationale."
+    },
+    {
+      "type": "paragraph",
+      "text": "De **1916 à 1924**, il n’a perdu aucune partie. Il a remporté le titre de champion du monde en 1921 en battant le légendaire Emanuel Lasker, champion pendant 27 ans."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "eye.fill",
+          "title": "Une précision photographique",
+          "text": "Il gagnait par la simplicité et une technique parfaite — non par l’agressivité.",
+          "style": null
+        },
+        {
+          "icon": "person.2.fill",
+          "title": "Un vulgarisateur des échecs",
+          "text": "Il a écrit « Chess Fundamentals » (1921) précisément pour les débutants et les amateurs.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Source : Project Gutenberg",
+      "icon": "text.book.closed.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Tout le contenu des leçons provient de la version numérique du livre disponible sur **Project Gutenberg** — une bibliothèque à but non lucratif d’ouvrages du domaine public."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "globe",
+      "title": "gutenberg.org/ebooks/33870",
+      "text": "Vous pouvez le lire intégralement gratuitement, sans inscription."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "heart.fill",
+      "title": "Remerciements",
+      "text": "Chessko remercie Capablanca pour ses principes intemporels et la communauté de bénévoles de Project Gutenberg qui ont numérisé ce livre et des milliers d’autres."
+    }
+  ],
+  "language": "fr"
+}

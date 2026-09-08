@@ -1,0 +1,334 @@
+{
+  "id": "board-and-pieces",
+  "title": "棋盘、棋子与走法",
+  "subtitle": "面向初学者的国际象棋基础",
+  "icon": "square.grid.3x3.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "卡帕布兰卡写道",
+      "text": "“学习者首先要做的是了解棋子的力量。最好的方法就是学会快速将杀。”"
+    },
+    {
+      "type": "paragraph",
+      "text": "国际象棋在 **64 格** 的棋盘上进行，深浅格交替。永远记住：**右下角必须是浅色格**。每方以 **16 个棋子** 开始。"
+    },
+    {
+      "type": "heading",
+      "text": "互动探索棋子",
+      "icon": "hand.point.up.left.fill"
+    },
+    {
+      "type": "explorer"
+    },
+    {
+      "type": "heading",
+      "text": "每个棋子如何走",
+      "icon": "square.grid.2x2.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "pawn",
+      "name": "兵",
+      "count": "× 8"
+    },
+    {
+      "type": "paragraph",
+      "text": "开局时你有 8 个兵——它们是你的“步兵”。卡帕布兰卡指出：**多赢一个兵是最小的物质优势，却常常足以取胜**。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "走法",
+          "text": "只能向前走，每次一格。首步可走两格。**兵不能后退。**",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.left.and.arrow.up.right",
+          "title": "进攻",
+          "text": "只能斜向前一格吃子。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "crown.fill",
+      "title": "升变",
+      "text": "如果兵到达底线，它会升变为任意棋子，通常是后。这是残局中的强力武器！"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "车",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "开局时位于棋盘的角落。只有在开放线上才有效——越多兵挡路，它就越受限。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "走法",
+          "text": "沿直线（上下、左右）走任意格数。两车合力略强于一后。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "象",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "一象始终在白格，另一象始终在黑格。卡帕布兰卡认为：**在多数局面中，象比马更有价值**。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right.and.arrow.up.left",
+          "title": "走法",
+          "text": "只能沿对角线走。弱点：“在与象异色的格子上升变的车兵”往往导致和棋而非胜利。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "马",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "唯一能跳过其他棋子的棋子。它在**封闭局面**中很强——当线路被兵堵住时。在棋盘边缘则会减弱。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "l.joystick.fill",
+          "title": "走法",
+          "text": "走“L”形：直走两格，再横走一格。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "独一无二！",
+      "text": "唯一能跳过其他棋子的棋子——无论己方还是对方！"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "皇后",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "它位于**自己颜色**的格子上——白后在白格，黑后在黑格。最强大的棋子，但开局不宜过早出动。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "走法",
+          "text": "它兼具车和象的走法——可向任意方向走任意格数。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "国王",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "最重要的棋子——失去它就意味着对局结束。开局中它是**被动的防守棋子**，但在残局中它会成为强大的进攻者。"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "dot.square.fill",
+          "title": "走法",
+          "text": "它只能向任意方向走一格。**不能走到被攻击的格子上！**",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "特殊走法：王车易位",
+      "icon": "arrow.left.arrow.right"
+    },
+    {
+      "type": "paragraph",
+      "text": "每盘棋有一次可以**同时移动两个棋子**——王和车。王朝车方向跳两格，车越过王落到其旁边。这能让王安全并使车投入战斗。"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "王车易位的条件",
+      "text": "王和车此前**都未移动过** · 它们之间**没有任何棋子** · 王不在被将状态，且不经过被攻击的格子"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "棋子的相对价值",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "卡帕布兰卡说：价值并非固定——它随局面变化。不过这些数字在兑子时可作参考。"
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "兵",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "马",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "象",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "车",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "皇后",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "国王",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "info.circle.fill",
+          "title": "双象几乎总是强于双马",
+          "text": "当棋盘两侧都有兵且线路开放时，象尤为强大。",
+          "style": null
+        },
+        {
+          "icon": "info.circle.fill",
+          "title": "一车价值相当于一马加两兵",
+          "text": "或一象加两兵。因此无补偿地用轻子换车被称为“亏交换”。",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "残局中国王成为进攻棋子",
+          "text": "在开局和中局，国王纯属防守棋子。到了残局，大部分棋子消失后，它必须积极投入战斗。",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "基本将杀",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "在学习开局和策略之前，先掌握这三种基本将杀。每一种都需要国王的配合！"
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "练习 1——王 + 车",
+      "hint": "把黑王逼到棋盘边缘。车和王必须配合！",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": null,
+      "startFEN": "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "练习 2——王 + 双象",
+      "hint": "不仅要把王逼到边缘，还要逼进与你象同色的角落。",
+      "icon": "rhombus.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "练习 3——王 + 后",
+      "hint": "最简单！后立刻压缩空间。小心逼和！",
+      "icon": "crown.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "zh-Hans"
+}

@@ -1,0 +1,145 @@
+{
+  "id": "openings",
+  "title": "L’inizio della partita (Aperture)",
+  "subtitle": "Regole d’oro e aperture famose",
+  "icon": "flag.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca scrive",
+      "text": "\"La cosa più importante in apertura è sviluppare i pezzi rapidamente. Nessun pezzo va mosso più di una volta prima che lo sviluppo sia completo, a meno che non sia assolutamente necessario.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Negli scacchi **il Bianco muove sempre per primo** e ha quindi un leggero vantaggio iniziale. Il compito di entrambi in apertura è lo stesso: portare i pezzi in gioco il più in fretta possibile e prendere il controllo del centro."
+    },
+    {
+      "type": "heading",
+      "text": "Le regole d’oro dell’apertura",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "numberedRule",
+      "number": 1,
+      "title": "Sviluppa i pezzi rapidamente",
+      "text": "Capablanca consiglia: sviluppa i cavalli prima degli alfieri. Non muovere lo stesso pezzo due volte in apertura se non costretto. Ogni mossa deve sviluppare un nuovo pezzo o controllare il centro."
+    },
+    {
+      "type": "numberedRule",
+      "number": 2,
+      "title": "Controlla il centro",
+      "text": "Le quattro case centrali (e4, d4, e5, d5) sono le più importanti della scacchiera. Chi domina il centro ha più spazio per manovrare. Capablanca: \"Nessun attacco vigoroso può riuscire senza il controllo di almeno due case centrali.\""
+    },
+    {
+      "type": "numberedRule",
+      "number": 3,
+      "title": "Proteggi il re — arrocca!",
+      "text": "Arrocca il prima possibile. Un re allo scoperto è un bersaglio facile. Capablanca stesso arroccava sempre presto e consiglia lo stesso a tutti, soprattutto ai principianti."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Errori tipici in apertura",
+      "icon": "exclamationmark.triangle.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Sviluppare la donna troppo presto",
+          "text": "La donna è forte, ma se la sviluppi presto l’avversario la attacca con pedoni e pezzi — e ogni attacco alla donna costa un tempo perché deve fuggire.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Difesa passiva con i pedoni",
+          "text": "Lo stile \"Philidor\" — rispondere a e4 subito con P-d6 — dà all’avversario sviluppo libero e spazio. Capablanca mostra come il Bianco costruisca poi facilmente una posizione superiore.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Arrocco tardivo",
+          "text": "Ogni mossa senza arrocco con le linee aperte è un rischio. L’avversario può aprire il gioco e attaccare il tuo re prima che si metta al sicuro.",
+          "style": "warning"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Aperture famose",
+      "icon": "book.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Gioca ogni mossa del Bianco sulla scacchiera — il Nero risponde automaticamente seguendo la linea teorica."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Partita spagnola (Ruy Lopez)",
+      "hint": "1.e4 e5 2.Cf3 Cc6 3.Ab5 — la preferita di Capablanca",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1b5"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Apertura padroneggiata! ✓",
+      "wrongMessage": "Mossa sbagliata — riprova.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Partita italiana",
+      "hint": "1.e4 e5 2.Cf3 Cc6 3.Ac4 — l’alfiere punta f7",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Apertura padroneggiata! ✓",
+      "wrongMessage": "Mossa sbagliata — riprova.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Difesa siciliana",
+      "hint": "1.e4 c5 2.Cf3 d6 3.d4 cxd4 4.Cxd4 — una lotta asimmetrica",
+      "icon": "shield.fill",
+      "uciMoves": [
+        "e2e4",
+        "c7c5",
+        "g1f3",
+        "d7d6",
+        "d2d4",
+        "c5d4",
+        "f3d4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Apertura padroneggiata! ✓",
+      "wrongMessage": "Mossa sbagliata — riprova.",
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "it"
+}

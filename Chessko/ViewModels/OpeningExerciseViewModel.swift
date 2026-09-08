@@ -68,11 +68,12 @@ final class OpeningExerciseViewModel {
 
     var statusMessage: String {
         switch phase {
-        case .solved:    return Loc(line.solvedMessage)
-        case .wrongMove: return Loc(line.wrongMessage)
+        // Poruke stizu iz JSON-a vec prevedene (Faza 3) — bez `Loc()`.
+        case .solved:    return line.solvedMessage
+        case .wrongMove: return line.wrongMessage
         case .playing:
             if let prompt = line.playingPrompt {
-                return Loc(prompt)
+                return prompt
             }
             let moveNum = (movePointer / 2) + 1
             return LocF("Potez %lld — pronađi pravi potez za bele!", moveNum)

@@ -18,6 +18,7 @@ let package = Package(
                 "Models/GameState.swift",
                 "Models/GameState+FEN.swift",
                 "Models/ChessPuzzle.swift",
+                "Models/LessonContent.swift",
                 "Logic/StatsManager.swift",
                 "Logic/MoveGenerator.swift",
                 "Logic/ZobristTable.swift",

@@ -1,0 +1,145 @@
+{
+  "id": "openings",
+  "title": "Le début de la partie (Ouvertures)",
+  "subtitle": "Règles d’or et ouvertures célèbres",
+  "icon": "flag.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca écrit",
+      "text": "« Le plus important dans l’ouverture est de développer rapidement les pièces. Aucune pièce ne doit être déplacée plus d’une fois avant la fin du développement, sauf nécessité absolue. »"
+    },
+    {
+      "type": "paragraph",
+      "text": "Aux échecs, **les Blancs jouent toujours en premier** et ont donc un léger avantage initial. La tâche des deux joueurs en ouverture est identique : développer les pièces le plus vite possible et prendre le contrôle du centre."
+    },
+    {
+      "type": "heading",
+      "text": "Les règles d’or de l’ouverture",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "numberedRule",
+      "number": 1,
+      "title": "Développez vite les pièces",
+      "text": "Capablanca conseille : développez les cavaliers avant les fous. Ne déplacez pas deux fois la même pièce en ouverture sans y être contraint. Chaque coup doit développer une nouvelle pièce ou contrôler le centre."
+    },
+    {
+      "type": "numberedRule",
+      "number": 2,
+      "title": "Contrôlez le centre",
+      "text": "Les quatre cases centrales (e4, d4, e5, d5) sont les plus importantes de l’échiquier. Qui domine le centre a plus d’espace pour manœuvrer. Capablanca : « Aucune attaque vigoureuse ne peut réussir sans le contrôle d’au moins deux cases centrales. »"
+    },
+    {
+      "type": "numberedRule",
+      "number": 3,
+      "title": "Protégez le roi — roquez !",
+      "text": "Roquez le plus tôt possible. Un roi à découvert est une cible facile. Capablanca lui-même roquait toujours tôt et le recommande à tous, surtout aux débutants."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Erreurs typiques en ouverture",
+      "icon": "exclamationmark.triangle.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Sortir la dame trop tôt",
+          "text": "La dame est puissante, mais sortie tôt, l’adversaire l’attaque avec pions et pièces — et chaque attaque sur la dame coûte un tempo car elle doit fuir.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Défense passive avec les pions",
+          "text": "Le style « Philidor » — répondre à e4 immédiatement par P-d6 — offre à l’adversaire développement et espace. Capablanca montre comment les Blancs construisent alors aisément une position supérieure.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Roque tardif",
+          "text": "Chaque coup sans roque alors que les lignes sont ouvertes est un risque. L’adversaire peut ouvrir le jeu et attaquer votre roi avant qu’il ne soit à l’abri.",
+          "style": "warning"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Ouvertures célèbres",
+      "icon": "book.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Jouez chaque coup des Blancs sur l’échiquier — les Noirs répondent automatiquement selon la ligne théorique."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Partie espagnole (Ruy Lopez)",
+      "hint": "1.e4 e5 2.Cf3 Cc6 3.Fb5 — la préférée de Capablanca",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1b5"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo ! Ouverture maîtrisée ! ✓",
+      "wrongMessage": "Mauvais coup — réessayez.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Partie italienne",
+      "hint": "1.e4 e5 2.Cf3 Cc6 3.Fc4 — le fou vise f7",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo ! Ouverture maîtrisée ! ✓",
+      "wrongMessage": "Mauvais coup — réessayez.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Défense sicilienne",
+      "hint": "1.e4 c5 2.Cf3 d6 3.d4 cxd4 4.Cxd4 — un combat asymétrique",
+      "icon": "shield.fill",
+      "uciMoves": [
+        "e2e4",
+        "c7c5",
+        "g1f3",
+        "d7d6",
+        "d2d4",
+        "c5d4",
+        "f3d4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo ! Ouverture maîtrisée ! ✓",
+      "wrongMessage": "Mauvais coup — réessayez.",
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "fr"
+}

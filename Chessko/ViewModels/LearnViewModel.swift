@@ -230,11 +230,3 @@ final class LearnViewModel {
         Array(repeating: Array(repeating: nil, count: 8), count: 8)
     }
 }
-
-// MARK: - Preview
-
-#Preview {
-    NavigationStack {
-        LessonDetailView(lesson: LessonInfo.all[0], pieceExplorer: LearnViewModel())
-    }
-}

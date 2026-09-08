@@ -27,3 +27,4 @@ ChesskoAndroid/local.properties
 
 # Logovi
 build.log
+__pycache__/

@@ -45,11 +45,13 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (27 testova): perft za svih 6 standardnih pozicija (uključujući
+Pokriveno (31 test): perft za svih 6 standardnih pozicija (uključujući
 početnu do dubine 5, 4.865.609 čvorova, ~85s), 4 testa prava rokade (uzimanje
 topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
 8 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu —
-vidi ispod) i 5 testova Elo rejtinga. `Chessko/TestSupport/LocShim.swift`
+vidi ispod), 5 testova Elo rejtinga i 4 testa sadržaja lekcija (dekodiranje
+svih 12 tipova blokova, round-trip, glasan pad na nepoznat tip, i prolaz kroz
+sva 32 generisana JSON-a). `Chessko/TestSupport/LocShim.swift`
 postoji samo zbog paketa i zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u
 aplikaciji se ne kompajlira.
 
@@ -66,11 +68,12 @@ red u ~2,5% pokretanja — praktično nikad.
 baze, licenca CC0**. Aplikacija od Faze 2 nema nijedan mrežni poziv za
 zadatke; radi u avionskom režimu.
 
-```bash
-# Regenerisanje (jednokratno; preuzima 304 MB, ne raspakuje na disk)
-curl -sL https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -dc \
-  | python3 build_puzzle_db.py --stdin --out Chessko/puzzles.sqlite
-```
+> **Generator je ZAMRZNUT.** `build_lesson_json.py` je prenео lekcije iz Swift-a u JSON
+> tako što je prevode vadio iz `Localizable.xcstrings`. Task 6 iste faze obrisao je baš te
+> ključeve, pa generator više **ne može da se pokrene** — i to jasno kaže ako se pokuša.
+> **Izvor istine su od Faze 3 sami JSON fajlovi**; lekcija se menja tako što se uredi
+> `Chessko/Content/lessons/<id>.<jezik>.json`. Skripta ostaje kao zapis kako je migracija
+> izvedena i koji je blok došao sa kog mesta u starom `LessonDetailView.swift`.
 
 - **Filter kvaliteta**: rejting 600–2200, `NbPlays >= 200`, `Popularity >= 90`,
   `RatingDeviation <= 80`. Propušta ~31% baze.
@@ -131,14 +134,18 @@ Chessko/
 │   ├── Position.swift        row 0 = rank 8 (crni), col 0 = file a
 │   ├── ChessPiece.swift      PieceType, PieceColor, materialValue, Unicode symbol
 │   ├── ChessMove.swift       from/to/flag; == poredi from+to **i** flag
-│   └── GameState.swift       cela tabla + prava rokade + status; immutable apply
+│   ├── GameState.swift       cela tabla + prava rokade + status; immutable apply
+│   └── LessonContent.swift   LessonDocument + LessonBlock (12 tipova blokova)
 ├── Logic/
 │   ├── MoveGenerator.swift   generisanje poteza, detekcija šaha (enum, statičke fn)
-│   └── ChessAI.swift         negamax + alfa-beta, piece-square tabele
+│   ├── ChessAI.swift         negamax + alfa-beta, piece-square tabele
+│   └── LessonRepository.swift  učitava Content/lessons/<id>.<jezik>.json iz bundle-a
 ├── ViewModels/
 │   └── GameViewModel.swift   @Observable @MainActor — sva interakcija + AI okidač
 ├── Views/                    GameView, BoardView, SquareView,
-│                             CapturedPiecesView, PieceImageView
+│                             CapturedPiecesView, PieceImageView,
+│                             LessonDetailView (okvir) + LessonRenderer (blokovi)
+├── Content/lessons/          FOLDER-REFERENCA: 32 JSON-a (4 lekcije × 8 jezika)
 └── Assets.xcassets/          12 SVG figura: piece_{white|black}_{type}
 ```
 
@@ -169,6 +176,61 @@ Chessko/
 - **Rotacija table**: `viewModel.isFlipped` → `BoardView` iterira redove/kolone u obrnutom
   redosledu; `SquareView` dobija `isBottomEdge`/`isLeftEdge` za koordinatne labele.
   `AnimatingPieceView` i `flyingCapture` overlay koriste display koordinate.
+
+## Sadržaj lekcija
+
+Od Faze 3 tekst lekcija **nije u Swift-u**. Živi u
+`Chessko/Content/lessons/<id>.<jezik>.json` — 32 fajla (4 lekcije × 8 jezika),
+`id ∈ {board-and-pieces, openings, middlegame, endgame}`.
+
+```bash
+python3 build_lesson_json.py     # regeneriše svih 32 JSON-a
+```
+
+- **`Content/` je FOLDER-REFERENCA u Xcode projektu**, ne grupa. Cela struktura
+  direktorijuma se prenosi u `.app`, pa **nova lekcija ne traži izmenu
+  `project.pbxproj`** — dovoljno je spustiti JSON u folder. Zato
+  `LessonRepository` traži `subdirectory: "Content/lessons"`; bez putanje bi
+  radilo samo da fajlovi stoje pojedinačno u korenu bundle-a.
+- **Tok**: `LessonRepository.shared.lesson(id:language:)` (keš, pad na `en` pa
+  `sr` ako jezika nema) → `LessonDocument` → `LessonDetailView` (samo zaglavlje
+  i skrol) → `LessonRenderer` (jedino mesto koje zna kako se blok crta).
+- **12 tipova blokova** (`LessonBlock` u `Models/LessonContent.swift`):
+  `heading`, `paragraph`, `bullets`, `box`, `quote`, `pieceRow`, `numberedRule`,
+  `pieceValueTable`, `board`, `explorer`, `exercise`, `divider`.
+  **Nov tip = jedan `case` u `LessonBlock` (+ `Codable` grane) i jedna grana u
+  `LessonRenderer.view(for:)`.** Dekoder namerno **baca** na nepoznat tip —
+  sadržaj je van dometa kompajlera, pa pokvaren JSON mora da vikne, ne da se
+  tiho preskoči (`LessonRepository.load` loguje pa `assertionFailure`).
+- **Tekst iz JSON-a stiže već preveden i NE ide kroz `Loc()`.** Renderer i
+  `OpeningExerciseViewModel` zovu `Loc()` samo na sopstvenom hromu (dugmad,
+  podrazumevane poruke vežbi, „Mat u %lld").
+- **Katalog prevoda (`Localizable.xcstrings`) od ove faze pokriva samo
+  interfejs** — 241 ključ. Sadržaj lekcija se u njega više ne dodaje; raste
+  samo sa UI-jem. Izuzetak su četiri oznake bodova (`1 bod` / `3 boda` /
+  `5 boda` / `9 bodova`) koje `L_PieceValueTable` **sastavlja interpolacijom**
+  iz brojne vrednosti u JSON-u, pa moraju da ostanu ključevi.
+
+### Kako se dodaje nova lekcija
+
+Bez ijedne linije Swift-a — provereno na simulatoru, ne pretpostavljeno:
+
+1. Napiši `Chessko/Content/lessons/<id>.sr.json` i `<id>.en.json` (nove lekcije idu na
+   sr + en; postojeće četiri imaju svih 8 jezika).
+2. Rebuild. `Content/` je **folder-referenca**, pa `project.pbxproj` ostaje netaknut.
+
+Lekcija se pojavljuje sama: `LessonRepository` otkriva id-jeve iz imena fajlova u bundle-u.
+`lessonOrder` je samo ključ za sortiranje — poznate lekcije idu propisanim redom, nepoznate
+azbučno na kraj. Broj lekcija u podnaslovu ekrana Učenje se računa, ne zakucava.
+
+Dve stvari na koje treba paziti pri pisanju JSON-a:
+
+- **Nepoznat `type` bloka ruši dekodiranje namerno** — bolje glasan pad nego lekcija sa
+  rupom koju niko ne primeti. Isto važi za nepoznat naziv figure i za `interactive: true`
+  (interaktivna tabla još ne postoji): oba daju vidljivu poruku u tekstu lekcije.
+- **`pieceValueTable` redovi treba da zadaju `valueLabel`** („1 bod" / „1 point"). Bez njega
+  renderer sklapa labelu iz `value` po srpskoj množini i traži ključ u katalogu — a ključevi
+  postoje samo za 1/3/5/9/∞, pa bi vrednost „2" na svim jezicima dala srpsko „2 boda".
 
 ## Poznata ograničenja / TODO kandidati
 
@@ -205,6 +267,15 @@ Chessko/
   strane. Uzastopni padovi ga zaustave oko ~80, uzastopna rešenja oko ~1520 (tu
   `round(32*(1-E))` padne na 0). Prozor za izbor zadatka je zato clamp-ovan
   posebno, u `PuzzleRepository.practiceRatingWindow(playerRating:)`.
+- **19 stringova korisničkog interfejsa nema ključ u katalogu**, pa ih korisnik na svim
+  jezicima osim srpskog vidi na srpskom (`Loc(_:)` za nepoznat ključ vraća sam ključ).
+  Među njima su i objave koje se vide u svakoj partiji: `„Mat! Beli je pobedio! 🎉"`,
+  `„Šah! Beli kralj je napadnut."` (`GameViewModel.swift:374-385`), zatim `„Beli"`/`„Crni"`
+  (`GameView.swift:357`), dijalog za predaju (`GameView.swift:242,248`), nazivi stilova
+  figura (`PieceImageView.swift:19-23`), `„Pregledaj partiju"`, `„Potvrda"`, `„Resetuj"`,
+  `„Zatvori"`. Nastalo ranije, dodavanjem tih funkcija bez `add(...)` linije; **nije
+  posledica Faze 3** — provereno da je isti skup od 19 postojao i pre nje. Popravka je
+  mehanička: 19 `add(...)` linija u `build_localizations.py`.
 - `build_localizations.py` pri svakom pokretanju regeneriše ceo
   `Localizable.xcstrings` i briše Xcode-ove auto-ekstraktovane ključeve iz
   izvornog koda (bez prevoda — Xcode ih sam vrati pri sledećem build-u), ali
@@ -251,7 +322,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
 - [x] Čuvanje/nastavak partije — `Codable` na svim modelima; `SavedGame` struct u VM; UserDefaults.
 - [x] **Lokalizacija na 8 jezika** — String Catalog (`Chessko/Localizable.xcstrings`), izvorni
       jezik srpski (`sr`), prevodi: en/fr/de/it/ru/zh-Hans/hi. Generiše se skriptom
-      `build_localizations.py` (300 ključeva × 8 jezika).
+      `build_localizations.py` (od Faze 3 samo UI: 241 ključ × 8 jezika).
       Notacija poteza (K/D/T/L/S) namerno NIJE lokalizovana (tehnička + izbegava stale save-ove);
       "En passant" ostaje univerzalni termin.
 - [x] **Izbor jezika u aplikaciji** — hamburger meni (gore-levo na ekranu Igra) → `SettingsSheet`
@@ -765,3 +836,38 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   ovaj talas popravlja); u changelog unosu za Task 5 `DS.onScrim` ispravljen na `DS.onAccent`.
   `swift test` 27/27 prošlo (~85 s), `xcodebuild` (iPhone 17 Pro simulator) BUILD SUCCEEDED.
   `project.pbxproj` nije diran (nema novih fajlova).
+
+- **2026-09-08** — Faza 3 (sadržaj lekcija u JSON). Tekst četiri lekcije izvučen iz
+  Swift-a u podatke: nova šema blokova (`Models/LessonContent.swift` — `LessonDocument`
+  + `LessonBlock` sa 12 tipova, `Codable` koji na nepoznat tip **baca** umesto da tiho
+  preskoči), generator `build_lesson_json.py` (struktura je zapisana u skripti, tekst se
+  NE prekucava nego vadi iz kataloga za svih 8 jezika) i 32 fajla u
+  `Chessko/Content/lessons/`. `Content/` je u projekat dodat kao **folder-referenca**, pa
+  nova lekcija ne traži izmenu `project.pbxproj`; `Logic/LessonRepository.swift` čita
+  `subdirectory: "Content/lessons"`, kešira po `id.jezik` i pada na `en` pa `sr`.
+  `Views/LessonRenderer.swift` je jedino mesto koje zna kako se blok crta (tu su se
+  preselile i `L_*` komponente i tri kartice vežbi), a `LessonDetailView.swift` je sa
+  **1238 spao na 96 linija** — samo zaglavlje, skrol i poziv renderera. Četiri nova
+  testa (`Tests/ChesskoEngineTests/LessonContentTests.swift`): svih 12 tipova se
+  dekodira, round-trip, nepoznat tip pada glasno, i svih 32 generisana JSON-a se
+  dekodiraju. `swift test` 27 → 31.
+  **Task 6 (zatvaranje faze):** iz `build_localizations.py` obrisano **169 `add(...)`
+  unosa** koje su koristile samo lekcije; katalog **410 → 241 ključ**, svaki i dalje sa
+  svih 8 jezika. Skup za brisanje nije uzet iz naivnog grep-a po Swift-u (on prijavi 191
+  ključ) nego iz preseka „nema literala u Swift-u" **i** „postoji u `*.sr.json`" — grep
+  sam bi obrisao i 22 zatečena siročeta iz ranijih faza (ostavljena, van dometa) i,
+  gore, četiri oznake bodova koje `L_PieceValueTable` **sastavlja interpolacijom**
+  (`"\(value) bod…"`) pa ih pretraga literala ne vidi; one i tri stringa istraživača
+  figura su na keep-listi (razlog upisan i kao komentar iznad njih u skripti).
+  U **istom commit-u** skinut `Loc()` sa sadržaja koji iz JSON-a stiže već preveden —
+  17 mesta u `LessonRenderer.swift` i 3 u `OpeningExerciseViewModel.swift` (iz plana),
+  plus 4 koje je plan promašio jer je gledao samo renderer: naslov+podnaslov lekcije u
+  `LessonDetailView.swift` i u kartici na `LearnView.swift`. Razdvojeno bi u prozoru
+  između dva commita srpski pao na katalog koji ga više ne nosi. Hrom (dugmad,
+  podrazumevane poruke vežbi, `LocF("Mat u %lld")`) zadržava `Loc()` — 11 mesta.
+  Provereno: 0 `Loc()`/`LocF()` poziva u `Chessko/**/*.swift` je ostalo bez ključa zbog
+  ove izmene (19 poziva je i pre ovoga bilo bez ključa i tiho padalo na srpski — isti
+  skup pre i posle, zaseban nalaz za neku sledeću fazu). Simulator (iPhone 17 Pro):
+  tabela vrednosti figura čita „1 bod / 3 boda / 3 boda / 5 boda / 9 bodova / ∞" na
+  srpskom i „1 point / 3 points / … / ∞" na engleskom. `swift test` 31/31,
+  `xcodebuild` BUILD SUCCEEDED, `project.pbxproj` nije diran.

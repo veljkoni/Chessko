@@ -1,0 +1,334 @@
+{
+  "id": "board-and-pieces",
+  "title": "Tabla, figure i kretanje",
+  "subtitle": "Osnove šaha za početnike",
+  "icon": "square.grid.3x3.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Kapablanka piše",
+      "text": "\"Prva stvar koju učenik treba da uradi jeste da upozna snagu figura. Ovo se najlakše postiže učenjem kako se brzo postiže šah-mat.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Šah se igra na tabli od **64 polja** naizmenično svetle i tamne boje. Uvek zapamti: **donje desno polje mora biti svetlo**. Svaki igrač počinje sa **16 figura**."
+    },
+    {
+      "type": "heading",
+      "text": "Istraži figure interaktivno",
+      "icon": "hand.point.up.left.fill"
+    },
+    {
+      "type": "explorer"
+    },
+    {
+      "type": "heading",
+      "text": "Kako se svaka figura kreće",
+      "icon": "square.grid.2x2.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "pawn",
+      "name": "Pion (Pešak)",
+      "count": "× 8"
+    },
+    {
+      "type": "paragraph",
+      "text": "Na početku imaš 8 piona — oni su tvoja \"pešadija\". Kapablanka napominje: **dobitak jednog piona je najmanji materijalni dobitak i često je dovoljan za pobedu**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Kretanje",
+          "text": "Ide isključivo napred, po jedno polje. Na prvom potezu može da preskoči dva polja. **Pioni ne mogu da idu unazad.**",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.left.and.arrow.up.right",
+          "title": "Napad",
+          "text": "Jede protivničke figure isključivo po dijagonali jedno polje unapred.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "crown.fill",
+      "title": "Promocija",
+      "text": "Ako pion stigne do poslednjeg reda — pretvara se u bilo koju figuru, najčešće Damu. Ovo je moćno oružje u završnici!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "Top (Kula)",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Stoji u uglovima table na početku. Efikasan je tek na otvorenim linijama — koliko god radi sa pioima koji blokiraju put, toliko je ograničen."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Kretanje",
+          "text": "Kreće se po pravim linijama (napred-nazad, levo-desno) koliko god polja želi. Zajedno, dva Topa su neznatno jača od Dame.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "Lovac (Iber)",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Jedan lovac uvek ostaje na belim, drugi na crnim poljima. Kapablanka smatra da je **u većini pozicija Lovac vredniji od Skakača**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right.and.arrow.up.left",
+          "title": "Kretanje",
+          "text": "Kreće se isključivo po dijagonalama. Slabost: \"Topov pion koji promovira na polju suprotne boje od Lovca\" najčešće vodi remiju umesto pobede.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "Skakač (Konj)",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Jedina figura koja preskače ostale. Snažan je u **zatvorenim pozicijama** — kada su linije blokirane pionima. Na ivici table gubi na snazi."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "l.joystick.fill",
+          "title": "Kretanje",
+          "text": "Kreće se u obliku slova \"L\": dva polja pravo pa jedno u stranu.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Jedinstven!",
+      "text": "Jedina figura koja može da preskače druge figure — i svoje i protivničke!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "Kraljica (Dama)",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "Stoji na polju **svoje boje** — bela Dama na belom polju, crna na crnom. Najmoćnija figura, ali ne treba je odmah izvoditi u otvaranju."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Kretanje",
+          "text": "Kombinuje kretanje Topa i Lovca — kreće se u svim pravcima, koliko god polja želi.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "Kralj",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "Najvažnija figura — njen gubitak znači kraj igre. U otvaranju je **pasivna odbrambena figura**, ali u završnici postaje moćan napadač."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "dot.square.fill",
+          "title": "Kretanje",
+          "text": "Kreće se samo jedno polje u bilo kom pravcu. **Ne sme da stane na napadnuto polje!**",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Poseban potez: Rokada",
+      "icon": "arrow.left.arrow.right"
+    },
+    {
+      "type": "paragraph",
+      "text": "Jednom u partiji možeš pomeriti **dve figure istovremeno** — Kralja i Topa. Kralj skoči dva polja ka Topu, a Top preskače Kralja i staje pored njega. Ovo služi da skloniš Kralja na sigurno i ubaciš Top u igru."
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Uslovi za rokadu",
+      "text": "Ni Kralj ni Top se do tada **nisu pomerali** · Između njih **nema nijedne figure** · Kralj se ne nalazi u šahu i ne prolazi kroz napadnuto polje"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Relativna vrednost figura",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Kapablanka kaže: vrednost nije fiksna — menja se zavisno od pozicije. Ipak, ove brojke služe kao vodič u razmeni figura."
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pešak",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Skakač",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Lovac",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Top",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Dama",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "Kralj",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "info.circle.fill",
+          "title": "Dva lovca su gotovo uvek jača od dva skakača",
+          "text": "Lovac je naročito snažan kada postoje pioni na obe strane table i kada su linije otvorene.",
+          "style": null
+        },
+        {
+          "icon": "info.circle.fill",
+          "title": "Top vredi kao skakač plus dva piona",
+          "text": "Ili lovac plus dva piona. Zato se razmena figure za topa bez kompenzacije naziva \"gubljenje kvaliteta\".",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "Kralj u završnici postaje napadačka figura",
+          "text": "U otvaranju i središnjici Kralj je isključivo odbrambena figura. U završnici, kada nestane većina figura, mora aktivno da učestvuje u borbi.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Elementarni matovi",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Pre nego što naučiš otvaranja i strategiju, nauči ove tri osnovne mat pozicije. Za svaki od njih potrebna je saradnja Kralja!"
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Vežba 1 — Kralj + Top",
+      "hint": "Oteraj crnog Kralja na ivicu table. Top i Kralj moraju da sarađuju!",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": null,
+      "startFEN": "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Vežba 2 — Kralj + dva Lovca",
+      "hint": "Oteraj Kralja ne samo na ivicu već i u ugao iste boje kao tvoji lovci.",
+      "icon": "rhombus.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Vežba 3 — Kralj + Dama",
+      "hint": "Najlakše! Dama odmah sužava prostor. Pazi na pat!",
+      "icon": "crown.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "sr"
+}

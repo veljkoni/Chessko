@@ -1,0 +1,334 @@
+{
+  "id": "board-and-pieces",
+  "title": "Brett, Figuren und Bewegung",
+  "subtitle": "Schach-Grundlagen für Anfänger",
+  "icon": "square.grid.3x3.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca schreibt",
+      "text": "„Das Erste, was ein Schüler tun muss, ist die Kraft der Figuren kennenzulernen. Am besten lernt man dies, indem man schnell mattsetzt.“"
+    },
+    {
+      "type": "paragraph",
+      "text": "Schach wird auf einem Brett mit **64 Feldern** in abwechselnd hellen und dunklen Farben gespielt. Merke dir immer: **das Feld unten rechts muss hell sein**. Jeder Spieler beginnt mit **16 Figuren**."
+    },
+    {
+      "type": "heading",
+      "text": "Figuren interaktiv erkunden",
+      "icon": "hand.point.up.left.fill"
+    },
+    {
+      "type": "explorer"
+    },
+    {
+      "type": "heading",
+      "text": "Wie sich jede Figur bewegt",
+      "icon": "square.grid.2x2.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "pawn",
+      "name": "Der Bauer",
+      "count": "× 8"
+    },
+    {
+      "type": "paragraph",
+      "text": "Zu Beginn hast du 8 Bauern — sie sind deine „Infanterie“. Capablanca merkt an: **ein einzelner Mehrbauer ist der kleinste materielle Gewinn und reicht oft zum Sieg**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Bewegung",
+          "text": "Er zieht nur vorwärts, ein Feld nach dem anderen. Beim ersten Zug darf er zwei Felder vorrücken. **Bauern können nicht rückwärts ziehen.**",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.left.and.arrow.up.right",
+          "title": "Angriff",
+          "text": "Er schlägt gegnerische Figuren nur diagonal, ein Feld nach vorn.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "crown.fill",
+      "title": "Umwandlung",
+      "text": "Erreicht ein Bauer die letzte Reihe, verwandelt er sich in eine beliebige Figur, meist in eine Dame. Im Endspiel ist das eine mächtige Waffe!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "Der Turm",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Er steht zu Beginn in den Brettecken. Erst auf offenen Linien wird er wirksam — je mehr Bauern den Weg versperren, desto eingeschränkter ist er."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Bewegung",
+          "text": "Er zieht in geraden Linien (auf-ab, links-rechts) beliebig weit. Zusammen sind zwei Türme etwas stärker als eine Dame.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "Der Läufer",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Ein Läufer bleibt immer auf den hellen, der andere auf den dunklen Feldern. Capablanca meint, dass **der Läufer in den meisten Stellungen mehr wert ist als der Springer**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right.and.arrow.up.left",
+          "title": "Bewegung",
+          "text": "Er zieht nur auf Diagonalen. Schwäche: „ein Turmbauer, der auf einem Feld der Gegenfarbe des Läufers umwandelt“ führt meist zum Remis statt zum Sieg.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "Der Springer",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Die einzige Figur, die über andere springt. Er ist stark in **geschlossenen Stellungen** — wenn die Linien von Bauern blockiert sind. Am Brettrand verliert er an Stärke."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "l.joystick.fill",
+          "title": "Bewegung",
+          "text": "Er zieht in L-Form: zwei Felder gerade, dann eins zur Seite.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Einzigartig!",
+      "text": "Die einzige Figur, die über andere Figuren springen kann — eigene wie gegnerische!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "Die Dame",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sie steht auf einem Feld **ihrer eigenen Farbe** — die weiße Dame auf hellem, die schwarze auf dunklem Feld. Die stärkste Figur, doch man sollte sie in der Eröffnung nicht zu früh herausbringen."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Bewegung",
+          "text": "Sie verbindet die Bewegung von Turm und Läufer — in alle Richtungen, beliebig weit.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "König",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "Die wichtigste Figur — ihr Verlust bedeutet das Ende der Partie. In der Eröffnung ist er eine **passive Verteidigungsfigur**, im Endspiel wird er zum mächtigen Angreifer."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "dot.square.fill",
+          "title": "Bewegung",
+          "text": "Er zieht nur ein Feld in beliebige Richtung. **Er darf kein angegriffenes Feld betreten!**",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Ein besonderer Zug: Rochade",
+      "icon": "arrow.left.arrow.right"
+    },
+    {
+      "type": "paragraph",
+      "text": "Einmal pro Partie darfst du **zwei Figuren gleichzeitig** ziehen — König und Turm. Der König springt zwei Felder zum Turm, der Turm überspringt den König und stellt sich daneben. So bringst du den König in Sicherheit und den Turm ins Spiel."
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Bedingungen für die Rochade",
+      "text": "Weder König noch Turm haben sich **zuvor bewegt** · Zwischen ihnen steht **keine Figur** · Der König steht nicht im Schach und zieht nicht über ein angegriffenes Feld"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Relativer Wert der Figuren",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca sagt: Der Wert ist nicht fest — er ändert sich je nach Stellung. Dennoch dienen diese Zahlen als Leitfaden beim Abtausch."
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Bauer",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Springer",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Läufer",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Turm",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Dame",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "König",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "info.circle.fill",
+          "title": "Zwei Läufer sind fast immer stärker als zwei Springer",
+          "text": "Der Läufer ist besonders stark, wenn auf beiden Seiten Bauern stehen und die Linien offen sind.",
+          "style": null
+        },
+        {
+          "icon": "info.circle.fill",
+          "title": "Ein Turm ist einen Springer plus zwei Bauern wert",
+          "text": "Oder ein Läufer plus zwei Bauern. Deshalb nennt man das Hergeben einer Leichtfigur für einen Turm ohne Kompensation „Qualitätsverlust“.",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "Im Endspiel wird der König zur Angriffsfigur",
+          "text": "In Eröffnung und Mittelspiel ist der König rein defensiv. Im Endspiel, wenn die meisten Figuren weg sind, muss er aktiv am Kampf teilnehmen.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Elementare Mattbilder",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Bevor du Eröffnungen und Strategie lernst, beherrsche diese drei grundlegenden Mattbilder. Jedes davon braucht die Mithilfe des Königs!"
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Übung 1 — König + Turm",
+      "hint": "Treibe den schwarzen König an den Brettrand. Turm und König müssen zusammenarbeiten!",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": null,
+      "startFEN": "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Übung 2 — König + zwei Läufer",
+      "hint": "Treibe den König nicht nur an den Rand, sondern in eine Ecke der gleichen Farbe wie deine Läufer.",
+      "icon": "rhombus.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Übung 3 — König + Dame",
+      "hint": "Am einfachsten! Die Dame schränkt den Raum sofort ein. Achte auf Patt!",
+      "icon": "crown.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "de"
+}
