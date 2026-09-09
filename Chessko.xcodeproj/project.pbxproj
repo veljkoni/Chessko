@@ -29,6 +29,7 @@
 		76E8F15964E84209B6549CC7 /* PieceImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48D8C6D4E4A487EB552BE28 /* PieceImageView.swift */; };
 		80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59755406843949CDA29BF61D /* SoundManager.swift */; };
 		10CA7A1000000000000000S1 /* StatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000S2 /* StatsManager.swift */; };
+		10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000V2 /* ProgressStore.swift */; };
 		10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000P2 /* PlatformHelper.swift */; };
 		10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000R2 /* PuzzleRepository.swift */; };
 		10CA7A1000000000000000L1 /* LessonContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L2 /* LessonContent.swift */; };
@@ -72,6 +73,7 @@
 		50511444A0D9466E931F8B68 /* SquareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareView.swift; sourceTree = "<group>"; };
 		59755406843949CDA29BF61D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000S2 /* StatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsManager.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000V2 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000P2 /* PlatformHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelper.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000R2 /* PuzzleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleRepository.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000L2 /* LessonContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonContent.swift; sourceTree = "<group>"; };
@@ -204,6 +206,7 @@
 				B14BD27CB2A1472DA10FBF00 /* MoveGenerator.swift */,
 				59755406843949CDA29BF61D /* SoundManager.swift */,
 				10CA7A1000000000000000S2 /* StatsManager.swift */,
+				10CA7A1000000000000000V2 /* ProgressStore.swift */,
 				10CA7A1000000000000000P2 /* PlatformHelper.swift */,
 				EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */,
 				E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */,
@@ -316,6 +319,7 @@
 				5121DCD7B0AD4E48BE1F4C3E /* MoveGenerator.swift in Sources */,
 				80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */,
 				10CA7A1000000000000000S1 /* StatsManager.swift in Sources */,
+				10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */,
 				10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */,
 				10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */,
 				10CA7A1000000000000000L1 /* LessonContent.swift in Sources */,
