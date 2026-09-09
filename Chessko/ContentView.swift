@@ -29,9 +29,12 @@ struct ContentView: View {
                     Label("Zadaci", systemImage: "puzzlepiece.fill")
                 }
 
-            LearnView(viewModel: learnViewModel)
+            // Od Faze 4a treci tab je Put, a ne Učenje. `LearnView` ostaje u
+            // projektu dok se ne potvrdi da Put pokriva sve sto je Učenje
+            // nudilo (brisanje ide u zavrsni zadatak faze).
+            PathView(viewModel: learnViewModel)
                 .tabItem {
-                    Label("Učenje", systemImage: "book.fill")
+                    Label("Put", systemImage: "signpost.right.fill")
                 }
         }
         .tint(DS.accent)

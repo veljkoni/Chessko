@@ -110,3 +110,37 @@ final class LessonRepository {
         return docs
     }
 }
+
+// MARK: - Curriculum Repository
+//
+// Isti sloj i isti obrazac kao `LessonRepository`: Put zivi u
+// `Content/curriculum.json`, van koda, i ucitava se jednom pa kesira.
+//
+// Za razliku od lekcija, kurikulum je JEDAN fajl bez varijanti po jeziku —
+// naslovi poglavlja stoje u samom JSON-u (`Chapter.title`), pa jezicki lanac
+// pada na potrosaca (`PathView`), ne ovde.
+
+@MainActor
+final class CurriculumRepository {
+    static let shared = CurriculumRepository()
+
+    /// `nil` znaci da `curriculum.json` nedostaje iz bundle-a ili se ne
+    /// dekodira — ekran Puta to mora da PRIKAZE, ne da ostane prazan. Ista
+    /// namera kao kod lekcija: sadrzaj je van dometa kompajlera od Faze 3, pa
+    /// je ovo jedino mesto koje moze da vikne.
+    private(set) lazy var curriculum: Curriculum? = {
+        guard let url = Bundle.main.url(forResource: "curriculum", withExtension: "json",
+                                        subdirectory: "Content") else {
+            print("[Chessko] GRESKA: curriculum.json nije u bundle-u.")
+            assertionFailure("curriculum.json nije u bundle-u.")
+            return nil
+        }
+        do {
+            return try JSONDecoder().decode(Curriculum.self, from: Data(contentsOf: url))
+        } catch {
+            print("[Chessko] GRESKA: curriculum.json se ne dekodira: \(error)")
+            assertionFailure("curriculum.json se ne dekodira: \(error)")
+            return nil
+        }
+    }()
+}

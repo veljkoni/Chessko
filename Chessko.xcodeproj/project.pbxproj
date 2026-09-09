@@ -35,6 +35,7 @@
 		10CA7A1000000000000000L1 /* LessonContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L2 /* LessonContent.swift */; };
 		10CA7A1000000000000000U1 /* Curriculum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000U2 /* Curriculum.swift */; };
 		10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L4 /* LessonRepository.swift */; };
+		10CA7A1000000000000000W1 /* PathView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000W2 /* PathView.swift */; };
 		10CA7A1000000000000000C5 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C6 /* Content */; };
 		89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */; };
 		8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */; };
@@ -79,6 +80,7 @@
 		10CA7A1000000000000000L2 /* LessonContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonContent.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000U2 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000L4 /* LessonRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonRepository.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000W2 /* PathView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathView.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000C6 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
 		5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
 		5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningExerciseViewModel.swift; sourceTree = "<group>"; };
@@ -147,6 +149,7 @@
 				97E697423DC545FD8B18BD01 /* PuzzleView.swift */,
 				50511444A0D9466E931F8B68 /* SquareView.swift */,
 			10CA7A1000000000000000B3 /* SettingsSheet.swift */,
+			10CA7A1000000000000000W2 /* PathView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -325,6 +328,7 @@
 				10CA7A1000000000000000L1 /* LessonContent.swift in Sources */,
 				10CA7A1000000000000000U1 /* Curriculum.swift in Sources */,
 				10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */,
+				10CA7A1000000000000000W1 /* PathView.swift in Sources */,
 				89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */,
 				B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,

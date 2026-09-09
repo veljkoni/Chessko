@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 // MARK: - Stanje koraka
 
@@ -90,6 +91,11 @@ struct ProgressSnapshot: Codable, Equatable {
 // sacica skalara. `UserDefaults` kljucevi se NAMERNO ne brisu posle migracije —
 // tako povratak na stariju verziju aplikacije i dalje radi (spec 5.4).
 
+/// `@Observable` jer je napredak stanje koje EKRAN Puta crta: kad se korak
+/// zavrsi u lekciji (drugi ekran, na navigacionom steku), lista koraka mora sama
+/// da se prekrsti. Bez toga bi svaki potrosac morao da nosi sopstveni okidac za
+/// osvezavanje — a Faze 4b i 5 dodaju jos dva takva potrosaca.
+@Observable
 @MainActor
 final class ProgressStore {
     static let shared = ProgressStore()

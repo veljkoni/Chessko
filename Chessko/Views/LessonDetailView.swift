@@ -13,6 +13,17 @@ struct LessonDetailView: View {
 
     let lessonId: String
 
+    /// Id koraka Puta iz kojeg je lekcija otvorena, ili `nil` ako je otvorena
+    /// iz liste lekcija (tab Učenje).
+    ///
+    /// Od ovoga zavisi SAMO dugme na dnu: korak se zavrsava tek kad korisnik
+    /// dodje do kraja i POTVRDI (spec 5.1). Da se `ProgressStore` zove bez ovog
+    /// razlikovanja, obicno listanje lekcija bi tiho zavrsavalo korake Puta —
+    /// napredak koji korisnik nije zaradio.
+    var stepId: String? = nil
+
+    @Environment(\.dismiss) private var dismiss
+
     /// Citanje `effectiveCode` unutar `body`-ja je i pretplata: `@Observable`
     /// belezi pristup i bez uskladistene reference, pa ekran prati promenu
     /// jezika i kad je gurnut na navigacioni stek.
@@ -47,6 +58,10 @@ struct LessonDetailView: View {
                                 .foregroundStyle(DS.inkMuted)
                                 .padding(40)
                         }
+
+                        if document != nil, let stepId {
+                            stepFooter(stepId)
+                        }
                     }
                     .frame(width: geo.size.width)
                     .padding(.bottom, 40)
@@ -58,6 +73,49 @@ struct LessonDetailView: View {
                          ?? (document?.title ?? ""))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.appBackground, for: .navigationBar)
+    }
+
+    // MARK: - Zavrsetak koraka Puta
+
+    /// Vidi se samo kad je lekcija otvorena iz Puta. Vec zavrsen korak ne nudi
+    /// dugme nego samo potvrdu — `completeStep` je ionako idempotentan, ali
+    /// dugme koje ne menja nista je gore od nikakvog dugmeta.
+    @ViewBuilder
+    private func stepFooter(_ stepId: String) -> some View {
+        let done = ProgressStore.shared.snapshot.completedSteps.contains(stepId)
+
+        VStack(spacing: DS.Space.m) {
+            Rectangle()
+                .fill(DS.line)
+                .frame(height: 1)
+
+            if done {
+                HStack(spacing: DS.Space.s) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(DS.success)
+                    Text(Loc("Korak je završen"))
+                        .foregroundStyle(DS.inkMuted)
+                }
+                .font(.dsBody)
+                .padding(.horizontal, DS.Space.xl)
+            } else {
+                Button {
+                    ProgressStore.shared.completeStep(stepId)
+                    Haptics.notification(.success)
+                    dismiss()
+                } label: {
+                    Text(Loc("Završi korak"))
+                        .font(.dsHeading.weight(.semibold))
+                        .foregroundStyle(DS.onAccent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, DS.Space.m)
+                        .background(DS.accent, in: RoundedRectangle(cornerRadius: DS.Radius.m))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, DS.Space.xl)
+            }
+        }
+        .padding(.top, DS.Space.xl)
     }
 
     // MARK: - Lesson Header
