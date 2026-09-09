@@ -33,12 +33,17 @@ final class StatsManager {
     /// Datumi ("yyyy-MM-dd") za koje je resen zadatak dana.
     nonisolated static let solvedDatesKey = "chessko.solvedDates"
 
-    /// `ProgressStore` nije `@Observable` (mora da ostane na nivou Foundation-a
-    /// zbog testnog paketa), pa citanje njegovog snimka iz racunatog svojstva
-    /// samo po sebi ne bi obavestilo SwiftUI. Ovaj brojac je jedina stvarna
-    /// promenljiva koju `@Observable` prati: svaki getter ga procita, svaka
-    /// izmena ga uveca — pa se `SettingsSheet` osvezava kao i pre (npr. posle
-    /// "Resetuj statistiku" dok je list otvoren).
+    /// Uveden u Task-u 2, kad `ProgressStore` JOS NIJE bio `@Observable`: bez
+    /// njega racunati getteri ne bi obavestili SwiftUI, pa se `SettingsSheet`
+    /// ne bi osvezio posle "Resetuj statistiku" dok je list otvoren.
+    ///
+    /// Od Task-a 3 je `ProgressStore` `@Observable` (`Observation` je deo
+    /// standardne biblioteke, ne SwiftUI-ja, pa testni paket to podnosi), tako
+    /// da citanje `snapshot`-a samo po sebi vec registruje pracenje i ovaj
+    /// brojac je **suvisan**. Zadrzan je namerno: uklanjanje se ne moze jeftino
+    /// proveriti bez sinteticnih tapova, koji u ovom simulatoru ne rade, a
+    /// cena drzanja je nekoliko linija. Sme da se ukloni kad neko bude mogao
+    /// rucno da potvrdi da se statistika i dalje osvezava uzivo.
     private var revision = 0
 
     private var s: ProgressSnapshot {
