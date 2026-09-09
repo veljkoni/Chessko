@@ -44,6 +44,16 @@ struct CurriculumStep: Codable, Equatable {
     let id: String
     let kind: StepKind
 
+    /// Sirove vrednosti `GameDifficulty`-ja iz aplikacije. Stoje kao literali,
+    /// a ne kao referenca na sam enum, jer `GameDifficulty` zivi u app target-u
+    /// (uvozi SwiftUI) a ovaj fajl mora da ostane na nivou Foundation-a zbog
+    /// testnog paketa.
+    ///
+    /// Postoji zato sto bi tipfeler ("begginer") inace prosao SVAKI test i
+    /// isplivao tek kao korak koji se ne moze odigrati — ista klasa greske
+    /// protiv koje kurikulum vec stiti kod lekcija i tema.
+    static let knownDifficulties: Set<String> = ["beginner", "easy", "medium", "hard", "stockfish"]
+
     private enum CodingKeys: String, CodingKey {
         case id, type, lessonId, themes, count, ratingRange, difficulty, startFEN
     }
@@ -77,7 +87,13 @@ struct CurriculumStep: Codable, Equatable {
                               count: try c.decode(Int.self, forKey: .count),
                               ratingRange: try range(c.decode([Int].self, forKey: .ratingRange)))
         case "game":
-            self.kind = .game(difficulty: try c.decode(String.self, forKey: .difficulty),
+            let difficulty = try c.decode(String.self, forKey: .difficulty)
+            guard CurriculumStep.knownDifficulties.contains(difficulty) else {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .difficulty, in: c,
+                    debugDescription: "Nepoznata tezina '\(difficulty)'. Dozvoljeno: \(CurriculumStep.knownDifficulties.sorted().joined(separator: ", ")).")
+            }
+            self.kind = .game(difficulty: difficulty,
                               startFEN: try c.decodeIfPresent(String.self, forKey: .startFEN))
         default:
             throw DecodingError.dataCorruptedError(

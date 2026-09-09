@@ -410,7 +410,7 @@ ls "$APP/Content/curriculum.json"
 - [ ] **Step 6: Testovi i commit**
 
 Run: `swift test`
-Expected: **35 testova prolazi** (31 + 4 nova).
+Expected: **38 testova prolazi** (31 + 7 novih).
 
 ```bash
 git add Chessko/Models/Curriculum.swift Chessko/Content/curriculum.json \
@@ -833,7 +833,7 @@ Dodati komentar na vrh `StatsManager`-a da je fasada i zašto.
 - [ ] **Step 6: Testovi i commit**
 
 Run: `swift test`
-Expected: **50 testova prolazi** (35 + 15 novih: 11 čistih funkcija + 4 skladišta). Postojećih 6 testova rejtinga mora i dalje da prolazi — oni gađaju `StatsManager.newRating`, koja je čista i ne menja se.
+Expected: **53 testova prolazi** (38 + 15 novih: 11 čistih funkcija + 4 skladišta). Postojećih 6 testova rejtinga mora i dalje da prolazi — oni gađaju `StatsManager.newRating`, koja je čista i ne menja se.
 
 ```bash
 git add Chessko/Logic/ProgressStore.swift Chessko/Logic/StatsManager.swift \
@@ -896,6 +896,8 @@ final class CurriculumRepository {
 1. **Nastavak** — kartica „Nastavi" sa rednim brojem i naslovom prvog dostupnog koraka (spec 5.1: „Nastavi: Korak 7 — Vezivanje"). Ako su svi koraci završeni, kartica kaže da je put pređen.
 2. **Streak i dnevni cilj** — broj dana zaredom i da li je današnji cilj ispunjen.
 3. **Poglavlja** — svako sa naslovom na tekućem jeziku i procentom završenosti, pa koraci sa stanjem (`completed` kvačica, `available` normalno, `locked` zaključano i nedodirljivo).
+
+> **Naslovi poglavlja imaju samo `sr` i `en`** (nalaz iz pregleda Task-a 1), a aplikacija ima 8 jezika. `Chapter.title` je otvoren rečnik, pa `PathView` mora sam da pada nazad: traženi jezik → `en` → `sr` → prazan string. Isti lanac koji `LessonRepository` već koristi za lekcije.
 
 Naslov koraka: za `lesson` — naslov lekcije iz `LessonRepository`; za ostale tipove — lokalizovana oznaka tipa (`Vežba`, `Partija`, `Test`) uz broj zadataka gde ima smisla.
 
@@ -1045,7 +1047,7 @@ add("Greška — test kreće ispočetka", "Mistake — the test restarts", "Erre
 
 - [ ] **Step 4: Testovi, build, commit**
 
-Expected: **53 testova** (50 + 3 nova za prozor rejtinga).
+Expected: **56 testova** (53 + 3 nova za prozor rejtinga).
 
 ---
 
@@ -1110,7 +1112,7 @@ Obrisati `progress.json`, ostaviti `UserDefaults`, pokrenuti — statistika mora
 
 ## Završna provera faze
 
-- [ ] `swift test` prolazi (31 postojeći + 22 nova = 53)
+- [ ] `swift test` prolazi (31 postojeći + 25 novih = 56)
 - [ ] `xcodebuild … build` → `** BUILD SUCCEEDED **`
 - [ ] `git status --short` prazan
 - [ ] `curriculum.json` u izgrađenom `.app`

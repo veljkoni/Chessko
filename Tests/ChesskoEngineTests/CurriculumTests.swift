@@ -127,3 +127,43 @@ import Foundation
         }
     }
 }
+
+@Test func unknownGameDifficultyThrows() {
+    // "begginer" bi inace prosao svaki test i ispao tek kao korak koji se ne
+    // moze odigrati — isto kao tipfeler u imenu lekcije ili teme.
+    let json = """
+    { "version": 1, "chapters": [ { "id": "c", "title": {"sr":"C","en":"C"},
+      "steps": [ { "id": "x", "type": "game", "difficulty": "begginer" } ] } ] }
+    """
+    #expect(throws: (any Error).self) {
+        try JSONDecoder().decode(Curriculum.self, from: Data(json.utf8))
+    }
+}
+
+@Test func singleValueRatingRangeIsAccepted() {
+    let json = """
+    { "version": 1, "chapters": [ { "id": "c", "title": {"sr":"C","en":"C"},
+      "steps": [ { "id": "x", "type": "practice", "themes": ["fork"],
+                   "count": 1, "ratingRange": [800, 800] } ] } ] }
+    """
+    let c = try? JSONDecoder().decode(Curriculum.self, from: Data(json.utf8))
+    guard case .practice(_, _, let r)? = c?.chapters[0].steps[0].kind else {
+        Issue.record("nije dekodirano kao practice"); return
+    }
+    #expect(r == 800...800)
+}
+
+// `encode(to:)` ne koristi nijedan drugi test. Cetiri kasnija zadatka zavise od
+// ovog oblika, pa bi izmena koja rasklopi par kljuceva (dekodira se pod jednim
+// imenom, kodira pod drugim) isplivala tek daleko od uzroka.
+@Test func everyStepKindSurvivesEncodeDecodeRoundTrip() throws {
+    let original = try JSONDecoder().decode(
+        Curriculum.self,
+        from: Data(contentsOf: URL(fileURLWithPath: "Chessko/Content/curriculum.json")))
+    let back = try JSONDecoder().decode(Curriculum.self,
+                                        from: JSONEncoder().encode(original))
+    #expect(back == original)
+    for (a, b) in zip(original.chapters.flatMap(\.steps), back.chapters.flatMap(\.steps)) {
+        #expect(a == b, "korak \(a.id) se ne vraca isti kroz enkodiranje")
+    }
+}
