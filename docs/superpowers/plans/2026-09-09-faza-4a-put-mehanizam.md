@@ -65,7 +65,7 @@
 
 **Interfaces:**
 - Consumes: ništa
-- Produces: `Curriculum`, `Chapter`, `CurriculumStep`, `StepKind`, `Curriculum.bundled` — troše ih zadaci 2–5.
+- Produces: `Curriculum`, `Chapter`, `CurriculumStep`, `StepKind`, `Curriculum.allStepIds`, `Curriculum.step(id:)` — troše ih zadaci 2–5. Učitavanje iz bundle-a NIJE ovde: `CurriculumRepository` stiže u Task-u 3, jer mu treba `Bundle.main` koji testni paket nema.
 
 - [ ] **Step 1: Napisati test koji pada**
 
