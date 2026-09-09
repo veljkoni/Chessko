@@ -234,6 +234,16 @@ Dve stvari na koje treba paziti pri pisanju JSON-a:
 
 ## Poznata ograničenja / TODO kandidati
 
+- **Git LFS: odlučeno da se NE koristi** (2026-09-09). Repo nosi 4 `.nnue` mreže, ~145 MB
+  ukupno; najveća je 71,4 MB, ispod GitHub-ovog tvrdog limita od 100 MB, pa push prolazi uz
+  upozorenje. Razlozi protiv LFS-a: mreže se nikad ne menjaju, pa glavna korist LFS-a
+  (da ne čuva svaku verziju) ovde ne postoji; LFS je trajni namet na svaki klon i CI;
+  besplatni tier daje 1 GB saobraćaja mesečno, što je ~14 klonova. Uz to su dve iOS mreže
+  bile **već objavljene** na `origin/main`, pa bi ih LFS zahvatio samo prepisivanjem
+  objavljene istorije i force-push-om, koji lomi svaki postojeći klon. Ako se ovo ikad
+  preispita, jedini pravi kandidat je `ChesskoAndroid/app/src/main/assets/nn-1c0000000000.nnue`
+  (71 MB) — ali ga Android kod traži po imenu (`MainActivity.kt:85`), pa bi izbacivanje
+  značilo da `git clone` više nije dovoljan da se aplikacija sagradi.
 - Stockfish radi samo sa `nn-37f18f62d772.nnue` (mali); `nn-1111cefa1111.nnue`
   (veliki, ~79MB) opcionalan za jaču igru — skinuti sa stockfishchess.org.
 - `positionKey` (`GameState.swift:97-100`) uključuje prava rokade u heš. Partija
