@@ -143,8 +143,27 @@ final class ProgressStore {
         return s
     }
 
+    /// Upis nikad ne baca dalje — napredak ne sme da obori aplikaciju. Ali NE
+    /// sme ni da cuti:
+    ///
+    /// - Neuspelo kodiranje je greska u kodu (ceo snimak su Codable primitivi),
+    ///   pa puca u debug build-u umesto da se tiho preskoci.
+    /// - Neuspeo upis je stanje okruzenja (pun disk, zakljucan uredjaj pa
+    ///   zasticeni podaci nisu dostupni), pa se samo prijavljuje.
+    ///
+    /// Gubitak je uzak jer je snimak u memoriji CEO: sledeca uspesna izmena
+    /// upisuje i ono sto je ranije palo. Zato `mutate` upisuje po svakoj izmeni
+    /// i ne sme da se "optimizuje" u grupno snimanje — time bi se ovaj oporavak
+    /// izgubio.
     func save() {
-        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        let data: Data
+        do {
+            data = try JSONEncoder().encode(snapshot)
+        } catch {
+            print("[Chessko] GRESKA: napredak se ne moze kodirati: \(error)")
+            assertionFailure("ProgressSnapshot se ne kodira: \(error)")
+            return
+        }
         do {
             try data.write(to: fileURL, options: .atomic)
         } catch {
