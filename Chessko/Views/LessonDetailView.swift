@@ -69,8 +69,13 @@ struct LessonDetailView: View {
                 .safeAreaPadding(.bottom, 24)
             }
         }
-        .navigationTitle(lessonNumber.map { LocF("Lekcija %lld", $0) }
-                         ?? (document?.title ?? ""))
+        // Kad je lekcija otvorena IZ KORAKA Puta, naslov je naslov lekcije, a ne
+        // "Lekcija N": Put broji korake (lekcija otvaranja je korak 4), a ovaj
+        // ekran je brojao lekcije (ista lekcija je lekcija 2). Korisnik bi na
+        // dva uzastopna ekrana video dva razlicita broja za istu stvar.
+        .navigationTitle(stepId != nil
+            ? (document?.title ?? "")
+            : (lessonNumber.map { LocF("Lekcija %lld", $0) } ?? (document?.title ?? "")))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.appBackground, for: .navigationBar)
     }

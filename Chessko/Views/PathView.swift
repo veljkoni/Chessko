@@ -58,7 +58,9 @@ struct PathView: View {
         for candidate in [language, "en", "sr"] {
             if let t = chapter.title[candidate], !t.isEmpty { return t }
         }
-        return ""
+        // Poslednje pribeziste: id poglavlja umesto praznog naslova. Prazan
+        // naslov bi dao nevidljivo zaglavlje sa samim procentom pored sebe.
+        return chapter.title.values.first ?? chapter.id
     }
 
     private func title(of step: CurriculumStep) -> String {
@@ -87,6 +89,19 @@ struct PathView: View {
     private func lessonId(of step: CurriculumStep) -> String? {
         if case .lesson(let id) = step.kind { return id }
         return nil
+    }
+
+    /// JEDINO mesto koje zna gde korak vodi. Kartica „Nastavi" i red u listi su
+    /// pre ovoga sami birali odrediste, pa bi Task 4 i Task 5 morali da menjaju
+    /// oba — i razisli bi se cim jedan bude propusten. `nil` znaci da korak jos
+    /// nema pokretac; pozivalac tada mora i da IZGLEDA neaktivno.
+    @ViewBuilder
+    private func destination(for step: CurriculumStep) -> (some View)? {
+        if let lessonId = lessonId(of: step) {
+            LessonDetailView(lessonId: lessonId, stepId: step.id)
+        } else {
+            nil as LessonDetailView?
+        }
     }
 
     // MARK: - Body
@@ -139,16 +154,12 @@ struct PathView: View {
     @ViewBuilder
     private func continueCard(_ states: [String: StepState]) -> some View {
         if let next = nextStep(states) {
-            if let lessonId = lessonId(of: next.step) {
-                NavigationLink {
-                    LessonDetailView(lessonId: lessonId, stepId: next.step.id)
-                } label: {
-                    continueLabel(next)
-                }
-                .buttonStyle(.plain)
+            if let destination = destination(for: next.step) {
+                NavigationLink { destination } label: { continueLabel(next, runnable: true) }
+                    .buttonStyle(.plain)
             } else {
                 // Vezba / test / partija — jos nema pokretac (zadaci 4 i 5).
-                continueLabel(next)
+                continueLabel(next, runnable: false)
             }
         } else {
             HStack(spacing: DS.Space.m) {
@@ -167,29 +178,40 @@ struct PathView: View {
         }
     }
 
-    private func continueLabel(_ next: (index: Int, step: CurriculumStep)) -> some View {
-        HStack(alignment: .center, spacing: DS.Space.m) {
+    /// `runnable` razdvaja izgled od ponasanja. Dok pokretaci vezbe i partije ne
+    /// postoje (zadaci 4 i 5), kartica za takav korak NE SME da izgleda isto kao
+    /// ona koja vodi negde: to je najistaknutiji element ekrana, i sa isporucenim
+    /// kurikulumom je bas ono sto korisnik vidi ODMAH posle prve lekcije.
+    /// Redovi liste vec postuju isto pravilo — nemaju strelicu kad su neaktivni.
+    private func continueLabel(_ next: (index: Int, step: CurriculumStep),
+                               runnable: Bool) -> some View {
+        let ink = runnable ? DS.onAccent : DS.inkMuted
+        return HStack(alignment: .center, spacing: DS.Space.m) {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
-                Text(Loc("Nastavi"))
+                Text(runnable ? Loc("Nastavi") : Loc("Uskoro"))
                     .font(.dsCaption.weight(.semibold))
-                    .foregroundStyle(DS.onAccent.opacity(0.85))
+                    .foregroundStyle(ink.opacity(0.85))
                 Text(LocF("Korak %lld", next.index))
                     .font(.dsCaption)
-                    .foregroundStyle(DS.onAccent.opacity(0.85))
+                    .foregroundStyle(ink.opacity(0.85))
                 Text(title(of: next.step))
                     .font(.dsHeading.weight(.bold))
-                    .foregroundStyle(DS.onAccent)
+                    .foregroundStyle(runnable ? DS.onAccent : DS.ink)
                     .multilineTextAlignment(.leading)
             }
             Spacer(minLength: 0)
             Image(systemName: icon(of: next.step))
                 .font(.dsTitle)
-                .foregroundStyle(DS.onAccent.opacity(0.85))
+                .foregroundStyle(ink.opacity(0.85))
         }
         .padding(DS.Space.l)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DS.accent, in: RoundedRectangle(cornerRadius: DS.Radius.l))
+        .background(runnable ? AnyShapeStyle(DS.accent) : AnyShapeStyle(DS.fill),
+                    in: RoundedRectangle(cornerRadius: DS.Radius.l))
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(runnable
+            ? LocF("Nastavi, korak %lld, %@", next.index, title(of: next.step))
+            : LocF("Korak %lld, %@, uskoro dostupno", next.index, title(of: next.step)))
     }
 
     // MARK: - Streak i dnevni cilj
@@ -198,7 +220,7 @@ struct PathView: View {
         let goalMet = store.goalMetToday
         return VStack(alignment: .leading, spacing: DS.Space.s) {
             HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
-                Text(store.currentStreak.formatted())
+                Text(store.currentStreak.formatted(.number.locale(LocalizationManager.shared.locale)))
                     .font(.dsTitle)
                     .foregroundStyle(DS.ink)
                 Text(Loc("Dana zaredom"))
@@ -277,10 +299,8 @@ struct PathView: View {
 
     @ViewBuilder
     private func stepRow(_ step: CurriculumStep, state: StepState) -> some View {
-        if state != .locked, let lessonId = lessonId(of: step) {
-            NavigationLink {
-                LessonDetailView(lessonId: lessonId, stepId: step.id)
-            } label: {
+        if state != .locked, let destination = destination(for: step) {
+            NavigationLink { destination } label: {
                 stepLabel(step, state: state, showsChevron: true)
             }
             .buttonStyle(.plain)
@@ -329,7 +349,21 @@ struct PathView: View {
         .padding(.horizontal, DS.Space.l)
         .padding(.vertical, DS.Space.m)
         .contentShape(Rectangle())
+        // `.combine` proguta katanac i kvacicu, pa bi VoiceOver zakljucan korak
+        // procitao isto kao dostupan. Stanje se zato izgovara eksplicitno.
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(title(of: step))
+        .accessibilityValue(accessibilityState(state))
+        .accessibilityHint(state == .locked
+                           ? Loc("Zaključano — završi prethodne korake") : "")
+    }
+
+    private func accessibilityState(_ state: StepState) -> String {
+        switch state {
+        case .locked:    return Loc("Zaključano")
+        case .available: return Loc("Dostupno")
+        case .completed: return Loc("Završeno")
+        }
     }
 
     // MARK: - Put nije dostupan

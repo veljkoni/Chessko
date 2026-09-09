@@ -430,6 +430,13 @@ add("Cilj za danas ispunjen", "Today's goal met", "Objectif du jour atteint", "T
 add("Cilj za danas nije ispunjen", "Today's goal not met yet", "Objectif du jour non atteint", "Tagesziel noch nicht erreicht", "Obiettivo di oggi non ancora raggiunto", "Цель на сегодня ещё не выполнена", "今日目标尚未完成", "आज का लक्ष्य अभी पूरा नहीं हुआ")
 add("Prešao si ceo put!", "You finished the whole path!", "Tu as terminé tout le parcours !", "Du hast den ganzen Pfad geschafft!", "Hai completato tutto il percorso!", "Вы прошли весь путь!", "你走完了整条路径！", "आपने पूरा पथ पूरा किया!")
 add("Put nije dostupan", "Path unavailable", "Parcours indisponible", "Pfad nicht verfügbar", "Percorso non disponibile", "Путь недоступен", "路径不可用", "पथ उपलब्ध नहीं")
+add("Uskoro", "Coming soon", "Bientôt", "Demnächst", "Prossimamente", "Скоро", "即将推出", "जल्द आ रहा है")
+add("Nastavi, korak %lld, %@", "Continue, step %lld, %@", "Continuer, étape %lld, %@", "Weiter, Schritt %lld, %@", "Continua, passo %lld, %@", "Продолжить, шаг %lld, %@", "继续，第 %lld 步，%@", "जारी रखें, चरण %lld, %@")
+add("Korak %lld, %@, uskoro dostupno", "Step %lld, %@, coming soon", "Étape %lld, %@, bientôt disponible", "Schritt %lld, %@, demnächst verfügbar", "Passo %lld, %@, prossimamente", "Шаг %lld, %@, скоро", "第 %lld 步，%@，即将推出", "चरण %lld, %@, जल्द उपलब्ध")
+add("Zaključano", "Locked", "Verrouillé", "Gesperrt", "Bloccato", "Заблокировано", "已锁定", "बंद")
+add("Dostupno", "Available", "Disponible", "Verfügbar", "Disponibile", "Доступно", "可用", "उपलब्ध")
+add("Završeno", "Completed", "Terminé", "Abgeschlossen", "Completato", "Завершено", "已完成", "पूर्ण")
+add("Zaključano — završi prethodne korake", "Locked — finish the earlier steps", "Verrouillé — termine les étapes précédentes", "Gesperrt — schließe die vorherigen Schritte ab", "Bloccato — completa i passi precedenti", "Заблокировано — завершите предыдущие шаги", "已锁定 — 请先完成前面的步骤", "बंद — पहले के चरण पूरे करें")
 add("Završi korak", "Finish step", "Terminer l'étape", "Schritt abschließen", "Completa il passo", "Завершить шаг", "完成此步", "चरण पूरा करें")
 add("Korak je završen", "Step completed", "Étape terminée", "Schritt abgeschlossen", "Passo completato", "Шаг завершён", "此步已完成", "चरण पूरा हो गया")
 
