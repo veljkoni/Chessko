@@ -83,24 +83,43 @@ struct PathView: View {
         }
     }
 
-    /// Lekcijski korak je jedini koji se u ovoj fazi MOZE otvoriti. Pokretaci
-    /// za vezbu, test i partiju stizu u zadacima 4 i 5; do tada su ti redovi
-    /// vidljivi sa tacnim stanjem, ali bez ikakve akcije.
-    private func lessonId(of step: CurriculumStep) -> String? {
-        if case .lesson(let id) = step.kind { return id }
-        return nil
+    /// Odrediste koraka kao PODATAK, ne kao opcioni pogled.
+    ///
+    /// Do Faze 4a je odluka stajala u `@ViewBuilder` funkciji koja je vracala
+    /// `(some View)?` — a takva funkcija nikad ne vrati `nil`: builder umota i
+    /// granu `nil as LessonDetailView?` u `Optional.some(_ConditionalContent…)`,
+    /// pa je `if let destination = …` uvek prolazio. Posledica: vezba, test i
+    /// partija su vec IZGLEDALI aktivno („Nastavi" umesto „Uskoro", strelica u
+    /// redu) i vodili na prazan ekran. Enum vraca odluku u tip koji zaista moze
+    /// da bude `nil`.
+    private enum StepRoute {
+        case lesson(lessonId: String, stepId: String)
+        case practice(CurriculumStep)   // i `practice` i `test` — vidi `StepPracticeView`
     }
 
     /// JEDINO mesto koje zna gde korak vodi. Kartica „Nastavi" i red u listi su
     /// pre ovoga sami birali odrediste, pa bi Task 4 i Task 5 morali da menjaju
     /// oba — i razisli bi se cim jedan bude propusten. `nil` znaci da korak jos
     /// nema pokretac; pozivalac tada mora i da IZGLEDA neaktivno.
+    private func route(for step: CurriculumStep) -> StepRoute? {
+        switch step.kind {
+        case .lesson(let lessonId):
+            return .lesson(lessonId: lessonId, stepId: step.id)
+        case .practice, .test:
+            return .practice(step)
+        case .game:
+            // Partija dobija pokretac u Task-u 5; do tada red stoji mirno.
+            return nil
+        }
+    }
+
     @ViewBuilder
-    private func destination(for step: CurriculumStep) -> (some View)? {
-        if let lessonId = lessonId(of: step) {
-            LessonDetailView(lessonId: lessonId, stepId: step.id)
-        } else {
-            nil as LessonDetailView?
+    private func destination(for route: StepRoute) -> some View {
+        switch route {
+        case .lesson(let lessonId, let stepId):
+            LessonDetailView(lessonId: lessonId, stepId: stepId)
+        case .practice(let step):
+            StepPracticeView(step: step)
         }
     }
 
@@ -154,11 +173,11 @@ struct PathView: View {
     @ViewBuilder
     private func continueCard(_ states: [String: StepState]) -> some View {
         if let next = nextStep(states) {
-            if let destination = destination(for: next.step) {
-                NavigationLink { destination } label: { continueLabel(next, runnable: true) }
+            if let route = route(for: next.step) {
+                NavigationLink { destination(for: route) } label: { continueLabel(next, runnable: true) }
                     .buttonStyle(.plain)
             } else {
-                // Vezba / test / partija — jos nema pokretac (zadaci 4 i 5).
+                // Partija — jos nema pokretac (Task 5).
                 continueLabel(next, runnable: false)
             }
         } else {
@@ -178,8 +197,8 @@ struct PathView: View {
         }
     }
 
-    /// `runnable` razdvaja izgled od ponasanja. Dok pokretaci vezbe i partije ne
-    /// postoje (zadaci 4 i 5), kartica za takav korak NE SME da izgleda isto kao
+    /// `runnable` razdvaja izgled od ponasanja. Dok pokretac partije ne postoji
+    /// (Task 5), kartica za takav korak NE SME da izgleda isto kao
     /// ona koja vodi negde: to je najistaknutiji element ekrana, i sa isporucenim
     /// kurikulumom je bas ono sto korisnik vidi ODMAH posle prve lekcije.
     /// Redovi liste vec postuju isto pravilo — nemaju strelicu kad su neaktivni.
@@ -299,14 +318,14 @@ struct PathView: View {
 
     @ViewBuilder
     private func stepRow(_ step: CurriculumStep, state: StepState) -> some View {
-        if state != .locked, let destination = destination(for: step) {
-            NavigationLink { destination } label: {
+        if state != .locked, let route = route(for: step) {
+            NavigationLink { destination(for: route) } label: {
                 stepLabel(step, state: state, showsChevron: true)
             }
             .buttonStyle(.plain)
         } else {
-            // Zakljucan korak nije dodirljiv; dostupna vezba/test/partija je u
-            // ovoj fazi jos bez pokretaca, pa takodje stoji mirno.
+            // Zakljucan korak nije dodirljiv; dostupna partija je u ovoj fazi
+            // jos bez pokretaca, pa takodje stoji mirno.
             stepLabel(step, state: state, showsChevron: false)
         }
     }

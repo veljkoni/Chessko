@@ -886,3 +886,30 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   Provereno u **izgrađenoj aplikaciji**, ne samo u katalogu: pročitani `fr/de/ru.lproj`
   unutar `.app` i potvrđeno da svaki nov ključ ima prevod. Kontrolna provera „svaki `Loc()`
   ima ključ" sada daje **0**.
+
+- **2026-09-10** — Faza 4a, Task 4 (pokretac `practice` i `test` koraka Puta).
+  `PuzzleMode` dobija treci slucaj `.step(id:requireFlawless:)` (+ `Equatable`,
+  koji je enum sa asocijativnom vrednoscu izgubio); `PuzzleViewModel` dobija red
+  zadataka (`stepQueue`/`stepSolved`/`stepFailed`/`stepProgress`),
+  `startStepPractice(step:)` koji red puni jednim upitom i pokrece prvi zadatak,
+  `advanceStepAfterSolve()` (broji i, kad je red iscrpljen, zove
+  `ProgressStore.completeStep`) i `failStepIfTest()` (prva greska u testu ga
+  obara i posle ~1.4s pokrece korak iznova sa NOVIM zadacima). Tok resavanja se
+  ne duplira — `tap`/`attempt`/`apply` su isti kao na tabu Zadaci, pa i
+  `StatsManager.recordPuzzleSolved()` (rejting + dnevni cilj) ide postojecim
+  putem. Novi `Chessko/Views/StepPracticeView.swift` je tanak (traka pilula,
+  brojac „Zadatak N od M", status, `BoardView`) i sopstveni `PuzzleViewModel` mu
+  je bitan: deljeni bi ulaskom u korak pregazio zadatak dana. Namerno NE nudi
+  „Prikazi resenje" (bio bi izlaz iz provere) ni „Sledeci zadatak" (red je
+  fiksan). `PuzzleRepository.stepRatingWindow(playerRating:stepRange:)` (spec
+  5.4) sece prozor rejtinga opsegom koraka, a kad je presek prazan prednost ima
+  OPSEG KORAKA — 3 nova testa (56 ukupno). Katalog 279 → 284 kljuca × 8 jezika.
+  **Popravljen stvarni bug iz Task-a 3:** `PathView.destination(for:)` je bila
+  `@ViewBuilder` funkcija sa tipom `(some View)?`, a takva funkcija NIKAD ne
+  vrati `nil` — builder umota i granu `nil as LessonDetailView?` u
+  `Optional.some(_ConditionalContent<…>)`, pa je `if let` uvek prolazio i vezba,
+  test i partija su izgledali aktivno („Nastavi" umesto „Uskoro", strelica u
+  redu) i vodili na prazan ekran. Odluka je prebacena u privatni `enum StepRoute`
+  + `route(for:)` (jedno mesto istine, kao i pre), a `destination(for:)` je sad
+  cist renderer. Verifikovano na simulatoru: `practice` i `test` se stvarno
+  igraju, `game` red je bez strelice i kartica kaze „Uskoro".

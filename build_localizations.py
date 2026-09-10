@@ -440,6 +440,13 @@ add("Zaključano — završi prethodne korake", "Locked — finish the earlier s
 add("Završi korak", "Finish step", "Terminer l'étape", "Schritt abschließen", "Completa il passo", "Завершить шаг", "完成此步", "चरण पूरा करें")
 add("Korak je završen", "Step completed", "Étape terminée", "Schritt abgeschlossen", "Passo completato", "Шаг завершён", "此步已完成", "चरण पूरा हो गया")
 
+# ── Pokretac koraka `practice` / `test` (Faza 4a, Task 4) ───────────────────
+add("Zadatak %lld od %lld", "Puzzle %lld of %lld", "Problème %lld sur %lld", "Aufgabe %lld von %lld", "Problema %lld di %lld", "Задача %lld из %lld", "第 %lld 题，共 %lld 题", "पहेली %lld / %lld")
+add("Test mora biti rešen bez greške", "The test must be solved without mistakes", "Le test doit être réussi sans erreur", "Der Test muss fehlerfrei gelöst werden", "Il test va superato senza errori", "Тест нужно пройти без ошибок", "测验必须零失误通过", "परीक्षा बिना गलती के पूरी करनी होगी")
+add("Greška — test kreće ispočetka", "Mistake — the test restarts", "Erreur — le test recommence", "Fehler — der Test beginnt von vorn", "Errore — il test ricomincia", "Ошибка — тест начинается заново", "失误 — 测验重新开始", "गलती — परीक्षा फिर से शुरू")
+add("Nazad na Put", "Back to the path", "Retour au parcours", "Zurück zum Pfad", "Torna al percorso", "Назад к пути", "返回路径", "पथ पर वापस")
+add("Korak nije dostupan", "Step unavailable", "Étape indisponible", "Schritt nicht verfügbar", "Passo non disponibile", "Шаг недоступен", "此步不可用", "चरण उपलब्ध नहीं")
+
 
 def build():
     entries = {}
