@@ -186,8 +186,12 @@ struct StepPracticeView: View {
     /// dostizno samo bez greske — prva greska ga vrati na pocetak sa novim
     /// zadacima, pa `stepSolved` krene od nule.
     private var isStepFinished: Bool {
+        // `!stepFailed` je drugi branik za isti slucaj koji `isPlayerTurn` sada
+        // gasi na izvoru: pao test NIJE zavrsen korak, ma koliko zadataka bilo
+        // reseno. Bez ovoga bi ekran napisao "Korak je zavrsen" i ponudio
+        // "Nazad na Put", dok Put isti korak jos vodi kao nezavrsen.
         let progress = viewModel.stepProgress
-        return progress.total > 0 && progress.solved >= progress.total
+        return !viewModel.stepFailed && progress.total > 0 && progress.solved >= progress.total
     }
 
     @ViewBuilder

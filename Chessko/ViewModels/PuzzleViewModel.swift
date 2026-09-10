@@ -68,10 +68,6 @@ final class PuzzleViewModel {
     /// novim zadacima bez pomoci ekrana.
     private(set) var currentStep: CurriculumStep?
 
-    var isStepMode: Bool {
-        if case .step = mode { return true }
-        return false
-    }
 
     var stepRequiresFlawless: Bool {
         if case .step(_, let flawless) = mode { return flawless }
@@ -97,6 +93,12 @@ final class PuzzleViewModel {
 
     private func recordPuzzleIdSolved(_ id: String) {
         guard solvedPuzzleIds.insert(id).inserted else { return }
+        // Postoje DVA ziva primerka ovog modela: jedan drzi tab Zadaci, drugi
+        // ekran koraka u Putu. Upis celog kesa bi pregazio ono sto je drugi
+        // primerak u medjuvremenu upisao, pa bi zadatak mogao ponovo da se
+        // pojavi u "Sledeći zadatak". Zato se disk cita pre spajanja.
+        let onDisk = Set(UserDefaults.standard.stringArray(forKey: StatsManager.solvedPuzzleIdsKey) ?? [])
+        solvedPuzzleIds.formUnion(onDisk)
         UserDefaults.standard.set(Array(solvedPuzzleIds), forKey: StatsManager.solvedPuzzleIdsKey)
     }
 
@@ -203,7 +205,13 @@ final class PuzzleViewModel {
     var isFlipped: Bool { playerColor == .black }
 
     var isPlayerTurn: Bool {
-        !awaitingOpponent && (phase == .playing || phase == .wrongMove)
+        // `!stepFailed`: kad test padne, restart stize tek posle 1.4s. Bez ovoga
+        // tabla u tom prozoru i dalje prima poteze — a resen zadatak unutar njega
+        // podigne `loadGeneration`, cime SAM otkaze restart koji ga je cekao.
+        // Zastavica ostane `true`, kredit izostane, a ekran ipak napise
+        // "Korak je zavrsen". Ulaz se zato gasi dok restart ne slegne;
+        // `startStepPractice` je vraca na `false`.
+        !awaitingOpponent && !stepFailed && (phase == .playing || phase == .wrongMove)
     }
 
     var statusMessage: String {
