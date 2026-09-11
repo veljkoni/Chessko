@@ -117,6 +117,9 @@ actor StockfishBridge {
     /// dubine, ne prva koju je prijavio.
     func evaluate(state: GameState, depth: Int = 12) async -> PositionEval? {
         if let terminal = terminalEval(for: state) { return terminal }
+        // Provera PRE pravljenja motora: u vec otkazanom zadatku motor se ne
+        // pravi uopste, pa ne moze ni da ostane "neupitan".
+        if Task.isCancelled { return nil }
 
         let eng = Engine(type: .stockfish, loggingEnabled: false)
         await eng.start()
@@ -126,15 +129,25 @@ actor StockfishBridge {
             try? await Task.sleep(for: .milliseconds(100))
             waited += 1
         }
-        guard await eng.isRunning else { return nil }
+        guard await eng.isRunning else {
+            await eng.stop()
+            return nil
+        }
 
         let evalFile      = nnueBig ?? nnueSmall
         let evalFileSmall = nnueSmall ?? nnueBig
         if let url = evalFile      { await eng.send(command: .setoption(id: "EvalFile",      value: url.path())) }
         if let url = evalFileSmall { await eng.send(command: .setoption(id: "EvalFileSmall", value: url.path())) }
 
-        guard let stream = await eng.responseStream else { return nil }
+        guard let stream = await eng.responseStream else {
+            await eng.stop()
+            return nil
+        }
 
+        // Pozicija ide ODMAH po preuzimanju stream-a: motor koji se pokrene a
+        // nikad ne dobije `position` obara SLEDECI motor u istom procesu
+        // (SIGABRT, assert u `Position::set`). Posle ove linije nijedan izlaz
+        // ne ostavlja "neupitan" motor.
         await eng.send(command: .position(.fen(state.fen)))
         await eng.send(command: .go(depth: depth))
 
@@ -151,9 +164,18 @@ actor StockfishBridge {
             let move = uci == "(none)" ? nil : parseUCI(uci, in: state)
             // Bez ijedne ocene nema sta da se vrati — pozicija bez ocene bi u
             // racunici prosla kao cp(0), sto je tvrdnja da je izjednaceno.
-            guard let score = lastScore else { return nil }
+            // `evaluate` sam gasi svoj motor na SVAKOM izlazu. Ranije se
+            // oslanjao na `Engine.deinit`, koji gasi asinhrono i tek kad stigne;
+            // u petlji bi to ostavilo vise motora da se gase uporedo, u istom
+            // procesu u kom je vec zabelezen SIGABRT zbog motora koji se "pusti".
+            guard let score = lastScore else {
+                await eng.stop()
+                return nil
+            }
+            await eng.stop()
             return PositionEval(score: score, bestMove: move)
         }
+        await eng.stop()
         return nil
     }
 
@@ -179,14 +201,22 @@ actor StockfishBridge {
     /// ocenu ni na punoj duzini partije. 81 pretraga je analiza partije od 40
     /// poteza, dakle ~25 s deljenim motorom prema ~105 s svezim po poziciji.
     ///
-    /// Zasto deljeni motor ovde radi, a `bestMove(for:depth:)` je 2026-06-27
-    /// morao da prelazi na svez po pozivu: `responseStream` je `AsyncStream`,
-    /// koji se ZAVRSAVA kad se njegov iterator ispusti. `for await … in stream`
-    /// pravi iterator i ispusta ga na izlasku iz petlje, pa je druga pretraga
-    /// citala vec zavrsen stream. Ovde se iterator pravi JEDNOM
-    /// (`makeAsyncIterator`) i zivi kroz sve pretrage — zato se kvar ne
-    /// ponavlja. `bestMove` namerno nije diran: igra protiv racunara zavisi
-    /// od njega i nije u obimu ove faze.
+    /// ZASTO ovo radi — NIJE utvrdjeno, i to je ovde zapisano namerno.
+    ///
+    /// Prva verzija ovog komentara tvrdila je da se `AsyncStream` zavrsava kad
+    /// se njegov iterator ispusti, pa da je stari kvar od 2026-06-27 bio u
+    /// `for await … in stream`, koji iterator ispusta na izlasku iz petlje.
+    /// TA TVRDNJA JE EKSPERIMENTALNO OBORENA: u sondi nad golim `AsyncStream`-om
+    /// `onTermination` se posle ispustanja iteratora NE poziva, a nov iterator
+    /// uredno dobija sledecu vrednost. Iterator ne poseduje terminaciju — deli
+    /// kontekst sa samom vrednoscu stream-a, koju `EngineConfiguration` drzi
+    /// zivu za ceo zivot motora.
+    ///
+    /// Izmereno je dakle DA deljeni motor daje 81/81 u tri uzastopna prolaza,
+    /// ali NIJE utvrdjeno zasto je stari obrazac padao. Dok se to ne utvrdi,
+    /// ovo NIJE dozvola da se `bestMove(for:depth:)` prebaci na deljeni motor
+    /// ili na dugoziveci iterator — taj put je vec jednom oboren u produkciji.
+    /// `bestMove` zato ostaje netaknut.
     func analyzeGame(
         states: [GameState],
         depth: Int = 12,
@@ -209,6 +239,9 @@ actor StockfishBridge {
             for i in states.indices { onProgress(i + 1, states.count) }
             return terminals.compactMap { $0 }
         }
+
+        // Isto kao u `evaluate`: u vec otkazanom zadatku motor se ne pravi.
+        if Task.isCancelled { return nil }
 
         let eng = Engine(type: .stockfish, loggingEnabled: false)
         let result = await analyze(states: states, terminals: terminals, depth: depth, using: eng, onProgress: onProgress)
@@ -240,9 +273,22 @@ actor StockfishBridge {
         if let url = evalFileSmall { await eng.send(command: .setoption(id: "EvalFileSmall", value: url.path())) }
 
         guard let stream = await eng.responseStream else { return nil }
-        // JEDAN iterator za sve pretrage. Ispustanje iteratora zavrsava
-        // `AsyncStream` — vidi objasnjenje iznad `analyzeGame`.
+        // JEDAN iterator za sve pretrage. NE zato sto bi ispustanje iteratora
+        // zavrsilo stream (provereno da ne zavrsava), nego zato sto je to
+        // oblik koji je izmeren kao ispravan — vidi objasnjenje iznad
+        // `analyzeGame`.
         var iterator = stream.makeAsyncIterator()
+
+        // Motor koji se pokrene a NIKAD ne dobije `position` obara SLEDECI
+        // motor u istom procesu (SIGABRT, assert u `Position::set`), a `stop()`
+        // ga od toga ne spasava — mereno, padalo je 2/3 puta i sa `stop()`-om.
+        // Guard iznad `analyzeGame` pokriva slucaj kad nijedna pozicija ne
+        // trazi pretragu, ali NE i otkazivanje: `Task.isCancelled` u prvoj
+        // iteraciji petlje znaci da je korisnik napustio ekran tokom ~1 s
+        // pokretanja motora, i tada bi motor ostao neupitan. Zato mu se odmah
+        // salje bezopasna pocetna pozicija: posle ove linije nijedan izlaz ne
+        // ostavlja neupitan motor, bez ijedne dodatne pretrage.
+        await eng.send(command: .position(.startpos))
 
         var out: [PositionEval] = []
         out.reserveCapacity(states.count)
