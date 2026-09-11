@@ -447,6 +447,16 @@ add("Greška — test kreće ispočetka", "Mistake — the test restarts", "Erre
 add("Nazad na Put", "Back to the path", "Retour au parcours", "Zurück zum Pfad", "Torna al percorso", "Назад к пути", "返回路径", "पथ पर वापस")
 add("Korak nije dostupan", "Step unavailable", "Étape indisponible", "Schritt nicht verfügbar", "Passo non disponibile", "Шаг недоступен", "此步不可用", "चरण उपलब्ध नहीं")
 
+# ── Pokretac koraka `game` (Faza 4a, Task 5) ───────────────────────────────
+add("Korak se završava kad partija dođe do kraja.",
+    "The step is completed once the game reaches its end.",
+    "L'étape se termine lorsque la partie arrive à son terme.",
+    "Der Schritt gilt als abgeschlossen, sobald die Partie zu Ende ist.",
+    "Il passo si completa quando la partita arriva alla fine.",
+    "Шаг завершается, когда партия доходит до конца.",
+    "对局下到结束时，此步即完成。",
+    "बाज़ी के अंत तक पहुँचने पर यह चरण पूरा हो जाता है।")
+
 
 def build():
     entries = {}

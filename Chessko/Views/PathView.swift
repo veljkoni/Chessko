@@ -95,21 +95,28 @@ struct PathView: View {
     private enum StepRoute {
         case lesson(lessonId: String, stepId: String)
         case practice(CurriculumStep)   // i `practice` i `test` — vidi `StepPracticeView`
+        case game(difficulty: GameDifficulty, startFEN: String?, stepId: String)
     }
 
     /// JEDINO mesto koje zna gde korak vodi. Kartica „Nastavi" i red u listi su
-    /// pre ovoga sami birali odrediste, pa bi Task 4 i Task 5 morali da menjaju
-    /// oba — i razisli bi se cim jedan bude propusten. `nil` znaci da korak jos
-    /// nema pokretac; pozivalac tada mora i da IZGLEDA neaktivno.
+    /// pre ovoga sami birali odrediste, pa bi svaki novi pokretac morao da menja
+    /// oba — i razisli bi se cim jedan bude propusten. `nil` znaci korak bez
+    /// odredista; pozivalac tada mora i da IZGLEDA neaktivno.
     private func route(for step: CurriculumStep) -> StepRoute? {
         switch step.kind {
         case .lesson(let lessonId):
             return .lesson(lessonId: lessonId, stepId: step.id)
         case .practice, .test:
             return .practice(step)
-        case .game:
-            // Partija dobija pokretac u Task-u 5; do tada red stoji mirno.
-            return nil
+        case .game(let difficulty, let startFEN):
+            // `difficulty` je vec validiran pri dekodiranju kurikuluma
+            // (`CurriculumStep.knownDifficulties` su bukvalno `GameDifficulty`
+            // rawValue-ovi), pa je ovo mapiranje totalno i `StepGameView`
+            // dobija tezinu bez opcionala. Ako dva spiska ikad odu na svoju
+            // stranu, korak ostaje NEAKTIVAN umesto da se tiho igra na
+            // pogresnoj jacini — fallback bi razlaz sakrio.
+            guard let level = GameDifficulty(rawValue: difficulty) else { return nil }
+            return .game(difficulty: level, startFEN: startFEN, stepId: step.id)
         }
     }
 
@@ -120,6 +127,8 @@ struct PathView: View {
             LessonDetailView(lessonId: lessonId, stepId: stepId)
         case .practice(let step):
             StepPracticeView(step: step)
+        case .game(let difficulty, let startFEN, let stepId):
+            StepGameView(stepId: stepId, difficulty: difficulty, startFEN: startFEN)
         }
     }
 
@@ -177,7 +186,7 @@ struct PathView: View {
                 NavigationLink { destination(for: route) } label: { continueLabel(next, runnable: true) }
                     .buttonStyle(.plain)
             } else {
-                // Partija — jos nema pokretac (Task 5).
+                // Korak bez odredista (vidi `route(for:)`) — stoji mirno.
                 continueLabel(next, runnable: false)
             }
         } else {
@@ -197,11 +206,11 @@ struct PathView: View {
         }
     }
 
-    /// `runnable` razdvaja izgled od ponasanja. Dok pokretac partije ne postoji
-    /// (Task 5), kartica za takav korak NE SME da izgleda isto kao
-    /// ona koja vodi negde: to je najistaknutiji element ekrana, i sa isporucenim
-    /// kurikulumom je bas ono sto korisnik vidi ODMAH posle prve lekcije.
-    /// Redovi liste vec postuju isto pravilo — nemaju strelicu kad su neaktivni.
+    /// `runnable` razdvaja izgled od ponasanja: kartica koja nigde ne vodi NE
+    /// SME da izgleda isto kao ona koja vodi — to je najistaknutiji element
+    /// ekrana. Sa isporucenim kurikulumom svi tipovi koraka sada imaju pokretac,
+    /// pa je neaktivna grana rezerva za korak bez odredista (vidi `route(for:)`).
+    /// Redovi liste postuju isto pravilo — nemaju strelicu kad su neaktivni.
     private func continueLabel(_ next: (index: Int, step: CurriculumStep),
                                runnable: Bool) -> some View {
         let ink = runnable ? DS.onAccent : DS.inkMuted
@@ -324,8 +333,8 @@ struct PathView: View {
             }
             .buttonStyle(.plain)
         } else {
-            // Zakljucan korak nije dodirljiv; dostupna partija je u ovoj fazi
-            // jos bez pokretaca, pa takodje stoji mirno.
+            // Zakljucan korak nije dodirljiv; isto vazi za korak bez odredista
+            // (vidi `route(for:)`).
             stepLabel(step, state: state, showsChevron: false)
         }
     }

@@ -913,3 +913,28 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   + `route(for:)` (jedno mesto istine, kao i pre), a `destination(for:)` je sad
   cist renderer. Verifikovano na simulatoru: `practice` i `test` se stvarno
   igraju, `game` red je bez strelice i kartica kaze „Uskoro".
+
+- **2026-09-11** — Faza 4a, Task 5 (pokretac `game` koraka Puta). `StepRoute` dobija
+  `case game(difficulty:startFEN:stepId:)`, pa `route(for:)` vise ni za jedan tip koraka
+  ne vraca `nil` sa isporucenim kurikulumom — poglavlja 2–4 su time prvi put dostizna
+  (korak 3 je bio zid). Tezina iz kurikuluma se mapira u `GameDifficulty` u `route(for:)`
+  i dalje putuje kao enum: mapiranje je totalno (`CurriculumStep.knownDifficulties` su
+  bukvalno `rawValue`-ovi), a ako se dva spiska ikad raziđu korak ostaje NEAKTIVAN umesto
+  da se tiho igra na pogresnoj jacini.
+  **`GameViewModel` vise ne cuva partiju pod jednim globalnim kljucem:** `savedGameKey`
+  je sada svojstvo primerka (`init(saveKey:)`, podrazumevano `GameViewModel.freePlaySaveKey`
+  = zatecen `chessko.savedGame`), a korak dobija svoj slot
+  (`GameViewModel.stepSaveKey(_:)` → `chessko.savedGame.step.<stepId>`). Bez toga bi drugi
+  primerak modela ucitao partiju koju korisnik ima u toku na tabu Igra i prvim potezom je
+  pregazio — model snima celu partiju posle SVAKOG poteza. Uzgredna dobit: prekinuta
+  partija iz koraka se nastavlja (zavrsena se ne nastavlja).
+  Novi `Chessko/Views/StepGameView.swift` (sopstveni `GameViewModel`, kartica protivnika,
+  status, tabla, predaja i undo u toolbaru) i novi `Chessko/Views/PromotionOverlay.swift`
+  — birac promocije je izdvojen iz `GameView`-a doslovno, jer bi bez njega partija koraka
+  stala na promociji i korak se ne bi mogao zavrsiti. Korak se zavrsava kad
+  `GameViewModel.isGameOver` postane `true`, TACNO jednom po ulasku (`pendingStepId`), i
+  **bez obzira na ishod** — predaja i poraz zavrsavaju korak isto kao pobeda (spec:
+  „partija odigrana do kraja", ne pobeda). Tab Igra je netaknut: sopstveni model, sopstveni
+  kljuc, `newGame` tamo ne dodiruje Put. Katalog 284 → 285 kljuca × 8 jezika; `swift test`
+  56/56; dokazano na simulatoru da `chessko.savedGame` ostaje bajt-identican (sha256
+  `dd3deee0…`) dok korak pise u svoj slot.

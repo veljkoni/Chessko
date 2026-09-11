@@ -15052,6 +15052,59 @@
           }
         }
       }
+    },
+    "Korak se završava kad partija dođe do kraja.": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Korak se završava kad partija dođe do kraja."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The step is completed once the game reaches its end."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'étape se termine lorsque la partie arrive à son terme."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Schritt gilt als abgeschlossen, sobald die Partie zu Ende ist."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il passo si completa quando la partita arriva alla fine."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шаг завершается, когда партия доходит до конца."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对局下到结束时，此步即完成。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बाज़ी के अंत तक पहुँचने पर यह चरण पूरा हो जाता है।"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
