@@ -1,0 +1,139 @@
+{
+  "id": "tactics",
+  "title": "Taktika",
+  "subtitle": "Četiri motiva koja odlučuju partije",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "bolt.fill",
+      "title": "Taktika ne pada s neba",
+      "text": "Kapablanka je pre svega bio pozicioni igrač, a partije je ipak završavao kombinacijama — jer kombinacija se ne izmišlja. Ona se pojavi tek kad je pozicija za nju sazrela: kad dve protivničke figure stanu na istu liniju, dijagonalu ili skakačev skok, ili kad ostanu bez zaštite. Taktika zato služi planu, a ne obrnuto."
+    },
+    {
+      "type": "paragraph",
+      "text": "Taktički motiv je **oblik** koji se ponavlja. Ne uči se napamet nego se prepoznaje — kao lice. Ovde su četiri osnovna: **viljuška**, **vezivanje**, **probod** i **otkriveni napad**. Sva četiri počivaju na istoj ideji: napraviti dve pretnje odjednom, jer protivnik jednim potezom može da odgovori samo na jednu. U sve četiri vežbe ispod beli je na potezu."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Viljuška",
+      "icon": "tuningfork"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Viljuška** (sreće se i kao „vilica“ ili „rašlje“) je jedna figura koja u istom trenutku napada dve mete. Protivnik spasava jednu i gubi drugu. Skakač je za to najopasniji: on skače preko svega, pa se od njegovog napada ne može zakloniti — mora se bežati. Najčistiji oblik je viljuška **sa šahom**: kralj mora da se skloni, pa druga meta ostaje bez pomoći."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Viljuška skakačem",
+      "hint": "Skakač traži polje sa kojeg drži dve mete odjednom.",
+      "icon": "l.joystick.fill",
+      "uciMoves": [
+        "b5d4",
+        "f3e4",
+        "d4c2"
+      ],
+      "startFEN": "8/5p2/6p1/1N2B1P1/p4P2/5k2/2r5/5K2 w - - 4 47",
+      "solvedMessage": "Sd4+ pa Sxc2 — top je pao. ✓",
+      "wrongMessage": "Nije to — traži dvostruki napad.",
+      "playingPrompt": "Odigraj potez koji pravi viljušku.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Vezivanje",
+      "icon": "link"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Vezivanje** je kad figura ne sme da se pomeri jer iza nje, na istoj liniji, stoji nešto vrednije. Ako je iza nje **kralj**, pomeranje nije samo loše nego i nelegalno. Zato je vezana figura branilac samo naizgled: polje koje „brani“ zapravo nije branjeno. Pre nego što prodreš ili žrtvuješ, pogledaj je li branilac vezan."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Vezani branilac",
+      "hint": "Jedan crni branilac je vezan — udari tamo gde on ne sme da uzme.",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e1e8"
+      ],
+      "startFEN": "r1b3k1/pp3rpp/2p3q1/8/2B5/8/P1P2PPP/R3Q1K1 w - - 0 19",
+      "solvedMessage": "De8# — vezani top nije smeo da uzme. ✓",
+      "wrongMessage": "Nije to — udari tamo gde branilac ne sme.",
+      "playingPrompt": "Iskoristi vezanog branioca.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Probod",
+      "icon": "arrow.forward.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Probod** je vezivanje okrenuto naopako: vrednija figura stoji **ispred**, a slabija iza nje. Kod vezivanja prednja figura ne sme da se skloni; kod proboda mora — i time otkriva ono što je iza nje. Zato se probod skoro uvek izvodi **sa šahom**, jer kralj tada nema izbora. Ova dva motiva se najčešće mešaju, a razlika je samo u tome ko od njih dvoje stoji napred."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Probod topom",
+      "hint": "Šahiraj kralja tako da ono što stoji iza njega ostane samo.",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "h7h8",
+        "f8e7",
+        "h8a8"
+      ],
+      "startFEN": "r4k2/7R/6p1/4p1P1/4P3/8/2n1K3/8 w - - 1 52",
+      "solvedMessage": "Th8+ pa Txa8 — kuda god kralj pođe. ✓",
+      "wrongMessage": "Nije to — kralj mora da se skloni s linije.",
+      "playingPrompt": "Odigraj potez koji izvodi probod.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Otkriveni napad",
+      "icon": "arrow.triangle.2.circlepath"
+    },
+    {
+      "type": "paragraph",
+      "text": "Kod **otkrivenog napada** figura koja se pomeri nije ona koja udara. Ona samo skloni sebe sa linije, a pretnja stiže od figure iza nje. Otud je toliko opasan: protivnik gleda u ono što se pomerilo i previdi ono što je zapravo zapretilo. A kad figura koja se sklanja pritom i sama nešto napadne, jednim potezom su na tabli dve pretnje."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Ko zapravo daje mat?",
+      "hint": "Figuru koja daje mat ne treba pomerati — treba joj otvoriti put.",
+      "icon": "eye.fill",
+      "uciMoves": [
+        "e6e7"
+      ],
+      "startFEN": "6k1/7p/p3P1p1/p1pBBp2/P1P3Pq/1rP4P/8/5K2 w - - 1 41",
+      "solvedMessage": "e7# — mat daje lovac sa d5. ✓",
+      "wrongMessage": "Nije to — otvori lovcu dijagonalu.",
+      "playingPrompt": "Odigraj potez koji otkriva napad.",
+      "mateIn": null
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "eye.fill",
+      "title": "Motivi se prepoznaju, ne pamte",
+      "text": "Oko koje je viljušku videlo sto puta nađe je pre nego što je izračuna. Zato posle ove lekcije pređi na karticu **Zadaci** — tamo te svakog dana čeka po jedna nova pozicija za rešavanje."
+    }
+  ],
+  "language": "sr"
+}

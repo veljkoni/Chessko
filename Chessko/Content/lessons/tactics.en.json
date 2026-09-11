@@ -1,0 +1,139 @@
+{
+  "id": "tactics",
+  "title": "Tactics",
+  "subtitle": "The four motifs that decide games",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "bolt.fill",
+      "title": "Tactics do not fall from the sky",
+      "text": "Capablanca was above all a positional player, and yet he finished his games with combinations — because a combination is not invented. It appears only once the position has ripened for it: when two enemy pieces line up on the same line, diagonal or knight's leap, or when they are left undefended. Tactics serve the plan, not the other way round."
+    },
+    {
+      "type": "paragraph",
+      "text": "A tactical motif is a **shape** that keeps coming back. You do not learn it by heart, you recognise it — the way you recognise a face. Here are the four basic ones: the **fork**, the **pin**, the **skewer** and the **discovered attack**. All four rest on the same idea: make two threats at once, because your opponent can only answer one of them with a single move. In all four exercises below it is White to move."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "The fork",
+      "icon": "tuningfork"
+    },
+    {
+      "type": "paragraph",
+      "text": "A **fork** is one piece attacking two targets at the same moment. Your opponent saves one and loses the other. The knight is the most dangerous piece for this: it jumps over everything, so there is no blocking its attack — the target has to run. The purest form is the fork **with check**: the king must step aside, and the second target is left with no help."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Knight fork",
+      "hint": "The knight is looking for a square that hits two targets at once.",
+      "icon": "l.joystick.fill",
+      "uciMoves": [
+        "b5d4",
+        "f3e4",
+        "d4c2"
+      ],
+      "startFEN": "8/5p2/6p1/1N2B1P1/p4P2/5k2/2r5/5K2 w - - 4 47",
+      "solvedMessage": "Nd4+ and then Nxc2 — the rook falls. ✓",
+      "wrongMessage": "Not that one — look for a double attack.",
+      "playingPrompt": "Play the move that makes a fork.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "The pin",
+      "icon": "link"
+    },
+    {
+      "type": "paragraph",
+      "text": "A **pin** is when a piece may not move because something more valuable stands behind it on the same line. If what stands behind it is the **king**, moving is not merely bad but illegal. That is why a pinned piece is a defender in appearance only: the square it \"guards\" is not really guarded. Before you break through or sacrifice, check whether the defender is pinned."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "The pinned defender",
+      "hint": "One black defender is pinned — strike where it is not allowed to capture.",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e1e8"
+      ],
+      "startFEN": "r1b3k1/pp3rpp/2p3q1/8/2B5/8/P1P2PPP/R3Q1K1 w - - 0 19",
+      "solvedMessage": "Qe8# — the pinned rook could not capture. ✓",
+      "wrongMessage": "Not that one — strike where the defender may not go.",
+      "playingPrompt": "Punish the pinned defender.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "The skewer",
+      "icon": "arrow.forward.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "A **skewer** is a pin turned around: the more valuable piece stands **in front**, the lesser one behind it. In a pin the front piece may not step aside; in a skewer it must — and in stepping aside it exposes what was behind it. That is why a skewer is almost always played **with check**, because then the king has no choice. These two motifs are the ones most often confused, and the only difference is which of the two stands in front."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Rook skewer",
+      "hint": "Check the king so that what stands behind it is left on its own.",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "h7h8",
+        "f8e7",
+        "h8a8"
+      ],
+      "startFEN": "r4k2/7R/6p1/4p1P1/4P3/8/2n1K3/8 w - - 1 52",
+      "solvedMessage": "Rh8+ and Rxa8 — wherever the king goes. ✓",
+      "wrongMessage": "Not that one — the king has to step off the line.",
+      "playingPrompt": "Play the move that sets up the skewer.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "The discovered attack",
+      "icon": "arrow.triangle.2.circlepath"
+    },
+    {
+      "type": "paragraph",
+      "text": "In a **discovered attack** the piece that moves is not the piece that strikes. It merely takes itself off the line, and the threat arrives from the piece behind it. That is what makes it so dangerous: your opponent looks at the thing that moved and overlooks the thing that actually threatened. And when the piece stepping aside attacks something of its own as well, one move puts two threats on the board."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Who is really giving mate?",
+      "hint": "The piece that delivers mate should not move — it needs its path opened.",
+      "icon": "eye.fill",
+      "uciMoves": [
+        "e6e7"
+      ],
+      "startFEN": "6k1/7p/p3P1p1/p1pBBp2/P1P3Pq/1rP4P/8/5K2 w - - 1 41",
+      "solvedMessage": "e7# — mate is given by the bishop on d5. ✓",
+      "wrongMessage": "Not that one — open the bishop's diagonal.",
+      "playingPrompt": "Play the move that uncovers the attack.",
+      "mateIn": null
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "eye.fill",
+      "title": "Motifs are recognised, not memorised",
+      "text": "An eye that has seen a fork a hundred times finds it before it can calculate it. So after this lesson move on to the **Puzzles** tab — a new position to solve is waiting there every day."
+    }
+  ],
+  "language": "en"
+}
