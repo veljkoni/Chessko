@@ -170,3 +170,38 @@ import Testing
     #expect(empty.whiteAccuracy == 100)
     #expect(empty.blackAccuracy == 100)
 }
+
+// MARK: - UCI parser ocene
+
+@Test func parsesCentipawnScoreFromInfoLine() {
+    let line = "<info> <depth> 12 <seldepth> 18 <score> cp 34 <nodes> 120000 <pv> e2e4"
+    #expect(UCIScoreParser.score(from: line) == .cp(34))
+}
+
+@Test func parsesNegativeCentipawnScore() {
+    #expect(UCIScoreParser.score(from: "<info> <score> cp -250 <pv> e2e4") == .cp(-250))
+}
+
+@Test func parsesMateScoreInBothDirections() {
+    #expect(UCIScoreParser.score(from: "<info> <score> mate 3 <pv> d1h5") == .mate(3))
+    #expect(UCIScoreParser.score(from: "<info> <score> mate -2 <pv> d1h5") == .mate(-2))
+}
+
+@Test func returnsNilForLinesWithoutScore() {
+    #expect(UCIScoreParser.score(from: "<bestmove> e2e4 <ponder> e7e5") == nil)
+    #expect(UCIScoreParser.score(from: "<info> <depth> 12 <nodes> 4000") == nil)
+    #expect(UCIScoreParser.score(from: "") == nil)
+}
+
+@Test func returnsNilWhenScoreTagIsTruncated() {
+    // Motor je prekinut usred linije. Bolje nista nego pogresna ocena.
+    #expect(UCIScoreParser.score(from: "<info> <score>") == nil)
+    #expect(UCIScoreParser.score(from: "<info> <score> cp") == nil)
+    #expect(UCIScoreParser.score(from: "<info> <score> cp abc") == nil)
+}
+
+@Test func ignoresLowerboundAndUpperboundQualifiers() {
+    // Stockfish uz ocenu ume da doda "lowerbound"/"upperbound" kad je vrednost
+    // samo granica, ne tacna ocena. Sama vrednost je i dalje upotrebljiva.
+    #expect(UCIScoreParser.score(from: "<info> <score> cp 34 lowerbound") == .cp(34))
+}

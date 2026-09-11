@@ -32,6 +32,7 @@
 		10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000V2 /* ProgressStore.swift */; };
 		10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000P2 /* PlatformHelper.swift */; };
 		10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000R2 /* PuzzleRepository.swift */; };
+		10CA7A1000000000000000N1 /* UCIScoreParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000N2 /* UCIScoreParser.swift */; };
 		10CA7A1000000000000000L1 /* LessonContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L2 /* LessonContent.swift */; };
 		10CA7A1000000000000000U1 /* Curriculum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000U2 /* Curriculum.swift */; };
 		10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L4 /* LessonRepository.swift */; };
@@ -80,6 +81,7 @@
 		10CA7A1000000000000000V2 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000P2 /* PlatformHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelper.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000R2 /* PuzzleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleRepository.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000N2 /* UCIScoreParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UCIScoreParser.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000L2 /* LessonContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonContent.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000U2 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000L4 /* LessonRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonRepository.swift; sourceTree = "<group>"; };
@@ -225,6 +227,7 @@
 			10CA7A1000000000000000B1 /* LocalizationManager.swift */,
 			10CA7A1000000000000000R2 /* PuzzleRepository.swift */,
 			10CA7A1000000000000000L4 /* LessonRepository.swift */,
+			10CA7A1000000000000000N2 /* UCIScoreParser.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -334,6 +337,7 @@
 				10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */,
 				10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */,
 				10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */,
+				10CA7A1000000000000000N1 /* UCIScoreParser.swift in Sources */,
 				10CA7A1000000000000000L1 /* LessonContent.swift in Sources */,
 				10CA7A1000000000000000U1 /* Curriculum.swift in Sources */,
 				10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */,

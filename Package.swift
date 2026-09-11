@@ -26,6 +26,7 @@ let package = Package(
                 "Logic/MoveGenerator.swift",
                 "Logic/ZobristTable.swift",
                 "Logic/PuzzleRepository.swift",
+                "Logic/UCIScoreParser.swift",
                 "TestSupport/LocShim.swift",
             ],
             swiftSettings: [.define("CHESSKO_ENGINE_PACKAGE")]
