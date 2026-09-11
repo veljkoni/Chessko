@@ -565,8 +565,15 @@ Dodati na kraj `Tests/ChesskoEngineTests/MoveAnalysisTests.swift`:
 
 - [ ] **Step 2: Pokrenuti testove i videti da padaju**
 
-Run: `swift test --filter UCIScore`
+Run: `swift test --filter MoveAnalysis`
 Expected: FAIL, `cannot find 'UCIScoreParser' in scope`.
+
+> **`--filter` koji ne pogađa ništa prijavljuje „passed"!** `swift test --filter UCIScore`
+> daje `Test run with 0 tests in 0 suites passed` — jer se filter poredi sa IMENIMA testova,
+> a nijedan se ne zove tako. Testovi iz ovog taska su u `MoveAnalysisTests.swift` i hvata ih
+> `--filter MoveAnalysis` (ime fajla/suite-a) ili `--filter parses` (zajednički prefiks
+> imena). Uvek proveri da je broj pokrenutih testova onaj koji očekuješ, ne samo da piše
+> „passed".
 
 - [ ] **Step 3: Napisati `Chessko/Logic/UCIScoreParser.swift`**
 
