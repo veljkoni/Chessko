@@ -172,19 +172,41 @@ import Testing
 }
 
 // MARK: - UCI parser ocene
+//
+// SVE linije ispod su STVARNE — dobijene kompajliranjem i pokretanjem same
+// biblioteke (ChessKitEngine 0.7.0), ne izmisljene. Prva verzija ovih testova
+// koristila je `<score> cp 34`, oblik koji biblioteka nikad ne emituje, pa su
+// testovi prolazili nad parserom koji u aplikaciji ne bi radio nijednom.
 
-@Test func parsesCentipawnScoreFromInfoLine() {
-    let line = "<info> <depth> 12 <seldepth> 18 <score> cp 34 <nodes> 120000 <pv> e2e4"
+@Test func parsesCentipawnScoreFromRealInfoLine() {
+    let line = "<info> <depth> 12 <score> <cp> 34.0"
     #expect(UCIScoreParser.score(from: line) == .cp(34))
 }
 
 @Test func parsesNegativeCentipawnScore() {
-    #expect(UCIScoreParser.score(from: "<info> <score> cp -250 <pv> e2e4") == .cp(-250))
+    #expect(UCIScoreParser.score(from: "<info> <score> <cp> -250.0") == .cp(-250))
+}
+
+@Test func parsesZeroCentipawnScore() {
+    // Nula mora da prodje kao vrednost, ne da se pobrka sa "nema ocene".
+    #expect(UCIScoreParser.score(from: "<info> <score> <cp> 0.0") == .cp(0))
 }
 
 @Test func parsesMateScoreInBothDirections() {
-    #expect(UCIScoreParser.score(from: "<info> <score> mate 3 <pv> d1h5") == .mate(3))
-    #expect(UCIScoreParser.score(from: "<info> <score> mate -2 <pv> d1h5") == .mate(-2))
+    #expect(UCIScoreParser.score(from: "<info> <score> <mate> 3") == .mate(3))
+    #expect(UCIScoreParser.score(from: "<info> <score> <mate> -2") == .mate(-2))
+}
+
+@Test func readsCentipawnsAsDecimalBecauseLibraryTypesThemAsDouble() {
+    // `EngineResponse.Info.Score.cp` je `Double?`, pa vrednost uvek nosi
+    // decimalu. Parser koji je cita kao `Int` vraca nil na SVAKOJ stvarnoj
+    // liniji — tacno to je bio defekt prve verzije.
+    #expect(UCIScoreParser.score(from: "<info> <score> <cp> 34.0") != nil)
+    #expect(Int("34.0") == nil)
+}
+
+@Test func ignoresBoundQualifierThatFollowsTheValue() {
+    #expect(UCIScoreParser.score(from: "<info> <score> <cp> 34.0 <upperbound>") == .cp(34))
 }
 
 @Test func returnsNilForLinesWithoutScore() {
@@ -193,15 +215,14 @@ import Testing
     #expect(UCIScoreParser.score(from: "") == nil)
 }
 
-@Test func returnsNilWhenScoreTagIsTruncated() {
+@Test func returnsNilWhenScoreTagIsTruncatedOrUnparsable() {
     // Motor je prekinut usred linije. Bolje nista nego pogresna ocena.
     #expect(UCIScoreParser.score(from: "<info> <score>") == nil)
-    #expect(UCIScoreParser.score(from: "<info> <score> cp") == nil)
-    #expect(UCIScoreParser.score(from: "<info> <score> cp abc") == nil)
+    #expect(UCIScoreParser.score(from: "<info> <score> <cp>") == nil)
+    #expect(UCIScoreParser.score(from: "<info> <score> <cp> abc") == nil)
 }
 
-@Test func ignoresLowerboundAndUpperboundQualifiers() {
-    // Stockfish uz ocenu ume da doda "lowerbound"/"upperbound" kad je vrednost
-    // samo granica, ne tacna ocena. Sama vrednost je i dalje upotrebljiva.
-    #expect(UCIScoreParser.score(from: "<info> <score> cp 34 lowerbound") == .cp(34))
+@Test func returnsNilWhenScoreBlockCarriesNeitherCpNorMate() {
+    // `<score>` postoji ali odmah sledi drugi tag — nema sta da se procita.
+    #expect(UCIScoreParser.score(from: "<info> <score> <nodes> 4000") == nil)
 }

@@ -513,14 +513,22 @@ git commit -m "Faza 5, Task 1: model i matematika analize partije"
 - Consumes: `EngineScore` iz Task-a 1.
 - Produces: `enum UCIScoreParser { static func score(from line: String) -> EngineScore? }`
 
-**Oblik ulaza.** `ChessKitEngine` vraća `response.rawValue` u tagovanom formatu — isti onaj zbog kog `bestMove` gleda prefiks `<bestmove>`. Za `info` linije oblik je:
+**Oblik ulaza — IZMEREN, ne pretpostavljen.** Prva verzija ovog plana je tvrdila da je oblik `<score> cp 34`. To je **netačno** i parser napisan po njoj vraća `nil` na svakoj stvarnoj liniji. Pravi oblik je dobijen kompajliranjem i pokretanjem same biblioteke (ChessKitEngine 0.7.0):
 
 ```
-<info> <depth> 12 <seldepth> 18 <score> cp 34 <nodes> 120000 <pv> e2e4 e7e5
-<info> <depth> 12 <score> mate 3 <nodes> 9000 <pv> d1h5
+<info> <depth> 12 <score> <cp> 34.0
+<info> <score> <cp> -250.0
+<info> <score> <mate> 3
+<info> <score> <cp> 34.0 <upperbound>
 ```
 
-Parser mora da radi i ako se redosled tagova promeni, zato traži token `<score>` i čita **dva** tokena posle njega.
+Tri stvari koje se iz ovoga moraju poštovati:
+
+1. Tag posle `<score>` nosi **uglaste zagrade** — `<cp>`, ne `cp`.
+2. `cp` je u biblioteci `Double?` (`EngineResponseInfo.swift:223`), pa vrednost uvek nosi decimalu: `34.0`. `Int("34.0")` je `nil` — mora se čitati kao `Double` pa zaokružiti. `mate` je `Int` i čita se direktno.
+3. `<lowerbound>`/`<upperbound>` su **zasebni tagovi bez vrednosti** i stoje iza ocene.
+
+Ako ikad zatreba da se ovo ponovo proveri, postupak je: `swiftc <checkout>/Sources/ChessKitEngine/EngineResponse/*.swift main.swift` gde `main.swift` sklopi `EngineResponse.Info` sa `score` i ispiše `EngineResponse.info(i).rawValue`.
 
 - [ ] **Step 1: Napisati testove koji padaju**
 
