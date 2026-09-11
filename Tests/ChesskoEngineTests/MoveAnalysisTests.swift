@@ -104,8 +104,12 @@ import Testing
     #expect(analysis.moves[2].byWhite == true)
     #expect(analysis.moves[0].notation == "e4")
     #expect(analysis.moves.allSatisfy { $0.cpLoss == 0 })
-    #expect(analysis.whiteAccuracy == 100)
-    #expect(analysis.blackAccuracy == 100)
+    // Savrsena igra NE daje tacno 100: formula iz spec-a u nuli daje 99.9999
+    // (103.1668 - 3.1669). To nije greska nego oblik same formule, i korisnik
+    // ionako vidi "100.0%" jer se prikazuje na jednu decimalu. Zato tolerancija,
+    // a ne `== 100` — inace bi test terao da se formula tiho odvoji od spec-a.
+    #expect(analysis.whiteAccuracy > 99.99)
+    #expect(analysis.blackAccuracy > 99.99)
 }
 
 @Test func buildComputesEachSideAccuracyFromOnlyThatSideMoves() {
@@ -124,7 +128,7 @@ import Testing
     #expect(analysis.moves[1].cpLoss == 200)  // crni
     #expect(analysis.moves[2].cpLoss == 0)    // beli
     #expect(analysis.moves[3].cpLoss == 200)  // crni
-    #expect(analysis.whiteAccuracy == 100)
+    #expect(analysis.whiteAccuracy > 99.99)
     #expect(analysis.whiteAccuracy > analysis.blackAccuracy)
 }
 
@@ -158,6 +162,8 @@ import Testing
     #expect(bad.turningPoint == nil)
 }
 
+/// Prazna partija je JEDINI slucaj u kome je tacnost tacno 100: nema nijednog
+/// poteza, pa se formula i ne primenjuje — `build` vraca zastitnu vrednost.
 @Test func emptyGameProducesEmptyAnalysisWithFullAccuracy() {
     let empty = GameAnalysis.build(notations: [], scores: [.cp(0)], engineBestMatched: [])
     #expect(empty.moves.isEmpty)

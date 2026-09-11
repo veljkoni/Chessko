@@ -188,8 +188,9 @@ import Testing
     #expect(analysis.moves[2].byWhite == true)
     #expect(analysis.moves[0].notation == "e4")
     #expect(analysis.moves.allSatisfy { $0.cpLoss == 0 })
-    #expect(analysis.whiteAccuracy == 100)
-    #expect(analysis.blackAccuracy == 100)
+    // Savrsena igra NE daje tacno 100: formula u nuli daje 99.9999.
+    #expect(analysis.whiteAccuracy > 99.99)
+    #expect(analysis.blackAccuracy > 99.99)
 }
 
 @Test func buildComputesEachSideAccuracyFromOnlyThatSideMoves() {
@@ -208,7 +209,7 @@ import Testing
     #expect(analysis.moves[1].cpLoss == 200)  // crni
     #expect(analysis.moves[2].cpLoss == 0)    // beli
     #expect(analysis.moves[3].cpLoss == 200)  // crni
-    #expect(analysis.whiteAccuracy == 100)
+    #expect(analysis.whiteAccuracy > 99.99)
     #expect(analysis.whiteAccuracy > analysis.blackAccuracy)
 }
 
@@ -449,17 +450,22 @@ Expected: **73/73** (58 zatečenih + 15 novih).
 
 Ovo nije formalnost. Isti propust je u projektu napravljen dvaput i oba puta su i `swift test` i `xcodebuild` bili zeleni dok aplikacija fajl **nikad nije kompajlirala** — jer ga nije ni bilo u target-u.
 
-Obrazac je četiri linije sa ručno izmišljenim, jedinstvenim ID-jem (ugledaj se na `PromotionOverlay.swift`, ID `10CA7A1000000000000000Z2`). Koristi `10CA7A1000000000000000A1`/`A2`:
+Obrazac je četiri linije sa ručno izmišljenim, jedinstvenim ID-jem (ugledaj se na `PromotionOverlay.swift`, ID `10CA7A1000000000000000Z2`).
+
+> **PROVERI DA JE ID SLOBODAN PRE UPOTREBE.** Prva verzija ovog plana je tvrdila da su `…A1`/`…A2` slobodni, a bili su zauzeti za `Localizable.xcstrings`; isto je važilo i za `…B*` i `…C*`. Duplirani GUID u `project.pbxproj` je greška koju Xcode ne prijavi odmah. Slobodni sufiksi, provereni: `D1 D2 E1 E2 F1 F2 G1 G2 H1 H2 J1 J2 K1 K2 N1 N2 Q1 Q2 T1 T2`. Pre upotrebe potvrdi:
+> ```bash
+> grep -c "10CA7A1000000000000000<SUFIKS>" Chessko.xcodeproj/project.pbxproj   # mora biti 0
+> ``` Koristi `10CA7A1000000000000000M1`/`M2`:
 
 ```
 # 1) u PBXBuildFile sekciju (oko linije 41):
-		10CA7A1000000000000000A1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000A2 /* MoveAnalysis.swift */; };
+		10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000M2 /* MoveAnalysis.swift */; };
 # 2) u PBXFileReference sekciju (oko linije 88):
-		10CA7A1000000000000000A2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000M2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
 # 3) u children listu Models grupe:
-			10CA7A1000000000000000A2 /* MoveAnalysis.swift */,
+			10CA7A1000000000000000M2 /* MoveAnalysis.swift */,
 # 4) u PBXSourcesBuildPhase files listu:
-				10CA7A1000000000000000A1 /* MoveAnalysis.swift in Sources */,
+				10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */,
 ```
 
 Dokaz da je fajl stvarno u target-u — namerno ubaci sintaksnu grešku i vidi da build **padne**:
@@ -923,7 +929,7 @@ final class AnalysisViewModel {
 
 - [ ] **Step 2: Dodati u `project.pbxproj`**
 
-Isti četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000C1`/`C2`, `path = AnalysisViewModel.swift`, u `ViewModels` grupu.
+Isti četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000Q1`/`Q2`, `path = AnalysisViewModel.swift`, u `ViewModels` grupu.
 
 **Ne** dodavati u `Package.swift` — fajl uvozi `Observation` i zove `Loc(...)`, koji je iza SwiftUI-ja.
 
@@ -1230,7 +1236,7 @@ Uz `@State private var showAnalysis = false` na vrhu `GameView`-a i, na kraju `b
 
 - [ ] **Step 4: `project.pbxproj`, build, dokaz da je fajl u target-u**
 
-Četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000D1`/`D2`, `path = AnalysisView.swift`, u `Views` grupu. Zatim isti dokaz sintaksnom greškom.
+Četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000T1`/`T2`, `path = AnalysisView.swift`, u `Views` grupu. Zatim isti dokaz sintaksnom greškom.
 
 - [ ] **Step 5: Vizuelna provera na simulatoru, u obe teme**
 
