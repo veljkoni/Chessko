@@ -102,7 +102,21 @@ struct PathView: View {
     /// pre ovoga sami birali odrediste, pa bi svaki novi pokretac morao da menja
     /// oba — i razisli bi se cim jedan bude propusten. `nil` znaci korak bez
     /// odredista; pozivalac tada mora i da IZGLEDA neaktivno.
+    /// `CurriculumStep.knownDifficulties` su literali jer `Curriculum.swift` mora
+    /// da ostane na nivou Foundation-a (testni paket), a `GameDifficulty` uvozi
+    /// SwiftUI. Dva rucno vodjena spiska bez ijedne veze su bomba sa odlozenim
+    /// dejstvom: neko doda tezinu u enum, kurikulum je ne prepozna, i korak tiho
+    /// ostane "Uskoro". Ovo je jedina tacka u programu gde su oba tipa vidljiva.
+    private func checkDifficultyListsAgree() {
+        #if DEBUG
+        let fromEnum = Set(GameDifficulty.allCases.map(\.rawValue))
+        assert(fromEnum == CurriculumStep.knownDifficulties,
+               "GameDifficulty i CurriculumStep.knownDifficulties su se razisli: \(fromEnum.symmetricDifference(CurriculumStep.knownDifficulties).sorted())")
+        #endif
+    }
+
     private func route(for step: CurriculumStep) -> StepRoute? {
+        checkDifficultyListsAgree()
         switch step.kind {
         case .lesson(let lessonId):
             return .lesson(lessonId: lessonId, stepId: step.id)
@@ -115,7 +129,16 @@ struct PathView: View {
             // dobija tezinu bez opcionala. Ako dva spiska ikad odu na svoju
             // stranu, korak ostaje NEAKTIVAN umesto da se tiho igra na
             // pogresnoj jacini — fallback bi razlaz sakrio.
-            guard let level = GameDifficulty(rawValue: difficulty) else { return nil }
+            guard let level = GameDifficulty(rawValue: difficulty) else {
+                // Razlaz dva rucno vodjena spiska bi inace bio TIH: korak bi
+                // zauvek stajao kao "Uskoro" i niko ne bi znao zasto. Ovo je
+                // jedino mesto u kodu gde su oba tipa vidljiva, pa se ovde i
+                // hvata. Provera nize (`checkDifficultyListsAgree`) pada u
+                // debug build-u cim se spiskovi raziđu.
+                print("[Chessko] GRESKA: kurikulum trazi tezinu '\(difficulty)' koju GameDifficulty ne poznaje")
+                assertionFailure("Nepoznata tezina '\(difficulty)' u kurikulumu")
+                return nil
+            }
             return .game(difficulty: level, startFEN: startFEN, stepId: step.id)
         }
     }
