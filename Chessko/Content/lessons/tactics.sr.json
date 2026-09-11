@@ -13,7 +13,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Taktički motiv je **oblik** koji se ponavlja. Ne uči se napamet nego se prepoznaje — kao lice. Ovde su četiri osnovna: **viljuška**, **vezivanje**, **probod** i **otkriveni napad**. Sva četiri počivaju na istoj ideji: napraviti dve pretnje odjednom, jer protivnik jednim potezom može da odgovori samo na jednu. U sve četiri vežbe ispod beli je na potezu."
+      "text": "Taktički motiv je **oblik** koji se ponavlja. Ne uči se napamet nego se prepoznaje — kao lice. Ovde su četiri osnovna: **viljuška**, **vezivanje**, **probod** i **otkriveni napad**. Tri od njih prave **dve pretnje odjednom**, a protivnik jednim potezom može da odgovori samo na jednu; vezivanje pravi jednu jedinu pretnju, ali oduzima branioca koji bi je odbio. Zajedničko im je to što nijedan potez ne rešava sve. U sve četiri vežbe ispod beli je na potezu."
     },
     {
       "type": "divider"
@@ -54,20 +54,20 @@
     },
     {
       "type": "paragraph",
-      "text": "**Vezivanje** je kad figura ne sme da se pomeri jer iza nje, na istoj liniji, stoji nešto vrednije. Ako je iza nje **kralj**, pomeranje nije samo loše nego i nelegalno. Zato je vezana figura branilac samo naizgled: polje koje „brani“ zapravo nije branjeno. Pre nego što prodreš ili žrtvuješ, pogledaj je li branilac vezan."
+      "text": "**Vezivanje** je kad figura ne sme da se pomeri jer iza nje, na istoj liniji, stoji nešto vrednije. Ako je iza nje **kralj**, pomeranje **s te linije** nije samo loše nego i nelegalno. Zato je vezana figura branilac samo naizgled: polje koje „brani“ zapravo nije branjeno. Isto važi i za presecanje: da bi se isprečila, vezana figura mora da siđe sa svoje linije — a to ne sme. Pre nego što prodreš ili žrtvuješ, pogledaj je li branilac vezan."
     },
     {
       "type": "exercise",
       "kind": "scripted",
       "title": "Vezani branilac",
-      "hint": "Jedan crni branilac je vezan — udari tamo gde on ne sme da uzme.",
+      "hint": "Jedan crni branilac je vezan — udari tamo gde on ne sme da se ispreči.",
       "icon": "crown.fill",
       "uciMoves": [
         "e1e8"
       ],
       "startFEN": "r1b3k1/pp3rpp/2p3q1/8/2B5/8/P1P2PPP/R3Q1K1 w - - 0 19",
-      "solvedMessage": "De8# — vezani top nije smeo da uzme. ✓",
-      "wrongMessage": "Nije to — udari tamo gde branilac ne sme.",
+      "solvedMessage": "De8# — vezani top nije smeo na f8. ✓",
+      "wrongMessage": "Nije to — udari tamo gde branilac ne sme da se ispreči.",
       "playingPrompt": "Iskoristi vezanog branioca.",
       "mateIn": null
     },
@@ -110,7 +110,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Kod **otkrivenog napada** figura koja se pomeri nije ona koja udara. Ona samo skloni sebe sa linije, a pretnja stiže od figure iza nje. Otud je toliko opasan: protivnik gleda u ono što se pomerilo i previdi ono što je zapravo zapretilo. A kad figura koja se sklanja pritom i sama nešto napadne, jednim potezom su na tabli dve pretnje."
+      "text": "Kod **otkrivenog napada** figura koja se pomeri nije ona koja udara. Ona samo skloni sebe sa linije, a pretnja stiže od figure iza nje. Otud je toliko opasan: protivnik gleda u ono što se pomerilo i previdi ono što je zapravo zapretilo. Kad je iza nje **kralj**, otkriveni napad postaje **otkriveni šah** — najoštriji oblik, jer protivnik mora da odgovori na šah i nema vremena ni za šta drugo. A kad figura koja se sklanja pritom i sama nešto napadne, jednim potezom su na tabli dve pretnje."
     },
     {
       "type": "exercise",

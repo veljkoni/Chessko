@@ -13,7 +13,7 @@
     },
     {
       "type": "paragraph",
-      "text": "A tactical motif is a **shape** that keeps coming back. You do not learn it by heart, you recognise it — the way you recognise a face. Here are the four basic ones: the **fork**, the **pin**, the **skewer** and the **discovered attack**. All four rest on the same idea: make two threats at once, because your opponent can only answer one of them with a single move. In all four exercises below it is White to move."
+      "text": "A tactical motif is a **shape** that keeps coming back. You do not learn it by heart, you recognise it — the way you recognise a face. Here are the four basic ones: the **fork**, the **pin**, the **skewer** and the **discovered attack**. Three of them make **two threats at once**, and your opponent can only answer one of them with a single move; the pin makes a single threat but takes away the defender that would meet it. What they share is that no one move answers everything. In all four exercises below it is White to move."
     },
     {
       "type": "divider"
@@ -54,20 +54,20 @@
     },
     {
       "type": "paragraph",
-      "text": "A **pin** is when a piece may not move because something more valuable stands behind it on the same line. If what stands behind it is the **king**, moving is not merely bad but illegal. That is why a pinned piece is a defender in appearance only: the square it \"guards\" is not really guarded. Before you break through or sacrifice, check whether the defender is pinned."
+      "text": "A **pin** is when a piece may not move because something more valuable stands behind it on the same line. If what stands behind it is the **king**, moving **off that line** is not merely bad but illegal. That is why a pinned piece is a defender in appearance only: the square it \"guards\" is not really guarded. The same goes for interposing: to step in the way, a pinned piece would have to leave its line — and that it may not do. Before you break through or sacrifice, check whether the defender is pinned."
     },
     {
       "type": "exercise",
       "kind": "scripted",
       "title": "The pinned defender",
-      "hint": "One black defender is pinned — strike where it is not allowed to capture.",
+      "hint": "One black defender is pinned — strike where it is not allowed to step in the way.",
       "icon": "crown.fill",
       "uciMoves": [
         "e1e8"
       ],
       "startFEN": "r1b3k1/pp3rpp/2p3q1/8/2B5/8/P1P2PPP/R3Q1K1 w - - 0 19",
-      "solvedMessage": "Qe8# — the pinned rook could not capture. ✓",
-      "wrongMessage": "Not that one — strike where the defender may not go.",
+      "solvedMessage": "Qe8# — the pinned rook could not interpose on f8. ✓",
+      "wrongMessage": "Not that one — strike where the defender cannot interpose.",
       "playingPrompt": "Punish the pinned defender.",
       "mateIn": null
     },
@@ -110,7 +110,7 @@
     },
     {
       "type": "paragraph",
-      "text": "In a **discovered attack** the piece that moves is not the piece that strikes. It merely takes itself off the line, and the threat arrives from the piece behind it. That is what makes it so dangerous: your opponent looks at the thing that moved and overlooks the thing that actually threatened. And when the piece stepping aside attacks something of its own as well, one move puts two threats on the board."
+      "text": "In a **discovered attack** the piece that moves is not the piece that strikes. It merely takes itself off the line, and the threat arrives from the piece behind it. That is what makes it so dangerous: your opponent looks at the thing that moved and overlooks the thing that actually threatened. When what stands behind is the **king**, a discovered attack becomes a **discovered check** — the sharpest form, because your opponent must answer the check and has no time for anything else. And when the piece stepping aside attacks something of its own as well, one move puts two threats on the board."
     },
     {
       "type": "exercise",
