@@ -872,6 +872,14 @@ final class AnalysisViewModel {
     private(set) var phase: Phase = .idle
 
     private let stockfish = StockfishBridge()
+
+    /// `@ObservationIgnored` NIJE kozmetika. Bez njega `@Observable` obavija
+    /// `task` u `@ObservationTracked`, cime `deinit { task?.cancel() }` prestaje
+    /// da se kompajlira: „main actor-isolated property 'task' can not be
+    /// referenced from a nonisolated context". Provereno oba smera na
+    /// `-swift-version 6`. Uz to, `task` nije stanje koje se prikazuje, pa u
+    /// pracenju nema sta ni da trazi.
+    @ObservationIgnored
     private var task: Task<Void, Never>?
 
     /// Dubina je fiksna po spec-u 5.5 — analiza mora da traje predvidivo.
