@@ -410,7 +410,7 @@ ls "$APP/Content/curriculum.json"
 - [ ] **Step 6: Testovi i commit**
 
 Run: `swift test`
-Expected: **35 testova prolazi** (31 + 4 nova).
+Expected: **38 testova prolazi** (31 + 7 novih).
 
 ```bash
 git add Chessko/Models/Curriculum.swift Chessko/Content/curriculum.json \
@@ -520,6 +520,61 @@ import Foundation
 @Test func streakCrossesMonthAndYearBoundaries() {
     let days: Set<String> = ["2025-12-30", "2025-12-31", "2026-01-01"]
     #expect(PathProgress.currentStreak(goalDays: days, today: "2026-01-01") == 3)
+}
+
+// MARK: - Skladiste (u privremenom direktorijumu, nikad u home-u korisnika)
+
+@MainActor
+private func makeStore(_ defaults: UserDefaults = UserDefaults(suiteName: UUID().uuidString)!)
+    -> (ProgressStore, URL) {
+    let url = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent("progress-\(UUID().uuidString).json")
+    return (ProgressStore(fileURL: url, defaults: defaults), url)
+}
+
+@Test @MainActor func completedStepSurvivesReload() {
+    let (store, url) = makeStore()
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    store.completeStep("basics-lesson")
+    #expect(store.snapshot.completedSteps.contains("basics-lesson"))
+
+    // Novi primerak nad ISTIM fajlom — to je ono sto se desava posle gasenja
+    // aplikacije, i uslov zavrsetka faze iz spec-a.
+    let reloaded = ProgressStore(fileURL: url, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+    #expect(reloaded.snapshot.completedSteps.contains("basics-lesson"))
+}
+
+@Test @MainActor func completingTheSameStepTwiceCountsOnce() {
+    let (store, url) = makeStore()
+    defer { try? FileManager.default.removeItem(at: url) }
+    store.completeStep("a")
+    store.completeStep("a")
+    let day = ProgressStore.dayKey()
+    #expect(store.snapshot.stepsCompletedByDay[day] == 1)
+}
+
+@Test @MainActor func migrationReadsUserDefaultsAndLeavesThemIntact() {
+    let d = UserDefaults(suiteName: UUID().uuidString)!
+    d.set(7, forKey: "stats_gamesPlayed")
+    d.set(1234, forKey: "stats_puzzleRating")
+
+    let (store, url) = makeStore(d)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    #expect(store.snapshot.gamesPlayed == 7)
+    #expect(store.snapshot.puzzleRating == 1234)
+    // Spec 5.4: stari kljucevi ostaju, da povratak na stariju verziju radi.
+    #expect(d.integer(forKey: "stats_gamesPlayed") == 7)
+    #expect(d.integer(forKey: "stats_puzzleRating") == 1234)
+}
+
+@Test @MainActor func missingRatingKeyMigratesToEightHundredNotZero() {
+    // `UserDefaults.integer(forKey:)` vraca 0 za nepostojeci kljuc; nov
+    // korisnik mora da krene sa 800, ne sa 0.
+    let (store, url) = makeStore()
+    defer { try? FileManager.default.removeItem(at: url) }
+    #expect(store.snapshot.puzzleRating == 800)
 }
 ```
 
@@ -631,29 +686,38 @@ final class ProgressStore {
 
     private(set) var snapshot: ProgressSnapshot
 
-    private static let fileName = "progress.json"
+    private let fileURL: URL
+    private let defaults: UserDefaults
 
-    private static var fileURL: URL {
+    static var defaultFileURL: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory,
                                            in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent(fileName)
+        return dir.appendingPathComponent("progress.json")
     }
 
-    private init() {
-        if let data = try? Data(contentsOf: Self.fileURL),
+    /// Putanja i `UserDefaults` se UBRIZGAVAJU, ne uzimaju iz okruzenja.
+    /// Pod `swift test` se `.applicationSupportDirectory` razresava u STVARNI
+    /// `~/Library/Application Support` korisnika — test koji dodirne skladiste
+    /// bez ovoga upisao bi pravi fajl u home, migrirao iz `UserDefaults`-a test
+    /// procesa, i davao rezultat zavisan od prethodnih pokretanja. Ovako
+    /// migracija i perzistencija postaju testabilne u privremenom direktorijumu.
+    init(fileURL: URL = ProgressStore.defaultFileURL,
+         defaults: UserDefaults = .standard) {
+        self.fileURL = fileURL
+        self.defaults = defaults
+        if let data = try? Data(contentsOf: fileURL),
            let loaded = try? JSONDecoder().decode(ProgressSnapshot.self, from: data) {
             snapshot = loaded
         } else {
-            snapshot = Self.migratedFromUserDefaults()
+            snapshot = Self.migrated(from: defaults)
             save()
         }
     }
 
     /// Prvo pokretanje posle nadogradnje: statistika se preuzima iz
     /// `UserDefaults`-a i ostavlja tamo netaknuta.
-    private static func migratedFromUserDefaults() -> ProgressSnapshot {
-        let d = UserDefaults.standard
+    private static func migrated(from d: UserDefaults) -> ProgressSnapshot {
         var s = ProgressSnapshot()
         s.gamesPlayed = d.integer(forKey: "stats_gamesPlayed")
         s.gamesWon = d.integer(forKey: "stats_gamesWon")
@@ -672,7 +736,7 @@ final class ProgressStore {
     func save() {
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
         do {
-            try data.write(to: Self.fileURL, options: .atomic)
+            try data.write(to: fileURL, options: .atomic)
         } catch {
             print("[Chessko] GRESKA: napredak nije sacuvan: \(error)")
         }
@@ -769,7 +833,7 @@ Dodati komentar na vrh `StatsManager`-a da je fasada i zašto.
 - [ ] **Step 6: Testovi i commit**
 
 Run: `swift test`
-Expected: **46 testova prolazi** (35 + 11 novih). Postojećih 6 testova rejtinga mora i dalje da prolazi — oni gađaju `StatsManager.newRating`, koja je čista i ne menja se.
+Expected: **53 testova prolazi** (38 + 15 novih: 11 čistih funkcija + 4 skladišta). Postojećih 6 testova rejtinga mora i dalje da prolazi — oni gađaju `StatsManager.newRating`, koja je čista i ne menja se.
 
 ```bash
 git add Chessko/Logic/ProgressStore.swift Chessko/Logic/StatsManager.swift \
@@ -832,6 +896,8 @@ final class CurriculumRepository {
 1. **Nastavak** — kartica „Nastavi" sa rednim brojem i naslovom prvog dostupnog koraka (spec 5.1: „Nastavi: Korak 7 — Vezivanje"). Ako su svi koraci završeni, kartica kaže da je put pređen.
 2. **Streak i dnevni cilj** — broj dana zaredom i da li je današnji cilj ispunjen.
 3. **Poglavlja** — svako sa naslovom na tekućem jeziku i procentom završenosti, pa koraci sa stanjem (`completed` kvačica, `available` normalno, `locked` zaključano i nedodirljivo).
+
+> **Naslovi poglavlja imaju samo `sr` i `en`** (nalaz iz pregleda Task-a 1), a aplikacija ima 8 jezika. `Chapter.title` je otvoren rečnik, pa `PathView` mora sam da pada nazad: traženi jezik → `en` → `sr` → prazan string. Isti lanac koji `LessonRepository` već koristi za lekcije.
 
 Naslov koraka: za `lesson` — naslov lekcije iz `LessonRepository`; za ostale tipove — lokalizovana oznaka tipa (`Vežba`, `Partija`, `Test`) uz broj zadataka gde ima smisla.
 
@@ -981,7 +1047,7 @@ add("Greška — test kreće ispočetka", "Mistake — the test restarts", "Erre
 
 - [ ] **Step 4: Testovi, build, commit**
 
-Expected: **49 testova** (46 + 3 nova za prozor rejtinga).
+Expected: **56 testova** (53 + 3 nova za prozor rejtinga).
 
 ---
 
@@ -1046,7 +1112,7 @@ Obrisati `progress.json`, ostaviti `UserDefaults`, pokrenuti — statistika mora
 
 ## Završna provera faze
 
-- [ ] `swift test` prolazi (31 postojeći + ~18 novih)
+- [ ] `swift test` prolazi (31 postojeći + 25 novih = 56)
 - [ ] `xcodebuild … build` → `** BUILD SUCCEEDED **`
 - [ ] `git status --short` prazan
 - [ ] `curriculum.json` u izgrađenom `.app`

@@ -521,36 +521,11 @@ struct GameView: View {
     @ViewBuilder
     private var promotionOverlay: some View {
         if viewModel.showPromotion {
-            ZStack {
-                DS.scrim.ignoresSafeArea()
-
-                VStack(spacing: 20) {
-                    Text(Loc("Izaberi figuru"))
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(DS.onScrim)
-
-                    HStack(spacing: 12) {
-                        ForEach([PieceType.queen, .rook, .bishop, .knight], id: \.self) { type in
-                            Button {
-                                viewModel.confirmPromotion(type)
-                            } label: {
-                                PieceImageView(piece: ChessPiece(type: type, color: viewModel.playerColor))
-                                    .frame(width: 64, height: 64)
-                                    .padding(10)
-                                    .background(DS.onScrim.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(DS.onScrim.opacity(0.3), lineWidth: 1)
-                                    )
-                            }
-                        }
-                    }
-                }
-                .padding(28)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-                .padding(.horizontal, 24)
+            // Sam birac zivi u `PromotionOverlay` — deli ga sa ekranom `game`
+            // koraka Puta. Izgled je nepromenjen (kod je prenet doslovno).
+            PromotionOverlay(color: viewModel.playerColor) { type in
+                viewModel.confirmPromotion(type)
             }
-            .transition(.opacity.combined(with: .scale(scale: 0.95)))
         }
     }
 

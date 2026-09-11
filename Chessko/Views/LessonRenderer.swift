@@ -221,7 +221,7 @@ struct LessonStaticBoard: View {
 struct LessonPieceExplorer: View {
 
     /// Model se ne pravi ovde: jedan `LearnViewModel` živi u `ContentView`-u
-    /// (da se ne inicijalizuje tokom animacije prelaska taba) i `LearnView` ga
+    /// (da se ne inicijalizuje tokom animacije prelaska taba) i `PathView` ga
     /// ubacuje u okruženje. Kroz okruženje ide zato što bi ga inače i
     /// `LessonDetailView` i `LessonRenderer` morali provlačiti kao parametar,
     /// a nijedan od njih nema razloga da zna za istraživač figura.

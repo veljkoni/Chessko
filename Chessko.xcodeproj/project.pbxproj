@@ -29,17 +29,22 @@
 		76E8F15964E84209B6549CC7 /* PieceImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48D8C6D4E4A487EB552BE28 /* PieceImageView.swift */; };
 		80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59755406843949CDA29BF61D /* SoundManager.swift */; };
 		10CA7A1000000000000000S1 /* StatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000S2 /* StatsManager.swift */; };
+		10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000V2 /* ProgressStore.swift */; };
 		10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000P2 /* PlatformHelper.swift */; };
 		10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000R2 /* PuzzleRepository.swift */; };
 		10CA7A1000000000000000L1 /* LessonContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L2 /* LessonContent.swift */; };
+		10CA7A1000000000000000U1 /* Curriculum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000U2 /* Curriculum.swift */; };
 		10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L4 /* LessonRepository.swift */; };
+		10CA7A1000000000000000W1 /* PathView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000W2 /* PathView.swift */; };
+		10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000X2 /* StepPracticeView.swift */; };
+		10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Y2 /* StepGameView.swift */; };
+		10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Z2 /* PromotionOverlay.swift */; };
 		10CA7A1000000000000000C5 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C6 /* Content */; };
 		89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */; };
 		8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */; };
 		8F9ABCE715DD4B4A8218DDF2 /* CapturedPiecesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */; };
 		8F9ABCE715DD4B4A8218EE01 /* EvalBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CBFECDFF734F169829EE01 /* EvalBarView.swift */; };
 		DFF4981773CA469D8413546E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */; };
-		9EBB28D90D73401D92A2E8D6 /* LearnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD5405B3998478BB52C55F1 /* LearnView.swift */; };
 		A57241CB60E343C88020F848 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD9659979FC044E9AF7C79F0 /* ContentView.swift */; };
 		AA328371C25F4E9CB9AF69F6 /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0EA4B995364C26A8D2D2A9 /* GameViewModel.swift */; };
 		B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86234DD826B24AC8AB906C35 /* ChessMove.swift */; };
@@ -71,10 +76,16 @@
 		50511444A0D9466E931F8B68 /* SquareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareView.swift; sourceTree = "<group>"; };
 		59755406843949CDA29BF61D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000S2 /* StatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsManager.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000V2 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000P2 /* PlatformHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelper.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000R2 /* PuzzleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleRepository.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000L2 /* LessonContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonContent.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000U2 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000L4 /* LessonRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonRepository.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000W2 /* PathView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathView.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000X2 /* StepPracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepPracticeView.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000Y2 /* StepGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepGameView.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000Z2 /* PromotionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromotionOverlay.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000C6 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
 		5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
 		5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningExerciseViewModel.swift; sourceTree = "<group>"; };
@@ -86,7 +97,6 @@
 		86234DD826B24AC8AB906C35 /* ChessMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessMove.swift; sourceTree = "<group>"; };
 		97E697423DC545FD8B18BD01 /* PuzzleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleView.swift; sourceTree = "<group>"; };
 		9F0EA4B995364C26A8D2D2A9 /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
-		ACD5405B3998478BB52C55F1 /* LearnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnView.swift; sourceTree = "<group>"; };
 		B14BD27CB2A1472DA10FBF00 /* MoveGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveGenerator.swift; sourceTree = "<group>"; };
 		BFDE9AD864ED479FA9B3560F /* move-self.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "move-self.mp3"; sourceTree = "<group>"; };
 		C11D1909A17A462F8BF7B8BF /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
@@ -135,7 +145,6 @@
 				253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */,
 				C3CF59B4F4804EB9BBE49F3A /* GameView.swift */,
 				C3CF59B4F4804EB9BBE49CCC /* ChessClockView.swift */,
-				ACD5405B3998478BB52C55F1 /* LearnView.swift */,
 				6D66F2BC5E3D48C793764D24 /* LessonDetailView.swift */,
 				10CA7A1000000000000000L6 /* LessonRenderer.swift */,
 				403F8F9B90274C9886E43245 /* MoveHistoryView.swift */,
@@ -143,6 +152,10 @@
 				97E697423DC545FD8B18BD01 /* PuzzleView.swift */,
 				50511444A0D9466E931F8B68 /* SquareView.swift */,
 			10CA7A1000000000000000B3 /* SettingsSheet.swift */,
+			10CA7A1000000000000000W2 /* PathView.swift */,
+			10CA7A1000000000000000X2 /* StepPracticeView.swift */,
+			10CA7A1000000000000000Y2 /* StepGameView.swift */,
+			10CA7A1000000000000000Z2 /* PromotionOverlay.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -169,6 +182,7 @@
 				C11D1909A17A462F8BF7B8BF /* GameState.swift */,
 				FBA1E9BAE39C4E178203B664 /* Position.swift */,
 				10CA7A1000000000000000L2 /* LessonContent.swift */,
+				10CA7A1000000000000000U2 /* Curriculum.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -201,6 +215,7 @@
 				B14BD27CB2A1472DA10FBF00 /* MoveGenerator.swift */,
 				59755406843949CDA29BF61D /* SoundManager.swift */,
 				10CA7A1000000000000000S2 /* StatsManager.swift */,
+				10CA7A1000000000000000V2 /* ProgressStore.swift */,
 				10CA7A1000000000000000P2 /* PlatformHelper.swift */,
 				EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */,
 				E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */,
@@ -313,10 +328,16 @@
 				5121DCD7B0AD4E48BE1F4C3E /* MoveGenerator.swift in Sources */,
 				80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */,
 				10CA7A1000000000000000S1 /* StatsManager.swift in Sources */,
+				10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */,
 				10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */,
 				10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */,
 				10CA7A1000000000000000L1 /* LessonContent.swift in Sources */,
+				10CA7A1000000000000000U1 /* Curriculum.swift in Sources */,
 				10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */,
+				10CA7A1000000000000000W1 /* PathView.swift in Sources */,
+				10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */,
+				10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */,
+				10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */,
 				89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */,
 				B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,
@@ -336,7 +357,6 @@
 				DFF4981773CA469D8413546E /* DesignSystem.swift in Sources */,
 				2F51D610F5994AB8AE204B14 /* GameView.swift in Sources */,
 				2F51D610F5994AB8AE204CCC /* ChessClockView.swift in Sources */,
-				9EBB28D90D73401D92A2E8D6 /* LearnView.swift in Sources */,
 				5945CB2F31AC412D90A755D5 /* LessonDetailView.swift in Sources */,
 				10CA7A1000000000000000L5 /* LessonRenderer.swift in Sources */,
 				D4168CD080D94B9E8F4ED3CD /* MoveHistoryView.swift in Sources */,

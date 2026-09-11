@@ -233,6 +233,29 @@ final class PuzzleRepository {
         return lo...hi
     }
 
+    // MARK: - Prozor rejtinga za korak Puta (vezba/test)
+
+    /// Prozor rejtinga za zadatke unutar koraka Puta (spec 5.4): isti
+    /// `-200/+100` prozor oko rejtinga igraca, ali PRESECEN sa opsegom koji je
+    /// korak propisao.
+    ///
+    /// Kad je presek prazan, prednost ima OPSEG KORAKA, ne rejting: kurikulum
+    /// zna sta se uci, rejting je samo podesavanje. Pocetnik sa rejtingom 600
+    /// koji je stigao do koraka za rejting 1500-1800 mora da dobije bas te
+    /// zadatke — vracanje praznog preseka (ili prozora oko rejtinga) dalo bi mu
+    /// zadatke koji nemaju veze sa lekcijom koju je upravo procitao, ili
+    /// nijedan zadatak.
+    ///
+    /// Nema klampovanja na granice baze kao kod `practiceRatingWindow`: opseg
+    /// koraka dolazi iz `curriculum.json`, gde ga `CurriculumStep` vec proverava
+    /// (donja <= gornja), pa `ClosedRange` ne moze da pukne pri kreiranju.
+    nonisolated static func stepRatingWindow(playerRating r: Int,
+                                             stepRange: ClosedRange<Int>) -> ClosedRange<Int> {
+        let lo = max(stepRange.lowerBound, r - 200)
+        let hi = min(stepRange.upperBound, r + 100)
+        return lo <= hi ? lo...hi : stepRange
+    }
+
     // MARK: - Pomocna funkcija
 
     /// Cita kolone tekuceg reda `SELECT id, fen, moves, rating, themes ...`

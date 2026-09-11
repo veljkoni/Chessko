@@ -146,6 +146,33 @@ private func openTestRepository() -> PuzzleRepository {
     #expect(window.lowerBound >= PuzzleRepository.minRating)
 }
 
+// MARK: - stepRatingWindow (Faza 4a, Task 4)
+//
+// Prozor koraka Puta je presek prozora oko rejtinga igraca sa opsegom koji je
+// korak propisao. Kad je presek prazan, PREDNOST IMA OPSEG KORAKA: kurikulum
+// zna sta se uci, rejting je samo podesavanje.
+
+@Test func stepRatingWindowIntersectsPlayerWindowWithStepRange() {
+    // Prozor igraca 1000...1300, opseg koraka 600...1400 — presek postoji.
+    let window = PuzzleRepository.stepRatingWindow(playerRating: 1200, stepRange: 600...1400)
+    #expect(window == 1000...1300)
+}
+
+@Test func stepRatingWindowFallsBackToStepRangeWhenPlayerIsBelowIt() {
+    // Pocetnik (600) na koraku za 1500-1800: prozor igraca je 400...700, presek
+    // sa 1500...1800 je prazan. Kurikulum pobedjuje — inace bi korisnik dobio
+    // zadatke koji nemaju veze sa lekcijom koju je upravo procitao.
+    let window = PuzzleRepository.stepRatingWindow(playerRating: 600, stepRange: 1500...1800)
+    #expect(window == 1500...1800)
+}
+
+@Test func stepRatingWindowFallsBackToStepRangeWhenPlayerIsAboveIt() {
+    // Jak igrac (2500) na uvodnom koraku 600...1000: prozor igraca je
+    // 2300...2600, presek je opet prazan. Isti ishod, druga strana.
+    let window = PuzzleRepository.stepRatingWindow(playerRating: 2500, stepRange: 600...1000)
+    #expect(window == 600...1000)
+}
+
 // Integritet baze nije samo "FEN se parsira". `applyNextComputerMove()` odigrava
 // PRVI potez zadatka preko `ChessMove.fromUCI` i, ako taj potez ne prodje, tiho
 // izlazi ostavljajuci `phase` na `.loading` — ekran bez ijedne aktivne kontrole.

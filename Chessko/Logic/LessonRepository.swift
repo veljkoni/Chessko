@@ -81,7 +81,8 @@ final class LessonRepository {
             // "openings.sr.json" -> "openings". Poslednji deo MORA biti podrzan
             // jezik: bez te provere bi zalutali "openings.sr.backup.json" dao
             // fantomsku lekciju "openings.sr", koja se onda ne razresi ni na
-            // jednom jeziku i obori `assertionFailure` u `allLessons`.
+            // jednom jeziku i zavrsila bi kao prijavljena greska o lekciji
+            // koja "nedostaje", a nikad je nije ni bilo.
             let stem = url.deletingPathExtension().lastPathComponent
             guard let dot = stem.lastIndex(of: "."),
                   Self.supportedLanguages.contains(String(stem[stem.index(after: dot)...]))
@@ -94,19 +95,53 @@ final class LessonRepository {
         return known + extra
     }
 
-    /// Sve lekcije redom, na trazenom jeziku. Koristi ekran Učenje za listu.
+    /// Sve lekcije redom, na trazenom jeziku.
     ///
-    /// `compactMap` bi tiho skratio listu ako lekcija ne prodje ceo lanac
-    /// jezika — korisnik bi video manje kartica i nista vise. Zato se skracenje
-    /// posebno prijavljuje.
+    /// Od Faze 4a NEMA pozivaoca: ekran Ucenja je obrisan, a Put ne prikazuje
+    /// spisak lekcija nego korake iz kurikuluma. Zadrzano jer Faza 4b pise nove
+    /// lekcije i verovatno ce joj trebati pregled svih; ako se pokaze da nece,
+    /// brise se bez posledica.
     func allLessons(language: String) -> [LessonDocument] {
         let ids = discoveredLessonIds()
         let docs = ids.compactMap { lesson(id: $0, language: language) }
         if docs.count != ids.count {
             let missing = Set(ids).subtracting(docs.map(\.id))
             print("[Chessko] GRESKA: nedostaju lekcije: \(missing.sorted())")
-            assertionFailure("Nedostaju lekcije: \(missing.sorted())")
         }
         return docs
     }
+}
+
+// MARK: - Curriculum Repository
+//
+// Isti sloj i isti obrazac kao `LessonRepository`: Put zivi u
+// `Content/curriculum.json`, van koda, i ucitava se jednom pa kesira.
+//
+// Za razliku od lekcija, kurikulum je JEDAN fajl bez varijanti po jeziku —
+// naslovi poglavlja stoje u samom JSON-u (`Chapter.title`), pa jezicki lanac
+// pada na potrosaca (`PathView`), ne ovde.
+
+@MainActor
+final class CurriculumRepository {
+    static let shared = CurriculumRepository()
+
+    /// `nil` znaci da `curriculum.json` nedostaje iz bundle-a ili se ne
+    /// dekodira — ekran Puta to mora da PRIKAZE, ne da ostane prazan. Ista
+    /// namera kao kod lekcija: sadrzaj je van dometa kompajlera od Faze 3, pa
+    /// je ovo jedino mesto koje moze da vikne.
+    private(set) lazy var curriculum: Curriculum? = {
+        guard let url = Bundle.main.url(forResource: "curriculum", withExtension: "json",
+                                        subdirectory: "Content") else {
+            print("[Chessko] GRESKA: curriculum.json nije u bundle-u.")
+            assertionFailure("curriculum.json nije u bundle-u.")
+            return nil
+        }
+        do {
+            return try JSONDecoder().decode(Curriculum.self, from: Data(contentsOf: url))
+        } catch {
+            print("[Chessko] GRESKA: curriculum.json se ne dekodira: \(error)")
+            assertionFailure("curriculum.json se ne dekodira: \(error)")
+            return nil
+        }
+    }()
 }

@@ -415,6 +415,49 @@ add("Potez %d od %d", "Move %d of %d", "Coup %d sur %d", "Zug %d von %d", "Mossa
 add("Evaluaciona traka (Eval Bar)", "Evaluation Bar (Eval Bar)", "Barre d'évaluation (Eval Bar)", "Bewertungsleiste (Eval Bar)", "Barra di valutazione (Eval Bar)", "Шкала оценки (Eval Bar)", "局面评估条（Eval Bar）", "मूल्यांकन पट्टी (Eval Bar)")
 add("Prikazuje ocenu pozicije u realnom vremenu pored table", "Shows real-time position evaluation next to the board", "Affiche l'évaluation en temps réel à côté de l'échiquier", "Zeigt die Stellungsbewertung in Echtzeit neben dem Brett", "Mostra la valutazione della posizione in tempo reale accanto alla scacchiera", "Показывает оценку позиции в реальном времени рядом с доской", "在棋盘旁实时显示局面优劣评估", "बोर्ड के बगल में वास्तविक समय में स्थिति का मूल्यांकन दिखाता है")
 
+# ── Put (Faza 4a) ───────────────────────────────────────────────────────────
+# "Nastavi" vec postoji gore (dijalog "Napustiti partiju?") i namerno se
+# ne duplira — isti smisao, isti kljuc.
+add("Put", "Path", "Parcours", "Pfad", "Percorso", "Путь", "路径", "पथ")
+add("Korak %lld", "Step %lld", "Étape %lld", "Schritt %lld", "Passo %lld", "Шаг %lld", "第 %lld 步", "चरण %lld")
+add("Vežba", "Practice", "Entraînement", "Übung", "Esercizio", "Практика", "练习", "अभ्यास")
+add("Partija", "Game", "Partie", "Partie", "Partita", "Партия", "对局", "बाज़ी")
+add("Test", "Test", "Test", "Test", "Test", "Тест", "测验", "परीक्षा")
+add("Vežba · %lld", "Practice · %lld", "Entraînement · %lld", "Übung · %lld", "Esercizio · %lld", "Практика · %lld", "练习 · %lld", "अभ्यास · %lld")
+add("Test · %lld", "Test · %lld", "Test · %lld", "Test · %lld", "Test · %lld", "Тест · %lld", "测验 · %lld", "परीक्षा · %lld")
+add("Dana zaredom", "Day streak", "Jours d'affilée", "Tage in Folge", "Giorni di fila", "Дней подряд", "连续天数", "लगातार दिन")
+add("Cilj za danas ispunjen", "Today's goal met", "Objectif du jour atteint", "Tagesziel erreicht", "Obiettivo di oggi raggiunto", "Цель на сегодня выполнена", "今日目标已完成", "आज का लक्ष्य पूरा")
+add("Cilj za danas nije ispunjen", "Today's goal not met yet", "Objectif du jour non atteint", "Tagesziel noch nicht erreicht", "Obiettivo di oggi non ancora raggiunto", "Цель на сегодня ещё не выполнена", "今日目标尚未完成", "आज का लक्ष्य अभी पूरा नहीं हुआ")
+add("Prešao si ceo put!", "You finished the whole path!", "Tu as terminé tout le parcours !", "Du hast den ganzen Pfad geschafft!", "Hai completato tutto il percorso!", "Вы прошли весь путь!", "你走完了整条路径！", "आपने पूरा पथ पूरा किया!")
+add("Put nije dostupan", "Path unavailable", "Parcours indisponible", "Pfad nicht verfügbar", "Percorso non disponibile", "Путь недоступен", "路径不可用", "पथ उपलब्ध नहीं")
+add("Uskoro", "Coming soon", "Bientôt", "Demnächst", "Prossimamente", "Скоро", "即将推出", "जल्द आ रहा है")
+add("Nastavi, korak %lld, %@", "Continue, step %lld, %@", "Continuer, étape %lld, %@", "Weiter, Schritt %lld, %@", "Continua, passo %lld, %@", "Продолжить, шаг %lld, %@", "继续，第 %lld 步，%@", "जारी रखें, चरण %lld, %@")
+add("Korak %lld, %@, uskoro dostupno", "Step %lld, %@, coming soon", "Étape %lld, %@, bientôt disponible", "Schritt %lld, %@, demnächst verfügbar", "Passo %lld, %@, prossimamente", "Шаг %lld, %@, скоро", "第 %lld 步，%@，即将推出", "चरण %lld, %@, जल्द उपलब्ध")
+add("Zaključano", "Locked", "Verrouillé", "Gesperrt", "Bloccato", "Заблокировано", "已锁定", "बंद")
+add("Dostupno", "Available", "Disponible", "Verfügbar", "Disponibile", "Доступно", "可用", "उपलब्ध")
+add("Završeno", "Completed", "Terminé", "Abgeschlossen", "Completato", "Завершено", "已完成", "पूर्ण")
+add("Zaključano — završi prethodne korake", "Locked — finish the earlier steps", "Verrouillé — termine les étapes précédentes", "Gesperrt — schließe die vorherigen Schritte ab", "Bloccato — completa i passi precedenti", "Заблокировано — завершите предыдущие шаги", "已锁定 — 请先完成前面的步骤", "बंद — पहले के चरण पूरे करें")
+add("Završi korak", "Finish step", "Terminer l'étape", "Schritt abschließen", "Completa il passo", "Завершить шаг", "完成此步", "चरण पूरा करें")
+add("Korak je završen", "Step completed", "Étape terminée", "Schritt abgeschlossen", "Passo completato", "Шаг завершён", "此步已完成", "चरण पूरा हो गया")
+
+# ── Pokretac koraka `practice` / `test` (Faza 4a, Task 4) ───────────────────
+add("Zadatak %lld od %lld", "Puzzle %lld of %lld", "Problème %lld sur %lld", "Aufgabe %lld von %lld", "Problema %lld di %lld", "Задача %lld из %lld", "第 %lld 题，共 %lld 题", "पहेली %lld / %lld")
+add("Test mora biti rešen bez greške", "The test must be solved without mistakes", "Le test doit être réussi sans erreur", "Der Test muss fehlerfrei gelöst werden", "Il test va superato senza errori", "Тест нужно пройти без ошибок", "测验必须零失误通过", "परीक्षा बिना गलती के पूरी करनी होगी")
+add("Greška — test kreće ispočetka", "Mistake — the test restarts", "Erreur — le test recommence", "Fehler — der Test beginnt von vorn", "Errore — il test ricomincia", "Ошибка — тест начинается заново", "失误 — 测验重新开始", "गलती — परीक्षा फिर से शुरू")
+add("Nazad na Put", "Back to the path", "Retour au parcours", "Zurück zum Pfad", "Torna al percorso", "Назад к пути", "返回路径", "पथ पर वापस")
+add("Korak nije dostupan", "Step unavailable", "Étape indisponible", "Schritt nicht verfügbar", "Passo non disponibile", "Шаг недоступен", "此步不可用", "चरण उपलब्ध नहीं")
+
+# ── Pokretac koraka `game` (Faza 4a, Task 5) ───────────────────────────────
+add("Korak se završava kad partija dođe do kraja.",
+    "The step is completed once the game reaches its end.",
+    "L'étape se termine lorsque la partie arrive à son terme.",
+    "Der Schritt gilt als abgeschlossen, sobald die Partie zu Ende ist.",
+    "Il passo si completa quando la partita arriva alla fine.",
+    "Шаг завершается, когда партия доходит до конца.",
+    "对局下到结束时，此步即完成。",
+    "बाज़ी के अंत तक पहुँचने पर यह चरण पूरा हो जाता है।")
+
+
 def build():
     entries = {}
     for sr, trans in T.items():

@@ -1,6 +1,20 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Fasada nad `ProgressStore`-om
+//
+// Od Faze 4a jedini izvor istine za statistiku je `progress.json`
+// (`ProgressStore`), a NE `UserDefaults`. `StatsManager` ostaje zbog 26
+// postojecih poziva u `GameViewModel`-u, `PuzzleViewModel`-u i
+// `SettingsSheet`-u — svaki potpis je namerno nepromenjen, pa nijedno mesto
+// poziva nije diralo ovu izmenu (medju njima i logika rejtinga proverena u
+// Fazi 2).
+//
+// Stari `stats_*` kljucevi u `UserDefaults`-u se posle migracije NAMERNO ne
+// brisu (spec 5.4): povratak na stariju verziju aplikacije tako i dalje radi.
+// Zato ovde vise nema `didSet` upisa — pisanje na oba mesta bi napravilo dva
+// izvora istine.
+
 @Observable
 @MainActor
 final class StatsManager {
@@ -19,92 +33,86 @@ final class StatsManager {
     /// Datumi ("yyyy-MM-dd") za koje je resen zadatak dana.
     nonisolated static let solvedDatesKey = "chessko.solvedDates"
 
-    var gamesPlayed: Int {
-        didSet { UserDefaults.standard.set(gamesPlayed, forKey: "stats_gamesPlayed") }
-    }
-    var gamesWon: Int {
-        didSet { UserDefaults.standard.set(gamesWon, forKey: "stats_gamesWon") }
-    }
-    var gamesLost: Int {
-        didSet { UserDefaults.standard.set(gamesLost, forKey: "stats_gamesLost") }
-    }
-    var gamesDrawn: Int {
-        didSet { UserDefaults.standard.set(gamesDrawn, forKey: "stats_gamesDrawn") }
+    /// Uveden u Task-u 2, kad `ProgressStore` JOS NIJE bio `@Observable`: bez
+    /// njega racunati getteri ne bi obavestili SwiftUI, pa se `SettingsSheet`
+    /// ne bi osvezio posle "Resetuj statistiku" dok je list otvoren.
+    ///
+    /// Od Task-a 3 je `ProgressStore` `@Observable` (`Observation` je deo
+    /// standardne biblioteke, ne SwiftUI-ja, pa testni paket to podnosi), tako
+    /// da citanje `snapshot`-a samo po sebi vec registruje pracenje i ovaj
+    /// brojac je **suvisan**. Zadrzan je namerno: uklanjanje se ne moze jeftino
+    /// proveriti bez sinteticnih tapova, koji u ovom simulatoru ne rade, a
+    /// cena drzanja je nekoliko linija. Sme da se ukloni kad neko bude mogao
+    /// rucno da potvrdi da se statistika i dalje osvezava uzivo.
+    private var revision = 0
+
+    private var s: ProgressSnapshot {
+        _ = revision
+        return ProgressStore.shared.snapshot
     }
 
-    var currentWinStreak: Int {
-        didSet { UserDefaults.standard.set(currentWinStreak, forKey: "stats_currentWinStreak") }
-    }
-    var bestWinStreak: Int {
-        didSet { UserDefaults.standard.set(bestWinStreak, forKey: "stats_bestWinStreak") }
+    private func write(_ change: (inout ProgressSnapshot) -> Void) {
+        ProgressStore.shared.updateStats(change)
+        revision &+= 1
     }
 
-    var puzzlesSolved: Int {
-        didSet { UserDefaults.standard.set(puzzlesSolved, forKey: "stats_puzzlesSolved") }
-    }
-    var currentPuzzleStreak: Int {
-        didSet { UserDefaults.standard.set(currentPuzzleStreak, forKey: "stats_currentPuzzleStreak") }
-    }
-    var bestPuzzleStreak: Int {
-        didSet { UserDefaults.standard.set(bestPuzzleStreak, forKey: "stats_bestPuzzleStreak") }
-    }
+    var gamesPlayed: Int { s.gamesPlayed }
+    var gamesWon: Int { s.gamesWon }
+    var gamesLost: Int { s.gamesLost }
+    var gamesDrawn: Int { s.gamesDrawn }
+
+    var currentWinStreak: Int { s.currentWinStreak }
+    var bestWinStreak: Int { s.bestWinStreak }
+
+    var puzzlesSolved: Int { s.puzzlesSolved }
+    var currentPuzzleStreak: Int { s.currentPuzzleStreak }
+    var bestPuzzleStreak: Int { s.bestPuzzleStreak }
 
     /// Elo-stil rejting igraca za zadatke. Pocinje na 800 (spec 5.4).
-    var puzzleRating: Int {
-        didSet { UserDefaults.standard.set(puzzleRating, forKey: "stats_puzzleRating") }
-    }
+    var puzzleRating: Int { s.puzzleRating }
 
     var winRate: Int {
         gamesPlayed > 0 ? Int((Double(gamesWon) / Double(gamesPlayed)) * 100.0) : 0
     }
 
-    private init() {
-        self.gamesPlayed = UserDefaults.standard.integer(forKey: "stats_gamesPlayed")
-        self.gamesWon = UserDefaults.standard.integer(forKey: "stats_gamesWon")
-        self.gamesLost = UserDefaults.standard.integer(forKey: "stats_gamesLost")
-        self.gamesDrawn = UserDefaults.standard.integer(forKey: "stats_gamesDrawn")
-        self.currentWinStreak = UserDefaults.standard.integer(forKey: "stats_currentWinStreak")
-        self.bestWinStreak = UserDefaults.standard.integer(forKey: "stats_bestWinStreak")
-        self.puzzlesSolved = UserDefaults.standard.integer(forKey: "stats_puzzlesSolved")
-        self.currentPuzzleStreak = UserDefaults.standard.integer(forKey: "stats_currentPuzzleStreak")
-        self.bestPuzzleStreak = UserDefaults.standard.integer(forKey: "stats_bestPuzzleStreak")
-        if UserDefaults.standard.object(forKey: "stats_puzzleRating") == nil {
-            self.puzzleRating = 800
-        } else {
-            self.puzzleRating = UserDefaults.standard.integer(forKey: "stats_puzzleRating")
-        }
-    }
+    private init() {}
 
     func recordGameWon() {
-        gamesPlayed += 1
-        gamesWon += 1
-        currentWinStreak += 1
-        if currentWinStreak > bestWinStreak {
-            bestWinStreak = currentWinStreak
+        write {
+            $0.gamesPlayed += 1
+            $0.gamesWon += 1
+            $0.currentWinStreak += 1
+            $0.bestWinStreak = max($0.bestWinStreak, $0.currentWinStreak)
         }
     }
 
     func recordGameLost() {
-        gamesPlayed += 1
-        gamesLost += 1
-        currentWinStreak = 0
-    }
-
-    func recordGameDrawn() {
-        gamesPlayed += 1
-        gamesDrawn += 1
-    }
-
-    func recordPuzzleSolved() {
-        puzzlesSolved += 1
-        currentPuzzleStreak += 1
-        if currentPuzzleStreak > bestPuzzleStreak {
-            bestPuzzleStreak = currentPuzzleStreak
+        write {
+            $0.gamesPlayed += 1
+            $0.gamesLost += 1
+            $0.currentWinStreak = 0
         }
     }
 
+    func recordGameDrawn() {
+        write {
+            $0.gamesPlayed += 1
+            $0.gamesDrawn += 1
+        }
+    }
+
+    func recordPuzzleSolved() {
+        write {
+            $0.puzzlesSolved += 1
+            $0.currentPuzzleStreak += 1
+            $0.bestPuzzleStreak = max($0.bestPuzzleStreak, $0.currentPuzzleStreak)
+        }
+        // Otud dnevni cilj Puta zna za resene zadatke.
+        ProgressStore.shared.recordPuzzleSolvedToday()
+    }
+
     func recordPuzzleFailed() {
-        currentPuzzleStreak = 0
+        write { $0.currentPuzzleStreak = 0 }
     }
 
     /// E = 1 / (1 + 10^((Rp - R)/400));  R' = R + K*(S - E),  K = 32
@@ -119,22 +127,26 @@ final class StatsManager {
     /// je rejting IGRACA, a parametar `puzzleRating` (`rp`) je rejting
     /// RESAVANOG ZADATKA. Red ispod cita jedno a pise drugo.
     func applyPuzzleResult(puzzleRating rp: Int, solved: Bool) {
-        puzzleRating = StatsManager.newRating(current: puzzleRating,
-                                              puzzleRating: rp,
-                                              solved: solved)
+        write {
+            $0.puzzleRating = StatsManager.newRating(current: $0.puzzleRating,
+                                                     puzzleRating: rp,
+                                                     solved: solved)
+        }
     }
 
     func resetStats() {
-        gamesPlayed = 0
-        gamesWon = 0
-        gamesLost = 0
-        gamesDrawn = 0
-        currentWinStreak = 0
-        bestWinStreak = 0
-        puzzlesSolved = 0
-        currentPuzzleStreak = 0
-        bestPuzzleStreak = 0
-        puzzleRating = 800
+        write {
+            $0.gamesPlayed = 0
+            $0.gamesWon = 0
+            $0.gamesLost = 0
+            $0.gamesDrawn = 0
+            $0.currentWinStreak = 0
+            $0.bestWinStreak = 0
+            $0.puzzlesSolved = 0
+            $0.currentPuzzleStreak = 0
+            $0.bestPuzzleStreak = 0
+            $0.puzzleRating = 800
+        }
 
         // Rejting nazad na 800 nema smisla ako napredak na zadacima ostane:
         // vezbanje bi i dalje iskljucivalo svaki ikad resen zadatak, a

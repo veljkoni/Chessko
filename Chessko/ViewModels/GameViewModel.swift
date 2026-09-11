@@ -192,7 +192,11 @@ final class GameViewModel {
 
     // MARK: Init
 
-    init() {
+    /// `saveKey` odredjuje slot u `UserDefaults`-u u koji ovaj primerak cuva
+    /// partiju. Podrazumevana vrednost je slot slobodne partije, pa nijedno
+    /// postojece mesto poziva ne menja ponasanje niti gubi zateceni save.
+    init(saveKey: String = GameViewModel.freePlaySaveKey) {
+        self.savedGameKey = saveKey
         UserDefaults.standard.register(defaults: [
             "soundEnabled": true,
             "hapticsEnabled": true,
@@ -313,7 +317,12 @@ final class GameViewModel {
         Haptics.notification(.error)
         updateEvaluation()
 
-        if gameMode == .vsComputer && !hasRecordedGameEnd {
+        // Predaja u koraku Puta se NE upisuje u statistiku. To je jedini
+        // predvidjen izlaz iz koraka koji igrac ne moze da dobije, pa bi upis
+        // poraza i gasenje niza pobeda kaznjavali korisnika sto je upotrebio
+        // ono sto mu je samo ponudjeno. Odigrana partija u koraku se broji
+        // normalno — kaznjava se samo predaja.
+        if gameMode == .vsComputer && !hasRecordedGameEnd && !isStepGame {
             hasRecordedGameEnd = true
             if loser == playerColor {
                 StatsManager.shared.recordGameLost()
@@ -787,7 +796,34 @@ final class GameViewModel {
         }
     }
 
-    private let savedGameKey = "chessko.savedGame"
+    /// Slot slobodne partije (tab Igra). Ime je zateceno — menjanje bi obrisalo
+    /// partiju svakom korisniku koji nadogradi aplikaciju.
+    static let freePlaySaveKey = "chessko.savedGame"
+
+    /// Slot partije jednog `game` koraka Puta. Zaseban po koraku, pa prekinuta
+    /// partija iz koraka moze da se nastavi a da ne dodirne slobodnu partiju.
+    static func stepSaveKey(_ stepId: String) -> String { "chessko.savedGame.step.\(stepId)" }
+
+    /// Tacno kad je ovaj model pokrenut kao korak Puta. Izvodi se iz kljuca da
+    /// ne bi postojao drugi izvor istine.
+    var isStepGame: Bool { savedGameKey.hasPrefix("chessko.savedGame.step.") }
+
+    /// Brise slot koraka. Napredak Puta pamti `ProgressStore`, pa sacuvana
+    /// partija posle zavrsenog koraka nema kome da sluzi — a `UserDefaults` se
+    /// pri pokretanju ucitava ceo, pa bi se sa vise `game` koraka samo gomilao.
+    func clearStepSave() {
+        guard isStepGame else { return }
+        UserDefaults.standard.removeObject(forKey: savedGameKey)
+    }
+
+    /// Kljuc pod kojim OVAJ primerak cuva i cita partiju.
+    ///
+    /// Od Faze 4a postoje dva ziva primerka modela: slobodna partija na tabu
+    /// Igra i partija `game` koraka Puta. Sa jednim zajednickim kljucem drugi
+    /// primerak bi pri kreiranju ucitao partiju koju korisnik ima u toku na
+    /// tabu Igra, a prvim potezom je pregazio — partija u toku bi nestala bez
+    /// ijednog upozorenja. Zato je kljuc svojstvo primerka, a ne konstanta.
+    private let savedGameKey: String
 
     /// Serialise current state to UserDefaults.
     private func save() {
@@ -862,6 +898,56 @@ final class GameViewModel {
         if gameMode == .vsComputer && playerColor == .black {
             triggerAI()
         }
+    }
+
+    // MARK: - Partija iz koraka Puta
+
+    /// Priprema partiju za `game` korak Puta.
+    ///
+    /// NAMERNO ne zove `newGame()`: on tezinu cita iz `selectedDifficulty`
+    /// (podesavanje korisnika) i time bi pregazio tezinu koju propisuje korak,
+    /// pa bi „Početnik" iz kurikuluma igrao Stockfish-om ako je korisnik tako
+    /// podesio tab Igra. Ovaj primerak tezinu ne upisuje u podesavanja —
+    /// slobodna partija je ne sme osetiti.
+    ///
+    /// Zapoceta partija iz ISTOG koraka se nastavlja: primerak ima sopstveni
+    /// slot, pa ju je `init` vec ucitao. Zavrsena se ne nastavlja — ulazak u
+    /// korak bi zavrsio na gotovoj tabli bez ijednog poteza koji se moze
+    /// odigrati.
+    func startStepGame(difficulty: GameDifficulty, startFEN: String?) {
+        self.difficulty = difficulty
+        gameMode = .vsComputer
+
+        if !gameState.moveNotations.isEmpty && !isGameOver {
+            return   // nastavak; `load()` je po potrebi vec pokrenuo AI
+        }
+
+        hasRecordedGameEnd = false
+        viewingMoveIndex = nil
+        gameGeneration += 1
+        flyingCapture = nil
+        animatingPiece = nil
+        promotionMove = nil
+        showPromotion = false
+        history.removeAll()
+
+        // Neispravan FEN ne sme da ostavi korak bez table — isti obrazac kao
+        // vezbe u lekcijama (`OpeningExerciseViewModel`).
+        let start = startFEN.flatMap { GameState.fromFEN($0) } ?? .initial()
+        // Igrac vodi stranu koja je na potezu u startnoj poziciji. Bez toga bi
+        // korak sa `startFEN`-om u kome je crni na potezu odmah cekao potez
+        // igraca koji tu stranu uopste ne igra.
+        playerColor = start.currentTurn
+
+        withAnimation {
+            gameState = start
+            selectedPosition = nil
+            legalMovesForSelected = []
+            lastMove = nil
+            isThinking = false
+        }
+        save()   // slot koraka postoji od prvog trenutka, ne tek od prvog poteza
+        updateEvaluation()
     }
 
     func generatePGN() -> String {

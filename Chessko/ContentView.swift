@@ -28,10 +28,9 @@ struct ContentView: View {
                 .tabItem {
                     Label("Zadaci", systemImage: "puzzlepiece.fill")
                 }
-
-            LearnView(viewModel: learnViewModel)
+            PathView(viewModel: learnViewModel)
                 .tabItem {
-                    Label("Učenje", systemImage: "book.fill")
+                    Label("Put", systemImage: "signpost.right.fill")
                 }
         }
         .tint(DS.accent)

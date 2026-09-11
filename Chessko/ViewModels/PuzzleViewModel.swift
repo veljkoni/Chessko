@@ -20,9 +20,13 @@ enum PuzzlePhase: Equatable {
 /// radi i u `.practice` rezimu, resen vezbovni zadatak bi lazno oznacio
 /// KALENDARSKI DAN kao resen (obrise legitimnu informaciju o tome da li
 /// je korisnik resio bas TAJ dnevni zadatak).
-enum PuzzleMode {
+enum PuzzleMode: Equatable {
     case daily
     case practice
+    /// Korak Puta (Faza 4a): fiksan red zadataka umesto jednog. `requireFlawless`
+    /// razlikuje `test` od `practice` — jedina razlika izmedju ta dva tipa
+    /// koraka je tolerancija na gresku, pa je to zastavica a ne cetvrti rezim.
+    case step(id: String, requireFlawless: Bool)
 }
 
 // MARK: - Puzzle View Model
@@ -49,6 +53,27 @@ final class PuzzleViewModel {
     /// slobodno vezbanje (`nextPuzzle()`). Vidi `PuzzleMode` za zasto.
     private(set) var mode: PuzzleMode = .daily
 
+    // MARK: - Korak Puta (Faza 4a)
+
+    /// Red zadataka za tekuci korak Puta i koliko ih je reseno. Red se puni
+    /// JEDNOM, u `startStepPractice(step:)`: da se zadaci izvlacili jedan po
+    /// jedan, traka napretka ne bi imala ukupan broj, a `test` koji krece
+    /// ispocetka ne bi mogao da garantuje da su zadaci NOVI.
+    private(set) var stepQueue: [ChessPuzzle] = []
+    private(set) var stepSolved: Int = 0
+    private(set) var stepFailed: Bool = false
+    var stepProgress: (solved: Int, total: Int) { (stepSolved, stepQueue.count) }
+
+    /// Korak iz kojeg je red napunjen — cuva se da `test` moze da se ponovi sa
+    /// novim zadacima bez pomoci ekrana.
+    private(set) var currentStep: CurriculumStep?
+
+
+    var stepRequiresFlawless: Bool {
+        if case .step(_, let flawless) = mode { return flawless }
+        return false
+    }
+
     /// `nil` kad `puzzles.sqlite` nedostaje iz bundle-a — `loadPuzzle()` tada
     /// odmah javlja `.unavailable` umesto praznog ekrana.
     private let repository = PuzzleRepository.bundled
@@ -68,6 +93,12 @@ final class PuzzleViewModel {
 
     private func recordPuzzleIdSolved(_ id: String) {
         guard solvedPuzzleIds.insert(id).inserted else { return }
+        // Postoje DVA ziva primerka ovog modela: jedan drzi tab Zadaci, drugi
+        // ekran koraka u Putu. Upis celog kesa bi pregazio ono sto je drugi
+        // primerak u medjuvremenu upisao, pa bi zadatak mogao ponovo da se
+        // pojavi u "Sledeći zadatak". Zato se disk cita pre spajanja.
+        let onDisk = Set(UserDefaults.standard.stringArray(forKey: StatsManager.solvedPuzzleIdsKey) ?? [])
+        solvedPuzzleIds.formUnion(onDisk)
         UserDefaults.standard.set(Array(solvedPuzzleIds), forKey: StatsManager.solvedPuzzleIdsKey)
     }
 
@@ -174,7 +205,13 @@ final class PuzzleViewModel {
     var isFlipped: Bool { playerColor == .black }
 
     var isPlayerTurn: Bool {
-        !awaitingOpponent && (phase == .playing || phase == .wrongMove)
+        // `!stepFailed`: kad test padne, restart stize tek posle 1.4s. Bez ovoga
+        // tabla u tom prozoru i dalje prima poteze — a resen zadatak unutar njega
+        // podigne `loadGeneration`, cime SAM otkaze restart koji ga je cekao.
+        // Zastavica ostane `true`, kredit izostane, a ekran ipak napise
+        // "Korak je zavrsen". Ulaz se zato gasi dok restart ne slegne;
+        // `startStepPractice` je vraca na `false`.
+        !awaitingOpponent && !stepFailed && (phase == .playing || phase == .wrongMove)
     }
 
     var statusMessage: String {
@@ -185,7 +222,13 @@ final class PuzzleViewModel {
             return playerColor == .white
                 ? Loc("Pronađi pravi potez za bele")
                 : Loc("Pronađi pravi potez za crne")
-        case .wrongMove:       return Loc("Pogrešno. Pokušaj ponovo.")
+        case .wrongMove:
+            // U testu prva greska nije "pokusaj ponovo" nego kraj pokusaja —
+            // poruka mora da kaze sta se upravo desilo, jer se tabla za koji
+            // trenutak sama zameni novim zadacima.
+            return stepFailed
+                ? Loc("Greška — test kreće ispočetka")
+                : Loc("Pogrešno. Pokušaj ponovo.")
         case .solved:          return Loc("Odlično! Zadatak rešen! 🎉")
         case .showingSolution: return Loc("Rešenje...")
         }
@@ -222,6 +265,7 @@ final class PuzzleViewModel {
     /// prikazan).
     private func loadPuzzle() {
         reloadPersistedProgress()
+        clearStepState()
         mode = .daily
         phase = .loading
         currentPuzzle = nil
@@ -264,6 +308,7 @@ final class PuzzleViewModel {
         // skup — bez osvezavanja bi vezbanje i posle reseta iskljucivalo
         // sve ranije resene zadatke.
         reloadPersistedProgress()
+        clearStepState()
 
         mode = .practice
         phase = .loading
@@ -314,6 +359,111 @@ final class PuzzleViewModel {
         let lo = max(PuzzleRepository.minRating, r - radius)
         let hi = max(lo, min(PuzzleRepository.maxRating, r + radius))
         return lo...hi
+    }
+
+    // MARK: - Korak Puta (Faza 4a — pokretac `practice` i `test` koraka)
+
+    /// Sve sto pokretac koraka treba da zna, izvuceno iz `StepKind`-a. `test`
+    /// se od `practice`-a razlikuje SAMO po `requireFlawless` — zato jedan plan
+    /// i jedan tok, umesto dva skoro identicna.
+    private struct StepPlan {
+        let themes: [String]
+        let count: Int
+        let range: ClosedRange<Int>
+        let requireFlawless: Bool
+    }
+
+    private static func plan(for step: CurriculumStep) -> StepPlan? {
+        switch step.kind {
+        case .practice(let themes, let count, let range):
+            return StepPlan(themes: themes, count: count, range: range, requireFlawless: false)
+        case .test(let themes, let count, let range):
+            return StepPlan(themes: themes, count: count, range: range, requireFlawless: true)
+        case .lesson, .game:
+            return nil
+        }
+    }
+
+    private func clearStepState() {
+        stepQueue = []
+        stepSolved = 0
+        stepFailed = false
+        currentStep = nil
+    }
+
+    /// Puni red zadataka za korak Puta i pokrece prvi. Poziva se i pri ulasku na
+    /// ekran i pri ponovnom pokretanju palog `test`-a — u oba slucaja zadaci su
+    /// NOVI (upit je `ORDER BY RANDOM()`), sto je i smisao "krece ispocetka".
+    func startStepPractice(step: CurriculumStep) {
+        guard let plan = Self.plan(for: step) else {
+            // Lekcija i partija imaju sopstvene ekrane; da neko ovde dovede
+            // takav korak, prazan ekran bi bio gori od poruke.
+            phase = .unavailable(Loc("Korak nije dostupan"))
+            return
+        }
+
+        reloadPersistedProgress()
+        clearStepState()
+        currentStep = step
+        mode = .step(id: step.id, requireFlawless: plan.requireFlawless)
+        phase = .loading
+        currentPuzzle = nil
+        puzzleHadError = false
+        awaitingOpponent = false
+        loadGeneration += 1
+
+        guard let repository else {
+            phase = .unavailable(Loc("Baza zadataka nije dostupna")); return
+        }
+
+        // Prozor rejtinga presecen sa opsegom koraka; kad je presek prazan,
+        // prednost ima opseg koraka (`PuzzleRepository.stepRatingWindow`).
+        let window = PuzzleRepository.stepRatingWindow(
+            playerRating: StatsManager.shared.puzzleRating,
+            stepRange: plan.range)
+
+        // Popustanje ide redom: prvo uzi prozor bez vec resenih, pa ceo opseg
+        // koraka, pa isto to SA vec resenim. Tema se ne popusta ni u jednom
+        // koraku — ona je ono sto korak uci; radije ponovljen zadatak na pravu
+        // temu nego nov na pogresnu.
+        let attempts: [(range: ClosedRange<Int>, excluding: Set<String>)] = [
+            (window, solvedPuzzleIds),
+            (plan.range, solvedPuzzleIds),
+            (window, []),
+            (plan.range, [])
+        ]
+
+        var best: [ChessPuzzle] = []
+        for attempt in attempts {
+            let found = repository.puzzles(themes: plan.themes,
+                                           ratingRange: attempt.range,
+                                           excluding: attempt.excluding,
+                                           limit: plan.count)
+            if found.count > best.count { best = found }
+            if best.count >= plan.count { break }
+        }
+
+        // Kraci red od trazenog je prihvatljiv (korak se zavrsava kad se resi
+        // sve sto je u redu); PRAZAN nije — to je ekran bez zadatka.
+        guard !best.isEmpty else {
+            phase = .unavailable(Loc("Nema dostupnih zadataka")); return
+        }
+
+        stepQueue = best
+        setup(puzzle: best[0])
+    }
+
+    /// Ucitava sledeci zadatak iz reda. Radi isti reset kao `loadPuzzle()` (novi
+    /// `loadGeneration` gasi zaostale odlozene poteze prethodnog zadatka), ali
+    /// NE dira red ni brojac resenih.
+    private func loadStepPuzzle(at index: Int) {
+        guard index >= 0, index < stepQueue.count else { return }
+        phase = .loading
+        currentPuzzle = nil
+        puzzleHadError = false
+        awaitingOpponent = false
+        loadGeneration += 1
+        setup(puzzle: stepQueue[index])
     }
 
     // MARK: - Setup
@@ -385,6 +535,7 @@ final class PuzzleViewModel {
                     StatsManager.shared.applyPuzzleResult(puzzleRating: currentPuzzle.rating, solved: false)
                 }
             }
+            failStepIfTest()
             return
         }
 
@@ -409,6 +560,7 @@ final class PuzzleViewModel {
                     StatsManager.shared.applyPuzzleResult(puzzleRating: currentPuzzle.rating, solved: true)
                 }
             }
+            advanceStepAfterSolve()
             return
         }
 
@@ -419,6 +571,54 @@ final class PuzzleViewModel {
             try? await Task.sleep(for: .milliseconds(600))
             guard generation == loadGeneration else { return }
             applyNextComputerMove()
+        }
+    }
+
+    // MARK: - Napredovanje kroz korak Puta
+
+    /// Zove se posle svakog resenog zadatka. U `test`-u greska korak vec obara
+    /// pre ovoga, pa je ovde dovoljno brojati.
+    private func advanceStepAfterSolve() {
+        guard case .step(let stepId, let requireFlawless) = mode else { return }
+
+        stepSolved += 1
+
+        guard stepSolved >= stepQueue.count else {
+            // Jos ima zadataka: kratka pauza da korisnik vidi da je resio, pa
+            // sledeci. Odlozeni `Task` se, kao i svi ostali, gasi ako se u
+            // medjuvremenu ucita nesto drugo.
+            let generation = loadGeneration
+            let next = stepSolved
+            Task {
+                try? await Task.sleep(for: .milliseconds(900))
+                guard generation == loadGeneration else { return }
+                loadStepPuzzle(at: next)
+            }
+            return
+        }
+
+        // `requireFlawless && stepFailed` je ovde nedostizno (pao test se
+        // restartuje, a restart nulira `stepFailed`), ali stoji da bi pravilo
+        // "test se zavrsava SAMO bez greske" bilo iskazano na mestu gde se
+        // korak zaista zavrsava, a ne samo u toku koji do njega vodi.
+        // Bez dodatnog haptika: `attempt()` je vec ispalio `.success` za resen
+        // zadatak pre koji milisekundu, pa bi drugi bio samo buka.
+        guard !(requireFlawless && stepFailed) else { return }
+        ProgressStore.shared.completeStep(stepId)
+    }
+
+    /// Prva greska u `test` koraku obara ceo korak. Tabla ostaje na mestu ~1.4s
+    /// (status kaze zasto), pa se korak pokrece iznova sa NOVIM zadacima.
+    private func failStepIfTest() {
+        guard case .step(_, true) = mode, !stepFailed else { return }
+        stepFailed = true
+
+        let generation = loadGeneration
+        let step = currentStep
+        Task {
+            try? await Task.sleep(for: .milliseconds(1400))
+            guard generation == loadGeneration, let step else { return }
+            startStepPractice(step: step)
         }
     }
 

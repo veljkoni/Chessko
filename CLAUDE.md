@@ -9,7 +9,7 @@
 (igra sa prijateljem na istom uređaju, samostalni šahovski sat). Igrač bira
 boju (beli ili crni; podrazumevano beli) — tabla se rotira kad igra crnim.
 UI je lokalizovan na 8 jezika (izvorni srpski). `ContentView` je `TabView`
-sa tri taba: Igra, Zadaci (dnevni puzzle), Učenje (lekcije).
+sa tri taba: Igra, Zadaci (dnevni puzzle), Put (kurikulum).
 
 - Platforma: **iOS 18.0+**, iPhone + iPad (`TARGETED_DEVICE_FAMILY = 1,2`)
 - Jezik: **Swift 6.0**, **SwiftUI**
@@ -135,14 +135,17 @@ Chessko/
 │   ├── ChessPiece.swift      PieceType, PieceColor, materialValue, Unicode symbol
 │   ├── ChessMove.swift       from/to/flag; == poredi from+to **i** flag
 │   ├── GameState.swift       cela tabla + prava rokade + status; immutable apply
-│   └── LessonContent.swift   LessonDocument + LessonBlock (12 tipova blokova)
+│   ├── LessonContent.swift   LessonDocument + LessonBlock (12 tipova blokova)
+│   └── Curriculum.swift      Curriculum + Chapter + CurriculumStep (4 tipa koraka)
 ├── Logic/
+│   ├── ProgressStore.swift   napredak Puta, dnevni cilj, streak (progress.json)
 │   ├── MoveGenerator.swift   generisanje poteza, detekcija šaha (enum, statičke fn)
 │   ├── ChessAI.swift         negamax + alfa-beta, piece-square tabele
 │   └── LessonRepository.swift  učitava Content/lessons/<id>.<jezik>.json iz bundle-a
 ├── ViewModels/
 │   └── GameViewModel.swift   @Observable @MainActor — sva interakcija + AI okidač
-├── Views/                    GameView, BoardView, SquareView,
+├── Views/                    PathView (Put), StepPracticeView, StepGameView,
+│                             GameView, BoardView, SquareView,
 │                             CapturedPiecesView, PieceImageView,
 │                             LessonDetailView (okvir) + LessonRenderer (blokovi)
 ├── Content/lessons/          FOLDER-REFERENCA: 32 JSON-a (4 lekcije × 8 jezika)
@@ -176,6 +179,49 @@ Chessko/
 - **Rotacija table**: `viewModel.isFlipped` → `BoardView` iterira redove/kolone u obrnutom
   redosledu; `SquareView` dobija `isBottomEdge`/`isLeftEdge` za koordinatne labele.
   `AnimatingPieceView` i `flyingCapture` overlay koriste display koordinate.
+
+## Put (kurikulum i napredak)
+
+Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
+
+- **Kurikulum** je `Chessko/Content/curriculum.json` — poglavlja i koraci, van koda kao i
+  lekcije. Četiri tipa koraka: `lesson` (otvara lekciju, završava se izričitom potvrdom na
+  dnu), `practice` (N zadataka po temi), `game` (partija do kraja), `test` (kao `practice`,
+  ali se završava **samo bez ijedne greške** — prva greška vraća korak na početak sa novim
+  zadacima).
+- **Nov korak** = nov unos u `curriculum.json`. Nema Swift koda. Dekoder odbija nepoznat tip
+  koraka, nepoznatu težinu i **obrnut `ratingRange`** (`ClosedRange` sa donjom granicom većom
+  od gornje ruši proces pri kreiranju, pa se hvata na ulazu).
+- **Test tvrdi da kurikulum ne laže**: svaka lekcija koju pominje mora da postoji kao fajl, i
+  svaka tema mora da ima dovoljno zadataka u traženom opsegu. Bez toga tipfeler daje korak
+  koji se **nikad ne može završiti**, i to bez ijedne poruke.
+- **Napredak** je `Chessko/Logic/ProgressStore.swift` → JSON u Application Support
+  (`progress.json`), ne `UserDefaults`. Stara statistika se pri prvom pokretanju migrira, a
+  `stats_*` ključevi se **namerno ne brišu** — da povratak na stariju verziju aplikacije radi.
+- **`StatsManager` je od Faze 4a fasada** nad `ProgressStore`-om. Zadržava svaki potpis, pa
+  njegovih 26 pozivnih mesta nije dirano. Sme da se ukloni, ali to znači dirati svih 26.
+- **„Resetuj statistiku" NE dira Put.** Briše brojače partija i zadataka, ali završeni koraci,
+  streak i istorija dnevnog cilja ostaju — napredak nije statistika. To je namerno, ali se na
+  ekranu nigde ne kaže, pa vredi znati.
+- **Dnevni cilj** = jedan završen korak **ili** tri rešena zadatka. **Streak** = dani zaredom
+  sa ispunjenim ciljem. Ključno: **niz se ne prekida dok dan ne prođe** — ako cilj danas još
+  nije ispunjen, broji se od juče. Inače bi korisniku streak nestajao svako jutro.
+- Otključavanje, cilj i streak su **čiste funkcije** u `PathProgress` — dan ulazi kao string,
+  pa testovi ne zavise od vremenske zone ni od trenutka pokretanja.
+
+### Zamke koje su već jednom ujele
+
+- **`GameViewModel` ima parametrizovan ključ za čuvanje partije.** Slobodna partija drži
+  `chessko.savedGame`, korak Puta `chessko.savedGame.step.<id>`. Sa jednim ključem bi korak
+  učitao korisnikovu partiju i pregazio je prvim potezom.
+- **Predaja u koraku Puta se ne upisuje u statistiku** — to je jedini predviđen izlaz iz
+  koraka koji se ne može dobiti. Odigrana partija u koraku se broji normalno.
+- **Ekrani koraka se guraju kao VREDNOST** (`NavigationLink(value:)` +
+  `navigationDestination(for:)`). Sa `NavigationLink { pogled }` odredište se preračunava kad
+  se lista osveži, pa bi se gurnuti ekran promenio pod korisnikom baš kad završi korak.
+- **`CurriculumStep.knownDifficulties` i `GameDifficulty` su dva ručno vođena spiska**
+  (kurikulum mora ostati Foundation-only). `PathView.route(for:)` ih poredi u debug build-u —
+  razlaz bi inače bio tih: korak zauvek stoji kao „Uskoro".
 
 ## Sadržaj lekcija
 
@@ -219,9 +265,13 @@ Bez ijedne linije Swift-a — provereno na simulatoru, ne pretpostavljeno:
    sr + en; postojeće četiri imaju svih 8 jezika).
 2. Rebuild. `Content/` je **folder-referenca**, pa `project.pbxproj` ostaje netaknut.
 
-Lekcija se pojavljuje sama: `LessonRepository` otkriva id-jeve iz imena fajlova u bundle-u.
-`lessonOrder` je samo ključ za sortiranje — poznate lekcije idu propisanim redom, nepoznate
-azbučno na kraj. Broj lekcija u podnaslovu ekrana Učenje se računa, ne zakucava.
+> **Od Faze 4a ovo VIŠE NIJE dovoljno.** `LearnView` — spisak lekcija — obrisan je kad je
+> treći tab postao Put. Lekcija koja nije vezana ni za jedan korak u `curriculum.json`
+> **nigde se ne vidi**, iako uredno stiže u aplikaciju. Uz JSON lekcije mora ići i
+> `{"type": "lesson", "lessonId": "<id>"}` korak u nekom poglavlju.
+>
+> `LessonRepository` i dalje otkriva id-jeve iz imena fajlova, pa se lekcija **učitava** bez
+> ijedne izmene koda; samo je više niko ne prikazuje sam od sebe.
 
 Dve stvari na koje treba paziti pri pisanju JSON-a:
 
@@ -886,3 +936,75 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   Provereno u **izgrađenoj aplikaciji**, ne samo u katalogu: pročitani `fr/de/ru.lproj`
   unutar `.app` i potvrđeno da svaki nov ključ ima prevod. Kontrolna provera „svaki `Loc()`
   ima ključ" sada daje **0**.
+
+- **2026-09-10** — Faza 4a, Task 4 (pokretac `practice` i `test` koraka Puta).
+  `PuzzleMode` dobija treci slucaj `.step(id:requireFlawless:)` (+ `Equatable`,
+  koji je enum sa asocijativnom vrednoscu izgubio); `PuzzleViewModel` dobija red
+  zadataka (`stepQueue`/`stepSolved`/`stepFailed`/`stepProgress`),
+  `startStepPractice(step:)` koji red puni jednim upitom i pokrece prvi zadatak,
+  `advanceStepAfterSolve()` (broji i, kad je red iscrpljen, zove
+  `ProgressStore.completeStep`) i `failStepIfTest()` (prva greska u testu ga
+  obara i posle ~1.4s pokrece korak iznova sa NOVIM zadacima). Tok resavanja se
+  ne duplira — `tap`/`attempt`/`apply` su isti kao na tabu Zadaci, pa i
+  `StatsManager.recordPuzzleSolved()` (rejting + dnevni cilj) ide postojecim
+  putem. Novi `Chessko/Views/StepPracticeView.swift` je tanak (traka pilula,
+  brojac „Zadatak N od M", status, `BoardView`) i sopstveni `PuzzleViewModel` mu
+  je bitan: deljeni bi ulaskom u korak pregazio zadatak dana. Namerno NE nudi
+  „Prikazi resenje" (bio bi izlaz iz provere) ni „Sledeci zadatak" (red je
+  fiksan). `PuzzleRepository.stepRatingWindow(playerRating:stepRange:)` (spec
+  5.4) sece prozor rejtinga opsegom koraka, a kad je presek prazan prednost ima
+  OPSEG KORAKA — 3 nova testa (56 ukupno). Katalog 279 → 284 kljuca × 8 jezika.
+  **Popravljen stvarni bug iz Task-a 3:** `PathView.destination(for:)` je bila
+  `@ViewBuilder` funkcija sa tipom `(some View)?`, a takva funkcija NIKAD ne
+  vrati `nil` — builder umota i granu `nil as LessonDetailView?` u
+  `Optional.some(_ConditionalContent<…>)`, pa je `if let` uvek prolazio i vezba,
+  test i partija su izgledali aktivno („Nastavi" umesto „Uskoro", strelica u
+  redu) i vodili na prazan ekran. Odluka je prebacena u privatni `enum StepRoute`
+  + `route(for:)` (jedno mesto istine, kao i pre), a `destination(for:)` je sad
+  cist renderer. Verifikovano na simulatoru: `practice` i `test` se stvarno
+  igraju, `game` red je bez strelice i kartica kaze „Uskoro".
+
+- **2026-09-11** — Faza 4a, Task 5 (pokretac `game` koraka Puta). `StepRoute` dobija
+  `case game(difficulty:startFEN:stepId:)`, pa `route(for:)` vise ni za jedan tip koraka
+  ne vraca `nil` sa isporucenim kurikulumom — poglavlja 2–4 su time prvi put dostizna
+  (korak 3 je bio zid). Tezina iz kurikuluma se mapira u `GameDifficulty` u `route(for:)`
+  i dalje putuje kao enum: mapiranje je totalno (`CurriculumStep.knownDifficulties` su
+  bukvalno `rawValue`-ovi), a ako se dva spiska ikad raziđu korak ostaje NEAKTIVAN umesto
+  da se tiho igra na pogresnoj jacini.
+  **`GameViewModel` vise ne cuva partiju pod jednim globalnim kljucem:** `savedGameKey`
+  je sada svojstvo primerka (`init(saveKey:)`, podrazumevano `GameViewModel.freePlaySaveKey`
+  = zatecen `chessko.savedGame`), a korak dobija svoj slot
+  (`GameViewModel.stepSaveKey(_:)` → `chessko.savedGame.step.<stepId>`). Bez toga bi drugi
+  primerak modela ucitao partiju koju korisnik ima u toku na tabu Igra i prvim potezom je
+  pregazio — model snima celu partiju posle SVAKOG poteza. Uzgredna dobit: prekinuta
+  partija iz koraka se nastavlja (zavrsena se ne nastavlja).
+  Novi `Chessko/Views/StepGameView.swift` (sopstveni `GameViewModel`, kartica protivnika,
+  status, tabla, predaja i undo u toolbaru) i novi `Chessko/Views/PromotionOverlay.swift`
+  — birac promocije je izdvojen iz `GameView`-a doslovno, jer bi bez njega partija koraka
+  stala na promociji i korak se ne bi mogao zavrsiti. Korak se zavrsava kad
+  `GameViewModel.isGameOver` postane `true`, TACNO jednom po ulasku (`pendingStepId`), i
+  **bez obzira na ishod** — predaja i poraz zavrsavaju korak isto kao pobeda (spec:
+  „partija odigrana do kraja", ne pobeda). Tab Igra je netaknut: sopstveni model, sopstveni
+  kljuc, `newGame` tamo ne dodiruje Put. Katalog 284 → 285 kljuca × 8 jezika; `swift test`
+  56/56; dokazano na simulatoru da `chessko.savedGame` ostaje bajt-identican (sha256
+  `dd3deee0…`) dok korak pise u svoj slot.
+- **2026-09-11** — Faza 4a (Put — mehanizam). Treći tab je **Put** umesto Učenja; `LearnView`
+  obrisan. Kurikulum (`Chessko/Content/curriculum.json`, 4 poglavlja × 3 koraka) i napredak
+  (`ProgressStore` → `progress.json` u Application Support) su novi; `StatsManager` je postao
+  fasada nad njim, pa njegovih 26 pozivnih mesta nije dirano. Sva četiri tipa koraka rade:
+  lekcija, vežba, test (nula grešaka) i partija. Testova 31 → 56.
+
+  **Provereno u pokrenutoj aplikaciji, ne izvedeno iz koda:** migracija stare statistike iz
+  `UserDefaults` (zasejano 7/5/42/1234 → isto u `progress.json`, stari ključevi netaknuti);
+  napredak preživljava gašenje (aplikacija sama upisala korak → `terminate` → posle ponovnog
+  pokretanja lekcija ima kvačicu, vežba otključana, poglavlje 33%); streak se prekida
+  propuštenim danom (0) ali **preživi dan koji još traje** (2 uz „cilj danas nije ispunjen");
+  slobodna partija preživljava partiju iz koraka (isti sha256).
+
+  **Greške uhvaćene usput, vredne pamćenja:** `@ViewBuilder` funkcija sa opcionim povratkom
+  **nikad ne vraća `nil`** — zbog toga su vežba, test i partija izgledali aktivno i vodili na
+  prazan ekran; odluka je premeštena u običan `enum`. Ekran koraka se gurao kao *pogled*, pa
+  se odredište preračunavalo pri osvežavanju liste i menjalo pod korisnikom baš kad završi
+  korak; sada se gura kao vrednost. I: ekran se mora proveriti u stanju u kom sporna putanja
+  **postoji** — prva provera Puta je rađena u početnom stanju, gde su vežba i partija
+  zaključane, pa se prvi od ta dva buga nije ni mogao videti.
