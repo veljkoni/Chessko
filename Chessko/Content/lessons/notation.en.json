@@ -121,7 +121,7 @@
       "startFEN": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
       "solvedMessage": "That's it — this is e4. ✓",
       "wrongMessage": "Not that one. Look for the pawn that lands on e4.",
-      "playingPrompt": null,
+      "playingPrompt": "Play the move the notation describes.",
       "mateIn": null
     },
     {
@@ -136,7 +136,7 @@
       "startFEN": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
       "solvedMessage": "Correct — Nf3. ✓",
       "wrongMessage": "Wrong piece or wrong square. N is the knight, and it goes to f3.",
-      "playingPrompt": null,
+      "playingPrompt": "Play the move the notation describes.",
       "mateIn": null
     },
     {
@@ -159,7 +159,7 @@
       "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
       "solvedMessage": "That's it — Bxf7+. ✓",
       "wrongMessage": "Not that one. Look for the bishop that captures on f7.",
-      "playingPrompt": null,
+      "playingPrompt": "Play the move the notation describes.",
       "mateIn": null
     },
     {
@@ -174,7 +174,7 @@
       "startFEN": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 6 5",
       "solvedMessage": "Castled — 0-0. ✓",
       "wrongMessage": "Castling is played with the king: move it from e1 to g1.",
-      "playingPrompt": null,
+      "playingPrompt": "Play the move the notation describes.",
       "mateIn": null
     },
     {
