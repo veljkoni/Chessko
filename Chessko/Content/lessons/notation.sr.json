@@ -168,7 +168,7 @@
       "uciMoves": [
         "c4f7"
       ],
-      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 3 4",
+      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
       "solvedMessage": "Tako je — Lxf7+. ✓ Zapis je tačan — sama žrtva ovde nije dobra (crni uzima kraljem), ali nas zanima samo kako se piše.",
       "wrongMessage": "Nije to. Traži se lovac koji uzima na polju f7.",
       "playingPrompt": "Odigraj potez koji zapis opisuje.",
@@ -194,7 +194,7 @@
       "style": "rule",
       "icon": "book.fill",
       "title": "Isto to u aplikaciji",
-      "text": "Partija se zapisuje u parovima, sa rednim brojem ispred: **1.e4 e5 2.Sf3 Sc6** znači da je beli prvo odigrao e4, crni odgovorio e5, pa je beli izveo skakača na f3. Baš taj zapis raste pored table na ekranu Igra, potez po potez."
+      "text": "Partija se zapisuje u parovima, sa rednim brojem ispred: **1.e4 e5 2.Sf3 Sc6** znači da je beli prvo odigrao e4, crni odgovorio e5, pa je beli izveo skakača na f3. Baš taj zapis raste uz tablu na ekranu Igra, potez po potez."
     }
   ],
   "language": "sr"

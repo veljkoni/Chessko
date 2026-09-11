@@ -168,7 +168,7 @@
       "uciMoves": [
         "c4f7"
       ],
-      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 3 4",
+      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
       "solvedMessage": "That's it — Bxf7+. ✓ The notation is right — the sacrifice itself is not good here (Black takes with the king), but we only care how it is written.",
       "wrongMessage": "Not that one. Look for the bishop that captures on f7.",
       "playingPrompt": "Play the move the notation describes.",
@@ -194,7 +194,7 @@
       "style": "rule",
       "icon": "book.fill",
       "title": "The same thing inside the app",
-      "text": "A game is written down in pairs, with the move number in front: **1.e4 e5 2.Nf3 Nc6** means White played e4 first, Black answered e5, and then White brought the knight out to f3. The same record grows beside the board on the Game screen — with one difference: the app writes the piece letters in Serbian, so the knight is **S** and the bishop **L**. The shape of the record is exactly the one you have just learned."
+      "text": "A game is written down in pairs, with the move number in front: **1.e4 e5 2.Nf3 Nc6** means White played e4 first, Black answered e5, and then White brought the knight out to f3. The same record grows alongside the board on the Play screen — with one difference: the app writes the piece letters in Serbian, so the knight is **S** and the bishop **L**. The shape of the record is exactly the one you have just learned."
     }
   ],
   "language": "en"

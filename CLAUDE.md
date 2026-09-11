@@ -201,7 +201,10 @@ Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
   stari redni broj. `tactics` ponavlja teme `fork`/`pin`/`discoveredAttack` iz
   `middlegame`-a. Razlog NIJE oskudica u bazi — alternativnih taktičkih tema ima napretek
   (`deflection` 190, `hangingPiece` 190, `sacrifice` 190 zadataka u opsegu [600,1200]).
-  Razlog je pedagoški: vežba i test treniraju tačno one motive koje `tactics-lesson` upravo
+  Korak `notation-practice` je pritom **svesan kompromis**: vežba ume samo da izvlači
+  zadatke po temi, a teme „pročitaj zapis" u Lichess bazi nema — pa su uzeta tri laka
+  jednopotezna zadatka (`oneMove`), dok samo čitanje notacije uvežbavaju četiri `exercise`
+  bloka unutar lekcije. Razlog je pedagoški: vežba i test treniraju tačno one motive koje `tactics-lesson` upravo
   predaje. `middlegame` je pritom namerno ostavljen netaknut, pa se opsezi preklapaju
   (`tactics-test` [600,1100] je podskup `middlegame-test` [600,1200]) — korisnik može dobiti
   i bukvalno isti zadatak u oba poglavlja. Prihvaćeno kao ponavljanje-razmak; ako ikad zasmeta,
@@ -247,16 +250,15 @@ Od Faze 3 tekst lekcija **nije u Swift-u**. Živi u
 × 2 jezika), `id ∈ {board-and-pieces, openings, middlegame, endgame, notation, tactics}`.
 
 ```bash
-python3 build_lesson_json.py     # regeneriše samo originalnih 32 JSON-a (vidi ispod)
+python3 build_lesson_json.py     # ZAMRZNUT — odmah odustaje, ne regeneriše NIŠTA
 ```
 
 - **`notation` i `tactics` su prve lekcije napisane POSLE Faze 3** (Faza 4b), pa nisu
   prošle kroz `build_lesson_json.py` — pisane su ručno, direktno kao JSON, samo na `sr` i
   `en` (ne svih 8 jezika kao originalne četiri; vidi „Kako se dodaje nova lekcija").
-  `build_lesson_json.py` i dalje zna samo za originalne 4 id-jeve i regeneriše samo njih
-  8×4=32 fajla — pokretanje ga ne dira ni ne briše `notation`/`tactics` JSON-e, ali ih ni
-  ne generiše; ako se ikad prevedu na preostalih 6 jezika, to ide ručno ili kroz izmenu
-  skripte.
+  `build_lesson_json.py` je **zamrznut** (vidi „Baza zadataka") — pokretanje ispiše
+  objašnjenje i odustane, ne regeneriše ni originalna 32 fajla ni ova četiri. Ako se
+  `notation`/`tactics` ikad prevedu na preostalih 6 jezika, to ide ručno.
 - **Vežbe u lekciji `tactics` su izvučene iz isporučene `puzzles.sqlite` baze i
   KONVERTOVANE**, ne prekopirane direktno — svaka se može pratiti nazad do zadatka u bazi
   (`lVYU8`, `osHSK`, `2CKmq`, `4tXYd`). **Vežbe u lekciji `notation` NISU iz baze** — to su ručno sastavljene pozicije
@@ -331,6 +333,14 @@ Dve stvari na koje treba paziti pri pisanju JSON-a:
   preispita, jedini pravi kandidat je `ChesskoAndroid/app/src/main/assets/nn-1c0000000000.nnue`
   (71 MB) — ali ga Android kod traži po imenu (`MainActivity.kt:85`), pa bi izbacivanje
   značilo da `git clone` više nije dovoljan da se aplikacija sagradi.
+- **Notacija poteza nema razlikovanje dvosmislenih poteza (disambiguation).**
+  `GameState.baseNotation` (`GameState.swift:252`) vraća `"\(letter)\(dest)"` bez ijedne
+  provere da li i druga istovrsna figura može na isto polje — kad oba skakača mogu na d2,
+  istorija poteza oba puta piše `Sd2` umesto `Sbd2`/`Sfd2`. Lekcija o notaciji ovo **ne
+  pominje i ne uči pogrešno** (drži se slova, `x`, `+`, `#`, `exd5`, `=D`, `O-O` — sve to
+  aplikacija piše tačno), ali njena rečenica „i ova aplikacija ti ispisuje poteze baš tako"
+  je za nijansu jača od onoga što motor notacije stvarno radi. Popravka je u `baseNotation`,
+  ne u tekstu lekcije.
 - Stockfish radi samo sa `nn-37f18f62d772.nnue` (mali); `nn-1111cefa1111.nnue`
   (veliki, ~79MB) opcionalan za jaču igru — skinuti sa stockfishchess.org.
 - `positionKey` (`GameState.swift:97-100`) uključuje prava rokade u heš. Partija
@@ -1087,3 +1097,24 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   [600,1200]. Pravi razlog je pedagoški i sada tako i piše. (3) Sekcija „Testovi" je od Faze 4a
   govorila „31 test" umesto 58; razbijeno po fajlovima (perft 7, rokada 4, `PuzzleRepository` 14,
   rejting 5, sadržaj lekcija 4, kurikulum 7, napredak 17).
+
+  **Talas ispravki posle finalnog pregleda cele grane (1 Important + 7 Minor, bez ijednog
+  blokirajućeg):** engleska lekcija je slala čitaoca „on the Game screen", a tab se na
+  engleskom zove **Play** (`Localizable.xcstrings`: `Igra → Play`) — ista klasa greške,
+  netačna tvrdnja o sopstvenoj aplikaciji, samo blaža. Tvrdnja da zapis raste „pored table"
+  važi samo u pejzažu; u portretu `MoveHistoryView` stoji ISPOD table (`GameView.swift:81`
+  pejzaž / `:148` portret) — sada „uz tablu" / „alongside the board". Pasus o vezivanju je
+  tvrdio kao opšte pravilo ono što važi samo **van** linije vezivanja (vezan top po e-liniji
+  i dalje stvarno brani e5 i sme da se kreće po njoj) — dodat je taj uslov u oba jezika.
+  FEN vežbe `Lxf7+` je nosio polutez `3`, koji nije dostižan: pozicija se dobija samo
+  transpozicijom (`1.e4 e6 2.Sf3 e5 3.Lc4 Sc6`), gde je sat poluteza `2` — ispravljeno
+  (sama pozicija je bila i ostala legalna). U dokumentaciji: blok koda je tvrdio da
+  `build_lesson_json.py` regeneriše 32 fajla, a skripta je zamrznuta i odmah odustaje;
+  dodato je i objašnjenje zašto `notation-practice` vuče `oneMove` zadatke umesto
+  notacijskih (takve teme u Lichess bazi nema), i nov unos u „Poznata ograničenja" o tome
+  da SAN nema disambiguaciju.
+  **Jedan nalaz je NAMERNO ostavljen:** doc-komentar iznad `LessonStaticBoard`
+  (`LessonRenderer.swift:175`) tvrdi da nijedna lekcija ne koristi `board` blok — od ove
+  grane `notation` ga koristi, i to je prvi put da se ta grana koda uopšte iscrtava.
+  Ispravka bi dirnula Swift i oborila centralnu tvrdnju faze („nijedna linija Swift-a"),
+  pa ide kao prvi zadatak sledeće faze.

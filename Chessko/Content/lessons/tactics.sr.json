@@ -54,7 +54,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Vezivanje** je kad figura ne sme da se pomeri jer iza nje, na istoj liniji, stoji nešto vrednije. Ako je iza nje **kralj**, pomeranje **s te linije** nije samo loše nego i nelegalno. Zato je vezana figura branilac samo naizgled: polje koje „brani“ zapravo nije branjeno. Isto važi i za presecanje: da bi se isprečila, vezana figura mora da siđe sa svoje linije — a to ne sme. Pre nego što prodreš ili žrtvuješ, pogledaj je li branilac vezan."
+      "text": "**Vezivanje** je kad figura ne sme da se pomeri jer iza nje, na istoj liniji, stoji nešto vrednije. Ako je iza nje **kralj**, pomeranje **s te linije** nije samo loše nego i nelegalno. Zato je vezana figura branilac samo naizgled: polje **van te linije** koje „brani“ zapravo nije branjeno. Isto važi i za presecanje: da bi se isprečila, vezana figura mora da siđe sa svoje linije — a to, kad je iza nje kralj, ne sme. (Duž same linije vezivanja sme i da se kreće i da brani.) Pre nego što prodreš ili žrtvuješ, pogledaj je li branilac vezan."
     },
     {
       "type": "exercise",

@@ -54,7 +54,7 @@
     },
     {
       "type": "paragraph",
-      "text": "A **pin** is when a piece may not move because something more valuable stands behind it on the same line. If what stands behind it is the **king**, moving **off that line** is not merely bad but illegal. That is why a pinned piece is a defender in appearance only: the square it \"guards\" is not really guarded. The same goes for interposing: to step in the way, a pinned piece would have to leave its line — and that it may not do. Before you break through or sacrifice, check whether the defender is pinned."
+      "text": "A **pin** is when a piece may not move because something more valuable stands behind it on the same line. If what stands behind it is the **king**, moving **off that line** is not merely bad but illegal. That is why a pinned piece is a defender in appearance only: a square **off that line** that it \"guards\" is not really guarded. The same goes for interposing: to step in the way, a pinned piece would have to leave its line — and with the king behind it, that it may not do. (Along the pinning line itself it may still move and defend.) Before you break through or sacrifice, check whether the defender is pinned."
     },
     {
       "type": "exercise",
