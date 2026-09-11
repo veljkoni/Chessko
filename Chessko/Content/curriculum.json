@@ -11,12 +11,29 @@
       ]
     },
     {
+      "id": "notation",
+      "title": { "sr": "Notacija", "en": "Notation" },
+      "steps": [
+        { "id": "notation-lesson", "type": "lesson", "lessonId": "notation" },
+        { "id": "notation-practice", "type": "practice", "themes": ["oneMove"], "count": 3, "ratingRange": [600, 1000] }
+      ]
+    },
+    {
       "id": "opening",
       "title": { "sr": "Otvaranje", "en": "The opening" },
       "steps": [
         { "id": "opening-lesson", "type": "lesson", "lessonId": "openings" },
         { "id": "opening-practice", "type": "practice", "themes": ["opening"], "count": 5, "ratingRange": [600, 1400] },
         { "id": "opening-game", "type": "game", "difficulty": "easy" }
+      ]
+    },
+    {
+      "id": "tactics",
+      "title": { "sr": "Taktika", "en": "Tactics" },
+      "steps": [
+        { "id": "tactics-lesson", "type": "lesson", "lessonId": "tactics" },
+        { "id": "tactics-practice", "type": "practice", "themes": ["fork", "pin", "skewer"], "count": 5, "ratingRange": [600, 1200] },
+        { "id": "tactics-test", "type": "test", "themes": ["fork", "pin", "discoveredAttack"], "count": 3, "ratingRange": [600, 1100] }
       ]
     },
     {

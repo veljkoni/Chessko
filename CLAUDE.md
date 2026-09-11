@@ -189,6 +189,16 @@ Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
   dnu), `practice` (N zadataka po temi), `game` (partija do kraja), `test` (kao `practice`,
   ali se završava **samo bez ijedne greške** — prva greška vraća korak na početak sa novim
   zadacima).
+- **Šest poglavlja, ovim redom**: `basics` (Osnove), `notation` (Notacija), `opening`
+  (Otvaranje), `tactics` (Taktika), `middlegame` (Središnjica), `endgame` (Završnica).
+  `notation` i `tactics` su dodati u Fazi 4b, ubačeni u sredinu niza (drugo i četvrto
+  poglavlje) jer je to pedagoški redosled — notacija pre nego što partije iz otvaranja
+  imaju smisla da se čitaju, taktika pre središnjice koja je već pretpostavlja. Cena:
+  koraci Puta se broje po poziciji u nizu (`Korak %lld`), pa je ubacivanje pomerilo brojeve
+  svakom koraku posle „Osnova" — namerno, ali vredi znati ako neko poređenje/link pamti
+  stari redni broj. `tactics` ponavlja teme `fork`/`pin`/`discoveredAttack` iz
+  `middlegame`-a (baza zadataka nema dovoljno drugih tema u traženim opsezima za oba
+  poglavlja) — namerno ponavljanje-razmak, nije duplikat greškom.
 - **Nov korak** = nov unos u `curriculum.json`. Nema Swift koda. Dekoder odbija nepoznat tip
   koraka, nepoznatu težinu i **obrnut `ratingRange`** (`ClosedRange` sa donjom granicom većom
   od gornje ruši proces pri kreiranju, pa se hvata na ulazu).
@@ -226,12 +236,28 @@ Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
 ## Sadržaj lekcija
 
 Od Faze 3 tekst lekcija **nije u Swift-u**. Živi u
-`Chessko/Content/lessons/<id>.<jezik>.json` — 32 fajla (4 lekcije × 8 jezika),
-`id ∈ {board-and-pieces, openings, middlegame, endgame}`.
+`Chessko/Content/lessons/<id>.<jezik>.json` — 36 fajla (4 lekcije × 8 jezika + 2 lekcije
+× 2 jezika), `id ∈ {board-and-pieces, openings, middlegame, endgame, notation, tactics}`.
 
 ```bash
-python3 build_lesson_json.py     # regeneriše svih 32 JSON-a
+python3 build_lesson_json.py     # regeneriše samo originalnih 32 JSON-a (vidi ispod)
 ```
+
+- **`notation` i `tactics` su prve lekcije napisane POSLE Faze 3** (Faza 4b), pa nisu
+  prošle kroz `build_lesson_json.py` — pisane su ručno, direktno kao JSON, samo na `sr` i
+  `en` (ne svih 8 jezika kao originalne četiri; vidi „Kako se dodaje nova lekcija").
+  `build_lesson_json.py` i dalje zna samo za originalne 4 id-jeve i regeneriše samo njih
+  8×4=32 fajla — pokretanje ga ne dira ni ne briše `notation`/`tactics` JSON-e, ali ih ni
+  ne generiše; ako se ikad prevedu na preostalih 6 jezika, to ide ručno ili kroz izmenu
+  skripte.
+- **Vežbe u obe nove lekcije su izvučene iz isporučene `puzzles.sqlite` baze i
+  KONVERTOVANE**, ne prekopirane direktno. Lichess zadatak uvek počinje **protivnikovim**
+  potezom (pozicija je posle poteza koji je napravio propust; prvi UCI potez u nizu je taj
+  protivnički potez, drugi je rešenje) — `exercise` blok tipa `scripted` očekuje da je
+  igrač odmah na potezu, pa je `startFEN` postavljen NA POZICIJU POSLE tog prvog poteza, a
+  `uciMoves` sadrži samo poteze igrača i odgovore počev odatle. Nekonvertovana pozicija bi
+  značila da vežba traži potez koji je zapravo protivnikov — tabla bi odbila svaki potez
+  igrača i vežba bi delovala pokvareno bez ijedne poruke o tome zašto.
 
 - **`Content/` je FOLDER-REFERENCA u Xcode projektu**, ne grupa. Cela struktura
   direktorijuma se prenosi u `.app`, pa **nova lekcija ne traži izmenu
@@ -1008,3 +1034,31 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   korak; sada se gura kao vrednost. I: ekran se mora proveriti u stanju u kom sporna putanja
   **postoji** — prva provera Puta je rađena u početnom stanju, gde su vežba i partija
   zaključane, pa se prvi od ta dva buga nije ni mogao videti.
+- **2026-09-11** — Faza 4b (dve nove lekcije: Notacija i Taktika). Task 1 i 2 su dodali
+  `Chessko/Content/lessons/{notation,tactics}.{sr,en}.json` — sadržinski nezavisan rad,
+  bez ijedne linije Swift-a; obe lekcije koriste isključivo postojećih 12 tipova blokova
+  (uključujući `exercise` tipa `scripted`, isti mehanizam koji već nose lekcije 2 i 4).
+  Task 3 (ovaj) je uklopio obe u kurikulum i zatvorio fazu: `curriculum.json` dobija
+  `notation` kao DRUGO i `tactics` kao ČETVRTO poglavlje (vidi „Put" i „Sadržaj lekcija"
+  gore za detalje i poznata ponavljanja tema sa `middlegame`-om). `swift test` 58/58 bez
+  ijedne izmene testa — `realCurriculumIsConsistentWithLessonsAndPuzzleDatabase` je
+  potvrdio da obe lekcije postoje i da nove teme (`oneMove`, `fork`/`pin`/`skewer` u [600,
+  1200], `fork`/`pin`/`discoveredAttack` u [600, 1100]) imaju dovoljno zadataka u bazi.
+  `git diff --stat main..HEAD -- '*.swift' Chessko.xcodeproj/project.pbxproj` je prazan —
+  **dokazano, ne pretpostavljeno**, da je "nova lekcija = nov JSON" i dalje tačno tvrdnja
+  i posle dodavanja dva nova poglavlja, ne samo dva nova fajla lekcije.
+  Izgrađen `.app` nosi tačno 36 lekcijskih JSON-a (4×8 + 2×2, prebrojano `find` po
+  `Content/lessons`). Put u simulatoru vizuelno potvrđen u obe teme sa svih 6 poglavlja
+  (privremeno zakucan koren `ContentView`-a na Put/na `LessonDetailView` direktno + zasejan
+  `progress.json` u kontejneru; sve privremene izmene vraćene, `git status --short` prazan
+  posle). **Nalaz o alatu, ne o sadržaju:** sintetički klik (cliclick) je JEDNOM pogodio
+  tablu na prvom pokušaju, ali ni jedan sledeći klik (drugačije koordinate, isto mesto,
+  drugi ekran) nije registrovan — `System Events` je u ovoj sesiji dosledno prijavljivao
+  0 prozora za proces Simulator, što znači da GUI prozor simulatora ovde nije stvarno
+  dostupan za klik; ekrani su ipak snimljeni preko `simctl io screenshot` (čita framebuffer
+  direktno, ne zavisi od prozora). Zaključak: **odigravanje poteza na tabli unutar vežbi
+  NIJE potvrđeno dodirom** u ovoj sesiji — potvrđeno je samo da se vežba ispravno iscrtava
+  (tabla odgovara `startFEN`-u iz JSON-a) i da koristi isti rendering put kao već ranije
+  vizuelno potvrđene vežbe u lekcijama 2 i 4. Ko god sledeći put radi vizuelnu proveru neka
+  prvo proveri `osascript -e 'tell application "System Events" to count windows of process
+  "Simulator"'` pre nego što pretpostavi da klik radi.
