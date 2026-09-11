@@ -45,13 +45,15 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (31 test): perft za svih 6 standardnih pozicija (uključujući
+Pokriveno (**58 testova**): 7 perft testova za svih 6 standardnih pozicija (uključujući
 početnu do dubine 5, 4.865.609 čvorova, ~85s), 4 testa prava rokade (uzimanje
 topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
-8 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu —
-vidi ispod), 5 testova Elo rejtinga i 4 testa sadržaja lekcija (dekodiranje
+14 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu —
+vidi ispod), 5 testova Elo rejtinga, 4 testa sadržaja lekcija (dekodiranje
 svih 12 tipova blokova, round-trip, glasan pad na nepoznat tip, i prolaz kroz
-sva 32 generisana JSON-a). `Chessko/TestSupport/LocShim.swift`
+sve lekcijske JSON-e), 7 testova kurikuluma (uključujući onaj koji tvrdi da
+kurikulum ne laže — svaka lekcija koju pominje postoji, svaka tema ima dovoljno
+zadataka u opsegu) i 17 testova napretka (`ProgressStore`, dnevni cilj, streak). `Chessko/TestSupport/LocShim.swift`
 postoji samo zbog paketa i zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u
 aplikaciji se ne kompajlira.
 
@@ -197,8 +199,13 @@ Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
   koraci Puta se broje po poziciji u nizu (`Korak %lld`), pa je ubacivanje pomerilo brojeve
   svakom koraku posle „Osnova" — namerno, ali vredi znati ako neko poređenje/link pamti
   stari redni broj. `tactics` ponavlja teme `fork`/`pin`/`discoveredAttack` iz
-  `middlegame`-a (baza zadataka nema dovoljno drugih tema u traženim opsezima za oba
-  poglavlja) — namerno ponavljanje-razmak, nije duplikat greškom.
+  `middlegame`-a. Razlog NIJE oskudica u bazi — alternativnih taktičkih tema ima napretek
+  (`deflection` 190, `hangingPiece` 190, `sacrifice` 190 zadataka u opsegu [600,1200]).
+  Razlog je pedagoški: vežba i test treniraju tačno one motive koje `tactics-lesson` upravo
+  predaje. `middlegame` je pritom namerno ostavljen netaknut, pa se opsezi preklapaju
+  (`tactics-test` [600,1100] je podskup `middlegame-test` [600,1200]) — korisnik može dobiti
+  i bukvalno isti zadatak u oba poglavlja. Prihvaćeno kao ponavljanje-razmak; ako ikad zasmeta,
+  popravka je suziti teme u `middlegame`-u, ne u `tactics`-u.
 - **Nov korak** = nov unos u `curriculum.json`. Nema Swift koda. Dekoder odbija nepoznat tip
   koraka, nepoznatu težinu i **obrnut `ratingRange`** (`ClosedRange` sa donjom granicom većom
   od gornje ruši proces pri kreiranju, pa se hvata na ulazu).
@@ -250,8 +257,12 @@ python3 build_lesson_json.py     # regeneriše samo originalnih 32 JSON-a (vidi 
   8×4=32 fajla — pokretanje ga ne dira ni ne briše `notation`/`tactics` JSON-e, ali ih ni
   ne generiše; ako se ikad prevedu na preostalih 6 jezika, to ide ručno ili kroz izmenu
   skripte.
-- **Vežbe u obe nove lekcije su izvučene iz isporučene `puzzles.sqlite` baze i
-  KONVERTOVANE**, ne prekopirane direktno. Lichess zadatak uvek počinje **protivnikovim**
+- **Vežbe u lekciji `tactics` su izvučene iz isporučene `puzzles.sqlite` baze i
+  KONVERTOVANE**, ne prekopirane direktno — svaka se može pratiti nazad do zadatka u bazi
+  (`lVYU8`, `osHSK`, `2CKmq`, `4tXYd`). **Vežbe u lekciji `notation` NISU iz baze** — to su ručno sastavljene pozicije
+  iz teorije otvaranja (1.e4, 2.Sf3, Lxf7+, 0-0), jer lekcija uči kako se potez ZAPISUJE, a
+  za to treba potez koji čitalac prepoznaje, ne taktički zadatak. Konverzija ispod se tiče
+  samo zadataka iz baze. Lichess zadatak uvek počinje **protivnikovim**
   potezom (pozicija je posle poteza koji je napravio propust; prvi UCI potez u nizu je taj
   protivnički potez, drugi je rešenje) — `exercise` blok tipa `scripted` očekuje da je
   igrač odmah na potezu, pa je `startFEN` postavljen NA POZICIJU POSLE tog prvog poteza, a
@@ -1062,3 +1073,17 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   vizuelno potvrđene vežbe u lekcijama 2 i 4. Ko god sledeći put radi vizuelnu proveru neka
   prvo proveri `osascript -e 'tell application "System Events" to count windows of process
   "Simulator"'` pre nego što pretpostavi da klik radi.
+
+  **Talas ispravki posle pregleda Task-a 3 (tri nalaza, sva tri u dokumentaciji):**
+  (1) Ovaj fajl je tvrdio da su vežbe u **obe** nove lekcije izvučene iz `puzzles.sqlite` i
+  konvertovane. Tačno je samo za `tactics` — sve četiri se traže nazad do stvarnih zadataka
+  (`lVYU8`, `osHSK`, `2CKmq`, `4tXYd`), potvrđeno pretragom cele baze i za direktan FEN i za
+  FEN posle uklonjenog protivničkog poteza. Vežbe u `notation` **nisu iz baze**: to su ručno
+  sastavljene pozicije iz teorije otvaranja, jer ta lekcija uči kako se potez ZAPISUJE pa joj
+  treba potez koji se prepoznaje, ne taktički zadatak. Formulacija je došla iz plana faze, pa
+  je implementator preneo tuđu netačnost — ista klasa greške kao netačan brief za vezivanje u
+  Task-u 2. (2) Opravdanje da `tactics` ponavlja teme iz `middlegame`-a „jer baza nema dovoljno
+  drugih tema" je izmišljeno: `deflection`/`hangingPiece`/`sacrifice` imaju po 190 zadataka u
+  [600,1200]. Pravi razlog je pedagoški i sada tako i piše. (3) Sekcija „Testovi" je od Faze 4a
+  govorila „31 test" umesto 58; razbijeno po fajlovima (perft 7, rokada 4, `PuzzleRepository` 14,
+  rejting 5, sadržaj lekcija 4, kurikulum 7, napredak 17).
