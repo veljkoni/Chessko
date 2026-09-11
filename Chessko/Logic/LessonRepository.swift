@@ -94,18 +94,18 @@ final class LessonRepository {
         return known + extra
     }
 
-    /// Sve lekcije redom, na trazenom jeziku. Koristi ekran Učenje za listu.
+    /// Sve lekcije redom, na trazenom jeziku.
     ///
-    /// `compactMap` bi tiho skratio listu ako lekcija ne prodje ceo lanac
-    /// jezika — korisnik bi video manje kartica i nista vise. Zato se skracenje
-    /// posebno prijavljuje.
+    /// Od Faze 4a NEMA pozivaoca: ekran Ucenja je obrisan, a Put ne prikazuje
+    /// spisak lekcija nego korake iz kurikuluma. Zadrzano jer Faza 4b pise nove
+    /// lekcije i verovatno ce joj trebati pregled svih; ako se pokaze da nece,
+    /// brise se bez posledica.
     func allLessons(language: String) -> [LessonDocument] {
         let ids = discoveredLessonIds()
         let docs = ids.compactMap { lesson(id: $0, language: language) }
         if docs.count != ids.count {
             let missing = Set(ids).subtracting(docs.map(\.id))
             print("[Chessko] GRESKA: nedostaju lekcije: \(missing.sorted())")
-            assertionFailure("Nedostaju lekcije: \(missing.sorted())")
         }
         return docs
     }

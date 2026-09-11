@@ -83,6 +83,40 @@ struct ProgressSnapshot: Codable, Equatable {
     var currentWinStreak = 0, bestWinStreak = 0
     var puzzlesSolved = 0, currentPuzzleStreak = 0, bestPuzzleStreak = 0
     var puzzleRating = 800
+
+    init() {}
+
+    /// RUCNO napisan dekoder, i to je vazno.
+    ///
+    /// Sintetisani `Decodable` IGNORISE podrazumevane vrednosti i baca
+    /// `keyNotFound` za svaki kljuc kog nema u fajlu (provereno, ne
+    /// pretpostavljeno). Da je ostao sintetisani, prvo sledece polje dodato u
+    /// ovu strukturu razbilo bi `progress.json` svakog postojeceg korisnika:
+    /// dekodiranje pukne → `init` padne na migraciju iz `UserDefaults`-a →
+    /// odmah upise preko fajla. Ceo napredak na Putu, cela istorija streak-a i
+    /// sva statistika stecena posle Faze 4a nestali bi bez ijedne poruke, a
+    /// vratile bi se samo zamrznute `stats_*` vrednosti od pre 4a.
+    ///
+    /// Sa `decodeIfPresent` stariji fajl se cita, nova polja dobiju
+    /// podrazumevanu vrednost, i shema sme da raste.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version               = try c.decodeIfPresent(Int.self, forKey: .version) ?? 1
+        completedSteps        = try c.decodeIfPresent(Set<String>.self, forKey: .completedSteps) ?? []
+        stepCompletionDates   = try c.decodeIfPresent([String: String].self, forKey: .stepCompletionDates) ?? [:]
+        stepsCompletedByDay   = try c.decodeIfPresent([String: Int].self, forKey: .stepsCompletedByDay) ?? [:]
+        puzzlesSolvedByDay    = try c.decodeIfPresent([String: Int].self, forKey: .puzzlesSolvedByDay) ?? [:]
+        gamesPlayed           = try c.decodeIfPresent(Int.self, forKey: .gamesPlayed) ?? 0
+        gamesWon              = try c.decodeIfPresent(Int.self, forKey: .gamesWon) ?? 0
+        gamesLost             = try c.decodeIfPresent(Int.self, forKey: .gamesLost) ?? 0
+        gamesDrawn            = try c.decodeIfPresent(Int.self, forKey: .gamesDrawn) ?? 0
+        currentWinStreak      = try c.decodeIfPresent(Int.self, forKey: .currentWinStreak) ?? 0
+        bestWinStreak         = try c.decodeIfPresent(Int.self, forKey: .bestWinStreak) ?? 0
+        puzzlesSolved         = try c.decodeIfPresent(Int.self, forKey: .puzzlesSolved) ?? 0
+        currentPuzzleStreak   = try c.decodeIfPresent(Int.self, forKey: .currentPuzzleStreak) ?? 0
+        bestPuzzleStreak      = try c.decodeIfPresent(Int.self, forKey: .bestPuzzleStreak) ?? 0
+        puzzleRating          = try c.decodeIfPresent(Int.self, forKey: .puzzleRating) ?? 800
+    }
 }
 
 // MARK: - Skladiste
@@ -122,13 +156,30 @@ final class ProgressStore {
          defaults: UserDefaults = .standard) {
         self.fileURL = fileURL
         self.defaults = defaults
-        if let data = try? Data(contentsOf: fileURL),
-           let loaded = try? JSONDecoder().decode(ProgressSnapshot.self, from: data) {
-            snapshot = loaded
-        } else {
-            snapshot = Self.migrated(from: defaults)
-            save()
+        let existing = try? Data(contentsOf: fileURL)
+        if let existing {
+            do {
+                snapshot = try JSONDecoder().decode(ProgressSnapshot.self, from: existing)
+                return
+            } catch {
+                // Fajl POSTOJI ali se ne cita. Migracija bi ga u sledecem redu
+                // pregazila i time trajno unistila napredak koji je mozda samo
+                // delimicno ostecen. Zato se odlaze u stranu, pa postoji sansa
+                // da se spasi rucno.
+                let backup = fileURL.appendingPathExtension("corrupt")
+                try? FileManager.default.removeItem(at: backup)
+                try? FileManager.default.moveItem(at: fileURL, to: backup)
+                // NAMERNO bez `assertionFailure`, za razliku od lekcija: lekcije
+                // se isporucuju u bundle-u pa je njihov pokvaren JSON greska u
+                // kodu, a `progress.json` je KORISNIKOV fajl na uredjaju i sme
+                // da se osteti prekinutim upisom ili kvarom diska. To je stanje
+                // okruzenja, i aplikacija iz njega mora da se oporavi, ne da
+                // padne.
+                print("[Chessko] GRESKA: progress.json se ne dekodira (\(error)); odlozen u \(backup.lastPathComponent)")
+            }
         }
+        snapshot = Self.migrated(from: defaults)
+        save()
     }
 
     /// Prvo pokretanje posle nadogradnje: statistika se preuzima iz

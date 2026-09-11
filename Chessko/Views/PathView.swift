@@ -21,14 +21,14 @@ struct PathView: View {
     /// Model istrazivaca figura. Ne koristi ga ovaj ekran nego
     /// `LessonPieceExplorer` duboko u rendereru lekcije; podignut je u
     /// `ContentView`-u da se ne pravi tokom animacije prelaska taba, pa ovde
-    /// samo prolazi kroz okruzenje — isto kao na ekranu Učenje.
+    /// samo prolazi kroz okruzenje — isto kao na ekranu Puta.
     var viewModel: LearnViewModel
 
     private var curriculum: Curriculum? { CurriculumRepository.shared.curriculum }
     private var store: ProgressStore { ProgressStore.shared }
 
     /// Citanje `effectiveCode` unutar `body`-ja je i pretplata na promenu
-    /// jezika (`@Observable` belezi pristup) — vidi `LearnView`.
+    /// jezika (`@Observable` belezi pristup) — vidi `PathView`.
     private var language: String { LocalizationManager.shared.effectiveCode }
 
     /// Stanje svakog koraka po id-ju. Jedan izvor za sve tri sekcije ekrana.
@@ -173,7 +173,7 @@ struct PathView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: DS.Space.l) {
                         // Naslov zivi u sadrzaju, a nav bar je sakriven — vidi
-                        // isto objasnjenje u `LearnView`.
+                        // isto objasnjenje u `PathView`.
                         Text(Loc("Put"))
                             .font(.dsTitle)
                             .foregroundStyle(DS.ink)

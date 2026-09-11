@@ -130,3 +130,46 @@ private func makeStore(_ defaults: UserDefaults = UserDefaults(suiteName: UUID()
     defer { try? FileManager.default.removeItem(at: url) }
     #expect(store.snapshot.puzzleRating == 800)
 }
+
+// Sintetisani `Decodable` IGNORISE podrazumevane vrednosti i baca `keyNotFound`
+// za svaki kljuc kog nema u fajlu. Bez rucnog dekodera bi prvo novo polje u
+// `ProgressSnapshot`-u razbilo `progress.json` svakog postojeceg korisnika i
+// migracija bi ga odmah pregazila — ceo napredak na Putu i istorija streak-a
+// nestali bi bez poruke. Ovaj test tvrdi da stariji fajl i dalje moze da se cita.
+@Test @MainActor func snapshotFromAnOlderSchemaStillLoads() throws {
+    let older = """
+    {"version":1,"completedSteps":["basics-lesson"],"stepsCompletedByDay":{"2026-09-10":1}}
+    """
+    let url = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent("progress-old-\(UUID().uuidString).json")
+    try Data(older.utf8).write(to: url)
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let store = ProgressStore(fileURL: url,
+                              defaults: UserDefaults(suiteName: UUID().uuidString)!)
+
+    // Preziveo je ono sto je u fajlu...
+    #expect(store.snapshot.completedSteps == ["basics-lesson"])
+    #expect(store.snapshot.stepsCompletedByDay["2026-09-10"] == 1)
+    // ...a polja kojih u fajlu nema dobila su podrazumevane vrednosti, ne nulu
+    // tamo gde nula nije tacna.
+    #expect(store.snapshot.puzzleRating == 800)
+    #expect(store.snapshot.gamesPlayed == 0)
+}
+
+@Test @MainActor func corruptProgressFileIsSetAsideInsteadOfOverwritten() throws {
+    let url = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent("progress-bad-\(UUID().uuidString).json")
+    try Data("{ ovo nije json".utf8).write(to: url)
+    let backup = url.appendingPathExtension("corrupt")
+    defer {
+        try? FileManager.default.removeItem(at: url)
+        try? FileManager.default.removeItem(at: backup)
+    }
+
+    _ = ProgressStore(fileURL: url, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+
+    // Ostecen fajl mora da se sacuva sa strane — mozda se moze spasiti rucno.
+    #expect(FileManager.default.fileExists(atPath: backup.path),
+            "ostecen progress.json nije odlozen u stranu")
+}

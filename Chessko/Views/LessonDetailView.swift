@@ -157,6 +157,6 @@ struct LessonDetailView: View {
     NavigationStack {
         LessonDetailView(lessonId: "board-and-pieces")
     }
-    // `LessonPieceExplorer` cita model iz okruzenja — vidi LearnView.
+    // `LessonPieceExplorer` cita model iz okruzenja — vidi PathView.
     .environment(LearnViewModel())
 }

@@ -28,8 +28,6 @@ struct ContentView: View {
                 .tabItem {
                     Label("Zadaci", systemImage: "puzzlepiece.fill")
                 }
-
-            // Od Faze 4a treci tab je Put, a ne Učenje. `LearnView` ostaje u
             // projektu dok se ne potvrdi da Put pokriva sve sto je Učenje
             // nudilo (brisanje ide u zavrsni zadatak faze).
             PathView(viewModel: learnViewModel)

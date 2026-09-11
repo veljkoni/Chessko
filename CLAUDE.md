@@ -9,7 +9,7 @@
 (igra sa prijateljem na istom uređaju, samostalni šahovski sat). Igrač bira
 boju (beli ili crni; podrazumevano beli) — tabla se rotira kad igra crnim.
 UI je lokalizovan na 8 jezika (izvorni srpski). `ContentView` je `TabView`
-sa tri taba: Igra, Zadaci (dnevni puzzle), Učenje (lekcije).
+sa tri taba: Igra, Zadaci (dnevni puzzle), Put (kurikulum).
 
 - Platforma: **iOS 18.0+**, iPhone + iPad (`TARGETED_DEVICE_FAMILY = 1,2`)
 - Jezik: **Swift 6.0**, **SwiftUI**
@@ -138,12 +138,14 @@ Chessko/
 │   ├── LessonContent.swift   LessonDocument + LessonBlock (12 tipova blokova)
 │   └── Curriculum.swift      Curriculum + Chapter + CurriculumStep (4 tipa koraka)
 ├── Logic/
+│   ├── ProgressStore.swift   napredak Puta, dnevni cilj, streak (progress.json)
 │   ├── MoveGenerator.swift   generisanje poteza, detekcija šaha (enum, statičke fn)
 │   ├── ChessAI.swift         negamax + alfa-beta, piece-square tabele
 │   └── LessonRepository.swift  učitava Content/lessons/<id>.<jezik>.json iz bundle-a
 ├── ViewModels/
 │   └── GameViewModel.swift   @Observable @MainActor — sva interakcija + AI okidač
-├── Views/                    GameView, BoardView, SquareView,
+├── Views/                    PathView (Put), StepPracticeView, StepGameView,
+│                             GameView, BoardView, SquareView,
 │                             CapturedPiecesView, PieceImageView,
 │                             LessonDetailView (okvir) + LessonRenderer (blokovi)
 ├── Content/lessons/          FOLDER-REFERENCA: 32 JSON-a (4 lekcije × 8 jezika)
@@ -198,6 +200,9 @@ Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
   `stats_*` ključevi se **namerno ne brišu** — da povratak na stariju verziju aplikacije radi.
 - **`StatsManager` je od Faze 4a fasada** nad `ProgressStore`-om. Zadržava svaki potpis, pa
   njegovih 26 pozivnih mesta nije dirano. Sme da se ukloni, ali to znači dirati svih 26.
+- **„Resetuj statistiku" NE dira Put.** Briše brojače partija i zadataka, ali završeni koraci,
+  streak i istorija dnevnog cilja ostaju — napredak nije statistika. To je namerno, ali se na
+  ekranu nigde ne kaže, pa vredi znati.
 - **Dnevni cilj** = jedan završen korak **ili** tri rešena zadatka. **Streak** = dani zaredom
   sa ispunjenim ciljem. Ključno: **niz se ne prekida dok dan ne prođe** — ako cilj danas još
   nije ispunjen, broji se od juče. Inače bi korisniku streak nestajao svako jutro.
@@ -260,9 +265,13 @@ Bez ijedne linije Swift-a — provereno na simulatoru, ne pretpostavljeno:
    sr + en; postojeće četiri imaju svih 8 jezika).
 2. Rebuild. `Content/` je **folder-referenca**, pa `project.pbxproj` ostaje netaknut.
 
-Lekcija se pojavljuje sama: `LessonRepository` otkriva id-jeve iz imena fajlova u bundle-u.
-`lessonOrder` je samo ključ za sortiranje — poznate lekcije idu propisanim redom, nepoznate
-azbučno na kraj. Broj lekcija u podnaslovu ekrana Učenje se računa, ne zakucava.
+> **Od Faze 4a ovo VIŠE NIJE dovoljno.** `LearnView` — spisak lekcija — obrisan je kad je
+> treći tab postao Put. Lekcija koja nije vezana ni za jedan korak u `curriculum.json`
+> **nigde se ne vidi**, iako uredno stiže u aplikaciju. Uz JSON lekcije mora ići i
+> `{"type": "lesson", "lessonId": "<id>"}` korak u nekom poglavlju.
+>
+> `LessonRepository` i dalje otkriva id-jeve iz imena fajlova, pa se lekcija **učitava** bez
+> ijedne izmene koda; samo je više niko ne prikazuje sam od sebe.
 
 Dve stvari na koje treba paziti pri pisanju JSON-a:
 
