@@ -81,7 +81,8 @@ final class LessonRepository {
             // "openings.sr.json" -> "openings". Poslednji deo MORA biti podrzan
             // jezik: bez te provere bi zalutali "openings.sr.backup.json" dao
             // fantomsku lekciju "openings.sr", koja se onda ne razresi ni na
-            // jednom jeziku i obori `assertionFailure` u `allLessons`.
+            // jednom jeziku i zavrsila bi kao prijavljena greska o lekciji
+            // koja "nedostaje", a nikad je nije ni bilo.
             let stem = url.deletingPathExtension().lastPathComponent
             guard let dot = stem.lastIndex(of: "."),
                   Self.supportedLanguages.contains(String(stem[stem.index(after: dot)...]))
