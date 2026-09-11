@@ -1266,6 +1266,18 @@ Uz `@State private var showAnalysis = false` na vrhu `GameView`-a i, na kraju `b
 
 Četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000T1`/`T2`, `path = AnalysisView.swift`, u `Views` grupu. Zatim isti dokaz sintaksnom greškom.
 
+- [ ] **Step 5a: Dokazati da zaostali izvestaj STARE analize ne gazi novu**
+
+`AnalysisViewModel` od Task-a 4 nosi `generation` brojac jer `task.cancel()` NE dopire do
+`Task { @MainActor }` jedinica koje je `onProgress` vec stavio u red. Ta zastita do sada
+**nije nijednom izvrsena** — nije postojao ekran koji ume da otkaze pa odmah ponovo pokrene.
+
+Ovaj task je prvi koji to moze, pa mora i da dokaze. Dodaj privremeno dugme (ili `.task`
+blok) koje pozove `analysis.cancel()` pa odmah `analysis.start(...)`, pokreni, i potvrdi da
+brojac napretka ne skace unazad i da ekran ne zavrsi u `.failed` od STARE analize. Ako se
+zastita ukloni (privremeno obrisi `guard self.generation == gen`), isti postupak MORA da
+pokaze kvar — inace provera nije nista dokazala. Vrati sve i potvrdi cisto stablo.
+
 - [ ] **Step 5: Vizuelna provera na simulatoru, u obe teme**
 
 Sintetički tapovi u simulatoru **ne rade** — pre nego što pretpostaviš da rade, proveri:

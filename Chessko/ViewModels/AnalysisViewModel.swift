@@ -32,6 +32,19 @@ final class AnalysisViewModel {
     @ObservationIgnored
     private var task: Task<Void, Never>?
 
+    /// Redni broj pokretanja analize. Isti obrazac koji `PuzzleViewModel` vec
+    /// nosi kao `loadGeneration` (uveden 2026-09-07 zbog iste klase greske).
+    ///
+    /// `task?.cancel()` otkazuje SAMO obuhvatajuci `Task`. Izvestaji o napretku
+    /// se salju iz aktora kroz zasebne `Task { @MainActor }` jedinice, koje NISU
+    /// deca tog task-a i ne nasledjuju njegovo otkazivanje. Bez ovog brojaca,
+    /// `cancel()` pa odmah `start()` (dugme „Analiziraj ponovo") pusta zaostali
+    /// izvestaj STARE analize da upise svoje brojeve — ili cak staro
+    /// `.failed` — preko tek pokrenute nove. `isRunning` to ne hvata: posle
+    /// restarta je ponovo `true`.
+    @ObservationIgnored
+    private var generation = 0
+
     /// Dubina je fiksna po spec-u 5.5 — analiza mora da traje predvidivo.
     private static let depth = 12
 
@@ -55,6 +68,9 @@ final class AnalysisViewModel {
             return
         }
 
+        generation += 1
+        let gen = generation
+
         phase = .running(done: 0, total: states.count)
         let positions = states.map(\.state)
         let playedMoves = states.dropFirst().map(\.lastMove)
@@ -66,12 +82,12 @@ final class AnalysisViewModel {
                 depth: Self.depth
             ) { done, total in
                 Task { @MainActor [weak self] in
-                    guard let self, self.isRunning else { return }
+                    guard let self, self.generation == gen, self.isRunning else { return }
                     self.phase = .running(done: done, total: total)
                 }
             }
 
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, self.generation == gen else { return }
             guard let evals, evals.count == positions.count else {
                 self.phase = .failed(Loc("Analiza nije uspela."))
                 return
@@ -85,6 +101,7 @@ final class AnalysisViewModel {
                 return played == best
             }
 
+            guard self.generation == gen else { return }
             self.phase = .done(GameAnalysis.build(
                 notations: notations,
                 scores: evals.map(\.score),
@@ -96,6 +113,10 @@ final class AnalysisViewModel {
     /// Zove se kad korisnik napusti ekran. Bez ovoga motor nastavi da melje
     /// 81 poziciju u pozadini iako rezultat vise nema ko da vidi.
     func cancel() {
+        // Podizanje generacije je ono sto stvarno gasi zaostale izvestaje:
+        // `task.cancel()` ne dopire do `Task { @MainActor }` jedinica koje je
+        // `onProgress` vec stavio u red.
+        generation += 1
         task?.cancel()
         task = nil
         if isRunning { phase = .idle }
