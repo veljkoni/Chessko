@@ -58,7 +58,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Pešak nema svoje slovo. Kad u zapisu vidiš samo ime polja — **e4**, **d5** — potez je odigrao pešak. Slovo figure je uvek **veliko**, a ime polja uvek **malo**, pa se to dvoje ne meša."
+      "text": "Pion nema svoje slovo. Kad u zapisu vidiš samo ime polja — **e4**, **d5** — potez je odigrao pion. Slovo figure je uvek **veliko**, a ime polja uvek **malo**, pa se to dvoje ne meša."
     },
     {
       "type": "divider"
@@ -74,7 +74,7 @@
         {
           "icon": "circle.fill",
           "title": "e4",
-          "text": "Pešak je stao na polje e4. Samo ime polja, bez slova figure.",
+          "text": "Pion je stao na polje e4. Samo ime polja, bez slova figure.",
           "style": null
         },
         {
@@ -104,7 +104,19 @@
         {
           "icon": "arrow.left.arrow.right",
           "title": "0-0",
-          "text": "Kratka rokada, na kraljevoj strani. Duga rokada, na daminoj strani, piše se **0-0-0**.",
+          "text": "Rokada se ne zapisuje poljem nego znakom: **0-0** kratka, **0-0-0** duga. U knjigama i u ovoj aplikaciji često stoji **O-O** sa slovom O — isto je.",
+          "style": null
+        },
+        {
+          "icon": "arrow.left.arrow.right",
+          "title": "Kad pion uzima",
+          "text": "Ispred **x** stoji slovo kolone sa koje pion kreće: **exd5**. Bez tog slova se ne zna koji pion uzima.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Promocija",
+          "text": "Kad pion stigne do kraja, iza polja ide **=** i slovo nove figure: **e8=D**.",
           "style": null
         }
       ]
@@ -113,14 +125,14 @@
       "type": "exercise",
       "kind": "scripted",
       "title": "Odigraj 1.e4",
-      "hint": "Nema slova figure, dakle igra pešak — onaj koji staje na e4.",
+      "hint": "Nema slova figure, dakle igra pion — onaj koji staje na e4.",
       "icon": "arrow.up.circle.fill",
       "uciMoves": [
         "e2e4"
       ],
       "startFEN": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
       "solvedMessage": "Tako je — to je e4. ✓",
-      "wrongMessage": "Nije to. Traži se pešak koji staje na polje e4.",
+      "wrongMessage": "Nije to. Traži se pion koji staje na polje e4.",
       "playingPrompt": "Odigraj potez koji zapis opisuje.",
       "mateIn": null
     },
@@ -128,7 +140,7 @@
       "type": "exercise",
       "kind": "scripted",
       "title": "Odigraj 2.Sf3",
-      "hint": "S je skakač. Onaj sa g1 skače na f3.",
+      "hint": "S je slovo skakača.",
       "icon": "l.joystick.fill",
       "uciMoves": [
         "g1f3"
@@ -156,8 +168,8 @@
       "uciMoves": [
         "c4f7"
       ],
-      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
-      "solvedMessage": "Tako je — Lxf7+. ✓",
+      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 3 4",
+      "solvedMessage": "Tako je — Lxf7+. ✓ Zapis je tačan — sama žrtva ovde nije dobra (crni uzima kraljem), ali nas zanima samo kako se piše.",
       "wrongMessage": "Nije to. Traži se lovac koji uzima na polju f7.",
       "playingPrompt": "Odigraj potez koji zapis opisuje.",
       "mateIn": null
@@ -166,7 +178,7 @@
       "type": "exercise",
       "kind": "scripted",
       "title": "Odigraj 0-0",
-      "hint": "Rokada se zapisuje bez polja. Kralj ide sa e1 dva polja u stranu, a top preskače preko njega.",
+      "hint": "Rokada se zapisuje znakom, ne poljem — i izvodi se kraljem.",
       "icon": "arrow.left.arrow.right",
       "uciMoves": [
         "e1g1"

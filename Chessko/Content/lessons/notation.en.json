@@ -9,11 +9,11 @@
       "style": "info",
       "icon": "text.book.closed.fill",
       "title": "Why you need notation",
-      "text": "The whole of chess literature — books, puzzles, the games of the old masters — is written in one and the same language. Learn it and you can read any game ever played, and go back over your own moves. This app writes your moves down in exactly the same way."
+      "text": "The whole of chess literature — books, puzzles, the games of the old masters — is written in one and the same language. Learn it and you can read any game ever played, and go back over your own moves."
     },
     {
       "type": "paragraph",
-      "text": "The board has **coordinates**. The eight upright lines of squares — the files — carry the letters **a** to **h**, left to right as White sees them. The eight horizontal rows — the ranks — carry the numbers **1** to **8**, from the bottom up. Every square therefore has a name: the letter of the file first, then the number of the rank."
+      "text": "The board has **coordinates**. The eight vertical columns — the files — carry the letters **a** to **h**, left to right as White sees them. The eight horizontal rows — the ranks — carry the numbers **1** to **8**, from the bottom up. Every square therefore has a name: the letter of the file first, then the number of the rank."
     },
     {
       "type": "board",
@@ -104,7 +104,19 @@
         {
           "icon": "arrow.left.arrow.right",
           "title": "0-0",
-          "text": "Castling short, on the king's side. Castling long, on the queen's side, is written **0-0-0**.",
+          "text": "Castling is written with a sign, not a square: **0-0** kingside, **0-0-0** queenside. Books and this app often write **O-O** with the letter O — it is the same thing.",
+          "style": null
+        },
+        {
+          "icon": "arrow.left.arrow.right",
+          "title": "When a pawn captures",
+          "text": "The letter of the pawn's file goes before the **x**: **exd5**. Without it you cannot tell which pawn took.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Promotion",
+          "text": "When a pawn reaches the end, the square is followed by **=** and the new piece: **e8=Q**.",
           "style": null
         }
       ]
@@ -128,7 +140,7 @@
       "type": "exercise",
       "kind": "scripted",
       "title": "Play 2.Nf3",
-      "hint": "N is the knight. The one on g1 jumps to f3.",
+      "hint": "N is the letter for the knight.",
       "icon": "l.joystick.fill",
       "uciMoves": [
         "g1f3"
@@ -156,8 +168,8 @@
       "uciMoves": [
         "c4f7"
       ],
-      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
-      "solvedMessage": "That's it — Bxf7+. ✓",
+      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 3 4",
+      "solvedMessage": "That's it — Bxf7+. ✓ The notation is right — the sacrifice itself is not good here (Black takes with the king), but we only care how it is written.",
       "wrongMessage": "Not that one. Look for the bishop that captures on f7.",
       "playingPrompt": "Play the move the notation describes.",
       "mateIn": null
@@ -166,7 +178,7 @@
       "type": "exercise",
       "kind": "scripted",
       "title": "Play 0-0",
-      "hint": "Castling is written without a square. The king goes two squares sideways from e1 and the rook hops over him.",
+      "hint": "Castling is written with a sign, not a square — and it is played with the king.",
       "icon": "arrow.left.arrow.right",
       "uciMoves": [
         "e1g1"
@@ -182,7 +194,7 @@
       "style": "rule",
       "icon": "book.fill",
       "title": "The same thing inside the app",
-      "text": "A game is written down in pairs, with the move number in front: **1.e4 e5 2.Nf3 Nc6** means White played e4 first, Black answered e5, and then White brought the knight out to f3. That very record grows beside the board on the Game screen, move by move."
+      "text": "A game is written down in pairs, with the move number in front: **1.e4 e5 2.Nf3 Nc6** means White played e4 first, Black answered e5, and then White brought the knight out to f3. The same record grows beside the board on the Game screen — with one difference: the app writes the piece letters in Serbian, so the knight is **S** and the bishop **L**. The shape of the record is exactly the one you have just learned."
     }
   ],
   "language": "en"
