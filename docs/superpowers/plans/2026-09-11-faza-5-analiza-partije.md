@@ -195,7 +195,7 @@ import Testing
 @Test func buildComputesEachSideAccuracyFromOnlyThatSideMoves() {
     // Beli igra savrseno, crni gubi po 200 centipiona po potezu.
     //
-    // Ocene se moraju izabrati tako da SVAKI belи potez ima gubitak 0, ne samo
+    // Ocene se moraju izabrati tako da SVAKI beli potez ima gubitak 0, ne samo
     // prvi: gubitak poteza `i` je `scores[i] + scores[i+1]`, pa jedna ocena
     // ulazi u DVA susedna poteza. Niz [0, 0, 200, -200, 400] daje belom 0 i 0,
     // a crnom 200 i 200.
@@ -315,7 +315,7 @@ enum MoveClass: String, CaseIterable, Sendable {
 }
 
 struct AnalyzedMove: Sendable, Identifiable, Equatable {
-    /// Redni broj poluteza, od 0. `ply 0` je prvi belи potez.
+    /// Redni broj poluteza, od 0. `ply 0` je prvi beli potez.
     let ply: Int
     let notation: String
     let byWhite: Bool
@@ -428,8 +428,6 @@ struct GameAnalysis: Sendable, Equatable {
     }
 }
 ```
-
-> **Napomena za implementatora:** u komentaru iznad `ply` gore stoji ćirilično „и" u reči „belи" — ispravi u latinično `beli`. Ovo je namerno ostavljeno kao provera da čitaš kod koji prepisuješ, ne da ga slepo kopiraš.
 
 - [ ] **Step 4: Dodati fajl u `Package.swift`**
 
