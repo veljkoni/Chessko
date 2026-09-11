@@ -455,7 +455,12 @@ Obrazac je četiri linije sa ručno izmišljenim, jedinstvenim ID-jem (ugledaj s
 > **PROVERI DA JE ID SLOBODAN PRE UPOTREBE.** Prva verzija ovog plana je tvrdila da su `…A1`/`…A2` slobodni, a bili su zauzeti za `Localizable.xcstrings`; isto je važilo i za `…B*` i `…C*`. Duplirani GUID u `project.pbxproj` je greška koju Xcode ne prijavi odmah. Slobodni sufiksi, provereni: `D1 D2 E1 E2 F1 F2 G1 G2 H1 H2 J1 J2 K1 K2 N1 N2 Q1 Q2 T1 T2`. Pre upotrebe potvrdi:
 > ```bash
 > grep -c "10CA7A1000000000000000<SUFIKS>" Chessko.xcodeproj/project.pbxproj   # mora biti 0
-> ``` Koristi `10CA7A1000000000000000M1`/`M2`:
+> ```
+>
+> Sufiksi vec upotrebljeni u ovoj fazi: `M1`/`M2` (Task 1), `N1`/`N2` (Task 2),
+> `Q1`/`Q2` (Task 4), `T1`/`T2` (Task 5) — ne koristi ih ponovo.
+
+Za ovaj task koristi `10CA7A1000000000000000M1`/`M2`:
 
 ```
 # 1) u PBXBuildFile sekciju (oko linije 41):
@@ -608,7 +613,7 @@ U `Package.swift` `sources:`, posle `"Logic/PuzzleRepository.swift",`:
                 "Logic/UCIScoreParser.swift",
 ```
 
-U `project.pbxproj` isti četvorolinijski obrazac kao u Task-u 1, sa ID-jevima `10CA7A1000000000000000B1`/`B2`, `path = UCIScoreParser.swift`, u `Logic` grupu.
+U `project.pbxproj` isti četvorolinijski obrazac kao u Task-u 1, sa ID-jevima `10CA7A1000000000000000N1`/`N2`, `path = UCIScoreParser.swift`, u `Logic` grupu.
 
 - [ ] **Step 5: Pokrenuti testove**
 
