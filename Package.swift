@@ -20,6 +20,7 @@ let package = Package(
                 "Models/ChessPuzzle.swift",
                 "Models/LessonContent.swift",
                 "Models/Curriculum.swift",
+                "Models/MoveAnalysis.swift",
                 "Logic/StatsManager.swift",
                 "Logic/ProgressStore.swift",
                 "Logic/MoveGenerator.swift",

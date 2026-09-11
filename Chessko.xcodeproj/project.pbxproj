@@ -39,6 +39,7 @@
 		10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000X2 /* StepPracticeView.swift */; };
 		10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Y2 /* StepGameView.swift */; };
 		10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Z2 /* PromotionOverlay.swift */; };
+		10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000M2 /* MoveAnalysis.swift */; };
 		10CA7A1000000000000000C5 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C6 /* Content */; };
 		89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */; };
 		8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */; };
@@ -86,6 +87,7 @@
 		10CA7A1000000000000000X2 /* StepPracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepPracticeView.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000Y2 /* StepGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepGameView.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000Z2 /* PromotionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromotionOverlay.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000M2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000C6 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
 		5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
 		5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningExerciseViewModel.swift; sourceTree = "<group>"; };
@@ -183,6 +185,7 @@
 				FBA1E9BAE39C4E178203B664 /* Position.swift */,
 				10CA7A1000000000000000L2 /* LessonContent.swift */,
 				10CA7A1000000000000000U2 /* Curriculum.swift */,
+				10CA7A1000000000000000M2 /* MoveAnalysis.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -338,6 +341,7 @@
 				10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */,
 				10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */,
 				10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */,
+				10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */,
 				89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */,
 				B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,
