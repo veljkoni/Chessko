@@ -317,7 +317,12 @@ final class GameViewModel {
         Haptics.notification(.error)
         updateEvaluation()
 
-        if gameMode == .vsComputer && !hasRecordedGameEnd {
+        // Predaja u koraku Puta se NE upisuje u statistiku. To je jedini
+        // predvidjen izlaz iz koraka koji igrac ne moze da dobije, pa bi upis
+        // poraza i gasenje niza pobeda kaznjavali korisnika sto je upotrebio
+        // ono sto mu je samo ponudjeno. Odigrana partija u koraku se broji
+        // normalno — kaznjava se samo predaja.
+        if gameMode == .vsComputer && !hasRecordedGameEnd && !isStepGame {
             hasRecordedGameEnd = true
             if loser == playerColor {
                 StatsManager.shared.recordGameLost()
@@ -798,6 +803,18 @@ final class GameViewModel {
     /// Slot partije jednog `game` koraka Puta. Zaseban po koraku, pa prekinuta
     /// partija iz koraka moze da se nastavi a da ne dodirne slobodnu partiju.
     static func stepSaveKey(_ stepId: String) -> String { "chessko.savedGame.step.\(stepId)" }
+
+    /// Tacno kad je ovaj model pokrenut kao korak Puta. Izvodi se iz kljuca da
+    /// ne bi postojao drugi izvor istine.
+    var isStepGame: Bool { savedGameKey.hasPrefix("chessko.savedGame.step.") }
+
+    /// Brise slot koraka. Napredak Puta pamti `ProgressStore`, pa sacuvana
+    /// partija posle zavrsenog koraka nema kome da sluzi — a `UserDefaults` se
+    /// pri pokretanju ucitava ceo, pa bi se sa vise `game` koraka samo gomilao.
+    func clearStepSave() {
+        guard isStepGame else { return }
+        UserDefaults.standard.removeObject(forKey: savedGameKey)
+    }
 
     /// Kljuc pod kojim OVAJ primerak cuva i cita partiju.
     ///

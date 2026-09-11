@@ -92,7 +92,15 @@ struct PathView: View {
     /// partija su vec IZGLEDALI aktivno („Nastavi" umesto „Uskoro", strelica u
     /// redu) i vodili na prazan ekran. Enum vraca odluku u tip koji zaista moze
     /// da bude `nil`.
-    private enum StepRoute {
+    /// `Hashable` jer se gura kao VREDNOST, ne kao pogled.
+    ///
+    /// Sa `NavigationLink { destination }` odrediste se ponovo racuna kad se
+    /// roditelj osvezi. Kartica „Nastavi" pokazuje na PRVI dostupan korak, pa
+    /// cim se korak zavrsi ta kartica pokazuje na sledeci — i gurnuti ekran bi
+    /// se promenio pod korisnikom, tacno u trenutku kad zavrsi partiju ili
+    /// vezbu: umesto „Korak je zavrsen" dobio bi sledecu lekciju. Vrednost
+    /// zaledjuje odrediste u trenutku dodira.
+    private enum StepRoute: Hashable {
         case lesson(lessonId: String, stepId: String)
         case practice(CurriculumStep)   // i `practice` i `test` — vidi `StepPracticeView`
         case game(difficulty: GameDifficulty, startFEN: String?, stepId: String)
@@ -189,6 +197,11 @@ struct PathView: View {
                 .safeAreaPadding(.bottom, 24)
             }
             .toolbar(.hidden, for: .navigationBar)
+            // Odrediste se razresava iz VREDNOSTI koja je gurnuta pri dodiru,
+            // pa se gurnuti ekran ne menja kad se lista ispod osvezi.
+            .navigationDestination(for: StepRoute.self) { route in
+                destination(for: route)
+            }
         }
         .environment(viewModel)
     }
@@ -206,7 +219,7 @@ struct PathView: View {
     private func continueCard(_ states: [String: StepState]) -> some View {
         if let next = nextStep(states) {
             if let route = route(for: next.step) {
-                NavigationLink { destination(for: route) } label: { continueLabel(next, runnable: true) }
+                NavigationLink(value: route) { continueLabel(next, runnable: true) }
                     .buttonStyle(.plain)
             } else {
                 // Korak bez odredista (vidi `route(for:)`) — stoji mirno.
@@ -351,7 +364,7 @@ struct PathView: View {
     @ViewBuilder
     private func stepRow(_ step: CurriculumStep, state: StepState) -> some View {
         if state != .locked, let route = route(for: step) {
-            NavigationLink { destination(for: route) } label: {
+            NavigationLink(value: route) {
                 stepLabel(step, state: state, showsChevron: true)
             }
             .buttonStyle(.plain)

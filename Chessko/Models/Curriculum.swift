@@ -8,7 +8,7 @@ import Foundation
 // Kao i kod `LessonBlock`-a, nepoznat `type` koraka BACA gresku umesto da se
 // tiho preskoci — preskocen korak bi napravio rupu u putu koju niko ne vidi.
 
-struct Curriculum: Codable, Equatable {
+struct Curriculum: Codable, Hashable {
     let version: Int
     let chapters: [Chapter]
 
@@ -21,7 +21,7 @@ struct Curriculum: Codable, Equatable {
     }
 }
 
-struct Chapter: Codable, Equatable {
+struct Chapter: Codable, Hashable {
     let id: String
     /// Naslov po jeziku. Kurikulum je mali, pa naslovi stoje ovde umesto u
     /// odvojenim fajlovima po jeziku kao kod lekcija.
@@ -29,7 +29,7 @@ struct Chapter: Codable, Equatable {
     let steps: [CurriculumStep]
 }
 
-enum StepKind: Equatable {
+enum StepKind: Hashable {
     /// Teorija; zavrsava se kad korisnik dodje do kraja i potvrdi.
     case lesson(lessonId: String)
     /// N zadataka filtriranih po temi; zavrsava se kad su svi reseni.
@@ -40,7 +40,10 @@ enum StepKind: Equatable {
     case test(themes: [String], count: Int, ratingRange: ClosedRange<Int>)
 }
 
-struct CurriculumStep: Codable, Equatable {
+/// `Hashable` (ne samo `Equatable`) jer `PathView` gura korak kao VREDNOST kroz
+/// `navigationDestination(for:)` — tako gurnuti ekran ostaje isti i kad se
+/// lista ispod osvezi.
+struct CurriculumStep: Codable, Hashable {
     let id: String
     let kind: StepKind
 

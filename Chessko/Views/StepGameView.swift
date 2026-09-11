@@ -124,6 +124,7 @@ struct StepGameView: View {
         ProgressStore.shared.completeStep(id)
         // Bez dodatnog haptika: `GameViewModel` je za kraj partije vec ispalio
         // svoj (pobeda/poraz/remi) pre koji milisekundu.
+        viewModel.clearStepSave()
     }
 
     // MARK: - Raspored
