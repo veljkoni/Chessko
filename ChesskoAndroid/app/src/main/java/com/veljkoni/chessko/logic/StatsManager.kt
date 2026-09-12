@@ -41,6 +41,18 @@ class StatsManager private constructor(context: Context) {
     var bestPuzzleStreak by mutableIntStateOf(prefs.getInt("bestPuzzleStreak", 0))
         private set
 
+    // Elo rejting igraca za zadatke. Pocetna vrednost je PuzzleRating.START,
+    // ne 0 — bez toga bi nov korisnik dobijao samo najlakse zadatke dok se ne
+    // popne, a `resetStats()` bi ga vratio na nulu umesto na pocetak.
+    var puzzleRating by mutableIntStateOf(prefs.getInt("puzzleRating", PuzzleRating.START))
+        private set
+
+    fun applyPuzzleResult(puzzleElo: Int, solved: Boolean) {
+        val next = PuzzleRating.newRating(this.puzzleRating, puzzleElo, solved)
+        this.puzzleRating = next
+        prefs.edit().putInt("puzzleRating", next).apply()
+    }
+
     val winRate: Int
         get() = if (gamesPlayed > 0) ((gamesWon.toDouble() / gamesPlayed) * 100).toInt() else 0
 
@@ -103,6 +115,7 @@ class StatsManager private constructor(context: Context) {
         puzzlesSolved = 0
         currentPuzzleStreak = 0
         bestPuzzleStreak = 0
+        puzzleRating = PuzzleRating.START
 
         prefs.edit().clear().apply()
     }
