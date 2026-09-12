@@ -956,18 +956,31 @@ fun MatePuzzleCard(
     hint: String,
     icon: String,
     accentColor: Color,
-    mateIn: Int
+    mateIn: Int,
+    // Poruke iz JSON-a. `null` = koristi podrazumevanu.
+    //
+    // Bez ovih parametara `solvedMessage`/`wrongMessage`/`playingPrompt` iz
+    // sadrzaja NEMAJU EFEKTA za mat-zadatke, jer ih je kartica sama sklapala.
+    // Danas se razlika ne bi videla — vrednosti u JSON-u se slucajno poklapaju
+    // sa podrazumevanima — ali bi pao ugovor cele faze: „sadrzaj je u JSON-u,
+    // izmena JSON-a menja aplikaciju". iOS ih prosledjuje
+    // (`LessonRenderer.swift:106-111`), pa bi Android tiho odstupao.
+    solvedMessage: String? = null,
+    wrongMessage: String? = null,
+    playingPrompt: String? = null
 ) {
-    val line = remember(fen, moves, title, hint, icon, accentColor) {
+    val line = remember(fen, moves, title, hint, icon, accentColor,
+                        solvedMessage, wrongMessage, playingPrompt) {
         OpeningLine(
             name = title,
             uciMoves = moves,
             hint = hint,
             icon = icon,
             accentColor = accentColor,
-            solvedMessage = loc("Sjajno! Mat pronađen! 🏆"),
-            wrongMessage = loc("Nije to — traži pravi ključni potez!"),
-            playingPrompt = if (mateIn == 1) loc("Pronađi mat u 1 potezu!") else loc("Pronađi ključni potez!"),
+            solvedMessage = solvedMessage ?: loc("Sjajno! Mat pronađen! 🏆"),
+            wrongMessage = wrongMessage ?: loc("Nije to — traži pravi ključni potez!"),
+            playingPrompt = playingPrompt
+                ?: if (mateIn == 1) loc("Pronađi mat u 1 potezu!") else loc("Pronađi ključni potez!"),
             startFEN = fen
         )
     }

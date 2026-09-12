@@ -89,9 +89,12 @@ class LearnViewModel {
             }
             LearnScenario.CASTLING -> loc("Poseban potez: ako kralj i top nisu se još pomerali i između njih nema figura, kralj skoči dva polja ka topu, a top preskoči kralja. Tapni g1 (kratka rokada) ili c1 (duga rokada).")
             LearnScenario.EN_PASSANT -> loc("Posebno uzimanje pešakom: ako protivnički pešak skoči dva polja i nađe se pored tvojeg pešaka, možeš ga uzeti 'u prolazu' — kao da se pomerio samo jedno polje. Tapni d6.")
-            // Kljuc postoji u `Loc.kt` na svih 8 jezika; jedina grana `infoText`
+            // Kljuc MORA doslovno da se poklopi sa recnikom: raniji literal je bio
+            // bez „(redovi 8)", pa `Loc.get` nije nasao unos i TIHO je vracao sam
+            // kljuc — srpski pasus na svakom stranom jeziku. Isti literal koristi iOS.
+            // Jedina grana `infoText`
             // koja je ostala bez `loc()`.
-            LearnScenario.PROMOTION -> loc("Kad beli pešak stigne do osmog reda, može se pretvoriti u bilo koju figuru — gotovo uvek u damu. Tapni e8.")
+            LearnScenario.PROMOTION -> loc("Kad beli pešak stigne do osmog reda (redovi 8), može se pretvoriti u bilo koju figuru — gotovo uvek u damu. Tapni e8.")
         }
 
     val movesCountLabel: String

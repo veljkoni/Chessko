@@ -179,7 +179,12 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
                 hint = spec.hint,
                 icon = lessonIcon(spec.icon),
                 accentColor = accent,
-                mateIn = spec.mateIn
+                mateIn = spec.mateIn,
+                // Poruke iz JSON-a moraju da stignu i ovde, inace bi za
+                // mat-zadatke izmena sadrzaja tiho nestala.
+                solvedMessage = spec.solvedMessage,
+                wrongMessage = spec.wrongMessage,
+                playingPrompt = spec.playingPrompt
             )
         } else OpeningExerciseCard(
             line = OpeningLine(
