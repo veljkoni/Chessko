@@ -276,7 +276,7 @@ fun LearnPlaceholderView() {
         verticalArrangement = Arrangement.Top
     ) {
         Text(
-            text = "📖 Učenje i Taktike",
+            text = "📖 " + loc("Učenje i Taktike"),
             color = Color.White,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,

@@ -553,7 +553,7 @@ fun SettingsView(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            Text(text = "🌐 Stockfish", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "🌐 " + loc("Stockfish"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Button(
@@ -569,7 +569,7 @@ fun SettingsView(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            Text(text = "🌐 Lichess", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "🌐 " + loc("Lichess"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

@@ -369,7 +369,7 @@ fun LearnView(
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Text(text = "◀ Lekcije", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "◀ " + loc("Lekcije"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -404,7 +404,7 @@ fun LearnView(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Lekcija ${activeLesson.id}",
+                                text = locF("Lekcija %d", activeLesson.id),
                                 color = activeLesson.accentColor,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -462,7 +462,7 @@ fun LessonCard(info: LessonInfo, onClick: () -> Unit) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Lekcija ${info.id}",
+                text = locF("Lekcija %d", info.id),
                 color = info.accentColor.copy(alpha = 0.9f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold
@@ -848,7 +848,7 @@ fun Lesson4Content(info: LessonInfo) {
     LBox(
         icon = "✓",
         title = loc("Ključno pravilo"),
-        text = "Da bi pešačka završnica bila pobednička, Kralj mora biti ispred svog piona sa barem jednim praznim poljem između njih. Ako je protivnički Kralj direktno ispred piona — igra je remi!",
+        text = loc("Da bi pešačka završnica bila pobednička, Kralj mora biti ispred svog piona sa barem jednim praznim poljem između njih. Ako je protivnički Kralj direktno ispred piona — igra je remi!"),
         color = info.accentColor
     )
     LBullet("⬆", loc("Napreduj Kralja, ne piona"), loc("Kapablanka savetuje: napreduj Kralja koliko je moguće a da ne ugrožavaš piona. Piona pomiči tek kada je neophodno za njegovu zaštitu."), info.accentColor)
@@ -1252,7 +1252,7 @@ fun MatePuzzleCard(
                             modifier = Modifier.weight(1f, fill = false)
                         )
                         Text(
-                            text = "Mat u $mateIn",
+                            text = locF("Mat u %d", mateIn),
                             color = accentColor,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,

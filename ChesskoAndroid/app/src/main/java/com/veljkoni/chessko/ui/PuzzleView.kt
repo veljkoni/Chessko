@@ -85,7 +85,7 @@ fun PuzzleView(
                             Text(text = "⚠️", fontSize = 36.sp)
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Greška pri učitavanju zadatka",
+                                text = loc("Greška pri učitavanju zadatka"),
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
@@ -206,7 +206,7 @@ fun PuzzleView(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Greška pri učitavanju zadatka",
+                                text = loc("Greška pri učitavanju zadatka"),
                                 color = Color.White,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
@@ -349,7 +349,7 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
         // Left: Rating indicator
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Rejting: ",
+                text = loc("Rejting: "),
                 color = Color.White.copy(alpha = 0.6f),
                 fontSize = 13.sp
             )
@@ -415,7 +415,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                Text(text = "💡 Prikaži rešenje", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = "💡 " + loc("Prikaži rešenje"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
 
             // Restart / Retry Button
@@ -429,7 +429,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                Text(text = "🔄 Pokušaj ponovo", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = "🔄 " + loc("Pokušaj ponovo"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }

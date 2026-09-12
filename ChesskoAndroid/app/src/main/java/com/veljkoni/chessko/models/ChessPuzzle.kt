@@ -1,5 +1,7 @@
 package com.veljkoni.chessko.models
 
+import com.veljkoni.chessko.logic.loc
+
 data class ChessPuzzle(
     val puzzleId: String,
     val fen: String,
@@ -15,9 +17,9 @@ data class ChessPuzzle(
 
     val difficultyLabel: String
         get() = when {
-            rating < 1200 -> "Lako"
-            rating in 1200..1599 -> "Srednje"
-            else -> "Teško"
+            rating < 1200 -> loc("Lako")
+            rating in 1200..1599 -> loc("Srednje")
+            else -> loc("Teško")
         }
 
     val difficultyColor: String
