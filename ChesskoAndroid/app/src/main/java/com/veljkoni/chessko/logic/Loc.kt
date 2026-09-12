@@ -499,6 +499,10 @@ object Loc {
         // Prevodi preuzeti iz iOS kataloga (`Chessko/Localizable.xcstrings`),
         // da isti string na dva uredjaja ne glasi razlicito.
         "Rejting zadataka" to mapOf("sr" to "Rejting zadataka", "en" to "Puzzle rating", "fr" to "Classement des problèmes", "de" to "Aufgaben-Wertung", "it" to "Punteggio problemi", "ru" to "Рейтинг задач", "zh-Hans" to "谜题评分", "hi" to "पहेली रेटिंग"),
+        // Grana `board.interactive` je danas nedostizna (ceo isporuceni sadrzaj
+        // ima `interactive: false`), ali bez kljuca bi poruka na svih 7 stranih
+        // jezika tiho ispala srpska — `Loc.get` na nepoznat kljuc vraca sam kljuc.
+        "Interaktivna tabla još nije dostupna." to mapOf("sr" to "Interaktivna tabla još nije dostupna.", "en" to "The interactive board is not available yet.", "fr" to "L\u2019échiquier interactif n\u2019est pas encore disponible.", "de" to "Das interaktive Brett ist noch nicht verfügbar.", "it" to "La scacchiera interattiva non è ancora disponibile.", "ru" to "Интерактивная доска пока недоступна.", "zh-Hans" to "互动棋盘尚不可用。", "hi" to "इंटरैक्टिव बोर्ड अभी उपलब्ध नहीं है।"),
         // Opisi kontrola pregleda partije (TalkBack). Bez ovih kljuceva su
         // `loc()` pozivi u MainActivity tiho padali na srpski na svih 7 jezika.
         "Kraj" to mapOf("sr" to "Kraj", "en" to "End", "fr" to "Fin", "de" to "Ende", "it" to "Fine", "ru" to "Конец", "zh-Hans" to "末尾", "hi" to "अंत"),
