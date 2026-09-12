@@ -66,6 +66,16 @@ class PuzzleRatingTest {
     }
 
     @Test
+    fun practiceWindowClampsUpperBoundWhenPlayerIsJustBelowTheCeiling() {
+        // Rupa u pokrivenosti koju je nasao pregled Task-a 2, i koju IMA I iOS:
+        // nijedan test nije pogadjao granu gde je `lo` jos ispod MAX, a
+        // `playerRating + 100` vec iznad njega. Za 2150: lo = 1950 (ispod MAX),
+        // hi = min(2200, 2250) = 2200. Bez klampovanja gornje granice bilo bi
+        // 2250 — prozor koji trazi zadatke kojih u bazi nema.
+        assertEquals(1950..2200, PuzzleRating.practiceWindow(2150))
+    }
+
+    @Test
     fun practiceWindowIsCenteredBelowThePlayer() {
         // -200 / +100: zadaci malo ispod rejtinga se cesce pogadjaju, pa je
         // vezbanje prijatnije nego kad je prozor centriran.
