@@ -9,6 +9,12 @@ import androidx.compose.runtime.setValue
 class StatsManager private constructor(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("chessko_stats", Context.MODE_PRIVATE)
 
+    /// Napredak na zadacima istorijski zivi u DRUGOM fajlu, koji `PuzzleViewModel`
+    /// otvara pod istim imenom. Drzi se ovde da bi `resetStats()` mogao da ga
+    /// ocisti; `context` je samo konstruktorski parametar i nije dostupan kasnije.
+    private val puzzlePrefs: SharedPreferences =
+        context.getSharedPreferences(PUZZLE_PREFS_NAME, Context.MODE_PRIVATE)
+
     var gamesPlayed by mutableIntStateOf(prefs.getInt("gamesPlayed", 0))
         private set
     var gamesWon by mutableIntStateOf(prefs.getInt("gamesWon", 0))
@@ -118,6 +124,16 @@ class StatsManager private constructor(context: Context) {
         puzzleRating = PuzzleRating.START
 
         prefs.edit().clear().apply()
+
+        // `clear()` iznad cisti SAMO `chessko_stats`. Napredak na zadacima je u
+        // `chessko_puzzle_prefs`, pa bi bez ovoga „Resetuj statistiku" obrisala
+        // brojace ali ostavila sve resene zadatke iskljucene iz vezbanja —
+        // korisnik bi posle reseta dobijao samo zadatke koje jos nije video.
+        // iOS isto radi (`StatsManager.resetStats`, `removeObject` za oba kljuca).
+        puzzlePrefs.edit()
+            .remove(SOLVED_PUZZLE_IDS_KEY)
+            .remove(SOLVED_DATES_KEY)
+            .apply()
     }
 
     private fun saveGameStats() {
@@ -145,6 +161,12 @@ class StatsManager private constructor(context: Context) {
     }
 
     companion object {
+        /// Fajl u kome `PuzzleViewModel` cuva napredak na zadacima. Odvojen od
+        /// `chessko_stats` istorijski, pa ga `resetStats()` mora cistiti posebno.
+        internal const val PUZZLE_PREFS_NAME = "chessko_puzzle_prefs"
+        internal const val SOLVED_PUZZLE_IDS_KEY = "solvedPuzzleIds"
+        internal const val SOLVED_DATES_KEY = "solved_dates_key"
+
         @Volatile
         private var instance: StatsManager? = null
 

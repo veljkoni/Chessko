@@ -31,7 +31,7 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
 
     private val soundManager = SoundManager(application)
     private val hapticManager = HapticManager(application)
-    private val sharedPrefs = application.getSharedPreferences("chessko_puzzle_prefs", Context.MODE_PRIVATE)
+    private val sharedPrefs = application.getSharedPreferences(StatsManager.PUZZLE_PREFS_NAME, Context.MODE_PRIVATE)
     private val statsManager = StatsManager.getInstance(application)
     private var puzzleHadError = false
 
@@ -134,11 +134,11 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         val dateKey = selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
         val updated = solvedDates.toMutableSet().apply { add(dateKey) }
         solvedDates = updated
-        sharedPrefs.edit().putStringSet("solved_dates_key", updated).apply()
+        sharedPrefs.edit().putStringSet(StatsManager.SOLVED_DATES_KEY, updated).apply()
     }
 
     private fun loadSolvedDates() {
-        solvedDates = sharedPrefs.getStringSet("solved_dates_key", emptySet()) ?: emptySet()
+        solvedDates = sharedPrefs.getStringSet(StatsManager.SOLVED_DATES_KEY, emptySet()) ?: emptySet()
     }
 
     fun loadDailyPuzzle() {
@@ -347,6 +347,8 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     companion object {
-        private const val SOLVED_PUZZLE_IDS_KEY = "solvedPuzzleIds"
+        // Kljucevi zive na `StatsManager`-u jer ih i `resetStats()` mora znati.
+        // Dupliran literal bi znacio da izmena na jednom mestu tiho ugasi reset.
+        private const val SOLVED_PUZZLE_IDS_KEY = StatsManager.SOLVED_PUZZLE_IDS_KEY
     }
 }
