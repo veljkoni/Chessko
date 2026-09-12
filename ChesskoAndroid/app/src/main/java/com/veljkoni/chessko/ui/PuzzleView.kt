@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +36,12 @@ fun PuzzleView(
     viewModel: PuzzleViewModel,
     modifier: Modifier = Modifier
 ) {
+    // Ekran se ponovo prikazuje (povratak na tab, zatvaranje podesavanja), a
+    // `PuzzleViewModel` prezivljava kroz `remember` u `MainActivity` — pa kes
+    // napretka moze biti zastareo ako je u medjuvremenu pritisnuto „Resetuj
+    // statistiku". Osvezava se SAMO kes, ne i zadatak: `loadDailyPuzzle()` bi
+    // restartovao zadatak u toku, sto je vec jednom bio bug.
+    LaunchedEffect(Unit) { viewModel.refreshPersistedProgress() }
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE

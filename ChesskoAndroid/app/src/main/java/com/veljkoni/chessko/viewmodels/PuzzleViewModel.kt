@@ -105,7 +105,9 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         }
 
     init {
-        loadSolvedDates()
+        // `loadSolvedDates()` je ovde nekad stajao zasebno; sada je suvisan jer
+        // `loadDailyPuzzle()` odmah zove `reloadPersistedProgress()`, koji ga
+        // ionako zove. Rezultat bi se prepisao u istom dahu.
         loadDailyPuzzle()
     }
 
@@ -146,10 +148,24 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     /// zna: kvacica pored datuma ostaje, a vec reseni zadaci ostaju iskljuceni
     /// iz vezbanja — sve do ubijanja procesa.
     ///
-    /// Zato se zove na SVAKOM ulasku u nov zadatak, u oba rezima. Isti obrazac
-    /// iOS ima kao `reloadPersistedProgress()`; Android ga pri prenosu nije
-    /// poneo, pa je popravka reseta bila nepotpuna u zivoj sesiji (dokazano na
-    /// uredjaju: disk cist, ekran i dalje pokazuje kvacicu).
+    /// Zato se zove na SVAKOM ulasku u nov zadatak, u oba rezima, I iz
+    /// `refreshPersistedProgress()` kad se ekran ponovo prikaze.
+    ///
+    /// iOS ima istoimenu funkciju, ali NEMA ovo reseno do kraja: njegov
+    /// `loadDailyPuzzle()` nosi `guard currentPuzzle == nil || isUnavailable`,
+    /// pa `.onAppear` na vec ucitanom zadatku ne stigne do osvezavanja. Isti
+    /// propust dakle postoji i tamo; ovde je zatvoren razdvajanjem osvezavanja
+    /// kesa od ucitavanja zadatka. Ne prepisivati ovo nazad na „iOS to ima
+    /// reseno" — provereno da nema.
+    /// Javna tacka za osvezavanje SAMO kesa napretka, bez diranja zadatka.
+    ///
+    /// Zove se kad se ekran Zadataka ponovo prikaze. Namerno NE zove
+    /// `loadDailyPuzzle()`: taj bi restartovao zadatak u toku, a bas to je vec
+    /// jednom bio bug (iOS Faza 2: `.onAppear` je bezuslovno restartovao
+    /// napola resen zadatak). Ovde treba osvezi samo ono sto je „Resetuj
+    /// statistiku" moglo da promeni sa strane — kvacicu i skup iskljucenih.
+    fun refreshPersistedProgress() = reloadPersistedProgress()
+
     private fun reloadPersistedProgress() {
         solvedPuzzleIds.clear()
         sharedPrefs.getStringSet(SOLVED_PUZZLE_IDS_KEY, emptySet())?.let { solvedPuzzleIds.addAll(it) }
