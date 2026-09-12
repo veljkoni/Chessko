@@ -166,7 +166,22 @@ private fun LExplorer(viewModel: LearnViewModel, accent: Color) {
 @Composable
 private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Color) {
     when (spec.kind) {
-        ExerciseKind.SCRIPTED -> OpeningExerciseCard(
+        // Skriptovana vezba sa `mateIn` ide u `MatePuzzleCard`, koja jedina
+        // prikazuje bedz „Mat u N". Bez ovog grananja pet vezbi u isporucenom
+        // sadrzaju tiho gubi bedz, a Android se razilazi od iOS-a, koji bira
+        // isto (`LessonRenderer.swift:100-112`). `MatePuzzleCard` NE prima
+        // `OpeningLine` nego raspakovane parametre, i `fen` joj nije opcion.
+        ExerciseKind.SCRIPTED -> if (spec.mateIn != null && spec.startFEN != null) {
+            MatePuzzleCard(
+                fen = spec.startFEN,
+                moves = spec.uciMoves ?: emptyList(),
+                title = spec.title,
+                hint = spec.hint,
+                icon = lessonIcon(spec.icon),
+                accentColor = accent,
+                mateIn = spec.mateIn
+            )
+        } else OpeningExerciseCard(
             line = OpeningLine(
                 name = spec.title,
                 uciMoves = spec.uciMoves ?: emptyList(),
