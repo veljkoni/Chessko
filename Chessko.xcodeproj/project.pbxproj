@@ -40,6 +40,7 @@
 		10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000X2 /* StepPracticeView.swift */; };
 		10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Y2 /* StepGameView.swift */; };
 		10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Z2 /* PromotionOverlay.swift */; };
+		10CA7A1000000000000000T1 /* AnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000T2 /* AnalysisView.swift */; };
 		10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000M2 /* MoveAnalysis.swift */; };
 		10CA7A1000000000000000Q1 /* AnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */; };
 		10CA7A1000000000000000C5 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C6 /* Content */; };
@@ -90,6 +91,7 @@
 		10CA7A1000000000000000X2 /* StepPracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepPracticeView.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000Y2 /* StepGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepGameView.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000Z2 /* PromotionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromotionOverlay.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000T2 /* AnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisView.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000M2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisViewModel.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000C6 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 			10CA7A1000000000000000X2 /* StepPracticeView.swift */,
 			10CA7A1000000000000000Y2 /* StepGameView.swift */,
 			10CA7A1000000000000000Z2 /* PromotionOverlay.swift */,
+			10CA7A1000000000000000T2 /* AnalysisView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -348,6 +351,7 @@
 				10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */,
 				10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */,
 				10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */,
+				10CA7A1000000000000000T1 /* AnalysisView.swift in Sources */,
 				10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */,
 				89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */,
 				B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */,
