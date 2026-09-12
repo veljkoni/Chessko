@@ -69,7 +69,9 @@ class LearnViewModel {
 
     val infoTitle: String
         get() = when (activeScenario) {
-            null -> selectedPieceType.srbName
+            // `srbName` je bukvalno srpski string u modelu — kljucevi postoje u
+            // `Loc.kt`, samo ih niko nije zvao.
+            null -> loc(selectedPieceType.srbName)
             LearnScenario.CASTLING -> loc("Rokada")
             LearnScenario.EN_PASSANT -> "En passant"
             LearnScenario.PROMOTION -> loc("Promocija")
@@ -87,7 +89,9 @@ class LearnViewModel {
             }
             LearnScenario.CASTLING -> loc("Poseban potez: ako kralj i top nisu se još pomerali i između njih nema figura, kralj skoči dva polja ka topu, a top preskoči kralja. Tapni g1 (kratka rokada) ili c1 (duga rokada).")
             LearnScenario.EN_PASSANT -> loc("Posebno uzimanje pešakom: ako protivnički pešak skoči dva polja i nađe se pored tvojeg pešaka, možeš ga uzeti 'u prolazu' — kao da se pomerio samo jedno polje. Tapni d6.")
-            LearnScenario.PROMOTION -> "Kad beli pešak stigne do osmog reda, može se pretvoriti u bilo koju figuru — gotovo uvek u damu. Tapni e8."
+            // Kljuc postoji u `Loc.kt` na svih 8 jezika; jedina grana `infoText`
+            // koja je ostala bez `loc()`.
+            LearnScenario.PROMOTION -> loc("Kad beli pešak stigne do osmog reda, može se pretvoriti u bilo koju figuru — gotovo uvek u damu. Tapni e8.")
         }
 
     val movesCountLabel: String

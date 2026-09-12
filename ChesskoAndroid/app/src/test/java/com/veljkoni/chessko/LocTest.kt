@@ -22,6 +22,21 @@ class LocTest {
     }
 
     @Test
+    fun fileLanguageCodeKeepsScriptForChinese() {
+        // Lekcije se traze po IMENU FAJLA (`board-and-pieces.zh-Hans.json`), a
+        // `getLanguage()` za kineski vraca „zh" radi UI biraca. Da `LearnView`
+        // upotrebi `getLanguage()`, kineski korisnik bi tiho dobio engleski —
+        // bez pada i bez poruke. Ovaj test je jedino mesto koje to hvata.
+        Loc.setLanguage("zh")
+        assertEquals("zh", Loc.getLanguage())
+        assertEquals("zh-Hans", Loc.fileLanguageCode())
+
+        Loc.setLanguage("fr")
+        assertEquals("fr", Loc.fileLanguageCode())
+        Loc.setLanguage("sr")
+    }
+
+    @Test
     fun difficultyLabelsAreTranslated() {
         Loc.setLanguage("en")
         assertEquals("Easy", loc("Lako"))

@@ -2,6 +2,8 @@ package com.veljkoni.chessko.ui
 
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
+import com.veljkoni.chessko.logic.Loc
+import com.veljkoni.chessko.logic.LessonRepository
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,21 +38,33 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/// Kartica lekcije na spisku. Od Faze 6b vise NE nosi tekst iz koda — sve sem
+/// boje dolazi iz `assets/lessons/<id>.<jezik>.json`.
+///
+/// `id` je String (`"board-and-pieces"`), a ne redni broj: lekcije se otkrivaju
+/// iz imena fajlova, pa redni broj vise nije identitet. `number` postoji samo
+/// zbog natpisa „Lekcija N" i racuna se iz POLOZAJA u spisku — nova lekcija
+/// ubacena u sredinu pomera brojeve ispod sebe, sto je i ocekivano.
 data class LessonInfo(
-    val id: Int,
+    val id: String,
+    val number: Int,
     val title: String,
     val subtitle: String,
     val icon: String,
     val accentColor: Color
-) {
-    companion object {
-        val all = listOf(
-            LessonInfo(1, loc("Tabla, figure i kretanje"), loc("Osnove šaha za početnike"), "♟️", Color(0xFF3B82F6)),
-            LessonInfo(2, loc("Početak igre (Otvaranja)"), loc("Zlatna pravila i poznata otvaranja"), "🏁", Color(0xFF10B981)),
-            LessonInfo(3, loc("Središnjica"), loc("Taktika i srce bitke"), "⚡", Color(0xFFF59E0B)),
-            LessonInfo(4, loc("Završnica"), loc("Šah-mat, pat i remi"), "🏆", Color(0xFFEF4444))
-        )
-    }
+)
+
+/// Boja lekcije je jedina stvar koja je ostala u kodu — JSON je ne nosi.
+/// Nepoznat id (nova lekcija bez unosa ovde) dobija podrazumevani akcent umesto
+/// da bude nevidljiv ili da obori ekran.
+private fun accentFor(id: String): Color = when (id) {
+    "board-and-pieces" -> Color(0xFF3B82F6)
+    "notation" -> Color(0xFF8B5CF6)
+    "openings" -> Color(0xFF10B981)
+    "tactics" -> Color(0xFF06B6D4)
+    "middlegame" -> Color(0xFFF59E0B)
+    "endgame" -> Color(0xFFEF4444)
+    else -> Color(0xFF3B82F6)
 }
 
 enum class OpeningPhase {
@@ -86,7 +100,11 @@ class OpeningExerciseState(val line: OpeningLine) {
             OpeningPhase.WRONG_MOVE -> line.wrongMessage
             OpeningPhase.PLAYING -> {
                 val moveNum = (movePointer / 2) + 1
-                "Potez $moveNum — pronađi pravi potez za bele!"
+                // Kljuc POSTOJI u `Loc.kt` na svih 8 jezika i postojao je i pre
+                // ove faze — samo ga niko nije zvao, pa je vezba otvaranja na
+                // svakom jeziku pisala srpski. Vidi se na svakoj vezbi bez
+                // `playingPrompt` (sve tri u lekciji `openings`).
+                locF("Potez %d — pronađi pravi potez za bele!", moveNum)
             }
         }
 
@@ -213,7 +231,7 @@ class MateExerciseState(
             }
             is GameStatus.Draw -> loc("Remi — pazi na pat! Pokušaj ponovo.")
             is GameStatus.Check -> {
-                if (status.color == PieceColor.BLACK) loc("Šah! Nastavi...") else "Šah — moraš da se braniš!"
+                if (status.color == PieceColor.BLACK) loc("Šah! Nastavi...") else loc("Šah — moraš da se braniš!")
             }
             is GameStatus.Playing -> {
                 if (isThinking) loc("Crni razmišlja...") else loc("Na potezu si!")
@@ -308,9 +326,39 @@ fun LearnView(
     viewModel: LearnViewModel,
     modifier: Modifier = Modifier
 ) {
-    var activeLessonId by remember { mutableStateOf<Int?>(null) }
+    val context = LocalContext.current
+    val repo = remember { LessonRepository(context) }
 
-    val activeLesson = activeLessonId?.let { id -> LessonInfo.all.find { it.id == id } }
+    // NIJE `Loc.getLanguage()`: on za kineski vraca „zh", a fajl se zove
+    // `.zh-Hans.json`. Sa pogresnim kodom bi kineski korisnik tiho dobio
+    // engleski — bez pada i bez poruke.
+    val lang = Loc.fileLanguageCode()
+
+    // Ucitavanje je sinhrono, na glavnoj niti: sest fajlova od ~10 KB, i ceo
+    // podstablo se ionako ponovo gradi pri promeni jezika (`key(languageKey)` u
+    // `MainActivity`). Ako ovo ikad ode u pozadinu, kes u `LessonRepository`
+    // mora prvo da postane thread-safe — danas je obican `HashMap`.
+    val lessons = remember(lang) {
+        repo.discoveredLessonIds()
+            // `id` je onaj iz IMENA FAJLA, ne `d.id` iz sadrzaja: telo lekcije
+            // se kasnije trazi istim tim kodom, pa bi neslaganje ta dva dalo
+            // karticu koja se otvara u prazno.
+            .mapNotNull { id -> repo.lesson(id, lang)?.let { id to it } }
+            .mapIndexed { index, (id, d) ->
+                LessonInfo(
+                    id = id,
+                    number = index + 1,
+                    title = d.title,
+                    subtitle = d.subtitle,
+                    icon = lessonIcon(d.icon),
+                    accentColor = accentFor(id)
+                )
+            }
+    }
+
+    var activeLessonId by remember { mutableStateOf<String?>(null) }
+
+    val activeLesson = activeLessonId?.let { id -> lessons.find { it.id == id } }
 
     Box(
         modifier = modifier
@@ -336,14 +384,14 @@ fun LearnView(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = loc("4 lekcije od osnova do završnice"),
+                        text = loc("Od osnova do završnice"),
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 14.sp
                     )
                 }
 
                 // Lesson Cards list
-                LessonInfo.all.forEach { lesson ->
+                lessons.forEach { lesson ->
                     LessonCard(
                         info = lesson,
                         onClick = { activeLessonId = lesson.id }
@@ -404,7 +452,7 @@ fun LearnView(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = locF("Lekcija %d", activeLesson.id),
+                                text = locF("Lekcija %d", activeLesson.number),
                                 color = activeLesson.accentColor,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -423,12 +471,21 @@ fun LearnView(
                         }
                     }
 
-                    // Render Lesson body depending on ID
-                    when (activeLesson.id) {
-                        1 -> Lesson1Content(viewModel, activeLesson)
-                        2 -> Lesson2Content(activeLesson)
-                        3 -> Lesson3Content(activeLesson)
-                        4 -> Lesson4Content(activeLesson)
+                    // Telo lekcije dolazi iz JSON-a. `remember(id, lang)` je
+                    // ovde samo kes — `LessonRepository` ionako kesira; drzi
+                    // dokument stabilnim kroz rekompozicije skrola.
+                    val doc = remember(activeLesson.id, lang) { repo.lesson(activeLesson.id, lang) }
+                    if (doc == null) {
+                        // Kartica postoji samo ako se lekcija vec jednom ucitala,
+                        // pa je ovo prakticno nedostizno — ali tiha praznina bi
+                        // bila gora od recenice.
+                        Text(
+                            text = loc("Lekcija nije dostupna."),
+                            color = Color.White.copy(alpha = 0.6f),
+                            fontSize = 13.sp
+                        )
+                    } else {
+                        LessonBlocks(doc.blocks, activeLesson.accentColor, viewModel)
                     }
                 }
             }
@@ -462,7 +519,7 @@ fun LessonCard(info: LessonInfo, onClick: () -> Unit) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = locF("Lekcija %d", info.id),
+                text = locF("Lekcija %d", info.number),
                 color = info.accentColor.copy(alpha = 0.9f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold
@@ -502,14 +559,15 @@ fun LBox(icon: String, title: String, text: String, color: Color) {
             Text(text = title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = text, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+        Text(text = mdBold(text), color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
     }
 }
 
 @Composable
 fun LPara(text: String) {
     Text(
-        text = text,
+        // Podebljanje iz JSON-a (`**ovako**`) — vidi `mdBold` u LessonRenderer.kt.
+        text = mdBold(text),
         color = Color.White.copy(alpha = 0.8f),
         fontSize = 13.sp,
         lineHeight = 18.sp,
@@ -529,7 +587,7 @@ fun LBullet(icon: String, title: String, text: String, color: Color) {
         Text(text = icon, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(text = text, color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
+            Text(text = mdBold(text), color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
         }
     }
 }
@@ -566,7 +624,7 @@ fun LNumberedRule(number: Int, title: String, text: String, color: Color) {
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(text = text, color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
+            Text(text = mdBold(text), color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
         }
     }
 }
@@ -614,7 +672,10 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = piece.srbName, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                // `srbName` je bukvalno srpski string u modelu; kljucevi („Kralj",
+                // „Dama"...) postoje u `Loc.kt` na svih 8 jezika. Bez `loc()` je
+                // birac figura u lekciji pisao srpski i na engleskom UI-ju.
+                Text(text = loc(piece.srbName), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -671,320 +732,13 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
     }
 }
 
-// Interactive Lesson 1 details
-@Composable
-fun Lesson1Content(viewModel: LearnViewModel, info: LessonInfo) {
-    LBox(
-        icon = "💬",
-        title = loc("Kapablanka piše"),
-        text = loc("\"Prva stvar koju učenik treba da uradi jeste da upozna snagu figura. Ovo se najlakše postiže učenjem kako se brzo postiže šah-mat.\""),
-        color = info.accentColor
-    )
-
-    LPara("Šah se igra na tabli od 64 polja naizmenično svetle i tamne boje. Uvek zapamti: donje desno polje mora biti svetlo. Svaki igrač počinje sa 16 figura.")
-
-    LSectionHeader("📱", loc("Istraži figure interaktivno"), info.accentColor)
-
-    PieceExplorer(viewModel, info.accentColor)
-
-    // Static piece details
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("ℹ️", "Opis figura i kretanje", info.accentColor)
-
-    LBullet("♟️", "Pion (Pešak) · x 8", "Ide isključivo napred po jedno polje. Na prvom potezu može skočiti dva polja. Jede isključivo dijagonalno napred.", info.accentColor)
-    LBullet("🏰", "Top (Kula) · x 2", "Kreće se po pravim linijama (vodoravno i uspravno) koliko god polja želi. Ne može da preskače druge figure.", info.accentColor)
-    LBullet("📐", "Lovac · x 2", "Kreće se isključivo dijagonalno. Jedan uvek ostaje na belim, a drugi na crnim poljima partije.", info.accentColor)
-    LBullet("🐴", "Skakač (Konj) · x 2", "Kreće se u obliku slova 'L' (2+1 polje). Jedina figura koja može preskakati druge figure na tabli.", info.accentColor)
-    LBullet("👑", "Dama (Kraljica) · x 1", "Najjača figura. Kombinuje kretanje topa i lovca u svim pravcima bez limita u poljima.", info.accentColor)
-    LBullet("🛡️", "Kralj · x 1", "Najvažnija figura čiji pad završava partiju. Kreće se jedno polje u svim pravcima. Ne sme stati na napadnuto polje.", info.accentColor)
-
-    // Checkmate Exercises at bottom of Lesson 1
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("🧩", "Zadaci — Vežbanje Mata", info.accentColor)
-    LPara("Završi ove jednostavne matne vežbe protiv računara. Na potezu si!")
-
-    MateExerciseCard(
-        fen = "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
-        title = loc("Vežba 1 — Kralj + Top"),
-        hint = loc("Oteraj crnog Kralja na ivicu table. Top i Kralj moraju da sarađuju!"),
-        icon = "🏰",
-        color = Color(0xFF3B82F6)
-    )
-
-    MateExerciseCard(
-        fen = "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
-        title = loc("Vežba 2 — Kralj + dva Lovca"),
-        hint = loc("Oteraj Kralja ne samo na ivicu već i u ugao iste boje kao tvoji lovci."),
-        icon = "📐",
-        color = Color(0xFF8B5CF6)
-    )
-
-    MateExerciseCard(
-        fen = "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
-        title = loc("Vežba 3 — Kralj + Dama"),
-        hint = loc("Najlakše! Dama odmah sužava prostor. Pazi na pat!"),
-        icon = "👑",
-        color = Color(0xFFF59E0B)
-    )
-}
-
-// Lesson 2 detail text layout
-@Composable
-fun Lesson2Content(info: LessonInfo) {
-    LBox(
-        icon = "💬",
-        title = loc("Kapablanka piše"),
-        text = loc("\"Najvažnija stvar u otvaranju je brzo razviti figure. Nijedno parče ne treba pomeriti više od jednom pre nego što je razvoj završen, osim ako je to apsolutno neophodno.\""),
-        color = info.accentColor
-    )
-
-    LPara("U šahu Beli uvek igra prvi i zbog toga ima blagu inicijalnu prednost. Zadatak oba igrača u otvaranju je isti: što brže dovesti figure u igru i zauzeti kontrolu nad centrom.")
-
-    LSectionHeader("✨", loc("Zlatna pravila otvaranja"), info.accentColor)
-    LNumberedRule(1, loc("Razvijaj figure brzo"), "Skakače razvijaj pre lovaca. Ne pomeraj istu figuru dva puta u otvaranju ako nisi primoran. Svaki potez treba da razvija novu figuru.", info.accentColor)
-    LNumberedRule(2, loc("Kontroliši centar"), "Četiri centralna polja (e4, d4, e5, d5) su ključ za pobedu. Ko vlada centrom, ima prostor za manevar i slobodan plasman figura.", info.accentColor)
-    LNumberedRule(3, "Zaštiti kralja — rokada!", "Uradi rokadu što pre. Kralj u centru je laka meta na otvorenim linijama. Rokada donosi bezbednost kralju i aktivira topa.", info.accentColor)
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("⚠️", loc("Tipične greške u otvaranju"), info.accentColor)
-    LBullet("❌", loc("Prerano izvođenje Dame"), "Dama je jaka, ali ako izađe rano, protivnik je napada lakim figurama i pešacima razvijajući se sa tempom prednosti.", Color.Red)
-    LBullet("❌", loc("Pasivna odbrana pionima"), "Previše odbrambenih poteza pešacima zatvara tvoje figure i daje protivniku slobodnu inicijativu u centru.", Color.Red)
-    LBullet("❌", loc("Zakasnela rokada"), "Čuvanje kralja u centru kada su linije otvorene je rizik koji najčešće vodi do brzog šaha i gubitka materijala.", Color.Red)
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("📖", "Vežbanje poznatih otvaranja", info.accentColor)
-    LPara(loc("Odigraj svaki potez belih na tabli — crni odgovara automatski po teorijskoj liniji."))
-
-    OpeningExerciseCard(
-        line = OpeningLine(
-            name = loc("Španska partija (Ruy Lopez)"),
-            uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1b5"),
-            hint = loc("1.e4 e5 2.Sf3 Sc6 3.Lb5 — Kapablankova omiljena"),
-            icon = "👑",
-            accentColor = info.accentColor
-        )
-    )
-
-    OpeningExerciseCard(
-        line = OpeningLine(
-            name = loc("Italijanska partija"),
-            uciMoves = listOf("e2e4", "e7e5", "g1f3", "b8c6", "f1c4"),
-            hint = loc("1.e4 e5 2.Sf3 Sc6 3.Lc4 — lovac nišani tačku f7"),
-            icon = "🔥",
-            accentColor = Color(0xFFF59E0B)
-        )
-    )
-
-    OpeningExerciseCard(
-        line = OpeningLine(
-            name = loc("Sicilijanska odbrana"),
-            uciMoves = listOf("e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4"),
-            hint = loc("1.e4 c5 2.Sf3 d6 3.d4 cxd4 4.Sxd4 — asimetrična borba"),
-            icon = "🛡️",
-            accentColor = Color(0xFF8B5CF6)
-        )
-    )
-}
-
-// Lesson 3 detail text layout
-@Composable
-fun Lesson3Content(info: LessonInfo) {
-    LBox(
-        icon = "💬",
-        title = loc("Kapablanka piše"),
-        text = loc("\"Idealna središnjica: sve figure su bačene u napad kao masa, koordinirajući se sa mašinskom preciznošću. Cilj svakog majstora je da postigne upravo takvu harmoniju.\""),
-        color = info.accentColor
-    )
-
-    LPara("Kada su figure razvijene i kraljevi sigurni, počinje središnjica — najkreativniji deo partije gde se grade planovi i sprovodi taktika.")
-
-    LSectionHeader("🚩", loc("Inicijativa"), info.accentColor)
-    LPara("Kapablanka objašnjava: Beli ima inicijativu zbog prvog poteza. Igrač sa inicijativom diktira tempo igre, dok protivnik mora da se brani. Inicijativu treba pažljivo čuvati i razvijati.")
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("⚖️", "Vrednosti figura (Materijal)", info.accentColor)
-    LPara("Tabela relativnih vrednosti figura u pešacima:")
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.05f))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        listOf(
-            "♟️ Pion (Pešak)" to "1 poen",
-            "🐴 Skakač (Konj)" to "3 poena",
-            "📐 Lovac" to "3 poena",
-            "🏰 Top (Kula)" to "5 poena",
-            "👑 Dama" to "9 poena",
-            "🛡️ Kralj" to "Beskonačno (kraj igre)"
-        ).forEach { pair ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = pair.first, color = Color.White, fontSize = 13.sp)
-                Text(text = pair.second, color = info.accentColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("⚡", loc("Osnovni taktički motivi"), info.accentColor)
-    LBox("🍴", loc("Viljuška (Rašlje)"), "Kada jedna tvoja figura napadne dve ili više protivničkih istovremeno. Skakači i pioni su idealni za ovaj motiv.", info.accentColor)
-    LBox("🔗", loc("Vezivanje (Pin)"), "Kada napadneš figuru koja se ne sme pomeriti jer bi time otkrila vredniju figuru iza sebe (Kralja ili Damu).", info.accentColor)
-    LBox("🔄", loc("Otkriveni napad"), "Kada pomeriš jednu figuru i time otvoriš liniju napada za drugu figuru koja stoji iza nje.", info.accentColor)
-}
-
-// Lesson 4 detail text layout
-@Composable
-fun Lesson4Content(info: LessonInfo) {
-    LBox(
-        icon = "💬",
-        title = loc("Kapablanka piše"),
-        text = loc("\"Pre nego što se boriš za pobedu u otvaranju ili središnjici, moraš savladati završnicu. Onaj ko ne poznaje završnicu ne može biti jak šahista.\""),
-        color = info.accentColor
-    )
-
-    LPara(loc("Završnica počinje kada su sa table nestale najvažnije figure i ostanu Kraljevi sa pešacima i možda jednom-dve lake figure."))
-
-    LSectionHeader("👑", loc("Kralj postaje napadač"), info.accentColor)
-    LPara("Ovo je najveća promena u završnici. Kralj koji je celu partiju bežao sada mora aktivno da napada.")
-
-    LBullet("👑", loc("Dovedi Kralja u centar odmah"), "Čim osetiš da je završnica blizu, počni da pomičeš Kralja ka centru table. Centralni Kralj dominira nad marginalnim.", info.accentColor)
-    LBullet("⛃", loc("Pioni su budući Kraljevi"), loc("Svaki pion koji stigne do poslednjeg reda postaje Dama (ili druga figura). Ovo je glavni cilj u pešačkim završnicama."), info.accentColor)
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("⛃", loc("Pravilo o promociji piona"), info.accentColor)
-    LPara(loc("Kapablanka objašnjava ovo pravilo jasno i precizno:"))
-
-    LBox(
-        icon = "✓",
-        title = loc("Ključno pravilo"),
-        text = loc("Da bi pešačka završnica bila pobednička, Kralj mora biti ispred svog piona sa barem jednim praznim poljem između njih. Ako je protivnički Kralj direktno ispred piona — igra je remi!"),
-        color = info.accentColor
-    )
-    LBullet("⬆", loc("Napreduj Kralja, ne piona"), loc("Kapablanka savetuje: napreduj Kralja koliko je moguće a da ne ugrožavaš piona. Piona pomiči tek kada je neophodno za njegovu zaštitu."), info.accentColor)
-    LBullet("📏", loc("Tajno oružje — \"Opozicija\""), "Kada su dva Kralja međusobno licem u lice sa neparnim brojem polja između, igrač koji je prethodno poterao ima prednost. Zove se opozicija — i ključna je za sve pešačke završnice.", info.accentColor)
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("⚡", loc("Kardinalno načelo"), info.accentColor)
-    LBox(
-        icon = "⭐",
-        title = loc("Jedno drži dvoje — Kapablankovo načelo"),
-        text = loc("\"Pion koji drži dva protivnička piona je jedno od glavnih oruđa majstora.\" Ako tvoj pion blokira dva protivnička, ti si faktički figuru ispred — iskoristi tu prednost na drugoj strani table!"),
-        color = Color(0xFFF59E0B)
-    )
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("⚖️", loc("Lovac vs. Skakač u završnici"), info.accentColor)
-    LBullet("↗", loc("Lovac je jači kada su pioni na obe strane"), loc("Lovac može istovremeno da napada pione na oba krila zahvaljujući dometu. Skakač je spor i ne može da stigne svuda."), info.accentColor)
-    LBullet("🎮", loc("Skakač je jači u zatvorenim pozicijama"), loc("Kada su pioni blokirani i pozicija zatvorena, skakač je bolji jer može da preskoče pione i stigne do idealnog polja."), info.accentColor)
-    LBox(
-        icon = "⚠️",
-        title = loc("Slabost lovca — Topov pion"),
-        text = loc("Ako tvoj pion ide do h8 (ili a8) i to polje je suprotne boje od tvog lovca, protivnik drži ugao i igra je remi! Kapablanka ovo posebno ističe kao izvor mnogih propuštenih pobeda."),
-        color = info.accentColor
-    )
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("🏆", loc("Šah-Mat i Remi"), info.accentColor)
-    LBox("⚠️", loc("Šah"), "Situacija kada je Kralj napadnut. Igrač mora da se odbrani — pomeri kralja, pojede napadača, ili postavi štit između.", Color(0xFFF59E0B))
-    LBox("❌", loc("Šah-Mat — Kraj igre"), loc("Kralj je napadnut, a nema nijedan legalan način odbrane. Partija se završava ovde — Kralj se nikada zapravo ne jede."), Color(0xFFEF4444))
-    LBox("ℹ️", loc("Pat — Noćna mora pobednika!"), "Igrač na potezu nije u šahu, ali nema nijedan legalan potez. Odmah je remi! Ovo je najopasnija greška u završnici — pretvoriti pobedničku poziciju u remi jednim lošim potezom.", info.accentColor)
-    LBullet("🔄", loc("Ponavljanje pozicije"), "Ako se ista pozicija ponovi tri puta, može se tražiti remi.", info.accentColor)
-    LBullet("➖", loc("Nedovoljno materijala"), loc("Samo Kraljevi, ili Kralj + Lovac/Skakač protiv Kralja — nije moguće dati mat. Automatski remi."), info.accentColor)
-
-    // Mini final test (5 puzzles)
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("🏆", loc("Mini finalni test"), info.accentColor)
-    LPara(loc("Primeni sve što si naučio! Reši 5 zadataka — mat u najmanji broj poteza. Svaki koristi drugu kombinaciju figura."))
-
-    MatePuzzleCard(
-        fen = "6k1/5ppp/8/8/8/8/3Q4/4R1K1 w - - 0 1",
-        moves = listOf("d2d8"),
-        title = loc("Zadatak 1 — Dama na zadnjoj liniji"),
-        hint = loc("Crni Kralj je zarobljen. Dama ima slobodan put..."),
-        icon = "👑",
-        accentColor = Color(0xFFF59E0B),
-        mateIn = 1
-    )
-
-    MatePuzzleCard(
-        fen = "6k1/5ppp/8/1R6/8/8/8/6K1 w - - 0 1",
-        moves = listOf("b5b8"),
-        title = loc("Zadatak 2 — Top na 8. liniji"),
-        hint = loc("Pešaci blokiraju sopstvenog Kralja. Top pronalazi put..."),
-        icon = "🏰",
-        accentColor = Color(0xFF3B82F6),
-        mateIn = 1
-    )
-
-    MatePuzzleCard(
-        fen = "2r3k1/5ppp/8/8/Q7/8/8/4R1K1 w - - 0 1",
-        moves = listOf("e1e8", "c8e8", "a4e8"),
-        title = loc("Zadatak 3 — Žrtva Topa!"),
-        hint = loc("Top ide na e8 i daje šah. Crni Top mora da uzme — a onda Dama?"),
-        icon = "🏰",
-        accentColor = Color(0xFFF59E0B),
-        mateIn = 2
-    )
-
-    MatePuzzleCard(
-        fen = "5k2/5ppp/8/4B3/8/8/8/4R1K1 w - - 0 1",
-        moves = listOf("e5d6", "f8g8", "e1e8"),
-        title = loc("Zadatak 4 — Lovac + Top"),
-        hint = loc("Lovac daje šah i tera Kralja na g8. Zašto je to pogubno?"),
-        icon = "📐",
-        accentColor = Color(0xFF10B981),
-        mateIn = 2
-    )
-
-    MatePuzzleCard(
-        fen = "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w KQ - 0 1",
-        moves = listOf("d2h6", "g7h6", "h4f6"),
-        title = loc("Zadatak 5 (težak) — Žrtva Dame, Lovac mat"),
-        hint = loc("Greet – Hanley, Liverpool 2008. Dama se žrtvuje na h6. Zašto Kralj mora da uzme?"),
-        icon = "👑",
-        accentColor = Color(0xFF8B5CF6),
-        mateIn = 2
-    )
-
-    // About author
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("👤", loc("O autoru"), info.accentColor)
-
-    LBox(
-        icon = "👤",
-        title = loc("Hoze Raul Kapablanka (1888–1942)"),
-        text = loc("Kubanski šahista, treći zvanični svetski prvak u šahu. Važi za jednog od najvećih šahiskih genija svih vremena — poznat po kristalno čistom stilu igre i intuitivnom razumevanju pozicije."),
-        color = info.accentColor
-    )
-
-    LPara("Kapablanka je naučio šah sa svega četiri godine gledajući svog oca. Nikada nije pohađao šahovsku školu — sve je naučio sam, igrajući. Već sa 13 godina pobedio je kubanskog prvaka Juana Corzo-a i postao nacionalna senzacija.")
-    LPara("U periodu 1916–1924. godine nije izgubio nijednu partiju. Svetsku šampionsku titulu osvojio je 1921. pobedivši legendarnog Emanuela Laskera, koji je bio prvak čitavih 27 godina.")
-
-    LBullet("👁️", loc("Fotografska preciznost"), loc("Pobedio je jednostavnošću i savršenom tehnikom — ne agresijom."), info.accentColor)
-    LBullet("📚", loc("Popularizator šaha"), loc("\"Chess Fundamentals\" (1921) je pisao upravo za početnike i amatere."), info.accentColor)
-
-    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-    LSectionHeader("📖", loc("Izvor: Project Gutenberg"), info.accentColor)
-    LPara("Sav sadržaj lekcija preuzet je iz digitalne verzije knjige dostupne na Project Gutenberg — neprofitnoj biblioteci knjiga u javnom domenu.")
-
-    LBox(
-        icon = "🌐",
-        title = "gutenberg.org/ebooks/33870",
-        text = loc("Možeš je pročitati u celosti besplatno, bez registracije."),
-        color = info.accentColor
-    )
-    LBox(
-        icon = "❤️",
-        title = loc("Zahvalnost"),
-        text = loc("Chessko duguje zahvalnost Kapablanki na bezvremenim principima i Project Gutenberg zajednici volontera koji su digitalizovali ovu i hiljade drugih knjiga."),
-        color = info.accentColor
-    )
-}
+// Telo lekcija je od Faze 6b u `assets/lessons/*.json`; crta ga
+// `LessonRenderer.LessonBlocks`. Ovde su nekad stajale `Lesson1Content`..
+// `Lesson4Content` sa ~400 linija zakucanog SRPSKOG teksta koji se na svim
+// ostalim jezicima video onakav kakav jeste. Komponente koje su one koristile
+// (`LBox`, `LPara`, `LBullet`, `LSectionHeader`, `LNumberedRule`,
+// `PieceExplorer`, `OpeningExerciseCard`, `MateExerciseCard`, `MatePuzzleCard`)
+// NISU obrisane — renderer ih zove.
 
 @Composable
 fun OpeningExerciseCard(line: OpeningLine) {
@@ -1058,7 +812,15 @@ fun OpeningExerciseCard(line: OpeningLine) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = state.statusMessage,
+                // `playingPrompt` je uputstvo koje JSON pise uz vezbu („Find
+                // mate in 1!"). `MatePuzzleCard` ga postuje, ali renderer zove
+                // OVU karticu za sve `scripted` vezbe, a ona ga je ignorisala —
+                // pa je 13 od 16 vezbi u isporucenom sadrzaju pisalo genericko
+                // „Potez N — pronadji pravi potez za bele!" umesto svog teksta.
+                text = if (state.phase == OpeningPhase.PLAYING && line.playingPrompt != null)
+                    line.playingPrompt
+                else
+                    state.statusMessage,
                 color = when (state.phase) {
                     OpeningPhase.SOLVED -> Color(0xFF10B981)
                     OpeningPhase.WRONG_MOVE -> Color(0xFFEF4444)

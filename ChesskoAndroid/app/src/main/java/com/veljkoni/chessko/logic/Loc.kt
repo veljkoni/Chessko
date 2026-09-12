@@ -15,6 +15,12 @@ object Loc {
         return if (currentLanguage == "zh-Hans") "zh" else currentLanguage
     }
 
+    /// Kod u obliku u kome se pojavljuje u IMENIMA FAJLOVA
+    /// (`board-and-pieces.zh-Hans.json`). Razlikuje se od `getLanguage()`, koji
+    /// za kineski vraca „zh" radi UI biraca. Lekcije se traze OVIM kodom —
+    /// inace kineski korisnik tiho dobija engleski.
+    fun fileLanguageCode(): String = currentLanguage
+
     fun get(key: String): String {
         val langMap = dictionary[key] ?: return key
         return langMap[currentLanguage] ?: langMap["en"] ?: key
@@ -512,6 +518,19 @@ object Loc {
         // kljuc namerno nema zavrsnu tacku (postoji i "Greška pri učitavanju."
         // kao zasebna, cela recenica).
         "Greška pri učitavanju" to mapOf("sr" to "Greška pri učitavanju", "en" to "Loading error", "fr" to "Erreur de chargement", "de" to "Ladefehler", "it" to "Errore di caricamento", "ru" to "Ошибка загрузки", "zh-Hans" to "加载出错", "hi" to "लोडिंग त्रुटि"),
+        // Jedina grana `MateExerciseState.statusMessage` koja je ostala bez
+        // `loc()` — igrac je u sahu u vezbi mata. Kljuc ne postoji ni u iOS
+        // katalogu, pa je ovde nov.
+        "Šah — moraš da se braniš!" to mapOf("sr" to "Šah — moraš da se braniš!", "en" to "Check — you must defend!", "fr" to "Échec — vous devez vous défendre !", "de" to "Schach — du musst dich verteidigen!", "it" to "Scacco — devi difenderti!", "ru" to "Шах — нужно защищаться!", "zh-Hans" to "将军 — 必须应将！", "hi" to "शह — आपको बचाव करना होगा!"),
+        // Faza 6b, Task 4: ekran Ucenja vise ne zna koliko lekcija postoji —
+        // spisak dolazi iz `assets/lessons/`. Stari kljuc je tvrdio „4 lekcije"
+        // i sa sestom lekcijom bi lagao; broj je zato izbacen iz recenice, a ne
+        // interpolovan (srpska mnozina „4 lekcije"/„6 lekcija" ne poklapa se ni
+        // sa jednim drugim jezikom u katalogu).
+        "Od osnova do završnice" to mapOf("sr" to "Od osnova do završnice", "en" to "From the basics to the endgame", "fr" to "Des bases jusqu’à la finale", "de" to "Von den Grundlagen bis zum Endspiel", "it" to "Dalle basi al finale", "ru" to "От основ до эндшпиля", "zh-Hans" to "从基础到残局", "hi" to "मूल बातों से अंत खेल तक"),
+        // Vidi se samo ako lekcija postoji u spisku a ne moze da se ucita ni na
+        // jednom jeziku iz lanca (jezik -> en -> sr) — npr. pokvaren JSON.
+        "Lekcija nije dostupna." to mapOf("sr" to "Lekcija nije dostupna.", "en" to "This lesson is not available.", "fr" to "Cette leçon n’est pas disponible.", "de" to "Diese Lektion ist nicht verfügbar.", "it" to "Questa lezione non è disponibile.", "ru" to "Этот урок недоступен.", "zh-Hans" to "该课程不可用。", "hi" to "यह पाठ उपलब्ध नहीं है।"),
         "Neispravan FEN u zadatku" to mapOf("sr" to "Neispravan FEN u zadatku", "en" to "Invalid FEN in puzzle", "fr" to "FEN invalide dans le problème", "de" to "Ungültiges FEN in der Aufgabe", "it" to "FEN non valido nel problema", "ru" to "Неверный FEN в задаче", "zh-Hans" to "谜题中的 FEN 无效", "hi" to "पहेली में अमान्य FEN")
     )
 }

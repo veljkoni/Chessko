@@ -8,6 +8,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,12 +39,12 @@ fun LessonBlocks(
 ) {
     for (b in blocks) {
         when (b) {
-            is LessonBlock.Heading -> LSectionHeader(b.icon, b.text, accent)
+            is LessonBlock.Heading -> LSectionHeader(lessonIcon(b.icon), b.text, accent)
             is LessonBlock.Paragraph -> LPara(b.text)
             is LessonBlock.Bullets -> for (it in b.items) {
-                LBullet(it.icon, it.title, it.text, colorFor(it.style, accent))
+                LBullet(lessonIcon(it.icon), it.title, it.text, colorFor(it.style, accent))
             }
-            is LessonBlock.Box -> LBox(b.icon, b.title, b.text, colorFor(b.style, accent))
+            is LessonBlock.Box -> LBox(lessonIcon(b.icon), b.title, b.text, colorFor(b.style, accent))
             is LessonBlock.Quote -> LQuote(b.text, b.author)
             is LessonBlock.PieceRow -> LPieceRow(b.piece, b.name, b.count, accent)
             is LessonBlock.NumberedRule -> LNumberedRule(b.number, b.title, b.text, accent)
@@ -68,7 +72,7 @@ private fun colorFor(style: BoxStyle?, accent: Color): Color = when (style) {
 @Composable
 private fun LQuote(text: String, author: String) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(text = text, fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f))
+        Text(text = mdBold(text), fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f))
         Spacer(Modifier.height(4.dp))
         Text(text = "— $author", fontSize = 13.sp, color = Color.White.copy(alpha = 0.55f))
     }
@@ -167,7 +171,7 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
                 name = spec.title,
                 uciMoves = spec.uciMoves ?: emptyList(),
                 hint = spec.hint,
-                icon = spec.icon,
+                icon = lessonIcon(spec.icon),
                 accentColor = accent,
                 // Podrazumevane poruke IDU kroz `loc()` — to je hrom, ne sadrzaj.
                 solvedMessage = spec.solvedMessage ?: loc("Bravo! Otvaranje savladano! ✓"),
@@ -182,8 +186,115 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
             fen = spec.startFEN ?: "",
             title = spec.title,
             hint = spec.hint,
-            icon = spec.icon,
+            icon = lessonIcon(spec.icon),
             color = accent
         )
+    }
+}
+
+// MARK: - Ikone
+//
+// JSON lekcija je prenet sa iOS-a i u polju `icon` nosi IME SF SIMBOLA
+// („crown.fill", „quote.opening"). Android nema SF simbole, a `LBox`/`LBullet`/
+// `LSectionHeader` ikonu crtaju kao obican `Text` — bez ovog prevoda bi se na
+// ekranu bukvalno ispisivalo „crown.fill" umesto ikone, na svakom naslovu i u
+// svakoj kutiji. Zato prevod stoji OVDE, na granici gde podatak iz JSON-a
+// ulazi u UI, a ne u samim komponentama (one primaju ono sto vec treba da
+// nacrtaju).
+//
+// Mapa pokriva svih 49 simbola koji se pojavljuju u `assets/lessons/*.json`
+// (provereno pretragom kroz sve fajlove). Nepoznat simbol daje neutralnu tacku
+// umesto sirovog imena — losa ikona je bolja od besmislenog teksta usred
+// recenice.
+private val SYMBOL_TO_EMOJI: Map<String, String> = mapOf(
+    "arrow.clockwise" to "🔄",
+    "arrow.forward.circle.fill" to "➡️",
+    "arrow.left.arrow.right" to "↔️",
+    "arrow.triangle.2.circlepath" to "🔄",
+    "arrow.up" to "⬆️",
+    "arrow.up.and.down" to "↕️",
+    "arrow.up.and.down.and.arrow.left.and.right" to "✳️",
+    "arrow.up.circle.fill" to "⬆️",
+    "arrow.up.left.and.arrow.up.right" to "↗️",
+    "arrow.up.right" to "↗️",
+    "arrow.up.right.and.arrow.up.left" to "↗️",
+    "bolt.fill" to "⚡",
+    "book.fill" to "📖",
+    "chart.line.uptrend.xyaxis" to "📈",
+    "checkmark.circle.fill" to "✅",
+    "checkmark.seal.fill" to "✅",
+    "circle.fill" to "⚫",
+    "crown.fill" to "👑",
+    "dot.square.fill" to "⬛",
+    "exclamationmark.2" to "‼️",
+    "exclamationmark.circle.fill" to "❗",
+    "exclamationmark.triangle.fill" to "⚠️",
+    "eye.fill" to "👁️",
+    "flag.checkered" to "🏁",
+    "flag.fill" to "🚩",
+    "flame.fill" to "🔥",
+    "globe" to "🌐",
+    "hand.point.up.left.fill" to "👆",
+    "heart.fill" to "❤️",
+    "info.circle.fill" to "ℹ️",
+    // Svih pet pojava je vezano za skakaca (L-putanja) — otud konj, ne dzojstik.
+    "l.joystick.fill" to "🐴",
+    "link" to "🔗",
+    "minus.circle.fill" to "➖",
+    "person.2.fill" to "👥",
+    "person.fill" to "👤",
+    "quote.opening" to "💬",
+    // „rectangle.portrait" je na iOS-u top, „rhombus" lovac — provereno po
+    // naslovima svih pojava, ne po imenu simbola.
+    "rectangle.portrait.fill" to "🏰",
+    "rhombus.fill" to "📐",
+    "ruler.fill" to "📏",
+    "scalemass.fill" to "⚖️",
+    "shield.fill" to "🛡️",
+    "square.grid.2x2.fill" to "🔲",
+    "square.grid.3x3.fill" to "♟️",
+    "star.fill" to "⭐",
+    "text.book.closed.fill" to "📚",
+    "trophy.fill" to "🏆",
+    // Motiv „viljuska" — iOS je za njega uzeo bas „tuningfork".
+    "tuningfork" to "🍴",
+    "xmark.circle.fill" to "❌",
+    "xmark.shield.fill" to "❌"
+)
+
+/// Emoji za ime SF simbola iz JSON-a. Ako sadrzaj vec nosi emoji (nema tacke u
+/// imenu), prosledjuje se nepromenjen — da rucno pisana lekcija ne mora da zna
+/// za SF imena.
+internal fun lessonIcon(symbol: String): String =
+    SYMBOL_TO_EMOJI[symbol] ?: if ('.' in symbol || symbol.isEmpty()) "•" else symbol
+
+// MARK: - Markdown
+//
+// JSON lekcija je prenet sa iOS-a, gde se telo bloka crta preko
+// `AttributedString` i podebljanje se pise kao `**ovako**`. Compose `Text` ne
+// zna za Markdown, pa bi bez ovoga na ekranu pisalo bukvalno „**64 polja**" —
+// 307 takvih mesta u 36 fajlova, u svakoj lekciji. Podrzano je samo `**`;
+// sadrzaj drugu sintaksu ne koristi (provereno pretragom kroz sve fajlove).
+internal fun mdBold(text: String): AnnotatedString = buildAnnotatedString {
+    var i = 0
+    var bold = false
+    while (i <= text.length) {
+        val next = text.indexOf("**", i)
+        if (next < 0) {
+            appendMaybeBold(text.substring(i), bold)
+            break
+        }
+        appendMaybeBold(text.substring(i, next), bold)
+        bold = !bold
+        i = next + 2
+    }
+}
+
+private fun AnnotatedString.Builder.appendMaybeBold(chunk: String, bold: Boolean) {
+    if (chunk.isEmpty()) return
+    if (bold) {
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(chunk) }
+    } else {
+        append(chunk)
     }
 }
