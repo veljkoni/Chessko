@@ -1,0 +1,201 @@
+{
+  "id": "notation",
+  "title": "Šahovska notacija",
+  "subtitle": "Kako se čita i zapisuje potez",
+  "icon": "text.book.closed.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "text.book.closed.fill",
+      "title": "Zašto ti treba notacija",
+      "text": "Cela šahovska literatura — knjige, zadaci, partije starih majstora — zapisana je jednim istim jezikom. Nauči ga i moći ćeš da pročitaš svaku partiju i da se vratiš na svoje poteze. I ova aplikacija ti ispisuje poteze baš tako."
+    },
+    {
+      "type": "paragraph",
+      "text": "Tabla ima **koordinate**. Osam uspravnih nizova polja — kolone — nose slova **a** do **h**, sleva nadesno gledano sa strane belog. Osam vodoravnih redova nose brojeve **1** do **8**, odozdo nagore. Svako polje tako ima svoje ime: prvo slovo kolone, pa broj reda."
+    },
+    {
+      "type": "board",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "caption": "Početna pozicija. Beli kralj stoji na e1, crni na e8. Polje u donjem desnom uglu je h1 — i uvek je svetlo.",
+      "interactive": false
+    },
+    {
+      "type": "heading",
+      "text": "Slova figura",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "Kralj",
+      "count": "K"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "Dama",
+      "count": "D"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "Top",
+      "count": "T"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "Lovac",
+      "count": "L"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "Skakač",
+      "count": "S"
+    },
+    {
+      "type": "paragraph",
+      "text": "Pion nema svoje slovo. Kad u zapisu vidiš samo ime polja — **e4**, **d5** — potez je odigrao pion. Slovo figure je uvek **veliko**, a ime polja uvek **malo**, pa se to dvoje ne meša."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Kako se čita potez",
+      "icon": "eye.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "circle.fill",
+          "title": "e4",
+          "text": "Pion je stao na polje e4. Samo ime polja, bez slova figure.",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "Sf3",
+          "text": "Skakač je stao na f3. Prvo slovo figure, pa polje na koje je došla.",
+          "style": null
+        },
+        {
+          "icon": "flame.fill",
+          "title": "Lxf7",
+          "text": "Lovac je **uzeo** figuru na f7. Slovo **x** između znači uzimanje.",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "+",
+          "text": "Plus na kraju znači **šah** — potez napada protivničkog kralja.",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "#",
+          "text": "Taraba na kraju znači **mat**. Partija je time gotova.",
+          "style": null
+        },
+        {
+          "icon": "arrow.left.arrow.right",
+          "title": "0-0",
+          "text": "Rokada se ne zapisuje poljem nego znakom: **0-0** kratka, **0-0-0** duga. U knjigama i u ovoj aplikaciji često stoji **O-O** sa slovom O — isto je.",
+          "style": null
+        },
+        {
+          "icon": "arrow.left.arrow.right",
+          "title": "Kad pion uzima",
+          "text": "Ispred **x** stoji slovo kolone sa koje pion kreće: **exd5**. Bez tog slova se ne zna koji pion uzima.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Promocija",
+          "text": "Kad pion stigne do kraja, iza polja ide **=** i slovo nove figure: **e8=D**.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Odigraj 1.e4",
+      "hint": "Nema slova figure, dakle igra pion — onaj koji staje na e4.",
+      "icon": "arrow.up.circle.fill",
+      "uciMoves": [
+        "e2e4"
+      ],
+      "startFEN": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "solvedMessage": "Tako je — to je e4. ✓",
+      "wrongMessage": "Nije to. Traži se pion koji staje na polje e4.",
+      "playingPrompt": "Odigraj potez koji zapis opisuje.",
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Odigraj 2.Sf3",
+      "hint": "S je slovo skakača.",
+      "icon": "l.joystick.fill",
+      "uciMoves": [
+        "g1f3"
+      ],
+      "startFEN": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      "solvedMessage": "Tačno — Sf3. ✓",
+      "wrongMessage": "Pogrešna figura ili polje. S je skakač, a ide na f3.",
+      "playingPrompt": "Odigraj potez koji zapis opisuje.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Uzimanje, šah i rokada",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Odigraj Lxf7+",
+      "hint": "Lovac uzima na f7 i time daje šah: x je uzimanje, + je šah.",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "c4f7"
+      ],
+      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
+      "solvedMessage": "Tako je — Lxf7+. ✓ Zapis je tačan — sama žrtva ovde nije dobra (crni uzima kraljem), ali nas zanima samo kako se piše.",
+      "wrongMessage": "Nije to. Traži se lovac koji uzima na polju f7.",
+      "playingPrompt": "Odigraj potez koji zapis opisuje.",
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Odigraj 0-0",
+      "hint": "Rokada se zapisuje znakom, ne poljem — i izvodi se kraljem.",
+      "icon": "arrow.left.arrow.right",
+      "uciMoves": [
+        "e1g1"
+      ],
+      "startFEN": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 6 5",
+      "solvedMessage": "Rokada odigrana — 0-0. ✓",
+      "wrongMessage": "Rokada se igra kraljem: povuci ga sa e1 na g1.",
+      "playingPrompt": "Odigraj potez koji zapis opisuje.",
+      "mateIn": null
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "book.fill",
+      "title": "Isto to u aplikaciji",
+      "text": "Partija se zapisuje u parovima, sa rednim brojem ispred: **1.e4 e5 2.Sf3 Sc6** znači da je beli prvo odigrao e4, crni odgovorio e5, pa je beli izveo skakača na f3. Baš taj zapis raste uz tablu na ekranu Igra, potez po potez."
+    }
+  ],
+  "language": "sr"
+}

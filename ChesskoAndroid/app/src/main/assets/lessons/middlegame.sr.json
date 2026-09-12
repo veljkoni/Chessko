@@ -1,0 +1,172 @@
+{
+  "id": "middlegame",
+  "title": "Središnjica",
+  "subtitle": "Taktika i srce bitke",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Kapablanka piše",
+      "text": "\"Idealna središnjica: sve figure su bačene u napad kao masa, koordinirajući se sa mašinskom preciznošću. Cilj svakog majstora je da postigne upravo takvu harmoniju.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Kada su figure izvedene i kraljevi na sigurnom, počinje **središnjica** — najkreativniji i najkompleksniji deo šaha."
+    },
+    {
+      "type": "heading",
+      "text": "Inicijativa",
+      "icon": "flag.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Kapablanka objašnjava: Beli ima inicijalnu prednost zbog prvog poteza. Ovu prednost treba **čuvati što duže** — predaj je samo ako za uzvrat dobijaš materijal ili bolju poziciju."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.forward.circle.fill",
+          "title": "Ko napadá, dikta tempo",
+          "text": "Igrač sa inicijativom bira gde i kako da napadne. Protivnik mora da reaguje umesto da sprovodi sopstveni plan.",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "Ne napadaj bez sigurnosti",
+          "text": "Kapablanka upozorava: direktan napad na Kralja nikada ne treba voditi do krajnosti ako nema apsolutne sigurnosti da će uspeti. Neuspeo napad znači katastrofu.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Vrednosti figura",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "U središnjici, vrednost figure zavisi od pozicije. Uvek pazi šta razmenjuješ!"
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pešak",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Skakač",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Lovac",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Top",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Dama",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "Kralj",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Osnovna taktička motiva",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "tuningfork",
+      "title": "Viljuška (Rašlje)",
+      "text": "Jedna figura napadne **dve protivničke figure istovremeno**. Protivnik može da spasi samo jednu. Skakači su posebno opasni za viljuške — skaču na polje odakle napadaju Damu i Topa u isto vreme."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "link",
+      "title": "Vezivanje (Pin)",
+      "text": "Napadneš figuru koja **ne sme da se pomeri** jer bi time otkrila vrednu figuru iza nje (Kralja ili Damu). Vezana figura je praktično izolovana iz igre — iskoristi to!"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "arrow.triangle.2.circlepath",
+      "title": "Otkriveni napad",
+      "text": "Pomeriš jednu figuru i time otkriješ napad druge figure iza nje na protivnikovu vrednu figuru. Posebno opasan kada je i sama figura koja se pomera napadačka."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Koordinacija figura",
+      "icon": "person.2.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Kapablanka stalno naglašava: figure moraju da rade zajedno kao tim."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down",
+          "title": "Topovi traže otvorene linije",
+          "text": "Postavi ih na otvorenu kolonu ili sedmi red. Top zatvoren iza sopstvenih piona je pasivna figura.",
+          "style": null
+        },
+        {
+          "icon": "circle.fill",
+          "title": "Skakači najjači u centru",
+          "text": "\"Skakač na ivici table je loš skakač\" — kaže Kapablanka. U centru kontroliše čak 8 polja, na ivici samo 2-4.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.right",
+          "title": "Lovci vole otvorene dijagonale",
+          "text": "Lovac koji blokira sopstveni pion je ograničen. Pione postavljaj na polja **suprotne boje** od svog lovca.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Prednost od jednog piona",
+      "icon": "chart.line.uptrend.xyaxis"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "info.circle.fill",
+      "title": "Kapablankovo zlatno pravilo",
+      "text": "\"Dobitak jednog piona između jednako jakih igrača najčešće znači pobedu.\" Ne potcenjuj pion — u završnici je on često odlučujući. Svaka sitna prednost se akumulira!"
+    }
+  ],
+  "language": "sr"
+}

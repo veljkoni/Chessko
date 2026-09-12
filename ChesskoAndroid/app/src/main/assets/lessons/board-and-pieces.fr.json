@@ -1,0 +1,334 @@
+{
+  "id": "board-and-pieces",
+  "title": "L’échiquier, les pièces et les déplacements",
+  "subtitle": "Les bases des échecs pour débutants",
+  "icon": "square.grid.3x3.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca écrit",
+      "text": "« La première chose qu’un élève doit faire est de se familiariser avec la force des pièces. Le mieux est d’apprendre à mater rapidement. »"
+    },
+    {
+      "type": "paragraph",
+      "text": "Les échecs se jouent sur un échiquier de **64 cases** claires et foncées en alternance. Retenez toujours : **la case en bas à droite doit être claire**. Chaque joueur commence avec **16 pièces**."
+    },
+    {
+      "type": "heading",
+      "text": "Explorez les pièces de façon interactive",
+      "icon": "hand.point.up.left.fill"
+    },
+    {
+      "type": "explorer"
+    },
+    {
+      "type": "heading",
+      "text": "Comment chaque pièce se déplace",
+      "icon": "square.grid.2x2.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "pawn",
+      "name": "Le Pion",
+      "count": "× 8"
+    },
+    {
+      "type": "paragraph",
+      "text": "Au début, vous avez 8 pions — c’est votre « infanterie ». Capablanca note : **gagner un seul pion est le plus petit gain matériel et suffit souvent à gagner**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Déplacement",
+          "text": "Il avance uniquement, d’une case à la fois. À son premier coup, il peut avancer de deux cases. **Les pions ne peuvent pas reculer.**",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.left.and.arrow.up.right",
+          "title": "Attaque",
+          "text": "Il capture les pièces adverses uniquement en diagonale, une case en avant.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "crown.fill",
+      "title": "Promotion",
+      "text": "Si un pion atteint la dernière rangée, il se transforme en n’importe quelle pièce, le plus souvent en dame. C’est une arme puissante en finale !"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "La Tour",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Elle commence dans les coins de l’échiquier. Elle ne devient efficace que sur les lignes ouvertes — plus des pions bloquent son chemin, plus elle est limitée."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Déplacement",
+          "text": "Elle se déplace en lignes droites (haut-bas, gauche-droite) d’autant de cases qu’elle veut. Ensemble, deux tours sont un peu plus fortes qu’une dame.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "Le Fou",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Un fou reste toujours sur les cases claires, l’autre sur les foncées. Capablanca estime que **dans la plupart des positions, le fou vaut plus que le cavalier**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right.and.arrow.up.left",
+          "title": "Déplacement",
+          "text": "Il se déplace uniquement en diagonale. Faiblesse : « un pion de tour qui promeut sur une case de couleur opposée au fou » mène le plus souvent à la nulle plutôt qu’au gain.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "Le Cavalier",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "La seule pièce qui saute par-dessus les autres. Il est fort dans les **positions fermées** — quand les lignes sont bloquées par des pions. Au bord de l’échiquier, il perd de sa force."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "l.joystick.fill",
+          "title": "Déplacement",
+          "text": "Il se déplace en forme de « L » : deux cases tout droit puis une sur le côté.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Unique !",
+      "text": "La seule pièce qui peut sauter par-dessus d’autres pièces — les siennes comme celles de l’adversaire !"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "La Dame",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "Elle se place sur une case de **sa couleur** — la dame blanche sur une case claire, la noire sur une foncée. La pièce la plus puissante, mais à ne pas sortir trop tôt en ouverture."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Déplacement",
+          "text": "Elle combine les déplacements de la tour et du fou — dans toutes les directions, autant de cases qu’elle veut.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "Roi",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "La pièce la plus importante — sa perte signifie la fin de la partie. En ouverture, c’est une **pièce défensive passive**, mais en finale, il devient un puissant attaquant."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "dot.square.fill",
+          "title": "Déplacement",
+          "text": "Il ne se déplace que d’une case dans n’importe quelle direction. **Il ne doit pas aller sur une case attaquée !**",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Un coup spécial : le roque",
+      "icon": "arrow.left.arrow.right"
+    },
+    {
+      "type": "paragraph",
+      "text": "Une fois par partie, vous pouvez déplacer **deux pièces en même temps** — le roi et une tour. Le roi saute de deux cases vers la tour, et la tour franchit le roi pour se placer à côté. Cela met le roi à l’abri et active la tour."
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Conditions du roque",
+      "text": "Ni le roi ni la tour n’ont **bougé auparavant** · Il n’y a **aucune pièce entre eux** · Le roi n’est pas en échec et ne traverse pas de case attaquée"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Valeur relative des pièces",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca dit : la valeur n’est pas fixe — elle change selon la position. Ces chiffres servent toutefois de guide pour les échanges."
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pion",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Cavalier",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Fou",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Tour",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Dame",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "Roi",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "info.circle.fill",
+          "title": "Deux fous sont presque toujours plus forts que deux cavaliers",
+          "text": "Le fou est particulièrement fort lorsqu’il y a des pions des deux côtés et que les lignes sont ouvertes.",
+          "style": null
+        },
+        {
+          "icon": "info.circle.fill",
+          "title": "Une tour vaut un cavalier plus deux pions",
+          "text": "Ou un fou plus deux pions. C’est pourquoi céder une pièce mineure contre une tour sans compensation s’appelle « perdre la qualité ».",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "En finale, le roi devient une pièce d’attaque",
+          "text": "En ouverture et milieu de partie, le roi est purement défensif. En finale, quand la plupart des pièces ont disparu, il doit participer activement au combat.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Mats élémentaires",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Avant d’apprendre les ouvertures et la stratégie, maîtrisez ces trois mats de base. Chacun nécessite la coopération du roi !"
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Exercice 1 — Roi + Tour",
+      "hint": "Repoussez le roi noir au bord de l’échiquier. La tour et le roi doivent coopérer !",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": null,
+      "startFEN": "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Exercice 2 — Roi + deux Fous",
+      "hint": "Repoussez le roi non seulement au bord mais dans un coin de la même couleur que vos fous.",
+      "icon": "rhombus.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Exercice 3 — Roi + Dame",
+      "hint": "Le plus facile ! La dame réduit tout de suite l’espace. Attention au pat !",
+      "icon": "crown.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "fr"
+}

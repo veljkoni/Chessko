@@ -1,0 +1,172 @@
+{
+  "id": "middlegame",
+  "title": "The middlegame",
+  "subtitle": "Tactics and the heart of the battle",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca writes",
+      "text": "\"The ideal middlegame: all the pieces thrown into the attack as a mass, coordinating with machine-like precision. Every master’s aim is to achieve exactly such harmony.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Once the pieces are developed and the kings are safe, the **middlegame** begins — the most creative and complex part of chess."
+    },
+    {
+      "type": "heading",
+      "text": "Initiative",
+      "icon": "flag.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca explains: White has an initial advantage thanks to the first move. This advantage should be **kept as long as possible** — give it up only if you get material or a better position in return."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.forward.circle.fill",
+          "title": "Whoever attacks dictates the tempo",
+          "text": "The player with the initiative chooses where and how to attack. The opponent must react instead of carrying out their own plan.",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "Don’t attack without certainty",
+          "text": "Capablanca warns: a direct attack on the king should never be pushed to the limit without absolute certainty that it will succeed. A failed attack means disaster.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Piece values",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "In the middlegame a piece’s value depends on the position. Always be careful what you exchange!"
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pawn",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Knight",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Bishop",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Rook",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Queen",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "King",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Basic tactical motifs",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "tuningfork",
+      "title": "Fork",
+      "text": "One piece attacks **two enemy pieces at once**. The opponent can save only one. Knights are especially dangerous for forks — they jump to a square from which they attack the queen and rook at the same time."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "link",
+      "title": "Pin",
+      "text": "You attack a piece that **cannot move** because doing so would expose a valuable piece behind it (the king or queen). A pinned piece is practically out of the game — use that!"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "arrow.triangle.2.circlepath",
+      "title": "Discovered attack",
+      "text": "You move one piece and thereby unleash the attack of another piece behind it on the opponent’s valuable piece. Especially dangerous when the moving piece itself also attacks something."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Piece coordination",
+      "icon": "person.2.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca constantly stresses: the pieces must work together as a team."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down",
+          "title": "Rooks seek open files",
+          "text": "Place them on an open file or the seventh rank. A rook shut in behind its own pawns is a passive piece.",
+          "style": null
+        },
+        {
+          "icon": "circle.fill",
+          "title": "Knights are strongest in the centre",
+          "text": "\"A knight on the rim is dim,\" says Capablanca. In the centre it controls as many as 8 squares, on the edge only 2–4.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.right",
+          "title": "Bishops love open diagonals",
+          "text": "A bishop blocked by its own pawn is limited. Put your pawns on squares of the **opposite colour** to your bishop.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "A one-pawn advantage",
+      "icon": "chart.line.uptrend.xyaxis"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "info.circle.fill",
+      "title": "Capablanca’s golden rule",
+      "text": "\"Winning a single pawn between equally strong players most often means victory.\" Don’t underestimate a pawn — in the endgame it is often decisive. Every small advantage accumulates!"
+    }
+  ],
+  "language": "en"
+}

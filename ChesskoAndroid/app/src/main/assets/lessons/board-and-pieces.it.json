@@ -1,0 +1,334 @@
+{
+  "id": "board-and-pieces",
+  "title": "La scacchiera, i pezzi e il movimento",
+  "subtitle": "Le basi degli scacchi per principianti",
+  "icon": "square.grid.3x3.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca scrive",
+      "text": "\"La prima cosa che uno studente deve fare è conoscere la forza dei pezzi. Il modo migliore è imparare a dare scacco matto rapidamente.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Gli scacchi si giocano su una scacchiera di **64 caselle** chiare e scure alternate. Ricorda sempre: **la casella in basso a destra deve essere chiara**. Ogni giocatore inizia con **16 pezzi**."
+    },
+    {
+      "type": "heading",
+      "text": "Esplora i pezzi in modo interattivo",
+      "icon": "hand.point.up.left.fill"
+    },
+    {
+      "type": "explorer"
+    },
+    {
+      "type": "heading",
+      "text": "Come si muove ogni pezzo",
+      "icon": "square.grid.2x2.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "pawn",
+      "name": "Il Pedone",
+      "count": "× 8"
+    },
+    {
+      "type": "paragraph",
+      "text": "All’inizio hai 8 pedoni — sono la tua \"fanteria\". Capablanca osserva: **guadagnare un solo pedone è il più piccolo vantaggio materiale e spesso basta per vincere**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Movimento",
+          "text": "Avanza solo in avanti, una casa alla volta. Alla prima mossa può avanzare di due case. **I pedoni non possono andare indietro.**",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.left.and.arrow.up.right",
+          "title": "Attacco",
+          "text": "Cattura i pezzi avversari solo in diagonale, una casa in avanti.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "crown.fill",
+      "title": "Promozione",
+      "text": "Se un pedone raggiunge l’ultima traversa si trasforma in qualsiasi pezzo, di solito una donna. È un’arma potente nel finale!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "La Torre",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Parte negli angoli della scacchiera. Diventa efficace solo sulle linee aperte — più pedoni bloccano il cammino, più è limitata."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Movimento",
+          "text": "Si muove in linea retta (su-giù, sinistra-destra) per quante case vuole. Insieme, due torri sono leggermente più forti di una donna.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "L’Alfiere",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "Un alfiere resta sempre sulle case chiare, l’altro sulle scure. Capablanca ritiene che **nella maggior parte delle posizioni l’alfiere valga più del cavallo**."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right.and.arrow.up.left",
+          "title": "Movimento",
+          "text": "Si muove solo lungo le diagonali. Debolezza: \"un pedone di torre che promuove su una casa di colore opposto all’alfiere\" porta spesso alla patta invece che alla vittoria.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "Il Cavallo",
+      "count": "× 2"
+    },
+    {
+      "type": "paragraph",
+      "text": "L’unico pezzo che salta gli altri. È forte nelle **posizioni chiuse** — quando le linee sono bloccate dai pedoni. Sul bordo della scacchiera perde forza."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "l.joystick.fill",
+          "title": "Movimento",
+          "text": "Si muove a forma di \"L\": due case dritto poi una di lato.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Unico!",
+      "text": "L’unico pezzo che può saltare altri pezzi — sia i propri sia quelli avversari!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "La Donna",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sta su una casa del **proprio colore** — la donna bianca su casa chiara, la nera su scura. Il pezzo più potente, ma non va sviluppato troppo presto in apertura."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down.and.arrow.left.and.right",
+          "title": "Movimento",
+          "text": "Combina il movimento di torre e alfiere — in tutte le direzioni, per quante case vuole.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "Re",
+      "count": "× 1"
+    },
+    {
+      "type": "paragraph",
+      "text": "Il pezzo più importante — la sua perdita significa la fine della partita. In apertura è un **pezzo difensivo passivo**, ma nel finale diventa un potente attaccante."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "dot.square.fill",
+          "title": "Movimento",
+          "text": "Si muove di una sola casa in qualsiasi direzione. **Non può andare su una casa attaccata!**",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Una mossa speciale: l’arrocco",
+      "icon": "arrow.left.arrow.right"
+    },
+    {
+      "type": "paragraph",
+      "text": "Una volta a partita puoi muovere **due pezzi contemporaneamente** — il re e una torre. Il re salta di due case verso la torre e la torre scavalca il re mettendosi accanto. Serve a mettere il re al sicuro e a portare la torre in gioco."
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Condizioni per l’arrocco",
+      "text": "Né il re né la torre si sono **mossi prima** · Tra loro **non c’è alcun pezzo** · Il re non è sotto scacco e non attraversa una casa attaccata"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Valore relativo dei pezzi",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca dice: il valore non è fisso — cambia con la posizione. Tuttavia questi numeri servono da guida negli scambi."
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pedone",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Cavallo",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Alfiere",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Torre",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Donna",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "Re",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "info.circle.fill",
+          "title": "Due alfieri sono quasi sempre più forti di due cavalli",
+          "text": "L’alfiere è particolarmente forte quando ci sono pedoni su entrambi i lati e le linee sono aperte.",
+          "style": null
+        },
+        {
+          "icon": "info.circle.fill",
+          "title": "Una torre vale un cavallo più due pedoni",
+          "text": "Oppure un alfiere più due pedoni. Per questo cedere un pezzo minore per una torre senza compenso si chiama \"perdere la qualità\".",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "Nel finale il re diventa un pezzo d’attacco",
+          "text": "In apertura e mediogioco il re è un pezzo puramente difensivo. Nel finale, quando la maggior parte dei pezzi è sparita, deve partecipare attivamente alla lotta.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Matti elementari",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Prima di imparare aperture e strategia, padroneggia queste tre posizioni di matto di base. Ognuna richiede la collaborazione del re!"
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Esercizio 1 — Re + Torre",
+      "hint": "Spingi il re nero sul bordo della scacchiera. Torre e re devono collaborare!",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": null,
+      "startFEN": "8/8/4k3/8/4K3/8/8/R7 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Esercizio 2 — Re + due Alfieri",
+      "hint": "Spingi il re non solo sul bordo ma in un angolo dello stesso colore dei tuoi alfieri.",
+      "icon": "rhombus.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "vsEngine",
+      "title": "Esercizio 3 — Re + Donna",
+      "hint": "Il più facile! La donna limita subito lo spazio. Attento allo stallo!",
+      "icon": "crown.fill",
+      "uciMoves": null,
+      "startFEN": "4k3/8/8/8/8/8/8/3QK3 w - - 0 1",
+      "solvedMessage": null,
+      "wrongMessage": null,
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "it"
+}

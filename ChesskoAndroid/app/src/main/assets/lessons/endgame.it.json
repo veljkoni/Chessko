@@ -1,0 +1,334 @@
+{
+  "id": "endgame",
+  "title": "Finale",
+  "subtitle": "Scacco matto, stallo e patta",
+  "icon": "flag.checkered",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca scrive",
+      "text": "\"Prima di lottare per la vittoria in apertura o mediogioco, devi padroneggiare il finale. Chi non conosce il finale non può essere un giocatore forte.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Il finale inizia quando i pezzi più importanti hanno lasciato la scacchiera e restano solo i re con i pedoni e forse uno o due pezzi minori."
+    },
+    {
+      "type": "heading",
+      "text": "Il re diventa attaccante",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Questo è il **cambiamento più grande** nel finale. Il re che è fuggito per tutta la partita ora deve attaccare attivamente."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "crown.fill",
+          "title": "Porta subito il re al centro",
+          "text": "Appena senti avvicinarsi il finale, comincia a portare il re verso il centro. Un re centrale domina uno marginale.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "I pedoni sono future donne",
+          "text": "Ogni pedone che raggiunge l’ultima traversa diventa una donna (o un altro pezzo). È l’obiettivo principale nei finali di pedoni.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "La regola della promozione del pedone",
+      "icon": "arrow.up.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca spiega questa regola in modo chiaro e preciso:"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "checkmark.circle.fill",
+      "title": "La regola chiave",
+      "text": "Perché un finale di pedoni sia vincente, **il re deve stare davanti al proprio pedone** con almeno una casa vuota tra loro. Se il re avversario è direttamente davanti al pedone — è patta!"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Avanza il re, non il pedone",
+          "text": "Capablanca consiglia: avanza il re il più possibile senza mettere in pericolo il pedone. Muovi il pedone solo quando è necessario per proteggerlo.",
+          "style": null
+        },
+        {
+          "icon": "ruler.fill",
+          "title": "L’arma segreta — \"l’opposizione\"",
+          "text": "Quando due re si fronteggiano con un numero dispari di case tra loro, ha il vantaggio il giocatore che **ha appena mosso**. Si chiama opposizione — ed è la chiave di tutti i finali di pedoni.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Un principio cardine",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Uno ne tiene due — il principio di Capablanca",
+      "text": "\"Un pedone che ne tiene due avversari è uno degli strumenti principali del maestro.\" Se il tuo pedone ne blocca due dell’avversario, sei di fatto un pezzo avanti — sfrutta quel vantaggio sull’altro lato della scacchiera!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Alfiere contro Cavallo nel finale",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right",
+          "title": "L’alfiere è più forte quando ci sono pedoni su entrambi i lati",
+          "text": "Grazie alla sua gittata l’alfiere può attaccare pedoni su entrambe le ali contemporaneamente. Il cavallo è lento e non può arrivare ovunque.",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "Il cavallo è più forte nelle posizioni chiuse",
+          "text": "Quando i pedoni sono bloccati e la posizione è chiusa, il cavallo è migliore perché può saltare i pedoni e raggiungere la casa ideale.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "La debolezza dell’alfiere — il pedone di torre",
+      "text": "Se il tuo pedone va verso h8 (o a8) e quella casa è di colore opposto al tuo alfiere, l’avversario tiene l’angolo ed è patta! Capablanca lo sottolinea come fonte di molte vittorie mancate."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Scacco matto e patta",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Scacco",
+      "text": "Una situazione in cui il re è sotto attacco. Il giocatore **deve** difendersi — muovere il re, catturare l’attaccante o frapporre uno scudo."
+    },
+    {
+      "type": "box",
+      "style": "warning",
+      "icon": "xmark.shield.fill",
+      "title": "Scacco matto — fine della partita",
+      "text": "Il re è sotto attacco e non c’è alcun modo legale di difendersi. La partita finisce qui — il re non viene mai realmente catturato."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.2",
+      "title": "Stallo — l’incubo del vincitore!",
+      "text": "Il giocatore al tratto **non è sotto scacco**, ma non ha alcuna mossa legale. È subito patta! È l’errore più pericoloso del finale — trasformare una posizione vincente in patta con una mossa sbagliata."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.clockwise",
+          "title": "Ripetizione di posizione",
+          "text": "Se la stessa posizione si ripete **tre volte**, si può richiedere la patta.",
+          "style": null
+        },
+        {
+          "icon": "minus.circle.fill",
+          "title": "Materiale insufficiente",
+          "text": "Solo i re, oppure re + alfiere/cavallo contro re — il matto è impossibile. Patta automatica.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Mini test finale",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Applica tutto ciò che hai imparato! Risolvi 5 problemi — matto nel minor numero di mosse. Ognuno usa una diversa combinazione di pezzi."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problema 1 — Donna sull’ultima traversa",
+      "hint": "Il re nero è intrappolato. La donna ha la via libera…",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2d8"
+      ],
+      "startFEN": "6k1/5ppp/8/8/8/8/3Q4/4R1K1 w - - 0 1",
+      "solvedMessage": "Ottimo! Matto trovato! 🏆",
+      "wrongMessage": "Non proprio — cerca la mossa chiave!",
+      "playingPrompt": "Trova il matto in 1!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problema 2 — Torre sull’8ª traversa",
+      "hint": "I pedoni bloccano il proprio re. La torre trova la via…",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "b5b8"
+      ],
+      "startFEN": "6k1/5ppp/8/1R6/8/8/8/6K1 w - - 0 1",
+      "solvedMessage": "Ottimo! Matto trovato! 🏆",
+      "wrongMessage": "Non proprio — cerca la mossa chiave!",
+      "playingPrompt": "Trova il matto in 1!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problema 3 — Sacrificio di torre!",
+      "hint": "La torre va in e8 con scacco. La torre nera deve prendere — e poi la donna?",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "e1e8",
+        "c8e8",
+        "a4e8"
+      ],
+      "startFEN": "2r3k1/5ppp/8/8/Q7/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Ottimo! Matto trovato! 🏆",
+      "wrongMessage": "Non proprio — cerca la mossa chiave!",
+      "playingPrompt": "Trova la mossa chiave!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problema 4 — Alfiere + Torre",
+      "hint": "L’alfiere dà scacco e spinge il re in g8. Perché è fatale?",
+      "icon": "rhombus.fill",
+      "uciMoves": [
+        "e5d6",
+        "f8g8",
+        "e1e8"
+      ],
+      "startFEN": "5k2/5ppp/8/4B3/8/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Ottimo! Matto trovato! 🏆",
+      "wrongMessage": "Non proprio — cerca la mossa chiave!",
+      "playingPrompt": "Trova la mossa chiave!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Problema 5 (difficile) — Sacrificio di donna, matto d’alfiere",
+      "hint": "Greet – Hanley, Liverpool 2008. La donna si sacrifica in h6. Perché il re deve prendere?",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2h6",
+        "g7h6",
+        "h4f6"
+      ],
+      "startFEN": "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w KQ - 0 1",
+      "solvedMessage": "Ottimo! Matto trovato! 🏆",
+      "wrongMessage": "Non proprio — cerca la mossa chiave!",
+      "playingPrompt": "Trova la mossa chiave!",
+      "mateIn": 2
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Sull’autore",
+      "icon": "person.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "person.fill",
+      "title": "José Raúl Capablanca (1888–1942)",
+      "text": "Scacchista cubano, terzo campione del mondo ufficiale. Considerato uno dei più grandi geni scacchistici di tutti i tempi — noto per uno stile cristallino e una comprensione intuitiva della posizione."
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca imparò gli scacchi a soli **quattro anni** guardando suo padre. Non frequentò mai una scuola di scacchi — imparò tutto da solo, giocando. A soli 13 anni batté il campione cubano Juan Corzo e divenne una sensazione nazionale."
+    },
+    {
+      "type": "paragraph",
+      "text": "Nel periodo **1916–1924** non perse nemmeno una partita. Conquistò il titolo mondiale nel 1921 battendo il leggendario Emanuel Lasker, campione per ben 27 anni."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "eye.fill",
+          "title": "Precisione fotografica",
+          "text": "Vinceva con la semplicità e una tecnica perfetta — non con l’aggressività.",
+          "style": null
+        },
+        {
+          "icon": "person.2.fill",
+          "title": "Un divulgatore degli scacchi",
+          "text": "Scrisse \"Chess Fundamentals\" (1921) proprio per principianti e dilettanti.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Fonte: Project Gutenberg",
+      "icon": "text.book.closed.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Tutti i contenuti delle lezioni provengono dalla versione digitale del libro disponibile su **Project Gutenberg** — una biblioteca senza scopo di lucro di libri di pubblico dominio."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "globe",
+      "title": "gutenberg.org/ebooks/33870",
+      "text": "Puoi leggerlo per intero gratuitamente, senza registrazione."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "heart.fill",
+      "title": "Ringraziamenti",
+      "text": "Chessko deve gratitudine a Capablanca per i suoi principi senza tempo e alla comunità di volontari di Project Gutenberg che ha digitalizzato questo e migliaia di altri libri."
+    }
+  ],
+  "language": "it"
+}

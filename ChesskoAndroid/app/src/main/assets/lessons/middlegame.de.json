@@ -1,0 +1,172 @@
+{
+  "id": "middlegame",
+  "title": "Das Mittelspiel",
+  "subtitle": "Taktik und das Herz der Schlacht",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca schreibt",
+      "text": "„Das ideale Mittelspiel: alle Figuren als Masse in den Angriff geworfen, mit maschineller Präzision koordiniert. Das Ziel jedes Meisters ist es, genau solche Harmonie zu erreichen.“"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sind die Figuren entwickelt und die Könige in Sicherheit, beginnt das **Mittelspiel** — der kreativste und komplexeste Teil des Schachs."
+    },
+    {
+      "type": "heading",
+      "text": "Initiative",
+      "icon": "flag.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca erklärt: Weiß hat dank des ersten Zuges einen Anfangsvorteil. Diesen Vorteil sollte man **so lange wie möglich bewahren** — gib ihn nur auf, wenn du dafür Material oder eine bessere Stellung bekommst."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.forward.circle.fill",
+          "title": "Wer angreift, bestimmt das Tempo",
+          "text": "Der Spieler mit der Initiative wählt, wo und wie er angreift. Der Gegner muss reagieren, statt seinen eigenen Plan zu verfolgen.",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "Greife nicht ohne Sicherheit an",
+          "text": "Capablanca warnt: Einen direkten Angriff auf den König sollte man nie bis zum Äußersten treiben, ohne absolute Gewissheit des Erfolgs. Ein gescheiterter Angriff bedeutet eine Katastrophe.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Figurenwerte",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Im Mittelspiel hängt der Wert einer Figur von der Stellung ab. Achte immer darauf, was du abtauschst!"
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Bauer",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Springer",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Läufer",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Turm",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Dame",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "König",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Grundlegende taktische Motive",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "tuningfork",
+      "title": "Die Gabel",
+      "text": "Eine Figur greift **zwei gegnerische Figuren gleichzeitig** an. Der Gegner kann nur eine retten. Springer sind für Gabeln besonders gefährlich — sie springen auf ein Feld, von dem sie Dame und Turm zugleich angreifen."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "link",
+      "title": "Die Fesselung",
+      "text": "Du greifst eine Figur an, die **sich nicht bewegen darf**, weil sie sonst eine wertvolle Figur dahinter (König oder Dame) freilegen würde. Eine gefesselte Figur ist praktisch aus dem Spiel — nutze das!"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "arrow.triangle.2.circlepath",
+      "title": "Abzugsangriff",
+      "text": "Du ziehst eine Figur und entfesselst dadurch den Angriff einer Figur dahinter auf eine wertvolle gegnerische Figur. Besonders gefährlich, wenn die ziehende Figur selbst ebenfalls angreift."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Figurenkoordination",
+      "icon": "person.2.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca betont immer wieder: Die Figuren müssen als Team zusammenarbeiten."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down",
+          "title": "Türme suchen offene Linien",
+          "text": "Stelle sie auf eine offene Linie oder die siebte Reihe. Ein Turm, der hinter den eigenen Bauern eingesperrt ist, ist eine passive Figur.",
+          "style": null
+        },
+        {
+          "icon": "circle.fill",
+          "title": "Springer sind im Zentrum am stärksten",
+          "text": "„Ein Springer am Rand bringt Kummer und Schand“, sagt Capablanca. Im Zentrum kontrolliert er bis zu 8 Felder, am Rand nur 2–4.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.right",
+          "title": "Läufer lieben offene Diagonalen",
+          "text": "Ein vom eigenen Bauern blockierter Läufer ist eingeschränkt. Stelle deine Bauern auf Felder der **Gegenfarbe** deines Läufers.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Ein Bauer Vorteil",
+      "icon": "chart.line.uptrend.xyaxis"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "info.circle.fill",
+      "title": "Capablancas goldene Regel",
+      "text": "„Ein einzelner Mehrbauer zwischen gleich starken Spielern bedeutet meist den Sieg.“ Unterschätze keinen Bauern — im Endspiel ist er oft entscheidend. Jeder kleine Vorteil summiert sich!"
+    }
+  ],
+  "language": "de"
+}

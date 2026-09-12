@@ -1,0 +1,334 @@
+{
+  "id": "endgame",
+  "title": "Završnica",
+  "subtitle": "Šah-mat, pat i remi",
+  "icon": "flag.checkered",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Kapablanka piše",
+      "text": "\"Pre nego što se boriš za pobedu u otvaranju ili središnjici, moraš savladati završnicu. Onaj ko ne poznaje završnicu ne može biti jak šahista.\""
+    },
+    {
+      "type": "paragraph",
+      "text": "Završnica počinje kada su sa table nestale najvažnije figure i ostanu Kraljevi sa pešacima i možda jednom-dve lake figure."
+    },
+    {
+      "type": "heading",
+      "text": "Kralj postaje napadač",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Ovo je **najveća promena** u završnici. Kralj koji je celu partiju bežao sada mora aktivno da napadá."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "crown.fill",
+          "title": "Dovedi Kralja u centar odmah",
+          "text": "Čim oseti da je završnica blizu, počni da pomičeš Kralja ka centru table. Centralni Kralj dominira nad marginalnim.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Pioni su budući Kraljevi",
+          "text": "Svaki pion koji stigne do poslednjeg reda postaje Dama (ili druga figura). Ovo je glavni cilj u pešačkim završnicama.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Pravilo o promociji piona",
+      "icon": "arrow.up.circle.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Kapablanka objašnjava ovo pravilo jasno i precizno:"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "checkmark.circle.fill",
+      "title": "Ključno pravilo",
+      "text": "Da bi pešačka završnica bila pobednička, **Kralj mora biti ispred svog piona** sa barem jednim praznim poljem između njih. Ako je protivnički Kralj direktno ispred piona — igra je remi!"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up",
+          "title": "Napreduj Kralja, ne piona",
+          "text": "Kapablanka savetuje: napreduj Kralja koliko je moguće a da ne ugrožavaš piona. Piona pomiči tek kada je neophodno za njegovu zaštitu.",
+          "style": null
+        },
+        {
+          "icon": "ruler.fill",
+          "title": "Tajno oružje — \"Opozicija\"",
+          "text": "Kada su dva Kralja međusobno licem u lice sa neparnim brojem polja između, igrač koji je **prethodno poterao** ima prednost. Zove se opozicija — i ključna je za sve pešačke završnice.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Kardinalno načelo",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "star.fill",
+      "title": "Jedno drži dvoje — Kapablankovo načelo",
+      "text": "\"Pion koji drži dva protivnička piona je jedno od glavnih oruđa majstora.\" Ako tvoj pion blokira dva protivnička, ti si faktički figuru ispred — iskoristi tu prednost na drugoj strani table!"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Lovac vs. Skakač u završnici",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.right",
+          "title": "Lovac je jači kada su pioni na obe strane",
+          "text": "Lovac može istovremeno da napada pione na oba krila zahvaljujući dometu. Skakač je spor i ne može da stigne svuda.",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "Skakač je jači u zatvorenim pozicijama",
+          "text": "Kada su pioni blokirani i pozicija zatvorena, skakač je bolji jer može da preskoče pione i stigne do idealnog polja.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Slabost lovca — Topov pion",
+      "text": "Ako tvoj pion ide do h8 (ili a8) i to polje je suprotne boje od tvog lovca, protivnik drži ugao i igra je remi! Kapablanka ovo posebno ističe kao izvor mnogih propuštenih pobeda."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Šah-Mat i Remi",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "exclamationmark.triangle.fill",
+      "title": "Šah",
+      "text": "Situacija kada je Kralj napadnut. Igrač **mora** da se odbrani — pomeri kralja, pojede napadača, ili postavi štit između."
+    },
+    {
+      "type": "box",
+      "style": "warning",
+      "icon": "xmark.shield.fill",
+      "title": "Šah-Mat — Kraj igre",
+      "text": "Kralj je napadnut, a nema nijedan legalan način odbrane. Partija se završava ovde — Kralj se nikada zapravo ne jede."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "exclamationmark.2",
+      "title": "Pat — Noćna mora pobednika!",
+      "text": "Igrač na potezu **nije u šahu**, ali nema nijedan legalan potez. Odmah je remi! Ovo je najopasnija greška u završnici — pretvoriti pobedničku poziciju u remi jednim lošim potezom."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.clockwise",
+          "title": "Ponavljanje pozicije",
+          "text": "Ako se ista pozicija ponovi **tri puta**, može se tražiti remi.",
+          "style": null
+        },
+        {
+          "icon": "minus.circle.fill",
+          "title": "Nedovoljno materijala",
+          "text": "Samo Kraljevi, ili Kralj + Lovac/Skakač protiv Kralja — nije moguće dati mat. Automatski remi.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Mini finalni test",
+      "icon": "trophy.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Primeni sve što si naučio! Reši 5 zadataka — mat u najmanji broj poteza. Svaki koristi drugu kombinaciju figura."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Zadatak 1 — Dama na zadnjoj liniji",
+      "hint": "Crni Kralj je zarobljen. Dama ima slobodan put...",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2d8"
+      ],
+      "startFEN": "6k1/5ppp/8/8/8/8/3Q4/4R1K1 w - - 0 1",
+      "solvedMessage": "Sjajno! Mat pronađen! 🏆",
+      "wrongMessage": "Nije to — traži pravi ključni potez!",
+      "playingPrompt": "Pronađi mat u 1 potezu!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Zadatak 2 — Top na 8. liniji",
+      "hint": "Pešaci blokiraju sopstvenog Kralja. Top pronalazi put...",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "b5b8"
+      ],
+      "startFEN": "6k1/5ppp/8/1R6/8/8/8/6K1 w - - 0 1",
+      "solvedMessage": "Sjajno! Mat pronađen! 🏆",
+      "wrongMessage": "Nije to — traži pravi ključni potez!",
+      "playingPrompt": "Pronađi mat u 1 potezu!",
+      "mateIn": 1
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Zadatak 3 — Žrtva Topa!",
+      "hint": "Top ide na e8 i daje šah. Crni Top mora da uzme — a onda Dama?",
+      "icon": "rectangle.portrait.fill",
+      "uciMoves": [
+        "e1e8",
+        "c8e8",
+        "a4e8"
+      ],
+      "startFEN": "2r3k1/5ppp/8/8/Q7/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Sjajno! Mat pronađen! 🏆",
+      "wrongMessage": "Nije to — traži pravi ključni potez!",
+      "playingPrompt": "Pronađi ključni potez!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Zadatak 4 — Lovac + Top",
+      "hint": "Lovac daje šah i tera Kralja na g8. Zašto je to pogubno?",
+      "icon": "rhombus.fill",
+      "uciMoves": [
+        "e5d6",
+        "f8g8",
+        "e1e8"
+      ],
+      "startFEN": "5k2/5ppp/8/4B3/8/8/8/4R1K1 w - - 0 1",
+      "solvedMessage": "Sjajno! Mat pronađen! 🏆",
+      "wrongMessage": "Nije to — traži pravi ključni potez!",
+      "playingPrompt": "Pronađi ključni potez!",
+      "mateIn": 2
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Zadatak 5 (težak) — Žrtva Dame, Lovac mat",
+      "hint": "Greet – Hanley, Liverpool 2008. Dama se žrtvuje na h6. Zašto Kralj mora da uzme?",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "d2h6",
+        "g7h6",
+        "h4f6"
+      ],
+      "startFEN": "r1bq2r1/b4pk1/p1pp1p2/1p2pP2/1P2P1PB/3P4/1PPQ2P1/R3K2R w KQ - 0 1",
+      "solvedMessage": "Sjajno! Mat pronađen! 🏆",
+      "wrongMessage": "Nije to — traži pravi ključni potez!",
+      "playingPrompt": "Pronađi ključni potez!",
+      "mateIn": 2
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "O autoru",
+      "icon": "person.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "person.fill",
+      "title": "Hoze Raul Kapablanka (1888–1942)",
+      "text": "Kubanski šahista, treći zvanični svetski prvak u šahu. Važi za jednog od najvećih šahiskih genija svih vremena — poznat po kristalno čistom stilu igre i intuitivnom razumevanju pozicije."
+    },
+    {
+      "type": "paragraph",
+      "text": "Kapablanka je naučio šah sa svega **četiri godine** gledajući svog oca. Nikada nije pohađao šahovsku školu — sve je naučio sam, igrajući. Već sa 13 godina pobedio je kubanslog prvaka Juana Corzo-a i postao nacionalna senzacija."
+    },
+    {
+      "type": "paragraph",
+      "text": "U periodu **1916–1924. godine** nije izgubio nijednu partiju. Svetsku šampionsku titulu osvojio je 1921. pobedivši legendarnog Emanuela Laskera, koji je bio prvak čitavih 27 godina."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "eye.fill",
+          "title": "Fotografska preciznost",
+          "text": "Pobedio je jednostavnošću i savršenom tehnikom — ne agresijom.",
+          "style": null
+        },
+        {
+          "icon": "person.2.fill",
+          "title": "Popularizator šaha",
+          "text": "\"Chess Fundamentals\" (1921) je pisao upravo za početnike i amatere.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Izvor: Project Gutenberg",
+      "icon": "text.book.closed.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Sav sadržaj lekcija preuzet je iz digitalne verzije knjige dostupne na **Project Gutenberg** — neprofitnoj biblioteci knjiga u javnom domenu."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "globe",
+      "title": "gutenberg.org/ebooks/33870",
+      "text": "Možeš je pročitati u celosti besplatno, bez registracije."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "heart.fill",
+      "title": "Zahvalnost",
+      "text": "Chessko duguje zahvalnost Kapablanki na bezvremenim principima i Project Gutenberg zajednici volontera koji su digitalizovali ovu i hiljade drugih knjiga."
+    }
+  ],
+  "language": "sr"
+}

@@ -1,0 +1,172 @@
+{
+  "id": "middlegame",
+  "title": "Le milieu de partie",
+  "subtitle": "La tactique, cœur de la bataille",
+  "icon": "bolt.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca écrit",
+      "text": "« Le milieu de partie idéal : toutes les pièces lancées dans l’attaque en masse, coordonnées avec une précision mécanique. Le but de tout maître est d’atteindre une telle harmonie. »"
+    },
+    {
+      "type": "paragraph",
+      "text": "Une fois les pièces développées et les rois en sécurité, le **milieu de partie** commence — la partie la plus créative et la plus complexe des échecs."
+    },
+    {
+      "type": "heading",
+      "text": "L’initiative",
+      "icon": "flag.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca explique : les Blancs ont un avantage initial grâce au premier coup. Cet avantage doit être **conservé le plus longtemps possible** — ne le cédez que contre du matériel ou une meilleure position."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.forward.circle.fill",
+          "title": "Qui attaque dicte le tempo",
+          "text": "Le joueur qui a l’initiative choisit où et comment attaquer. L’adversaire doit réagir au lieu de mener son propre plan.",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "N’attaquez pas sans certitude",
+          "text": "Capablanca avertit : une attaque directe sur le roi ne doit jamais être menée à l’extrême sans certitude absolue de réussite. Une attaque ratée est une catastrophe.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Valeur des pièces",
+      "icon": "scalemass.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Au milieu de partie, la valeur d’une pièce dépend de la position. Faites toujours attention à ce que vous échangez !"
+    },
+    {
+      "type": "pieceValueTable",
+      "rows": [
+        {
+          "piece": "pawn",
+          "name": "Pion",
+          "value": "1"
+        },
+        {
+          "piece": "knight",
+          "name": "Cavalier",
+          "value": "3"
+        },
+        {
+          "piece": "bishop",
+          "name": "Fou",
+          "value": "3"
+        },
+        {
+          "piece": "rook",
+          "name": "Tour",
+          "value": "5"
+        },
+        {
+          "piece": "queen",
+          "name": "Dame",
+          "value": "9"
+        },
+        {
+          "piece": "king",
+          "name": "Roi",
+          "value": "∞"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Motifs tactiques de base",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "tuningfork",
+      "title": "La fourchette",
+      "text": "Une pièce attaque **deux pièces adverses à la fois**. L’adversaire ne peut en sauver qu’une. Les cavaliers sont particulièrement dangereux pour les fourchettes — ils sautent sur une case d’où ils attaquent dame et tour en même temps."
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "link",
+      "title": "Le clouage",
+      "text": "Vous attaquez une pièce qui **ne peut pas bouger** car cela exposerait une pièce de valeur derrière elle (le roi ou la dame). Une pièce clouée est pratiquement hors jeu — profitez-en !"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "arrow.triangle.2.circlepath",
+      "title": "Attaque à la découverte",
+      "text": "Vous déplacez une pièce et révélez ainsi l’attaque d’une autre pièce derrière elle sur une pièce de valeur adverse. Particulièrement dangereux quand la pièce qui bouge attaque elle-même."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Coordination des pièces",
+      "icon": "person.2.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Capablanca insiste sans cesse : les pièces doivent travailler ensemble comme une équipe."
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "arrow.up.and.down",
+          "title": "Les tours cherchent les colonnes ouvertes",
+          "text": "Placez-les sur une colonne ouverte ou la septième rangée. Une tour enfermée derrière ses propres pions est une pièce passive.",
+          "style": null
+        },
+        {
+          "icon": "circle.fill",
+          "title": "Les cavaliers sont au plus fort au centre",
+          "text": "« Un cavalier au bord est un mauvais cavalier », dit Capablanca. Au centre, il contrôle jusqu’à 8 cases, au bord seulement 2 à 4.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.right",
+          "title": "Les fous aiment les diagonales ouvertes",
+          "text": "Un fou bloqué par son propre pion est limité. Placez vos pions sur des cases de **couleur opposée** à votre fou.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "L’avantage d’un pion",
+      "icon": "chart.line.uptrend.xyaxis"
+    },
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "info.circle.fill",
+      "title": "La règle d’or de Capablanca",
+      "text": "« Gagner un seul pion entre joueurs de force égale signifie le plus souvent la victoire. » Ne sous-estimez pas un pion — en finale, il est souvent décisif. Chaque petit avantage s’accumule !"
+    }
+  ],
+  "language": "fr"
+}

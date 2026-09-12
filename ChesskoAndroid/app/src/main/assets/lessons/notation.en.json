@@ -1,0 +1,201 @@
+{
+  "id": "notation",
+  "title": "Chess notation",
+  "subtitle": "How to read and write a move",
+  "icon": "text.book.closed.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "text.book.closed.fill",
+      "title": "Why you need notation",
+      "text": "The whole of chess literature — books, puzzles, the games of the old masters — is written in one and the same language. Learn it and you can read any game ever played, and go back over your own moves."
+    },
+    {
+      "type": "paragraph",
+      "text": "The board has **coordinates**. The eight vertical columns — the files — carry the letters **a** to **h**, left to right as White sees them. The eight horizontal rows — the ranks — carry the numbers **1** to **8**, from the bottom up. Every square therefore has a name: the letter of the file first, then the number of the rank."
+    },
+    {
+      "type": "board",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "caption": "The starting position. The white king stands on e1, the black king on e8. The square in the bottom right corner is h1 — and it is always light.",
+      "interactive": false
+    },
+    {
+      "type": "heading",
+      "text": "The letters of the pieces",
+      "icon": "crown.fill"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "king",
+      "name": "King",
+      "count": "K"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "queen",
+      "name": "Queen",
+      "count": "Q"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "rook",
+      "name": "Rook",
+      "count": "R"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "bishop",
+      "name": "Bishop",
+      "count": "B"
+    },
+    {
+      "type": "pieceRow",
+      "piece": "knight",
+      "name": "Knight",
+      "count": "N"
+    },
+    {
+      "type": "paragraph",
+      "text": "The pawn has no letter of its own. When you see only the name of a square — **e4**, **d5** — a pawn made the move. The letter of a piece is always **capital**, the name of a square always **lower case**, so the two are never confused. The knight takes **N** because K is already the king's."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "How to read a move",
+      "icon": "eye.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "circle.fill",
+          "title": "e4",
+          "text": "A pawn went to e4. Just the name of the square, with no letter in front of it.",
+          "style": null
+        },
+        {
+          "icon": "l.joystick.fill",
+          "title": "Nf3",
+          "text": "A knight went to f3. First the letter of the piece, then the square it arrived on.",
+          "style": null
+        },
+        {
+          "icon": "flame.fill",
+          "title": "Bxf7",
+          "text": "A bishop **captured** a piece on f7. The **x** in the middle means a capture.",
+          "style": null
+        },
+        {
+          "icon": "exclamationmark.circle.fill",
+          "title": "+",
+          "text": "A plus at the end means **check** — the move attacks the enemy king.",
+          "style": null
+        },
+        {
+          "icon": "crown.fill",
+          "title": "#",
+          "text": "A hash at the end means **checkmate**. The game is over.",
+          "style": null
+        },
+        {
+          "icon": "arrow.left.arrow.right",
+          "title": "0-0",
+          "text": "Castling is written with a sign, not a square: **0-0** kingside, **0-0-0** queenside. Books and this app often write **O-O** with the letter O — it is the same thing.",
+          "style": null
+        },
+        {
+          "icon": "arrow.left.arrow.right",
+          "title": "When a pawn captures",
+          "text": "The letter of the pawn's file goes before the **x**: **exd5**. Without it you cannot tell which pawn took.",
+          "style": null
+        },
+        {
+          "icon": "arrow.up.circle.fill",
+          "title": "Promotion",
+          "text": "When a pawn reaches the end, the square is followed by **=** and the new piece: **e8=Q**.",
+          "style": null
+        }
+      ]
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Play 1.e4",
+      "hint": "No letter of a piece, so a pawn moves — the one that lands on e4.",
+      "icon": "arrow.up.circle.fill",
+      "uciMoves": [
+        "e2e4"
+      ],
+      "startFEN": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "solvedMessage": "That's it — this is e4. ✓",
+      "wrongMessage": "Not that one. Look for the pawn that lands on e4.",
+      "playingPrompt": "Play the move the notation describes.",
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Play 2.Nf3",
+      "hint": "N is the letter for the knight.",
+      "icon": "l.joystick.fill",
+      "uciMoves": [
+        "g1f3"
+      ],
+      "startFEN": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      "solvedMessage": "Correct — Nf3. ✓",
+      "wrongMessage": "Wrong piece or wrong square. N is the knight, and it goes to f3.",
+      "playingPrompt": "Play the move the notation describes.",
+      "mateIn": null
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Captures, check and castling",
+      "icon": "bolt.fill"
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Play Bxf7+",
+      "hint": "The bishop captures on f7 and gives check at the same time: x is the capture, + is the check.",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "c4f7"
+      ],
+      "startFEN": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
+      "solvedMessage": "That's it — Bxf7+. ✓ The notation is right — the sacrifice itself is not good here (Black takes with the king), but we only care how it is written.",
+      "wrongMessage": "Not that one. Look for the bishop that captures on f7.",
+      "playingPrompt": "Play the move the notation describes.",
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Play 0-0",
+      "hint": "Castling is written with a sign, not a square — and it is played with the king.",
+      "icon": "arrow.left.arrow.right",
+      "uciMoves": [
+        "e1g1"
+      ],
+      "startFEN": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 6 5",
+      "solvedMessage": "Castled — 0-0. ✓",
+      "wrongMessage": "Castling is played with the king: move it from e1 to g1.",
+      "playingPrompt": "Play the move the notation describes.",
+      "mateIn": null
+    },
+    {
+      "type": "box",
+      "style": "rule",
+      "icon": "book.fill",
+      "title": "The same thing inside the app",
+      "text": "A game is written down in pairs, with the move number in front: **1.e4 e5 2.Nf3 Nc6** means White played e4 first, Black answered e5, and then White brought the knight out to f3. The same record grows alongside the board on the Play screen — with one difference: the app writes the piece letters in Serbian, so the knight is **S** and the bishop **L**. The shape of the record is exactly the one you have just learned."
+    }
+  ],
+  "language": "en"
+}

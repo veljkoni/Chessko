@@ -1,0 +1,145 @@
+{
+  "id": "openings",
+  "title": "Spielbeginn (Eröffnungen)",
+  "subtitle": "Goldene Regeln und berühmte Eröffnungen",
+  "icon": "flag.fill",
+  "blocks": [
+    {
+      "type": "box",
+      "style": "info",
+      "icon": "quote.opening",
+      "title": "Capablanca schreibt",
+      "text": "„Das Wichtigste in der Eröffnung ist die schnelle Entwicklung der Figuren. Keine Figur sollte vor Abschluss der Entwicklung mehr als einmal gezogen werden, außer es ist absolut notwendig.“"
+    },
+    {
+      "type": "paragraph",
+      "text": "Im Schach **zieht Weiß immer zuerst** und hat dadurch einen kleinen Anfangsvorteil. Die Aufgabe beider Spieler in der Eröffnung ist dieselbe: die Figuren so schnell wie möglich ins Spiel bringen und die Kontrolle über das Zentrum übernehmen."
+    },
+    {
+      "type": "heading",
+      "text": "Goldene Regeln der Eröffnung",
+      "icon": "checkmark.seal.fill"
+    },
+    {
+      "type": "numberedRule",
+      "number": 1,
+      "title": "Entwickle die Figuren schnell",
+      "text": "Capablanca rät: entwickle Springer vor Läufern. Ziehe dieselbe Figur in der Eröffnung nicht zweimal, wenn du nicht musst. Jeder Zug sollte eine neue Figur entwickeln oder das Zentrum kontrollieren."
+    },
+    {
+      "type": "numberedRule",
+      "number": 2,
+      "title": "Kontrolliere das Zentrum",
+      "text": "Die vier Zentralfelder (e4, d4, e5, d5) sind die wichtigsten auf dem Brett. Wer das Zentrum beherrscht, hat mehr Raum zum Manövrieren. Capablanca: „Kein energischer Angriff kann ohne Kontrolle über mindestens zwei Zentralfelder gelingen.“"
+    },
+    {
+      "type": "numberedRule",
+      "number": 3,
+      "title": "Schütze den König — rochiere!",
+      "text": "Rochiere so früh wie möglich. Ein König im Freien ist ein leichtes Ziel. Capablanca selbst rochierte stets früh und empfiehlt dasselbe allen Spielern, besonders Anfängern."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Typische Eröffnungsfehler",
+      "icon": "exclamationmark.triangle.fill"
+    },
+    {
+      "type": "bullets",
+      "items": [
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Die Dame zu früh herausbringen",
+          "text": "Die Dame ist stark, doch bringst du sie früh heraus, greift der Gegner sie mit Bauern und Figuren an — und jeder Angriff auf die Dame kostet ein Tempo, weil sie fliehen muss.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Passive Verteidigung mit Bauern",
+          "text": "Der „Philidor“-Stil — auf e4 sofort mit P-d6 zu antworten — gibt dem Gegner freie Entwicklung und Raum. Capablanca zeigt, wie Weiß dann leicht eine überlegene Stellung aufbaut.",
+          "style": "warning"
+        },
+        {
+          "icon": "xmark.circle.fill",
+          "title": "Zu spätes Rochieren",
+          "text": "Jeder Zug ohne Rochade bei offenen Linien ist ein Risiko. Der Gegner kann das Spiel öffnen und deinen König angreifen, bevor er in Sicherheit ist.",
+          "style": "warning"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "text": "Berühmte Eröffnungen",
+      "icon": "book.fill"
+    },
+    {
+      "type": "paragraph",
+      "text": "Spiele jeden Zug von Weiß auf dem Brett — Schwarz antwortet automatisch nach der theoretischen Linie."
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Spanische Partie (Ruy Lopez)",
+      "hint": "1.e4 e5 2.Sf3 Sc6 3.Lb5 — Capablancas Liebling",
+      "icon": "crown.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1b5"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Eröffnung gemeistert! ✓",
+      "wrongMessage": "Falscher Zug — versuch es nochmal.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Italienische Partie",
+      "hint": "1.e4 e5 2.Sf3 Sc6 3.Lc4 — der Läufer zielt auf f7",
+      "icon": "flame.fill",
+      "uciMoves": [
+        "e2e4",
+        "e7e5",
+        "g1f3",
+        "b8c6",
+        "f1c4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Eröffnung gemeistert! ✓",
+      "wrongMessage": "Falscher Zug — versuch es nochmal.",
+      "playingPrompt": null,
+      "mateIn": null
+    },
+    {
+      "type": "exercise",
+      "kind": "scripted",
+      "title": "Sizilianische Verteidigung",
+      "hint": "1.e4 c5 2.Sf3 d6 3.d4 cxd4 4.Sxd4 — ein asymmetrischer Kampf",
+      "icon": "shield.fill",
+      "uciMoves": [
+        "e2e4",
+        "c7c5",
+        "g1f3",
+        "d7d6",
+        "d2d4",
+        "c5d4",
+        "f3d4"
+      ],
+      "startFEN": null,
+      "solvedMessage": "Bravo! Eröffnung gemeistert! ✓",
+      "wrongMessage": "Falscher Zug — versuch es nochmal.",
+      "playingPrompt": null,
+      "mateIn": null
+    }
+  ],
+  "language": "de"
+}
