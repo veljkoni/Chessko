@@ -130,7 +130,11 @@ fun PuzzleView(
                     .padding(end = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                DateNavigationRow(viewModel)
+                // Vezi se za KONKRETAN datum — u vezbovnom rezimu bi tvrdila
+                // neistinu (zadatak nije zadatak dana za prikazani datum).
+                if (viewModel.mode == PuzzleViewModel.PuzzleMode.DAILY) {
+                    DateNavigationRow(viewModel)
+                }
 
                 if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
                     PuzzleMetadataHeader(viewModel)
@@ -148,8 +152,11 @@ fun PuzzleView(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. Date Navigation Toolbar
-            DateNavigationRow(viewModel)
+            // 1. Date Navigation Toolbar — vezi se za KONKRETAN datum, pa se
+            // gasi u vezbovnom rezimu (ne tvrdi neistinu o zadatku dana).
+            if (viewModel.mode == PuzzleViewModel.PuzzleMode.DAILY) {
+                DateNavigationRow(viewModel)
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -367,40 +374,56 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
 
 @Composable
 fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Solution Button
-        Button(
-            onClick = { viewModel.showSolution() },
-            enabled = viewModel.phase == PuzzlePhase.PLAYING || viewModel.phase == PuzzlePhase.WRONG_MOVE,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.08f),
-                contentColor = Color.White,
-                disabledContainerColor = Color.White.copy(alpha = 0.02f),
-                disabledContentColor = Color.White.copy(alpha = 0.25f)
-            ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(vertical = 10.dp)
-        ) {
-            Text(text = "💡 Prikaži rešenje", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        // Vezbanje bez kraja: uvek dostupno kad je zadatak resen, u OBA rezima
+        // (dnevni i vezbovni) — iznad ostalih kontrola, kao primarna akcija.
+        if (viewModel.phase == PuzzlePhase.SOLVED) {
+            Button(
+                onClick = { viewModel.nextPuzzle() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = loc("Sledeći zadatak"), fontWeight = FontWeight.SemiBold)
+            }
         }
 
-        // Restart / Retry Button
-        Button(
-            onClick = { viewModel.loadDailyPuzzle() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.08f),
-                contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(vertical = 10.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "🔄 Pokušaj ponovo", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            // Solution Button
+            Button(
+                onClick = { viewModel.showSolution() },
+                enabled = viewModel.phase == PuzzlePhase.PLAYING || viewModel.phase == PuzzlePhase.WRONG_MOVE,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White.copy(alpha = 0.08f),
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.White.copy(alpha = 0.02f),
+                    disabledContentColor = Color.White.copy(alpha = 0.25f)
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(vertical = 10.dp)
+            ) {
+                Text(text = "💡 Prikaži rešenje", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            // Restart / Retry Button
+            Button(
+                onClick = { viewModel.loadDailyPuzzle() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White.copy(alpha = 0.08f),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(vertical = 10.dp)
+            ) {
+                Text(text = "🔄 Pokušaj ponovo", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

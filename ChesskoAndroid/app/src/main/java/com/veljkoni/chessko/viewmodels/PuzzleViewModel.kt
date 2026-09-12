@@ -10,6 +10,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.veljkoni.chessko.logic.HapticManager
 import com.veljkoni.chessko.logic.MoveGenerator
+import com.veljkoni.chessko.logic.PuzzleRating
+import com.veljkoni.chessko.logic.PuzzleRepository
 import com.veljkoni.chessko.logic.SoundManager
 import com.veljkoni.chessko.logic.StatsManager
 import com.veljkoni.chessko.models.*
@@ -17,11 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -37,6 +34,21 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     private val sharedPrefs = application.getSharedPreferences("chessko_puzzle_prefs", Context.MODE_PRIVATE)
     private val statsManager = StatsManager.getInstance(application)
     private var puzzleHadError = false
+
+    // `by lazy`: prva upotreba kopira 7 MB iz `assets` u `filesDir`, pa se to
+    // ne radi u konstruktoru ViewModel-a (glavna nit pri otvaranju taba).
+    private val repository by lazy { PuzzleRepository(getApplication()) }
+
+    // Skup id-jeva vec resenih zadataka (nezavisno od kalendara - vidi
+    // `solvedDates`). Ucitava se JEDNOM iz `SharedPreferences`; upisuje se tek
+    // kad je zadatak STVARNO resen (prikaz resenja ga ne upisuje), u oba
+    // rezima (DAILY i PRACTICE) - koristi se za iskljucivanje iz `nextPuzzle()`.
+    private val solvedPuzzleIds: MutableSet<String> =
+        sharedPrefs.getStringSet(SOLVED_PUZZLE_IDS_KEY, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+    private fun persistSolvedPuzzleIds() {
+        sharedPrefs.edit().putStringSet(SOLVED_PUZZLE_IDS_KEY, solvedPuzzleIds).apply()
+    }
 
     // Observable states
     var gameState by mutableStateOf(GameState.initial())
@@ -55,6 +67,11 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     var phase by mutableStateOf(PuzzlePhase.LOADING)
         private set
     var networkErrorMessage by mutableStateOf("")
+        private set
+
+    enum class PuzzleMode { DAILY, PRACTICE }
+
+    var mode by mutableStateOf(PuzzleMode.DAILY)
         private set
 
     var selectedDate by mutableStateOf(LocalDate.now())
@@ -125,6 +142,10 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun loadDailyPuzzle() {
+        // Reset na DAILY: bez ovoga bi vezbanje (PRACTICE) ostalo "zaglavljeno"
+        // posle povratka na zadatak dana (retry dugme, promena datuma), pa bi
+        // UI (traka za datum, poruke) i dalje gejtovao na pogresan rezim.
+        mode = PuzzleMode.DAILY
         phase = PuzzlePhase.LOADING
         currentPuzzle = null
         puzzleHadError = false
@@ -133,50 +154,51 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         val dayIndex = ChronoUnit.DAYS.between(epochStart, selectedDate)
 
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // Modulo daily index matching iOS day cycle (start = dayIndex % 10000)
-                val startParam = dayIndex % 10000
-                val url = URL("https://chess-puzzles-api.vercel.app/puzzles?start=$startParam&limit=1")
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "GET"
-                conn.connectTimeout = 10000
-                conn.readTimeout = 10000
-
-                if (conn.responseCode == 200) {
-                    val reader = BufferedReader(InputStreamReader(conn.inputStream))
-                    val response = reader.use { it.readText() }
-                    val jsonArray = JSONArray(response)
-                    if (jsonArray.length() > 0) {
-                        val jsonObject = jsonArray.getJSONObject(0)
-                        val puzzle = ChessPuzzle(
-                            puzzleId = jsonObject.getString("PuzzleId"),
-                            fen = jsonObject.getString("FEN"),
-                            moves = jsonObject.getString("Moves"),
-                            rating = jsonObject.getInt("Rating"),
-                            themes = jsonObject.getString("Themes")
-                        )
-                        withContext(Dispatchers.Main) {
-                            setupPuzzle(puzzle)
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) {
-                            networkErrorMessage = "Nema dostupnih zadataka."
-                            phase = PuzzlePhase.NETWORK_ERROR
-                        }
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        networkErrorMessage = "HTTP greška ${conn.responseCode}."
-                        phase = PuzzlePhase.NETWORK_ERROR
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    networkErrorMessage = e.localizedMessage ?: "Greška na mreži."
-                    phase = PuzzlePhase.NETWORK_ERROR
-                }
+            // Citanje iz lokalne baze je brzo, ali ostaje na IO niti: prvo
+            // pokretanje kopira 7 MB iz `assets` u `filesDir`.
+            val puzzle = repository.dailyPuzzle(dayIndex)
+            withContext(Dispatchers.Main) {
+                if (puzzle != null) setupPuzzle(puzzle) else showUnavailable()
             }
         }
+    }
+
+    /// Vezbanje bez kraja: bira zadatak po rejtingu igraca, iskljucujuci vec
+    /// resene. Prozor se progresivno siri — inace bi korisnik koji je resio sve
+    /// u svom opsegu dobio prazan ekran bez objasnjenja.
+    fun nextPuzzle() {
+        mode = PuzzleMode.PRACTICE
+        // Bez ovoga bi `puzzleHadError` iz PRETHODNOG zadatka (dnevnog ili
+        // vezbovnog) ostao `true` i tiho progutao snimanje Elo rejtinga i
+        // streaka za OVAJ, potpuno nov zadatak (i tacan i pogresan potez u
+        // `attempt()` proveravaju bas ovaj flag).
+        puzzleHadError = false
+        viewModelScope.launch(Dispatchers.IO) {
+            val r = statsManager.puzzleRating
+            val windows = listOf(
+                PuzzleRating.practiceWindow(r),
+                maxOf(PuzzleRating.MIN, r - 400)..minOf(PuzzleRating.MAX, r + 400),
+                PuzzleRating.MIN..PuzzleRating.MAX
+            )
+            var found = windows.firstNotNullOfOrNull {
+                repository.randomPuzzle(it, solvedPuzzleIds)
+            }
+            // Poslednje pribeziste: korisnik je resio sve. Bolje ponovljen
+            // zadatak nego prazan ekran.
+            if (found == null) found = repository.randomPuzzle(PuzzleRating.MIN..PuzzleRating.MAX, emptySet())
+            withContext(Dispatchers.Main) {
+                if (found != null) setupPuzzle(found) else showUnavailable()
+            }
+        }
+    }
+
+    /// Repozitorijum ne vraca zadatak (isporucena baza od 20.000 redova ovo
+    /// prakticno cini nedostizivim, ali `randomPuzzle`/`dailyPuzzle` su
+    /// nullable pa se mora pokriti). Ista poruka i faza koje je ranije
+    /// koristio mrezni put za "nema rezultata".
+    private fun showUnavailable() {
+        networkErrorMessage = "Nema dostupnih zadataka."
+        phase = PuzzlePhase.NETWORK_ERROR
     }
 
     private fun setupPuzzle(puzzle: ChessPuzzle) {
@@ -242,6 +264,7 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
             if (!puzzleHadError) {
                 puzzleHadError = true
                 statsManager.recordPuzzleFailed()
+                statsManager.applyPuzzleResult(currentPuzzle?.rating ?: return, solved = false)
             }
             return
         }
@@ -253,9 +276,17 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         if (movePointer >= rawMoves.size) {
             phase = PuzzlePhase.SOLVED
             hapticManager.success()
-            markCurrentSolved()
+            currentPuzzle?.let { puzzle ->
+                if (solvedPuzzleIds.add(puzzle.puzzleId)) persistSolvedPuzzleIds()
+            }
+            // Kalendarski dan se oznacava resenim SAMO u DAILY rezimu —
+            // vezbovni zadatak nije vezan ni za jedan datum.
+            if (mode == PuzzleMode.DAILY) {
+                markCurrentSolved()
+            }
             if (!puzzleHadError) {
                 statsManager.recordPuzzleSolved()
+                statsManager.applyPuzzleResult(currentPuzzle?.rating ?: return, solved = true)
             }
             return
         }
@@ -282,6 +313,7 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         if (!puzzleHadError) {
             puzzleHadError = true
             statsManager.recordPuzzleFailed()
+            currentPuzzle?.let { statsManager.applyPuzzleResult(it.rating, solved = false) }
         }
 
         viewModelScope.launch {
@@ -312,5 +344,9 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     override fun onCleared() {
         super.onCleared()
         soundManager.release()
+    }
+
+    companion object {
+        private const val SOLVED_PUZZLE_IDS_KEY = "solvedPuzzleIds"
     }
 }
