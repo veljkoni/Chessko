@@ -265,8 +265,24 @@ actor StockfishBridge {
             try? await Task.sleep(for: .milliseconds(100))
             waited += 1
         }
+        // Motor se nije podigao za 5 s. Isto vazi i za `responseStream == nil`
+        // nize: oba izlaza ostavljaju `Engine` kome `position` nikad nije
+        // poslat — isti obrazac koji obara SLEDECI motor. Dostizno samo kad se
+        // motor uopste ne pokrene, pa se ne zatvara ovde: `stop()` od toga ne
+        // spasava (mereno u Task-u 3: padalo 2/3 i sa njim), a slanje pozicije
+        // motoru koji ne radi nema kome da stigne.
         guard await eng.isRunning else { return nil }
 
+        // OVE CETIRI LINIJE SE U ANALIZI NIKAD NE IZVRSE, i to je namerno
+        // zapisano umesto precutano: `nnueBig`/`nnueSmall` puni iskljucivo
+        // `start()`, a `AnalysisViewModel` drzi sopstvenu instancu mosta i
+        // `start()` na njoj ne zove — koristi samo `isAvailable` i
+        // `analyzeGame`. Analiza ipak radi jer sama biblioteka pri
+        // `Engine.start()` posalje iste dve opcije iz `Bundle.main`.
+        // Ne uklanjaju se (bile bi potrebne cim se `start()` pozove) i ne
+        // "popravljaju" pozivom `start()` pred sam merge: to bi promenilo
+        // komandnu sekvencu koja je izmerena kao ispravna, a izmena bez
+        // ponovljenog merenja je tacno greska koju je ova faza vec platila.
         let evalFile      = nnueBig ?? nnueSmall
         let evalFileSmall = nnueSmall ?? nnueBig
         if let url = evalFile      { await eng.send(command: .setoption(id: "EvalFile",      value: url.path())) }

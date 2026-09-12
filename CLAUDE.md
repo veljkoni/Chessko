@@ -252,7 +252,8 @@ gubitku u centipionima i prikazuje ekran sa procentom tačnosti, trakom poteza u
 prelomnim potezom. Dostupno je i iz `game` koraka Puta.
 
 - **Matematika je odvojena od motora.** `Models/MoveAnalysis.swift` je Foundation-only,
-  kompajlira se i u SwiftPM paket i pokriven je sa 26 testova. Motor je zamenljiv; pravila
+  kompajlira se i u SwiftPM paket i pokriven je sa 17 testova (uz još 9 za parser, ukupno 26
+  u `MoveAnalysisTests.swift`). Motor je zamenljiv; pravila
   klasifikacije nisu. `Logic/UCIScoreParser.swift` je iz istog razloga izdvojen iz
   `StockfishBridge`-a — `actor` koji uvozi `ChessKitEngine` ne može u testni paket, a
   čitanje ocene iz linije teksta mora da bude testirano.
@@ -263,7 +264,9 @@ prelomnim potezom. Dostupno je i iz `game` koraka Puta.
   posle poteza okreće na protivnika.
 - **Izmereno, ne procenjeno** (simulator iPhone 17 Pro, dubina 12 iz spec-a): 81 pozicija za
   **~17,5 s**, 81/81 ocena, tri uzastopna prolaza. Deljeni motor je izabran merenjem — svež
-  motor po poziciji daje isto 81/81 ali ~3× sporije (25,1 s prema 8,7 s na 20 pozicija).
+  motor po poziciji daje 20/20 ali ~3× sporije (25,1 s prema 8,7 s **na 20 pozicija**, i to na
+  simulatoru iPhone 17 bez „Pro"). Na punih 81 poziciju svež motor nikad nije meren; brojevi iz
+  dva reda ovog bullet-a nisu sa istog uređaja i ne porede se direktno.
 - **Mat se mapira u centipione**, a `cpLoss` je ograničen na `0…1000`. Bez gornje granice
   jedan propušten mat (razlika ~20.000) sam odredi prosek cele partije i tačnost padne na ~0
   iako je ostatak bio solidan. Granica je trostruko iznad praga za promašaj (300), pa ne
@@ -386,6 +389,23 @@ Dve stvari na koje treba paziti pri pisanju JSON-a:
 
 ## Poznata ograničenja / TODO kandidati
 
+- **Analiza pretpostavlja da je prvi potez beli.** `GameAnalysis.build` računa
+  `byWhite = ply % 2 == 0` i broj poteza iz istog izraza. Za partiju iz početne pozicije to je
+  tačno, ali `CurriculumStep.game` nosi opcioni `startFEN` koji je do kraja provučen kroz
+  `PathView` → `StepGameView`. Korak zadat iz pozicije u kojoj je **crni** na potezu tiho bi
+  označio svaki potez pogrešnom stranom i pogrešnim brojem (`1.e4` umesto `1…e4`) — i u traci
+  poteza i u kartici prelomnog poteza. Danas nedostižno: nijedan `game` korak u
+  `curriculum.json` nema `startFEN`. Popravka je jeftina (proslediti početni `currentTurn` u
+  `build`), ali nije rađena jer bi bila neprovereno rešenje za problem koji ne postoji.
+- **Šest klasa poteza preslikava se u četiri boje.** `excellent` i `good` dele `DS.success`,
+  `inaccuracy` i `mistake` dele `DS.warning`. Pragovi 20 i 100 su u spec-u navedeni doslovno i
+  testirani, ali se u traci poteza ne vide. Nazivi klasa jesu tačni u VoiceOver labeli, pa
+  informacija nije izgubljena — samo nije u boji.
+- **Eksplicitno postavljanje NNUE mreže u `analyzeGame` je mrtav kod.** `AnalysisViewModel`
+  drži sopstvenu instancu `StockfishBridge`-a i ne zove `start()`, pa su `nnueBig`/`nnueSmall`
+  uvek `nil` i nijedan `setoption` ne ode motoru. Analiza radi jer sama biblioteka pri
+  `Engine.start()` šalje iste dve opcije iz `Bundle.main`. Detalji i razlog zašto nije
+  „popravljeno" pred merge — u komentaru na mestu.
 - **Git LFS: odlučeno da se NE koristi** (2026-09-09). Repo nosi 4 `.nnue` mreže, ~145 MB
   ukupno; najveća je 71,4 MB, ispod GitHub-ovog tvrdog limita od 100 MB, pa push prolazi uz
   upozorenje. Razlozi protiv LFS-a: mreže se nikad ne menjaju, pa glavna korist LFS-a
@@ -512,30 +532,6 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
    strukturno promeni).
 
 ## Changelog
-
-- **2026-09-12** — Faza 5 (analiza partije). Posle svake partije Stockfish prolazi sve
-  pozicije, klasifikuje poteze i prikazuje ekran sa tačnošću oba igrača, trakom poteza u boji
-  i prelomnim potezom; isti ekran služi kao povratna informacija za `game` korake Puta. Novi
-  fajlovi: `Models/MoveAnalysis.swift` (Foundation-only, 26 testova), `Logic/UCIScoreParser.swift`,
-  `ViewModels/AnalysisViewModel.swift`, `Views/AnalysisView.swift`; `StockfishBridge` dobio
-  `evaluate` i `analyzeGame`. Testova 58 → 84, katalog 285 → 299 ključeva × 8 jezika.
-  Detalji i izmereni brojevi — vidi sekciju „Analiza partije".
-
-  **Četiri greške koje su uhvaćene tek zato što je traženo merenje umesto čitanja koda:**
-  (1) Parser ocene je bio pisan po **pretpostavljenom** formatu `<score> cp 34`; stvarni je
-  `<score> <cp> 34.0` — tag sa zagradama, a `cp` je u biblioteci `Double`. Parser bi vraćao
-  `nil` za svaku poziciju i cela faza ne bi radila, a **svih 6 testova je prolazilo** jer su
-  koristili isti izmišljeni oblik kao i kod. Test koji deli pretpostavku sa kodom ne testira
-  ništa. Ispravljeno tako što su linije dobijene kompajliranjem i pokretanjem same biblioteke.
-  (2) Za završnu poziciju motor ne vraća ocenu, pa bi analiza padala na svakoj odigranoj
-  partiji — dodat `terminalEval`. (3) Otkazivanje analize je gasilo aplikaciju SIGPIPE-om.
-  (4) `deinit { task?.cancel() }` se u `@Observable` klasi ne kompajlira; samostalan `swiftc`
-  test bez makroa lažno prolazi.
-
-  **Dve tvrdnje su povučene iz koda pošto su oborene merenjem**, jer je netačan zapis o uzroku
-  gori od zapisa „ne znamo": objašnjenje kvara `responseStream`-a preko ispuštanja iteratora, i
-  tvrdnja da bez `generation` brojača zaostali izveštaj gazi novu analizu.
-
 
 - **2026-06-17** — Kreiran CLAUDE.md nakon analize cele kodne baze (Models, Logic,
   ViewModels, Views, build settings). Aplikacija funkcionalna: šah vs AI, igrač beli.
@@ -1225,7 +1221,32 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   i bez nje. Razlog: `AsyncStream.Iterator.next()` po otkazivanju završi iteraciju, pa se do
   `onProgress` posle poslednje pozicije nikad ne stigne. Brojač je ostavljen (tačan je i ne košta
   ništa), ali nije nosiv. Isto tako prijavljeno: ~15% brzih restart-ova završi na „Analiza nije
-  uspela." jer izlaz starog motora završi u pipe-u novog, i `GameAnalysis.turningPoint` ume da
-  izdvoji potez koji `MoveClass.classify` naziva „najboljim" (kartica tada nosi boju akcenta, ne
-  upozorenja). Pun izveštaj:
+  uspela." jer izlaz starog motora završi u pipe-u novog — **to je jedini nalaz iz ovog taska
+  koji je i dalje nepopravljen**. Drugi prijavljeni nalaz (`GameAnalysis.turningPoint` je umeo
+  da izdvoji potez koji `MoveClass.classify` naziva „najboljim", pa je kartica nosila boju
+  akcenta umesto upozorenja) **popravljen je na istoj grani**, u `cb19173` — `.best` se sada
+  isključuje iz izbora, uz dva testa. Pun izveštaj:
   `.superpowers/sdd/2026-09-11-faza-5-analiza-partije/task-5-report.md`.
+
+- **2026-09-12** — Faza 5 (analiza partije). Posle svake partije Stockfish prolazi sve
+  pozicije, klasifikuje poteze i prikazuje ekran sa tačnošću oba igrača, trakom poteza u boji
+  i prelomnim potezom; isti ekran služi kao povratna informacija za `game` korake Puta. Novi
+  fajlovi: `Models/MoveAnalysis.swift` (Foundation-only, 17 testova), `Logic/UCIScoreParser.swift`,
+  `ViewModels/AnalysisViewModel.swift`, `Views/AnalysisView.swift`; `StockfishBridge` dobio
+  `evaluate` i `analyzeGame`. Testova 58 → 84, katalog 285 → 299 ključeva × 8 jezika.
+  Detalji i izmereni brojevi — vidi sekciju „Analiza partije".
+
+  **Četiri greške koje su uhvaćene tek zato što je traženo merenje umesto čitanja koda:**
+  (1) Parser ocene je bio pisan po **pretpostavljenom** formatu `<score> cp 34`; stvarni je
+  `<score> <cp> 34.0` — tag sa zagradama, a `cp` je u biblioteci `Double`. Parser bi vraćao
+  `nil` za svaku poziciju i cela faza ne bi radila, a **svih 6 testova je prolazilo** jer su
+  koristili isti izmišljeni oblik kao i kod. Test koji deli pretpostavku sa kodom ne testira
+  ništa. Ispravljeno tako što su linije dobijene kompajliranjem i pokretanjem same biblioteke.
+  (2) Za završnu poziciju motor ne vraća ocenu, pa bi analiza padala na svakoj odigranoj
+  partiji — dodat `terminalEval`. (3) Otkazivanje analize je gasilo aplikaciju SIGPIPE-om.
+  (4) `deinit { task?.cancel() }` se u `@Observable` klasi ne kompajlira; samostalan `swiftc`
+  test bez makroa lažno prolazi.
+
+  **Dve tvrdnje su povučene iz koda pošto su oborene merenjem**, jer je netačan zapis o uzroku
+  gori od zapisa „ne znamo": objašnjenje kvara `responseStream`-a preko ispuštanja iteratora, i
+  tvrdnja da bez `generation` brojača zaostali izveštaj gazi novu analizu.
