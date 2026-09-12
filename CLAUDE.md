@@ -45,7 +45,7 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (**58 testova**): 7 perft testova za svih 6 standardnih pozicija (uključujući
+Pokriveno (**84 testa**): 7 perft testova za svih 6 standardnih pozicija (uključujući
 početnu do dubine 5, 4.865.609 čvorova, ~85s), 4 testa prava rokade (uzimanje
 topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
 14 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu —
@@ -53,7 +53,9 @@ vidi ispod), 5 testova Elo rejtinga, 4 testa sadržaja lekcija (dekodiranje
 svih 12 tipova blokova, round-trip, glasan pad na nepoznat tip, i prolaz kroz
 sve lekcijske JSON-e), 7 testova kurikuluma (uključujući onaj koji tvrdi da
 kurikulum ne laže — svaka lekcija koju pominje postoji, svaka tema ima dovoljno
-zadataka u opsegu) i 17 testova napretka (`ProgressStore`, dnevni cilj, streak). `Chessko/TestSupport/LocShim.swift`
+zadataka u opsegu), 17 testova napretka (`ProgressStore`, dnevni cilj, streak) i
+26 testova analize partije (`MoveAnalysisTests` — matematika ocena i klasa poteza,
+plus parser UCI ocene). `Chessko/TestSupport/LocShim.swift`
 postoji samo zbog paketa i zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u
 aplikaciji se ne kompajlira.
 
@@ -242,6 +244,67 @@ Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
 - **`CurriculumStep.knownDifficulties` i `GameDifficulty` su dva ručno vođena spiska**
   (kurikulum mora ostati Foundation-only). `PathView.route(for:)` ih poredi u debug build-u —
   razlaz bi inače bio tih: korak zauvek stoji kao „Uskoro".
+
+## Analiza partije
+
+Od Faze 5. Posle svake partije Stockfish prolazi sve pozicije, klasifikuje poteze po
+gubitku u centipionima i prikazuje ekran sa procentom tačnosti, trakom poteza u boji i
+prelomnim potezom. Dostupno je i iz `game` koraka Puta.
+
+- **Matematika je odvojena od motora.** `Models/MoveAnalysis.swift` je Foundation-only,
+  kompajlira se i u SwiftPM paket i pokriven je sa 26 testova. Motor je zamenljiv; pravila
+  klasifikacije nisu. `Logic/UCIScoreParser.swift` je iz istog razloga izdvojen iz
+  `StockfishBridge`-a — `actor` koji uvozi `ChessKitEngine` ne može u testni paket, a
+  čitanje ocene iz linije teksta mora da bude testirano.
+- **N+1 pretraga, ne 2N.** Ocena pozicije PRE poteza daje „najbolje što se moglo", a ocena
+  pozicije POSLE njega, sa obrnutim znakom, daje „šta je odigrano". Svaka pozicija se zato
+  pretražuje tačno jednom: partija od 40 poteza traži **81 pretragu, ne 160**.
+  `cpLoss = before + after` — sabiranje nije greška nego posledica toga što se perspektiva
+  posle poteza okreće na protivnika.
+- **Izmereno, ne procenjeno** (simulator iPhone 17 Pro, dubina 12 iz spec-a): 81 pozicija za
+  **~17,5 s**, 81/81 ocena, tri uzastopna prolaza. Deljeni motor je izabran merenjem — svež
+  motor po poziciji daje isto 81/81 ali ~3× sporije (25,1 s prema 8,7 s na 20 pozicija).
+- **Mat se mapira u centipione**, a `cpLoss` je ograničen na `0…1000`. Bez gornje granice
+  jedan propušten mat (razlika ~20.000) sam odredi prosek cele partije i tačnost padne na ~0
+  iako je ostatak bio solidan. Granica je trostruko iznad praga za promašaj (300), pa ne
+  sakriva nijednu grešku. Potez koji DAJE mat ispadne `cpLoss = 0`, što je i tačno.
+- **Prelomni potez** je najveći gubitak, ali samo ako je ≥ 100 i ako potez **nije** klase
+  `.best`. Bez tog drugog uslova kartica ume da kaže „Prelomni potez (−1000)" i da ga oboji
+  akcentom kao najbolji potez — dve suprotne poruke o istom potezu. Potez koji bi i motor
+  odigrao nije prelomni, ma šta merenje reklo.
+- **Završna pozicija se ne šalje motoru.** Za poziciju bez legalnih poteza Stockfish ne
+  pošalje nijednu `<score>` liniju, pa bi analiza vraćala `nil` za SVAKU odigranu partiju —
+  poslednja pozicija je uvek mat ili pat. `terminalEval` je rešava iz pravila (mat →
+  `mate(0)`, pat → `cp(0)`), i to preko generisanja poteza, **ne** preko `state.status`, koji
+  `GameState.fromFEN` ostavlja na `.playing` i za mat.
+- **`game` korak Puta NE zavisi od analize.** Korak se upisuje kao završen pre nego što se
+  ekran analize uopšte otvori. Da je obrnuto, korak bi bio nezavršiv kad motor nije dostupan —
+  tiha, trajna blokada Puta.
+
+### Dva pada koja su ovde dijagnostikovana
+
+- **SIGPIPE pri otkazivanju analize gasio je celu aplikaciju, bez izveštaja o padu.**
+  `ChessKitEngine` ne pokreće zaseban proces: Stockfish radi u našem i `dup2`-uje svoj pipe
+  na `stdout`. `stop()` zatvara čitajući kraj, pa svaki naredni upis niti koja se još gasi
+  šalje SIGPIPE, čija podrazumevana radnja gasi proces. Izmereno: 4 pada u 8 pokretanja; sa
+  `signal(SIGPIPE, SIG_IGN)` u `ChesskoApp.init()` — 0 u 14. Upis u zatvoren pipe samo vrati
+  `EPIPE`, a `ChessKitEngine` povratnu vrednost `write()`-a ionako ne gleda.
+- **Motor koji se pokrene a nikad ne dobije `position` obara SLEDEĆI motor** u istom procesu
+  (SIGABRT, assert u `Position::set`). Zato se pozicija šalje odmah po preuzimanju stream-a;
+  `stop()` od toga ne spasava (mereno: padalo 2/3 i sa njim).
+
+### Šta NIJE utvrđeno — namerno zapisano
+
+- **Zašto je `bestMove` 2026-06-27 morao na svež motor po pozivu, ne zna se.** Objašnjenje
+  „`AsyncStream` se završava kad se iterator ispusti" je **eksperimentalno oboreno**: posle
+  ispuštanja iteratora `onTermination` se ne poziva, a nov iterator uredno dobija sledeću
+  vrednost. Deljeni motor u analizi radi (81/81 ×3), ali **to nije dozvola** da se `bestMove`
+  prebaci na isti obrazac — taj put je već jednom oboren u produkciji.
+- **`generation` brojač u `AnalysisViewModel` je tačan ali neizvršiv.** Sa uklonjene sve tri
+  zaštite izmereno je 0 zastarelih izveštaja kroz 14 pokretanja. Ostaje jer čuva stvarnu
+  invarijantu, ali se ne navodi kao dokazana zaštita.
+- **~2 od 14 brzih ponovnih pokretanja analize** završi na „Analiza nije uspela" — izlaz
+  starog motora upadne u pipe novog. Uzrok je u `StockfishBridge`/`ChessKitEngine`.
 
 ## Sadržaj lekcija
 
@@ -449,6 +512,30 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
    strukturno promeni).
 
 ## Changelog
+
+- **2026-09-12** — Faza 5 (analiza partije). Posle svake partije Stockfish prolazi sve
+  pozicije, klasifikuje poteze i prikazuje ekran sa tačnošću oba igrača, trakom poteza u boji
+  i prelomnim potezom; isti ekran služi kao povratna informacija za `game` korake Puta. Novi
+  fajlovi: `Models/MoveAnalysis.swift` (Foundation-only, 26 testova), `Logic/UCIScoreParser.swift`,
+  `ViewModels/AnalysisViewModel.swift`, `Views/AnalysisView.swift`; `StockfishBridge` dobio
+  `evaluate` i `analyzeGame`. Testova 58 → 84, katalog 285 → 299 ključeva × 8 jezika.
+  Detalji i izmereni brojevi — vidi sekciju „Analiza partije".
+
+  **Četiri greške koje su uhvaćene tek zato što je traženo merenje umesto čitanja koda:**
+  (1) Parser ocene je bio pisan po **pretpostavljenom** formatu `<score> cp 34`; stvarni je
+  `<score> <cp> 34.0` — tag sa zagradama, a `cp` je u biblioteci `Double`. Parser bi vraćao
+  `nil` za svaku poziciju i cela faza ne bi radila, a **svih 6 testova je prolazilo** jer su
+  koristili isti izmišljeni oblik kao i kod. Test koji deli pretpostavku sa kodom ne testira
+  ništa. Ispravljeno tako što su linije dobijene kompajliranjem i pokretanjem same biblioteke.
+  (2) Za završnu poziciju motor ne vraća ocenu, pa bi analiza padala na svakoj odigranoj
+  partiji — dodat `terminalEval`. (3) Otkazivanje analize je gasilo aplikaciju SIGPIPE-om.
+  (4) `deinit { task?.cancel() }` se u `@Observable` klasi ne kompajlira; samostalan `swiftc`
+  test bez makroa lažno prolazi.
+
+  **Dve tvrdnje su povučene iz koda pošto su oborene merenjem**, jer je netačan zapis o uzroku
+  gori od zapisa „ne znamo": objašnjenje kvara `responseStream`-a preko ispuštanja iteratora, i
+  tvrdnja da bez `generation` brojača zaostali izveštaj gazi novu analizu.
+
 
 - **2026-06-17** — Kreiran CLAUDE.md nakon analize cele kodne baze (Models, Logic,
   ViewModels, Views, build settings). Aplikacija funkcionalna: šah vs AI, igrač beli.
