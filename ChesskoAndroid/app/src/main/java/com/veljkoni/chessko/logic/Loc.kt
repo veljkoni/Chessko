@@ -495,7 +495,15 @@ object Loc {
         "Stockfish" to mapOf("sr" to "Stockfish", "en" to "Stockfish", "fr" to "Stockfish", "de" to "Stockfish", "it" to "Stockfish", "ru" to "Stockfish", "zh-Hans" to "Stockfish", "hi" to "Stockfish"),
         "Lichess" to mapOf("sr" to "Lichess", "en" to "Lichess", "fr" to "Lichess", "de" to "Lichess", "it" to "Lichess", "ru" to "Lichess", "zh-Hans" to "Lichess", "hi" to "Lichess"),
         "Učenje i Taktike" to mapOf("sr" to "Učenje i Taktike", "en" to "Learning & Tactics", "fr" to "Apprentissage et tactiques", "de" to "Lernen & Taktiken", "it" to "Apprendimento e tattiche", "ru" to "Обучение и тактика", "zh-Hans" to "学习与战术", "hi" to "सीखना और युक्तियाँ"),
-        "Lekcije" to mapOf("sr" to "Lekcije", "en" to "Lessons", "fr" to "Leçons", "de" to "Lektionen", "it" to "Lezioni", "ru" to "Уроки", "zh-Hans" to "课程", "hi" to "पाठ")
+        "Lekcije" to mapOf("sr" to "Lekcije", "en" to "Lessons", "fr" to "Leçons", "de" to "Lektionen", "it" to "Lezioni", "ru" to "Уроки", "zh-Hans" to "课程", "hi" to "पाठ"),
+        // Prevodi preuzeti iz iOS kataloga (`Chessko/Localizable.xcstrings`),
+        // da isti string na dva uredjaja ne glasi razlicito.
+        "Rejting zadataka" to mapOf("sr" to "Rejting zadataka", "en" to "Puzzle rating", "fr" to "Classement des problèmes", "de" to "Aufgaben-Wertung", "it" to "Punteggio problemi", "ru" to "Рейтинг задач", "zh-Hans" to "谜题评分", "hi" to "पहेली रेटिंग"),
+        // Okvir poruke o gresci; razlog se interpolira posle dvotacke, pa ovaj
+        // kljuc namerno nema zavrsnu tacku (postoji i "Greška pri učitavanju."
+        // kao zasebna, cela recenica).
+        "Greška pri učitavanju" to mapOf("sr" to "Greška pri učitavanju", "en" to "Loading error", "fr" to "Erreur de chargement", "de" to "Ladefehler", "it" to "Errore di caricamento", "ru" to "Ошибка загрузки", "zh-Hans" to "加载出错", "hi" to "लोडिंग त्रुटि"),
+        "Neispravan FEN u zadatku" to mapOf("sr" to "Neispravan FEN u zadatku", "en" to "Invalid FEN in puzzle", "fr" to "FEN invalide dans le problème", "de" to "Ungültiges FEN in der Aufgabe", "it" to "FEN non valido nel problema", "ru" to "Неверный FEN в задаче", "zh-Hans" to "谜题中的 FEN 无效", "hi" to "पहेली में अमान्य FEN")
     )
 }
 
