@@ -137,11 +137,31 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         sharedPrefs.edit().putStringSet(StatsManager.SOLVED_DATES_KEY, updated).apply()
     }
 
+    /// Ponovo cita napredak sa diska u kes.
+    ///
+    /// `solvedPuzzleIds` i `solvedDates` se ucitavaju JEDNOM, pri stvaranju
+    /// ViewModel-a, a `MainActivity` ga drzi kroz `remember` — instanca
+    /// prezivljava prelaske izmedju tabova i otvaranje podesavanja. Kad
+    /// „Resetuj statistiku" obrise `chessko_puzzle_prefs` NA DISKU, kes toga ne
+    /// zna: kvacica pored datuma ostaje, a vec reseni zadaci ostaju iskljuceni
+    /// iz vezbanja — sve do ubijanja procesa.
+    ///
+    /// Zato se zove na SVAKOM ulasku u nov zadatak, u oba rezima. Isti obrazac
+    /// iOS ima kao `reloadPersistedProgress()`; Android ga pri prenosu nije
+    /// poneo, pa je popravka reseta bila nepotpuna u zivoj sesiji (dokazano na
+    /// uredjaju: disk cist, ekran i dalje pokazuje kvacicu).
+    private fun reloadPersistedProgress() {
+        solvedPuzzleIds.clear()
+        sharedPrefs.getStringSet(SOLVED_PUZZLE_IDS_KEY, emptySet())?.let { solvedPuzzleIds.addAll(it) }
+        loadSolvedDates()
+    }
+
     private fun loadSolvedDates() {
         solvedDates = sharedPrefs.getStringSet(StatsManager.SOLVED_DATES_KEY, emptySet()) ?: emptySet()
     }
 
     fun loadDailyPuzzle() {
+        reloadPersistedProgress()
         // Reset na DAILY: bez ovoga bi vezbanje (PRACTICE) ostalo "zaglavljeno"
         // posle povratka na zadatak dana (retry dugme, promena datuma), pa bi
         // UI (traka za datum, poruke) i dalje gejtovao na pogresan rezim.
@@ -167,6 +187,7 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     /// resene. Prozor se progresivno siri — inace bi korisnik koji je resio sve
     /// u svom opsegu dobio prazan ekran bez objasnjenja.
     fun nextPuzzle() {
+        reloadPersistedProgress()
         mode = PuzzleMode.PRACTICE
         // Bez ovoga bi `puzzleHadError` iz PRETHODNOG zadatka (dnevnog ili
         // vezbovnog) ostao `true` i tiho progutao snimanje Elo rejtinga i
