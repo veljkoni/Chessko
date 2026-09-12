@@ -571,20 +571,17 @@ fun LNumberedRule(number: Int, title: String, text: String, color: Color) {
     }
 }
 
-// Interactive Lesson 1 details
+// Istrazivac figura: birac figura + sandbox tabla + info kartica + scenario
+// dugmad (rokada/en passant/promocija). Izdvojen iz `Lesson1Content` (Faza 6b,
+// Task 3) da bi `LessonRenderer` mogao da ga pozove za JSON blok tipa
+// `explorer`, BEZ izmene izgleda — isti pozivi, isti parametri
+// (`BoardTheme.CLASSIC`, `PieceStyle.CLASSIC`), ista kartica.
+// `accent` je izdvojen kao parametar (umesto `LessonInfo`, koji ovde ne
+// postoji) jer `LessonRenderer.LessonBlocks` vec nosi svoj `accent: Color` za
+// ceo blok niz — `info.accentColor` sa poziva iz `Lesson1Content` ostaje
+// bit-za-bit ista vrednost.
 @Composable
-fun Lesson1Content(viewModel: LearnViewModel, info: LessonInfo) {
-    LBox(
-        icon = "💬",
-        title = loc("Kapablanka piše"),
-        text = loc("\"Prva stvar koju učenik treba da uradi jeste da upozna snagu figura. Ovo se najlakše postiže učenjem kako se brzo postiže šah-mat.\""),
-        color = info.accentColor
-    )
-
-    LPara("Šah se igra na tabli od 64 polja naizmenično svetle i tamne boje. Uvek zapamti: donje desno polje mora biti svetlo. Svaki igrač počinje sa 16 figura.")
-
-    LSectionHeader("📱", loc("Istraži figure interaktivno"), info.accentColor)
-
+fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
     // Piece picker grid
     val piecesList = listOf(PieceType.PAWN, PieceType.KNIGHT, PieceType.BISHOP, PieceType.ROOK, PieceType.QUEEN, PieceType.KING)
     LazyVerticalGrid(
@@ -642,7 +639,7 @@ fun Lesson1Content(viewModel: LearnViewModel, info: LessonInfo) {
             .background(Color.White.copy(alpha = 0.05f))
             .padding(12.dp)
     ) {
-        Text(text = viewModel.infoTitle, color = info.accentColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(text = viewModel.infoTitle, color = accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(2.dp))
         Text(text = viewModel.infoText, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
         Spacer(modifier = Modifier.height(6.dp))
@@ -672,6 +669,23 @@ fun Lesson1Content(viewModel: LearnViewModel, info: LessonInfo) {
             }
         }
     }
+}
+
+// Interactive Lesson 1 details
+@Composable
+fun Lesson1Content(viewModel: LearnViewModel, info: LessonInfo) {
+    LBox(
+        icon = "💬",
+        title = loc("Kapablanka piše"),
+        text = loc("\"Prva stvar koju učenik treba da uradi jeste da upozna snagu figura. Ovo se najlakše postiže učenjem kako se brzo postiže šah-mat.\""),
+        color = info.accentColor
+    )
+
+    LPara("Šah se igra na tabli od 64 polja naizmenično svetle i tamne boje. Uvek zapamti: donje desno polje mora biti svetlo. Svaki igrač počinje sa 16 figura.")
+
+    LSectionHeader("📱", loc("Istraži figure interaktivno"), info.accentColor)
+
+    PieceExplorer(viewModel, info.accentColor)
 
     // Static piece details
     HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
