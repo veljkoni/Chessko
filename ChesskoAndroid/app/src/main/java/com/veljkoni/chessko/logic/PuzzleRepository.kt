@@ -20,7 +20,9 @@ class PuzzleRepository(context: Context) {
 
     init {
         val target = File(context.filesDir, DB_NAME)
-        val expected = context.assets.openFd(DB_NAME).length
+        // `.use`: `openFd` vraca deskriptor koji se mora zatvoriti. Bez toga
+        // svaka nova instanca repozitorijuma procuri jedan fd.
+        val expected = context.assets.openFd(DB_NAME).use { it.length }
         // Kopira se samo ako fajla nema ILI je nepotpun. Bez provere velicine
         // bi prekinuta prva kopija (pun disk, ubijen proces) ostala zauvek kao
         // pokvarena baza koju niko vise ne bi prepisao.

@@ -73,6 +73,44 @@ class PuzzleRepositoryTest {
     }
 
     @Test
+    fun dailyPuzzleSurvivesNegativeDayIndex() {
+        // `dayIndex` je broj dana od epohe i za datume PRE 1970. je negativan —
+        // korisnik do njega stize strelicom „prethodni dan". Kotlinov `%` cuva
+        // znak, pa bi naivan `dayIndex % n` dao NEGATIVAN offset.
+        //
+        // Ne sme se proveravati samo `!= null`: SQLite negativan `OFFSET`
+        // tretira kao nulu (provereno), pa bi takav zadatak i dalje stizao —
+        // samo bi SVI datumi pre epohe delili isti, prvi zadatak. Zato se
+        // trazi tacno preslikavanje: dan -1 mora dati POSLEDNJI zadatak, a ne
+        // isti kao dan 0.
+        val r = repo()
+        val last = (r.count() - 1).toLong()
+        assertEquals(r.dailyPuzzle(last)!!.puzzleId, r.dailyPuzzle(-1)!!.puzzleId)
+        assertTrue(r.dailyPuzzle(-1)!!.puzzleId != r.dailyPuzzle(0)!!.puzzleId)
+        // Jedina vrednost kod koje bi unarni minus prelio; mora da prodje.
+        assertNotNull(r.dailyPuzzle(Long.MIN_VALUE))
+    }
+
+    @Test
+    fun hugeExclusionSetDoesNotThrow() {
+        // `excluding` se vezuje kao JEDAN SQL parametar po id-ju. Skup od 1500
+        // resenih zadataka je dostizan posle par meseci vezbanja, pa upit mora
+        // da vrati zadatak umesto da pukne.
+        //
+        // Na OVOM emulatoru (API 36, SQLite 3.50) granica je 32.766 pa ni 1500
+        // parametara ne puca — provereno. Na `minSdk 26` uredjajima granica je
+        // 999, i tamo je pad stvaran. Zato test nosi i tvrdnju nad samom
+        // granicom: ona vazi svuda, ne samo na uredjaju na kome se pokrece.
+        assertTrue(
+            "MAX_EXCLUDED mora ostati ispod SQLite granice od 999 parametara",
+            PuzzleRepository.MAX_EXCLUDED <= 999
+        )
+        val many = (1..1500).map { "x$it" }.toSet()
+        assertTrue(many.size > PuzzleRepository.MAX_EXCLUDED)
+        assertNotNull(repo().randomPuzzle(600..2200, many))
+    }
+
+    @Test
     fun puzzleByIdRoundTrips() {
         val r = repo()
         val any = r.dailyPuzzle(12345)!!

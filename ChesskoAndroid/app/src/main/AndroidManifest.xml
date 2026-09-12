@@ -3,7 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+      INTERNET je namerno UKLONJEN (Faza 6a). Aplikacija od prelaska na lokalnu
+      bazu zadataka nema nijedan mrezni poziv, a odsustvo dozvole je najjaci
+      dokaz za to: svaki buduci mrezni poziv bi pukao odmah, umesto da tiho
+      vrati aplikaciju na mrezu. Stockfish radi lokalno i ne trazi mrezu.
+    -->
+
 
     <application
         android:allowBackup="true"
