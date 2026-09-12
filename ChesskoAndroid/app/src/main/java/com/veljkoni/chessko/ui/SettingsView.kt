@@ -318,7 +318,7 @@ fun SettingsView(
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 Text(
-                                    text = theme.label,
+                                    text = loc(theme.label),
                                     color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.7f),
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
@@ -415,7 +415,7 @@ fun SettingsView(
                                             Spacer(modifier = Modifier.height(4.dp))
 
                                             Text(
-                                                text = style.label,
+                                                text = loc(style.label),
                                                 color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.7f),
                                                 fontSize = 10.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium

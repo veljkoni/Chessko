@@ -499,6 +499,11 @@ object Loc {
         // Prevodi preuzeti iz iOS kataloga (`Chessko/Localizable.xcstrings`),
         // da isti string na dva uredjaja ne glasi razlicito.
         "Rejting zadataka" to mapOf("sr" to "Rejting zadataka", "en" to "Puzzle rating", "fr" to "Classement des problèmes", "de" to "Aufgaben-Wertung", "it" to "Punteggio problemi", "ru" to "Рейтинг задач", "zh-Hans" to "谜题评分", "hi" to "पहेली रेटिंग"),
+        // Opisi kontrola pregleda partije (TalkBack). Bez ovih kljuceva su
+        // `loc()` pozivi u MainActivity tiho padali na srpski na svih 7 jezika.
+        "Kraj" to mapOf("sr" to "Kraj", "en" to "End", "fr" to "Fin", "de" to "Ende", "it" to "Fine", "ru" to "Конец", "zh-Hans" to "末尾", "hi" to "अंत"),
+        "Prethodni" to mapOf("sr" to "Prethodni", "en" to "Previous", "fr" to "Précédent", "de" to "Zurück", "it" to "Precedente", "ru" to "Предыдущий", "zh-Hans" to "上一步", "hi" to "पिछला"),
+        "Sledeći" to mapOf("sr" to "Sledeći", "en" to "Next", "fr" to "Suivant", "de" to "Weiter", "it" to "Successivo", "ru" to "Следующий", "zh-Hans" to "下一步", "hi" to "अगला"),
         // Okvir poruke o gresci; razlog se interpolira posle dvotacke, pa ovaj
         // kljuc namerno nema zavrsnu tacku (postoji i "Greška pri učitavanju."
         // kao zasebna, cela recenica).

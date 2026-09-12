@@ -404,7 +404,12 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
             // Solution Button
             Button(
                 onClick = { viewModel.showSolution() },
-                enabled = viewModel.phase == PuzzlePhase.PLAYING || viewModel.phase == PuzzlePhase.WRONG_MOVE,
+                // `isPlayerTurn` je NUZAN deo uslova: `showSolution()` je iznutra
+                // gejtovan na `!awaitingOpponent`, pa bi bez ovoga dugme tokom
+                // 600 ms cekanja na protivnicki odgovor izgledalo pritisno a ne
+                // bi radilo nista — dodir se tiho proguta.
+                enabled = viewModel.isPlayerTurn &&
+                    (viewModel.phase == PuzzlePhase.PLAYING || viewModel.phase == PuzzlePhase.WRONG_MOVE),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White.copy(alpha = 0.08f),
                     contentColor = Color.White,
