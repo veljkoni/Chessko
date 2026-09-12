@@ -401,7 +401,25 @@ cd ChesskoAndroid && ./gradlew testDebugUnitTest --tests '*LessonContentTest*'
 ```
 Expected: **8 testova prolazi.**
 
-- [ ] **Step 5: Ako `org.json` u JVM testu vraća stub**
+- [ ] **Step 5: `org.json` u JVM testu NE RADI — testovi idu u `androidTest`**
+
+**Ovo se ostvarilo i odlučeno je.** `testDebugUnitTest` pada sa
+`RuntimeException: Method getJSONArray in org.json.JSONObject not mocked` — Android JVM testovi
+nose *stub* `org.json`-a. `isReturnDefaultValues = true` to **ne rešava**; stub i dalje baca.
+
+Odluka: `LessonContentTest.kt` ide u **`app/src/androidTest/`** sa `@RunWith(AndroidJUnit4::class)`.
+
+Razlog nije samo zabrana zavisnosti. Test-only zavisnost (`testImplementation("org.json:json")`)
+testirala bi parser protiv **druge implementacije** `org.json`-a od one koja se isporučuje na
+uređaju — pa bi parser mogao da prolazi testove a da se na telefonu ponaša drugačije. To je ista
+klasa greške kao test koji deli pogrešnu pretpostavku sa kodom. Instrumentisani test radi protiv
+**pravog** `org.json`-a.
+
+Cena, zapisana pošteno: `LessonContent.kt` ostaje bez ijednog `android.*` uvoza (pa je prenosiv),
+ali se **njegovi testovi ne mogu pokrenuti bez emulatora**. Projektni cilj „JVM-testabilan parser"
+time nije ispunjen — ispunjen je samo „parser bez Android zavisnosti".
+
+- [ ] **Step 5b (istorijski zapis): zašto ne ide u JVM testove**
 
 Android-ov `org.json` je u `testDebugUnitTest` podrazumevano *stub* koji baca
 `RuntimeException("Stub!")`. Ako testovi padnu tom porukom, u `app/build.gradle.kts` dodati:
@@ -429,7 +447,7 @@ raščlanjivanjem umesto `org.json`. **Ne uvoditi zavisnost.** Odluku donosi kon
 ```bash
 cd ChesskoAndroid && ./gradlew testDebugUnitTest && ./gradlew assembleDebug
 ```
-Expected: **30 testova** (22 zatečena + 8 novih), `BUILD SUCCESSFUL`.
+Expected: JVM ostaje **22** (testovi ovog taska su instrumentisani), instrumentisanih **19** (11 zatečenih + 8 novih), `BUILD SUCCESSFUL`.
 
 - [ ] **Step 7: Commit**
 
@@ -663,7 +681,7 @@ for p in glob.glob("app/build/outputs/androidTest-results/connected/debug/*.xml"
 print(f"instrumentisanih: {t}, padova: {f}")
 EOF
 ```
-Expected: **17 testova** (11 zatečenih + 6 novih), **0 padova**.
+Expected: **25 testova** (19 posle Task-a 1 + 6 novih), **0 padova**.
 
 - [ ] **Step 6: Dokazati da lekcije stvarno ulaze u APK**
 
@@ -1056,7 +1074,7 @@ Snimiti i srpsku varijantu radi poređenja, i **jednu lekciju koja postoji samo 
 ```bash
 cd ChesskoAndroid && ./gradlew testDebugUnitTest && ./gradlew assembleDebug
 ```
-Expected: **30 testova**, `BUILD SUCCESSFUL`.
+Expected: JVM **22**, `BUILD SUCCESSFUL`.
 
 - [ ] **Step 8: Commit**
 
@@ -1080,7 +1098,7 @@ nepoznat tip bloka iz istog razloga kao iOS.
 
 - [ ] **Step 2: Ažurirati „Stanje Android porta"**
 
-Faza 3 prelazi u **da**. Brojevi testova: **30 JVM + 17 instrumentisanih**.
+Faza 3 prelazi u **da**. Brojevi testova: **22 JVM + 25 instrumentisanih**. Zapisati i ZAŠTO parser nije JVM-testiran (Android `org.json` stub), jer je to netipično i sledeći čitalac bi pomislio da je propust.
 
 - [ ] **Step 3: Zatvoriti unos o spec-u 4.5**
 
@@ -1106,8 +1124,8 @@ git commit -m "Faza 6b: dokumentacija lekcija iz JSON-a na Androidu"
 
 ## Završna provera faze
 
-- [ ] `./gradlew testDebugUnitTest` prolazi **30/30**
-- [ ] `./gradlew connectedDebugAndroidTest` prolazi **17/17** (čitano iz XML-a)
+- [ ] `./gradlew testDebugUnitTest` prolazi **22/22** (parser se testira instrumentisano, vidi Task 1 Step 5)
+- [ ] `./gradlew connectedDebugAndroidTest` prolazi **25/25** (čitano iz XML-a)
 - [ ] `./gradlew assembleDebug` → `BUILD SUCCESSFUL`
 - [ ] 36 JSON fajlova u APK-u (`unzip -l | grep -c assets/lessons/`)
 - [ ] `diff -r Chessko/Content/lessons ChesskoAndroid/app/src/main/assets/lessons` prazan
