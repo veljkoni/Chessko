@@ -20,11 +20,13 @@ let package = Package(
                 "Models/ChessPuzzle.swift",
                 "Models/LessonContent.swift",
                 "Models/Curriculum.swift",
+                "Models/MoveAnalysis.swift",
                 "Logic/StatsManager.swift",
                 "Logic/ProgressStore.swift",
                 "Logic/MoveGenerator.swift",
                 "Logic/ZobristTable.swift",
                 "Logic/PuzzleRepository.swift",
+                "Logic/UCIScoreParser.swift",
                 "TestSupport/LocShim.swift",
             ],
             swiftSettings: [.define("CHESSKO_ENGINE_PACKAGE")]

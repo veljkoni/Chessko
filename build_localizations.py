@@ -458,6 +458,23 @@ add("Korak se završava kad partija dođe do kraja.",
     "बाज़ी के अंत तक पहुँचने पर यह चरण पूरा हो जाता है।")
 
 
+# ── Analiza partije (Faza 5) ───────────────────────────────────────
+add("Analiza partije", "Game analysis", "Analyse de la partie", "Partieanalyse", "Analisi della partita", "Анализ партии", "对局分析", "गेम विश्लेषण")
+add("Analiziraj partiju", "Analyse game", "Analyser la partie", "Partie analysieren", "Analizza la partita", "Анализировать партию", "分析对局", "गेम का विश्लेषण करें")
+add("Analiziram…", "Analysing…", "Analyse en cours…", "Analysiere…", "Analisi in corso…", "Анализирую…", "分析中…", "विश्लेषण जारी…")
+add("Tačnost", "Accuracy", "Précision", "Genauigkeit", "Precisione", "Точность", "准确率", "सटीकता")
+add("Prelomni potez", "Turning point", "Coup décisif", "Wendepunkt", "Mossa decisiva", "Переломный ход", "转折点", "निर्णायक चाल")
+add("najbolji", "best", "meilleur", "bester", "migliore", "лучший", "最佳", "सर्वोत्तम")
+add("odličan", "excellent", "excellent", "ausgezeichnet", "eccellente", "отличный", "优秀", "उत्कृष्ट")
+add("dobar", "good", "bon", "gut", "buono", "хороший", "良好", "अच्छा")
+add("netačnost", "inaccuracy", "imprécision", "Ungenauigkeit", "imprecisione", "неточность", "不精确", "अशुद्धि")
+add("greška", "mistake", "erreur", "Fehler", "errore", "ошибка", "失误", "गलती")
+add("promašaj", "blunder", "gaffe", "Patzer", "errore grave", "грубая ошибка", "严重失误", "भारी भूल")
+add("Analiza nije uspela.", "Analysis failed.", "L’analyse a échoué.", "Analyse fehlgeschlagen.", "Analisi non riuscita.", "Анализ не удался.", "分析失败。", "विश्लेषण विफल रहा।")
+add("Analiza nije dostupna — motor nije pronađen.", "Analysis unavailable — engine not found.", "Analyse indisponible — moteur introuvable.", "Analyse nicht verfügbar — Engine nicht gefunden.", "Analisi non disponibile — motore non trovato.", "Анализ недоступен — движок не найден.", "无法分析 — 未找到引擎。", "विश्लेषण उपलब्ध नहीं — इंजन नहीं मिला।")
+add("Nema dovoljno poteza za analizu.", "Not enough moves to analyse.", "Pas assez de coups à analyser.", "Nicht genug Züge für die Analyse.", "Non ci sono abbastanza mosse da analizzare.", "Недостаточно ходов для анализа.", "棋步不足，无法分析。", "विश्लेषण के लिए पर्याप्त चालें नहीं।")
+
+
 def build():
     entries = {}
     for sr, trans in T.items():

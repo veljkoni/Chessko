@@ -41,6 +41,7 @@ struct StepGameView: View {
     @State private var pendingStepId: String?
 
     @State private var showResignConfirm = false
+    @State private var showAnalysis = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -91,6 +92,11 @@ struct StepGameView: View {
         } message: {
             Text(Loc("Da li ste sigurni da želite da predate trenutnu partiju?"))
         }
+        .sheet(isPresented: $showAnalysis) {
+            if let viewModel {
+                AnalysisView(viewModel: viewModel)
+            }
+        }
         .onAppear(perform: start)
         // `isGameOver` je JEDINI izvor istine o kraju partije (`GameViewModel`);
         // ekran ga posmatra, ne izvodi ponovo.
@@ -125,6 +131,10 @@ struct StepGameView: View {
         // Bez dodatnog haptika: `GameViewModel` je za kraj partije vec ispalio
         // svoj (pobeda/poraz/remi) pre koji milisekundu.
         viewModel.clearStepSave()
+        // Analiza je PRIKAZ, ne uslov: korak je gore vec upisan kao zavrsen,
+        // pa otvaranje ekrana analize ovde nikad ne moze da spreci zavrsetak
+        // koraka — ni ako se ne otvori, ni ako padne, ni ako motor ne radi.
+        showAnalysis = true
     }
 
     // MARK: - Raspored

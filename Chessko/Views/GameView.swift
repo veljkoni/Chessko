@@ -10,6 +10,7 @@ struct GameView: View {
     @State private var showNewGameConfirm = false
     @State private var showResignConfirm = false
     @State private var showSettings = false
+    @State private var showAnalysis = false
     @State private var dismissGameOverOverlay = false
 
     enum PendingSelection {
@@ -71,6 +72,8 @@ struct GameView: View {
                                 if viewModel.totalReviewMoves > 0 {
                                     reviewControlsView
                                 }
+
+                                analysisButton
 
                                 if !viewModel.gameState.moveNotations.isEmpty {
                                     VStack(alignment: .leading, spacing: 6) {
@@ -138,6 +141,8 @@ struct GameView: View {
                                 if viewModel.totalReviewMoves > 0 {
                                     reviewControlsView
                                 }
+
+                                analysisButton
 
                                 if !viewModel.gameState.moveNotations.isEmpty {
                                     VStack(alignment: .leading, spacing: 6) {
@@ -253,6 +258,32 @@ struct GameView: View {
             .fullScreenCover(isPresented: $showChessClock) {
                 ChessClockView()
             }
+            .sheet(isPresented: $showAnalysis) {
+                AnalysisView(viewModel: viewModel)
+            }
+        }
+    }
+
+    // MARK: - Analiza partije
+
+    // Vidi se samo na gotovoj partiji koja ima bar jedan potez: analiza pretrazuje
+    // pozicije redom, pa nad partijom koja jos traje ne bi ni imala sta da kaze.
+    // Stoji u OBE grane rasporeda (portret i pejzaz) — grane ne dele telo, pa bi
+    // dodavanje na jedno mesto ostavilo dugme nevidljivim u drugoj orijentaciji.
+    @ViewBuilder
+    private var analysisButton: some View {
+        if viewModel.isGameOver && !viewModel.gameState.moveNotations.isEmpty {
+            Button {
+                showAnalysis = true
+            } label: {
+                Label(Loc("Analiziraj partiju"), systemImage: "chart.bar.doc.horizontal")
+                    .font(.dsBody.weight(.semibold))
+                    .foregroundStyle(DS.onAccent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, DS.Space.m)
+                    .background(DS.accent, in: RoundedRectangle(cornerRadius: DS.Radius.m))
+            }
+            .buttonStyle(.plain)
         }
     }
 

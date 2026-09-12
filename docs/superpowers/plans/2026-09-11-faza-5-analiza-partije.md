@@ -188,14 +188,15 @@ import Testing
     #expect(analysis.moves[2].byWhite == true)
     #expect(analysis.moves[0].notation == "e4")
     #expect(analysis.moves.allSatisfy { $0.cpLoss == 0 })
-    #expect(analysis.whiteAccuracy == 100)
-    #expect(analysis.blackAccuracy == 100)
+    // Savrsena igra NE daje tacno 100: formula u nuli daje 99.9999.
+    #expect(analysis.whiteAccuracy > 99.99)
+    #expect(analysis.blackAccuracy > 99.99)
 }
 
 @Test func buildComputesEachSideAccuracyFromOnlyThatSideMoves() {
     // Beli igra savrseno, crni gubi po 200 centipiona po potezu.
     //
-    // Ocene se moraju izabrati tako da SVAKI belи potez ima gubitak 0, ne samo
+    // Ocene se moraju izabrati tako da SVAKI beli potez ima gubitak 0, ne samo
     // prvi: gubitak poteza `i` je `scores[i] + scores[i+1]`, pa jedna ocena
     // ulazi u DVA susedna poteza. Niz [0, 0, 200, -200, 400] daje belom 0 i 0,
     // a crnom 200 i 200.
@@ -208,7 +209,7 @@ import Testing
     #expect(analysis.moves[1].cpLoss == 200)  // crni
     #expect(analysis.moves[2].cpLoss == 0)    // beli
     #expect(analysis.moves[3].cpLoss == 200)  // crni
-    #expect(analysis.whiteAccuracy == 100)
+    #expect(analysis.whiteAccuracy > 99.99)
     #expect(analysis.whiteAccuracy > analysis.blackAccuracy)
 }
 
@@ -315,7 +316,7 @@ enum MoveClass: String, CaseIterable, Sendable {
 }
 
 struct AnalyzedMove: Sendable, Identifiable, Equatable {
-    /// Redni broj poluteza, od 0. `ply 0` je prvi belи potez.
+    /// Redni broj poluteza, od 0. `ply 0` je prvi beli potez.
     let ply: Int
     let notation: String
     let byWhite: Bool
@@ -429,8 +430,6 @@ struct GameAnalysis: Sendable, Equatable {
 }
 ```
 
-> **Napomena za implementatora:** u komentaru iznad `ply` gore stoji ćirilično „и" u reči „belи" — ispravi u latinično `beli`. Ovo je namerno ostavljeno kao provera da čitaš kod koji prepisuješ, ne da ga slepo kopiraš.
-
 - [ ] **Step 4: Dodati fajl u `Package.swift`**
 
 U `sources:` listu, posle `"Models/Curriculum.swift",` dodati:
@@ -451,17 +450,27 @@ Expected: **73/73** (58 zatečenih + 15 novih).
 
 Ovo nije formalnost. Isti propust je u projektu napravljen dvaput i oba puta su i `swift test` i `xcodebuild` bili zeleni dok aplikacija fajl **nikad nije kompajlirala** — jer ga nije ni bilo u target-u.
 
-Obrazac je četiri linije sa ručno izmišljenim, jedinstvenim ID-jem (ugledaj se na `PromotionOverlay.swift`, ID `10CA7A1000000000000000Z2`). Koristi `10CA7A1000000000000000A1`/`A2`:
+Obrazac je četiri linije sa ručno izmišljenim, jedinstvenim ID-jem (ugledaj se na `PromotionOverlay.swift`, ID `10CA7A1000000000000000Z2`).
+
+> **PROVERI DA JE ID SLOBODAN PRE UPOTREBE.** Prva verzija ovog plana je tvrdila da su `…A1`/`…A2` slobodni, a bili su zauzeti za `Localizable.xcstrings`; isto je važilo i za `…B*` i `…C*`. Duplirani GUID u `project.pbxproj` je greška koju Xcode ne prijavi odmah. Slobodni sufiksi, provereni: `D1 D2 E1 E2 F1 F2 G1 G2 H1 H2 J1 J2 K1 K2 N1 N2 Q1 Q2 T1 T2`. Pre upotrebe potvrdi:
+> ```bash
+> grep -c "10CA7A1000000000000000<SUFIKS>" Chessko.xcodeproj/project.pbxproj   # mora biti 0
+> ```
+>
+> Sufiksi vec upotrebljeni u ovoj fazi: `M1`/`M2` (Task 1), `N1`/`N2` (Task 2),
+> `Q1`/`Q2` (Task 4), `T1`/`T2` (Task 5) — ne koristi ih ponovo.
+
+Za ovaj task koristi `10CA7A1000000000000000M1`/`M2`:
 
 ```
 # 1) u PBXBuildFile sekciju (oko linije 41):
-		10CA7A1000000000000000A1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000A2 /* MoveAnalysis.swift */; };
+		10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000M2 /* MoveAnalysis.swift */; };
 # 2) u PBXFileReference sekciju (oko linije 88):
-		10CA7A1000000000000000A2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000M2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
 # 3) u children listu Models grupe:
-			10CA7A1000000000000000A2 /* MoveAnalysis.swift */,
+			10CA7A1000000000000000M2 /* MoveAnalysis.swift */,
 # 4) u PBXSourcesBuildPhase files listu:
-				10CA7A1000000000000000A1 /* MoveAnalysis.swift in Sources */,
+				10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */,
 ```
 
 Dokaz da je fajl stvarno u target-u — namerno ubaci sintaksnu grešku i vidi da build **padne**:
@@ -504,14 +513,22 @@ git commit -m "Faza 5, Task 1: model i matematika analize partije"
 - Consumes: `EngineScore` iz Task-a 1.
 - Produces: `enum UCIScoreParser { static func score(from line: String) -> EngineScore? }`
 
-**Oblik ulaza.** `ChessKitEngine` vraća `response.rawValue` u tagovanom formatu — isti onaj zbog kog `bestMove` gleda prefiks `<bestmove>`. Za `info` linije oblik je:
+**Oblik ulaza — IZMEREN, ne pretpostavljen.** Prva verzija ovog plana je tvrdila da je oblik `<score> cp 34`. To je **netačno** i parser napisan po njoj vraća `nil` na svakoj stvarnoj liniji. Pravi oblik je dobijen kompajliranjem i pokretanjem same biblioteke (ChessKitEngine 0.7.0):
 
 ```
-<info> <depth> 12 <seldepth> 18 <score> cp 34 <nodes> 120000 <pv> e2e4 e7e5
-<info> <depth> 12 <score> mate 3 <nodes> 9000 <pv> d1h5
+<info> <depth> 12 <score> <cp> 34.0
+<info> <score> <cp> -250.0
+<info> <score> <mate> 3
+<info> <score> <cp> 34.0 <upperbound>
 ```
 
-Parser mora da radi i ako se redosled tagova promeni, zato traži token `<score>` i čita **dva** tokena posle njega.
+Tri stvari koje se iz ovoga moraju poštovati:
+
+1. Tag posle `<score>` nosi **uglaste zagrade** — `<cp>`, ne `cp`.
+2. `cp` je u biblioteci `Double?` (`EngineResponseInfo.swift:223`), pa vrednost uvek nosi decimalu: `34.0`. `Int("34.0")` je `nil` — mora se čitati kao `Double` pa zaokružiti. `mate` je `Int` i čita se direktno.
+3. `<lowerbound>`/`<upperbound>` su **zasebni tagovi bez vrednosti** i stoje iza ocene.
+
+Ako ikad zatreba da se ovo ponovo proveri, postupak je: `swiftc <checkout>/Sources/ChessKitEngine/EngineResponse/*.swift main.swift` gde `main.swift` sklopi `EngineResponse.Info` sa `score` i ispiše `EngineResponse.info(i).rawValue`.
 
 - [ ] **Step 1: Napisati testove koji padaju**
 
@@ -556,8 +573,15 @@ Dodati na kraj `Tests/ChesskoEngineTests/MoveAnalysisTests.swift`:
 
 - [ ] **Step 2: Pokrenuti testove i videti da padaju**
 
-Run: `swift test --filter UCIScore`
+Run: `swift test --filter MoveAnalysis`
 Expected: FAIL, `cannot find 'UCIScoreParser' in scope`.
+
+> **`--filter` koji ne pogađa ništa prijavljuje „passed"!** `swift test --filter UCIScore`
+> daje `Test run with 0 tests in 0 suites passed` — jer se filter poredi sa IMENIMA testova,
+> a nijedan se ne zove tako. Testovi iz ovog taska su u `MoveAnalysisTests.swift` i hvata ih
+> `--filter MoveAnalysis` (ime fajla/suite-a) ili `--filter parses` (zajednički prefiks
+> imena). Uvek proveri da je broj pokrenutih testova onaj koji očekuješ, ne samo da piše
+> „passed".
 
 - [ ] **Step 3: Napisati `Chessko/Logic/UCIScoreParser.swift`**
 
@@ -604,7 +628,7 @@ U `Package.swift` `sources:`, posle `"Logic/PuzzleRepository.swift",`:
                 "Logic/UCIScoreParser.swift",
 ```
 
-U `project.pbxproj` isti četvorolinijski obrazac kao u Task-u 1, sa ID-jevima `10CA7A1000000000000000B1`/`B2`, `path = UCIScoreParser.swift`, u `Logic` grupu.
+U `project.pbxproj` isti četvorolinijski obrazac kao u Task-u 1, sa ID-jevima `10CA7A1000000000000000N1`/`N2`, `path = UCIScoreParser.swift`, u `Logic` grupu.
 
 - [ ] **Step 5: Pokrenuti testove**
 
@@ -848,6 +872,14 @@ final class AnalysisViewModel {
     private(set) var phase: Phase = .idle
 
     private let stockfish = StockfishBridge()
+
+    /// `@ObservationIgnored` NIJE kozmetika. Bez njega `@Observable` obavija
+    /// `task` u `@ObservationTracked`, cime `deinit { task?.cancel() }` prestaje
+    /// da se kompajlira: „main actor-isolated property 'task' can not be
+    /// referenced from a nonisolated context". Provereno oba smera na
+    /// `-swift-version 6`. Uz to, `task` nije stanje koje se prikazuje, pa u
+    /// pracenju nema sta ni da trazi.
+    @ObservationIgnored
     private var task: Task<Void, Never>?
 
     /// Dubina je fiksna po spec-u 5.5 — analiza mora da traje predvidivo.
@@ -925,7 +957,7 @@ final class AnalysisViewModel {
 
 - [ ] **Step 2: Dodati u `project.pbxproj`**
 
-Isti četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000C1`/`C2`, `path = AnalysisViewModel.swift`, u `ViewModels` grupu.
+Isti četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000Q1`/`Q2`, `path = AnalysisViewModel.swift`, u `ViewModels` grupu.
 
 **Ne** dodavati u `Package.swift` — fajl uvozi `Observation` i zove `Loc(...)`, koji je iza SwiftUI-ja.
 
@@ -1232,7 +1264,19 @@ Uz `@State private var showAnalysis = false` na vrhu `GameView`-a i, na kraju `b
 
 - [ ] **Step 4: `project.pbxproj`, build, dokaz da je fajl u target-u**
 
-Četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000D1`/`D2`, `path = AnalysisView.swift`, u `Views` grupu. Zatim isti dokaz sintaksnom greškom.
+Četvorolinijski obrazac, ID-jevi `10CA7A1000000000000000T1`/`T2`, `path = AnalysisView.swift`, u `Views` grupu. Zatim isti dokaz sintaksnom greškom.
+
+- [ ] **Step 5a: Dokazati da zaostali izvestaj STARE analize ne gazi novu**
+
+`AnalysisViewModel` od Task-a 4 nosi `generation` brojac jer `task.cancel()` NE dopire do
+`Task { @MainActor }` jedinica koje je `onProgress` vec stavio u red. Ta zastita do sada
+**nije nijednom izvrsena** — nije postojao ekran koji ume da otkaze pa odmah ponovo pokrene.
+
+Ovaj task je prvi koji to moze, pa mora i da dokaze. Dodaj privremeno dugme (ili `.task`
+blok) koje pozove `analysis.cancel()` pa odmah `analysis.start(...)`, pokreni, i potvrdi da
+brojac napretka ne skace unazad i da ekran ne zavrsi u `.failed` od STARE analize. Ako se
+zastita ukloni (privremeno obrisi `guard self.generation == gen`), isti postupak MORA da
+pokaze kvar — inace provera nije nista dokazala. Vrati sve i potvrdi cisto stablo.
 
 - [ ] **Step 5: Vizuelna provera na simulatoru, u obe teme**
 

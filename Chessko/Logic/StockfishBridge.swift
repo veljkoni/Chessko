@@ -78,6 +78,277 @@ actor StockfishBridge {
         return nil
     }
 
+    // MARK: - Analiza pozicije
+
+    struct PositionEval: Sendable {
+        /// Ocena iz ugla strane koja je na potezu u toj poziciji.
+        let score: EngineScore
+        /// Potez koji motor smatra najboljim; `nil` u zavrsnoj poziciji.
+        let bestMove: ChessMove?
+    }
+
+    /// Ocena zavrsne pozicije — bez pitanja motora.
+    ///
+    /// IZMERENO (simulator, 2026-09-11): za poziciju bez legalnih poteza
+    /// Stockfish preko `ChessKitEngine`-a NE posalje nijednu `info … <score> …`
+    /// liniju, nego ide pravo na `<bestmove> (none)`. Bez ove grane bi
+    /// `evaluate` i `analyzeGame` vracali `nil` za SVAKU odigranu partiju, jer
+    /// je poslednja od N+1 pozicija upravo mat ili pat.
+    ///
+    /// Vrednost se ne pogadja nego sledi iz pravila: ako je strana na potezu
+    /// matirana, ocena iz NJENOG ugla je `mate(0)` (isto sto bi motor rekao sa
+    /// `score mate 0`, tj. −10.000 centipiona); u svakom drugom slucaju bez
+    /// poteza to je pat, dakle `cp(0)`.
+    ///
+    /// Namerno se NE gleda `state.status` — `GameState.fromFEN` ga ostavlja na
+    /// `.playing` i za matiranu poziciju, pa bi oslanjanje na njega vezalo
+    /// tacnost analize za to kako je pozicija nastala.
+    private func terminalEval(for state: GameState) -> PositionEval? {
+        guard MoveGenerator.legalMoves(for: state.currentTurn, in: state).isEmpty else { return nil }
+        let mated = MoveGenerator.isInCheck(color: state.currentTurn, in: state)
+        return PositionEval(score: mated ? .mate(0) : .cp(0), bestMove: nil)
+    }
+
+    /// Ocena jedne pozicije. Za razliku od `bestMove(for:depth:)`, cita i
+    /// `info` linije da bi izvukla ocenu, ne samo `<bestmove>`.
+    ///
+    /// Uzima se POSLEDNJA vidjena ocena pre `<bestmove>`, jer motor tokom
+    /// produbljivanja salje ocenu za svaku dubinu — a zanima nas ona sa pune
+    /// dubine, ne prva koju je prijavio.
+    func evaluate(state: GameState, depth: Int = 12) async -> PositionEval? {
+        if let terminal = terminalEval(for: state) { return terminal }
+        // Provera PRE pravljenja motora: u vec otkazanom zadatku motor se ne
+        // pravi uopste, pa ne moze ni da ostane "neupitan".
+        if Task.isCancelled { return nil }
+
+        let eng = Engine(type: .stockfish, loggingEnabled: false)
+        await eng.start()
+
+        var waited = 0
+        while !(await eng.isRunning), waited < 50 {
+            try? await Task.sleep(for: .milliseconds(100))
+            waited += 1
+        }
+        guard await eng.isRunning else {
+            await eng.stop()
+            return nil
+        }
+
+        let evalFile      = nnueBig ?? nnueSmall
+        let evalFileSmall = nnueSmall ?? nnueBig
+        if let url = evalFile      { await eng.send(command: .setoption(id: "EvalFile",      value: url.path())) }
+        if let url = evalFileSmall { await eng.send(command: .setoption(id: "EvalFileSmall", value: url.path())) }
+
+        guard let stream = await eng.responseStream else {
+            await eng.stop()
+            return nil
+        }
+
+        // Pozicija ide ODMAH po preuzimanju stream-a: motor koji se pokrene a
+        // nikad ne dobije `position` obara SLEDECI motor u istom procesu
+        // (SIGABRT, assert u `Position::set`). Posle ove linije nijedan izlaz
+        // ne ostavlja "neupitan" motor.
+        await eng.send(command: .position(.fen(state.fen)))
+        await eng.send(command: .go(depth: depth))
+
+        var lastScore: EngineScore?
+        for await response in stream {
+            let raw = response.rawValue
+            if let s = UCIScoreParser.score(from: raw) {
+                lastScore = s
+                continue
+            }
+            guard raw.hasPrefix("<bestmove>") else { continue }
+            let tokens = raw.split(separator: " ")
+            let uci = tokens.count >= 2 ? String(tokens[1]) : "(none)"
+            let move = uci == "(none)" ? nil : parseUCI(uci, in: state)
+            // Bez ijedne ocene nema sta da se vrati — pozicija bez ocene bi u
+            // racunici prosla kao cp(0), sto je tvrdnja da je izjednaceno.
+            // `evaluate` sam gasi svoj motor na SVAKOM izlazu. Ranije se
+            // oslanjao na `Engine.deinit`, koji gasi asinhrono i tek kad stigne;
+            // u petlji bi to ostavilo vise motora da se gase uporedo, u istom
+            // procesu u kom je vec zabelezen SIGABRT zbog motora koji se "pusti".
+            guard let score = lastScore else {
+                await eng.stop()
+                return nil
+            }
+            await eng.stop()
+            return PositionEval(score: score, bestMove: move)
+        }
+        await eng.stop()
+        return nil
+    }
+
+    /// Ocena niza pozicija, redom. `onProgress(gotovo, ukupno)` se zove posle
+    /// svake pozicije da ekran moze da prikaze napredak.
+    ///
+    /// Vraca `nil` ako ijedna pozicija ne uspe — delimicna analiza bi prikazala
+    /// tacnost izracunatu iz dela partije, a korisnik bi je citao kao da vazi
+    /// za celu.
+    ///
+    /// Otkazivanje: proverava `Task.isCancelled` pre svake pozicije, pa
+    /// napustanje ekrana ne ostavlja motor da melje u pozadini.
+    ///
+    /// DELJENI MOTOR — odluka je IZMERENA, ne pretpostavljena (simulator
+    /// iPhone 17, iOS 26.5, dubina 12, 2026-09-11):
+    ///
+    ///   20 pozicija, svez motor po poziciji: 25,06 s i 26,14 s, ocena 20/20
+    ///   20 pozicija, jedan deljeni motor:     8,69 s i  8,65 s, ocena 20/20
+    ///   81 pozicija, jedan deljeni motor:    24,1–24,8 s,       ocena 81/81
+    ///
+    /// Dva merenja po pristupu, u oba redosleda, da ubrzanje ne bude posledica
+    /// zagrejanog simulatora. Deljeni motor je ~3x brzi i ne gubi nijednu
+    /// ocenu ni na punoj duzini partije. 81 pretraga je analiza partije od 40
+    /// poteza, dakle ~25 s deljenim motorom prema ~105 s svezim po poziciji.
+    ///
+    /// ZASTO ovo radi — NIJE utvrdjeno, i to je ovde zapisano namerno.
+    ///
+    /// Prva verzija ovog komentara tvrdila je da se `AsyncStream` zavrsava kad
+    /// se njegov iterator ispusti, pa da je stari kvar od 2026-06-27 bio u
+    /// `for await … in stream`, koji iterator ispusta na izlasku iz petlje.
+    /// TA TVRDNJA JE EKSPERIMENTALNO OBORENA: u sondi nad golim `AsyncStream`-om
+    /// `onTermination` se posle ispustanja iteratora NE poziva, a nov iterator
+    /// uredno dobija sledecu vrednost. Iterator ne poseduje terminaciju — deli
+    /// kontekst sa samom vrednoscu stream-a, koju `EngineConfiguration` drzi
+    /// zivu za ceo zivot motora.
+    ///
+    /// Izmereno je dakle DA deljeni motor daje 81/81 u tri uzastopna prolaza,
+    /// ali NIJE utvrdjeno zasto je stari obrazac padao. Dok se to ne utvrdi,
+    /// ovo NIJE dozvola da se `bestMove(for:depth:)` prebaci na deljeni motor
+    /// ili na dugoziveci iterator — taj put je vec jednom oboren u produkciji.
+    /// `bestMove` zato ostaje netaknut.
+    func analyzeGame(
+        states: [GameState],
+        depth: Int = 12,
+        onProgress: @Sendable (Int, Int) -> Void
+    ) async -> [PositionEval]? {
+        guard !states.isEmpty else { return [] }
+
+        // Zavrsne pozicije se ocenjuju bez motora (vidi `terminalEval`).
+        // Racuna se ovde, jednom, da se `legalMoves` ne bi zvao dvaput po poziciji.
+        let terminals = states.map(terminalEval(for:))
+
+        // Ako NIJEDNA pozicija ne trazi motor, motor se ne pokrece.
+        //
+        // IZMERENO, ne pretpostavljeno: `Engine` koji se pokrene (a `start`
+        // ucitava NNUE mrezu) pa se pusti a da nikad nije dobio `position`,
+        // obara SLEDECI `Engine` u istom procesu — Stockfish padne na `assert`
+        // u `Position::set` (SIGABRT). Ista sekvenca bez tog praznog motora
+        // prolazi 3/3 puta; sa njim pada 2/3 puta.
+        guard terminals.contains(where: { $0 == nil }) else {
+            for i in states.indices { onProgress(i + 1, states.count) }
+            return terminals.compactMap { $0 }
+        }
+
+        // Isto kao u `evaluate`: u vec otkazanom zadatku motor se ne pravi.
+        if Task.isCancelled { return nil }
+
+        let eng = Engine(type: .stockfish, loggingEnabled: false)
+        let result = await analyze(states: states, terminals: terminals, depth: depth, using: eng, onProgress: onProgress)
+        // Gasi se na SVAKOM izlazu, i na gresci i na otkazivanju. `defer` ovde
+        // ne moze jer je gasenje `async`; zato jedan izlaz i eksplicitan `stop`.
+        await eng.stop()
+        return result
+    }
+
+    private func analyze(
+        states: [GameState],
+        terminals: [PositionEval?],
+        depth: Int,
+        using eng: Engine,
+        onProgress: @Sendable (Int, Int) -> Void
+    ) async -> [PositionEval]? {
+        await eng.start()
+
+        var waited = 0
+        while !(await eng.isRunning), waited < 50 {
+            try? await Task.sleep(for: .milliseconds(100))
+            waited += 1
+        }
+        // Motor se nije podigao za 5 s. Isto vazi i za `responseStream == nil`
+        // nize: oba izlaza ostavljaju `Engine` kome `position` nikad nije
+        // poslat — isti obrazac koji obara SLEDECI motor. Dostizno samo kad se
+        // motor uopste ne pokrene, pa se ne zatvara ovde: `stop()` od toga ne
+        // spasava (mereno u Task-u 3: padalo 2/3 i sa njim), a slanje pozicije
+        // motoru koji ne radi nema kome da stigne.
+        guard await eng.isRunning else { return nil }
+
+        // OVE CETIRI LINIJE SE U ANALIZI NIKAD NE IZVRSE, i to je namerno
+        // zapisano umesto precutano: `nnueBig`/`nnueSmall` puni iskljucivo
+        // `start()`, a `AnalysisViewModel` drzi sopstvenu instancu mosta i
+        // `start()` na njoj ne zove — koristi samo `isAvailable` i
+        // `analyzeGame`. Analiza ipak radi jer sama biblioteka pri
+        // `Engine.start()` posalje iste dve opcije iz `Bundle.main`.
+        // Ne uklanjaju se (bile bi potrebne cim se `start()` pozove) i ne
+        // "popravljaju" pozivom `start()` pred sam merge: to bi promenilo
+        // komandnu sekvencu koja je izmerena kao ispravna, a izmena bez
+        // ponovljenog merenja je tacno greska koju je ova faza vec platila.
+        let evalFile      = nnueBig ?? nnueSmall
+        let evalFileSmall = nnueSmall ?? nnueBig
+        if let url = evalFile      { await eng.send(command: .setoption(id: "EvalFile",      value: url.path())) }
+        if let url = evalFileSmall { await eng.send(command: .setoption(id: "EvalFileSmall", value: url.path())) }
+
+        guard let stream = await eng.responseStream else { return nil }
+        // JEDAN iterator za sve pretrage. NE zato sto bi ispustanje iteratora
+        // zavrsilo stream (provereno da ne zavrsava), nego zato sto je to
+        // oblik koji je izmeren kao ispravan — vidi objasnjenje iznad
+        // `analyzeGame`.
+        var iterator = stream.makeAsyncIterator()
+
+        // Motor koji se pokrene a NIKAD ne dobije `position` obara SLEDECI
+        // motor u istom procesu (SIGABRT, assert u `Position::set`), a `stop()`
+        // ga od toga ne spasava — mereno, padalo je 2/3 puta i sa `stop()`-om.
+        // Guard iznad `analyzeGame` pokriva slucaj kad nijedna pozicija ne
+        // trazi pretragu, ali NE i otkazivanje: `Task.isCancelled` u prvoj
+        // iteraciji petlje znaci da je korisnik napustio ekran tokom ~1 s
+        // pokretanja motora, i tada bi motor ostao neupitan. Zato mu se odmah
+        // salje bezopasna pocetna pozicija: posle ove linije nijedan izlaz ne
+        // ostavlja neupitan motor, bez ijedne dodatne pretrage.
+        await eng.send(command: .position(.startpos))
+
+        var out: [PositionEval] = []
+        out.reserveCapacity(states.count)
+
+        for (i, state) in states.enumerated() {
+            if Task.isCancelled { return nil }
+
+            // Zavrsna pozicija: motor za nju ne posalje ocenu (vidi
+            // `terminalEval`), pa se ni ne pita.
+            if let terminal = terminals[i] {
+                out.append(terminal)
+                onProgress(i + 1, states.count)
+                continue
+            }
+
+            await eng.send(command: .position(.fen(state.fen)))
+            await eng.send(command: .go(depth: depth))
+
+            var lastScore: EngineScore?
+            var eval: PositionEval?
+            while let response = await iterator.next() {
+                let raw = response.rawValue
+                if let s = UCIScoreParser.score(from: raw) {
+                    lastScore = s
+                    continue
+                }
+                guard raw.hasPrefix("<bestmove>") else { continue }
+                let tokens = raw.split(separator: " ")
+                let uci = tokens.count >= 2 ? String(tokens[1]) : "(none)"
+                let move = uci == "(none)" ? nil : parseUCI(uci, in: state)
+                // Bez ijedne ocene nema sta da se vrati — pozicija bez ocene bi
+                // u racunici prosla kao cp(0), sto je tvrdnja da je izjednaceno.
+                guard let score = lastScore else { return nil }
+                eval = PositionEval(score: score, bestMove: move)
+                break
+            }
+            guard let eval else { return nil }
+
+            out.append(eval)
+            onProgress(i + 1, states.count)
+        }
+        return out
+    }
+
     // MARK: - UCI Move Parser
 
     /// Converts UCI move string (e.g. "e2e4", "e7e8q") to ChessMove
