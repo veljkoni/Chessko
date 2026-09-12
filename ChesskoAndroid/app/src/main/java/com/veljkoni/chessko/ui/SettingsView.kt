@@ -210,6 +210,12 @@ fun SettingsView(
                         StatItem(label = loc("Uspešnost"), value = "${stats.winRate}%", color = Color(0xFF00D2FF))
                         StatItem(label = loc("Najbolji niz"), value = "${stats.bestWinStreak} 🔥", color = Color(0xFFF59E0B))
                         StatItem(label = loc("Rešeno zadataka"), value = "${stats.puzzlesSolved} 🧩", color = Color(0xFFA855F7))
+                        // Rejting igraca BIRA zadatke (`PuzzleRating.practiceWindow`),
+                        // pa mora da se vidi — inace se tesina vezbanja menja bez
+                        // ijednog vidljivog razloga. („Rejting" u zaglavlju
+                        // Zadataka je rejting ZADATKA, ne igraca.) iOS ovo ima
+                        // na istom mestu, u istom redu.
+                        StatItem(label = loc("Rejting zadataka"), value = "${stats.puzzleRating}", color = Color(0xFF00D2FF))
                     }
 
                     if (stats.gamesPlayed > 0 || stats.puzzlesSolved > 0) {
@@ -312,7 +318,7 @@ fun SettingsView(
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 Text(
-                                    text = theme.label,
+                                    text = loc(theme.label),
                                     color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.7f),
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
@@ -409,7 +415,7 @@ fun SettingsView(
                                             Spacer(modifier = Modifier.height(4.dp))
 
                                             Text(
-                                                text = style.label,
+                                                text = loc(style.label),
                                                 color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.7f),
                                                 fontSize = 10.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
@@ -553,7 +559,7 @@ fun SettingsView(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            Text(text = "🌐 Stockfish", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "🌐 " + loc("Stockfish"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Button(
@@ -569,7 +575,7 @@ fun SettingsView(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            Text(text = "🌐 Lichess", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "🌐 " + loc("Lichess"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
