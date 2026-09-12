@@ -41,6 +41,18 @@ android {
     buildFeatures {
         compose = true
     }
+    androidResources {
+        // `puzzles.sqlite` mora ostati NEKOMPRESOVAN u APK-u: AAPT po
+        // podrazumevanom spisku ekstenzija kompresuje sve sto nije vec
+        // kompresovan format (slike, audio...), a ".sqlite" nije na tom
+        // spisku. `PuzzleRepository` cita velicinu preko
+        // `AssetManager.openFd()` da bi znao da li je kopija u `filesDir`
+        // potpuna — `openFd()` puca sa `FileNotFoundException` na
+        // kompresovanom asset-u ("it is probably compressed"). Dokazano na
+        // emulatoru pre ovog dodatka: svih 8 instrumentisanih testova je
+        // padalo na tacno toj gresci u konstruktoru.
+        noCompress += "sqlite"
+    }
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
