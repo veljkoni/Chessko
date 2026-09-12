@@ -406,20 +406,26 @@ Dve stvari na koje treba paziti pri pisanju JSON-a:
 
 ## Stanje Android porta
 
-Android je zaseban Kotlin/Compose port (`ChesskoAndroid/`, ~9.700 linija). Spec Fazu 6
-opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u krišvama.
+Android je zaseban Kotlin/Compose port (`ChesskoAndroid/`, ~10.500 linija). Spec Fazu 6
+opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u kriškama.
 
 | Faza | Preneto? | Napomena |
 |---|---|---|
-| 0 — higijena | **da** | rokada popravljena (`bc58ab0`), 9 JVM testova: 6 perft + 2 regresiona za rokadu |
+| 0 — higijena | **da** | rokada popravljena (`bc58ab0`), 9 JVM testova: 6 perft + 3 regresiona za rokadu |
 | 1 — dizajn sistem | ne | ima `ui/theme`, nema `DS` tokene |
+| 2 — offline zadaci | **da** | to JESTE Faza 6a — ista stavka pod dva broja (iOS je numeriše 2, Android plan 6a) |
 | **6a — offline zadaci** | **da** | deljena `puzzles.sqlite`, `PuzzleRepository`, Elo rejting, „Sledeći zadatak" |
 | 3 — lekcije u JSON | ne | `LearnView.kt` nosi sadržaj zakucan u kodu (vidi „Poznata ograničenja") |
 | 4 — Put | ne | nema kurikuluma ni `ProgressStore` |
 | 5 — analiza partije | ne | — |
 
-Testovi: **22 JVM** (`./gradlew testDebugUnitTest`) + **8 instrumentisanih**
-(`./gradlew connectedDebugAndroidTest`, traži emulator).
+Testovi: **22 JVM** (`./gradlew testDebugUnitTest`) + **11 instrumentisanih**
+(`./gradlew connectedDebugAndroidTest`, traži emulator) — 10 u `PuzzleRepositoryTest` plus
+zatečeni `ExampleInstrumentedTest`.
+
+> **`connectedDebugAndroidTest` ume da kaže `BUILD SUCCESSFUL` a da ne pokrene nijedan test**
+> (npr. `INSTALL_FAILED_INSUFFICIENT_STORAGE`). Rezultat se čita iz
+> `app/build/outputs/androidTest-results/connected/debug/*.xml`, ne iz izlaznog koda.
 
 > **Emulator se pokreće bez prozora**, inače otima fokus korisniku:
 > ```bash
@@ -451,7 +457,11 @@ Testovi: **22 JVM** (`./gradlew testDebugUnitTest`) + **8 instrumentisanih**
   `Engine.start()` šalje iste dve opcije iz `Bundle.main`. Detalji i razlog zašto nije
   „popravljeno" pred merge — u komentaru na mestu.
 - **Spec 4.5 („Android meša jezike") je rešen SAMO za ekran Zadataka.** To jeste doslovan
-  primer iz spec-a i sada je čist — ekran na engleskom nema nijednu srpsku reč. Ali **ekran
+  primer iz spec-a i sada je čist — ekran na engleskom nema nijednu srpsku reč. Ta tvrdnja je
+  postala tačna tek u talasu ispravki 2026-09-12: do tada su tri stringa u `PuzzleViewModel`
+  zaobilazila `loc()` („Greška pri učitavanju: …", „Nema dostupnih zadataka.", „Neispravan FEN
+  u zadatku."), a prva dva se stvarno iscrtavaju. Provereno grep-om nad `PuzzleView.kt` i
+  `PuzzleViewModel.kt` (nijedan literal sa srpskim slovima van `loc()`) i na uređaju. Ali **ekran
   Učenja i dalje meša jezike**: `ChesskoAndroid/.../ui/LearnView.kt` nosi **46 zakucanih
   srpskih stringova** prosleđenih kao *pozicioni* argumenti (`LPara("…")`, `LBullet("…")`,
   `LSectionHeader("…")`). Pretraga po `text = "…"` ih ne vidi — zato su promašeni pri
@@ -468,7 +478,7 @@ Testovi: **22 JVM** (`./gradlew testDebugUnitTest`) + **8 instrumentisanih**
   `LaunchedEffect` ga zove pri ponovnom prikazu — zadatak se ne dira, jer je bezuslovno
   ponovno učitavanje već jednom restartovalo napola rešen zadatak.
 - **Traka datuma na Androidu prikazuje engleski naziv meseca i u srpskom UI-ju.**
-- - **Git LFS: odlučeno da se NE koristi** (2026-09-09). Repo nosi 4 `.nnue` mreže, ~145 MB
+- **Git LFS: odlučeno da se NE koristi** (2026-09-09). Repo nosi 4 `.nnue` mreže, ~145 MB
   ukupno; najveća je 71,4 MB, ispod GitHub-ovog tvrdog limita od 100 MB, pa push prolazi uz
   upozorenje. Razlozi protiv LFS-a: mreže se nikad ne menjaju, pa glavna korist LFS-a
   (da ne čuva svaku verziju) ovde ne postoji; LFS je trajni namet na svaki klon i CI;
@@ -1319,7 +1329,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   više ne zove `chess-puzzles-api.vercel.app` nego čita istu `puzzles.sqlite` koju isporučuje
   i iOS, bajt-identično. Dodati `PuzzleRepository.kt`, `PuzzleRating.kt` (Elo, bez ijednog
   `android.*` uvoza pa JVM-testabilan), `puzzleRating` u `StatsManager` i režim vežbanja
-  („Sledeći zadatak"). Testova 10 → 22 JVM + 8 instrumentisanih. Detalji — vidi „Baza zadataka"
+  („Sledeći zadatak"). Testova 10 → 22 JVM + 9 instrumentisanih (11 posle talasa ispravki). Detalji — vidi „Baza zadataka"
   i „Stanje Android porta".
 
   **Dokaz koji se tražio nije bio screenshot nego rad bez mreže:** zadatak učitan i rešen sa
@@ -1344,3 +1354,46 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
 
   Uklonjena i tiha mina: pet ključeva u `Loc.kt` nosilo je `%lld` — Swift format, nevažeći u
   Kotlinu, koji postojeći `try/catch` ćutke guta.
+
+- **2026-09-12** — Faza 6a, talas ispravki iz finalnog pregleda cele grane (izveštaj u
+  `.superpowers/sdd/2026-09-12-faza-6a-android-offline-zadaci/fix-wave-report.md`). Četiri
+  IMPORTANT nalaza plus M-1/M-7/M-8/M-10.
+  **(1) Rupa u unosu od 600 ms tiho je poništavala rešen zadatak.** Posle TAČNOG poteza
+  `attempt()` je vraćao `phase = PLAYING` i tek za 600 ms igrao protivnički odgovor, a
+  `isPlayerTurn` je u tom prozoru bio `true` — brz dodir se poredio sa PROTIVNIČKIM potezom
+  iz `rawMoves` i padao kao greška koju korisnik nije napravio. Reprodukovano: četiri
+  sintetička dodira za 101 ms obore `currentPuzzleStreak` sa 1 na 0, ekran ne pokaže ništa
+  (`WRONG_MOVE` bude pregažen), a zadatak dovršen POTPUNO TAČNO ne uveća `puzzlesSolved` —
+  dok ekran čestita. Faza 6a je to pogoršala, jer greška sada vodi i u
+  `applyPuzzleResult(solved = false)`. Popravka je iOS obrazac: `awaitingOpponent` se diže
+  pre odloženog `launch`-a, gasi u `finally` unutar `applyNextComputerMove()` (funkcija ima
+  tri izlaza i svaki mora da otvori tablu nazad), i ulazi u `isPlayerTurn` I u gejt
+  `showSolution()`. `LOADING` se ovde NE sme koristiti kao gejt — `PuzzleView` u toj fazi
+  crta ekran učitavanja umesto table.
+  **(2) Zaostala korutina je igrala potez nad NOVIM zadatkom.** Tri odložene korutine
+  (400 ms prvi protivnički potez, 600 ms odgovor, 700 ms po potezu u reprodukciji rešenja)
+  nisu imale brojač generacije, a strelice za datum su žive tokom svih tih pauza.
+  Reprodukovano: tačan potez pa odmah strelica — aplikacija je sama odigrala IGRAČEV potez
+  novog zadatka, `movePointer` je ostao na protivničkom potezu i zadatak je postao NEREŠIV.
+  Dokaz je poređenje tabli piksel po piksel: pre popravke razlika (bbox
+  `(0,279,237,1005)` — crni top već uzeo na g3), posle popravke `None`, pa je zadatak
+  odigran do kraja. `loadGeneration` raste u `loadDailyPuzzle()`, `nextPuzzle()` **i**
+  `setupPuzzle()` — poslednje zato što učitavanje ide preko IO korutine, pa dva brza zahteva
+  mogu da stignu do `setupPuzzle` oba.
+  **(3) Rejting igrača BIRA zadatke a nigde se nije video** — dodat `StatItem`
+  „Rejting zadataka" u statistiku u `SettingsView.kt`, na isto mesto i u isti red kao na
+  iOS-u. **(4) Tri stringa su zaobilazila `loc()`** (`"Greška pri učitavanju: …"`,
+  `"Nema dostupnih zadataka."`, `"Neispravan FEN u zadatku."`); prvi sada prevodi samo okvir
+  i interpolira već preveden razlog. Četiri nova ključa u `Loc.kt`, svaki na svih 8 jezika,
+  prevodima usklađenim sa iOS katalogom.
+  **M-7:** uklonjena `android.permission.INTERNET` — aplikacija nema nijedan mrežni poziv, a
+  odsustvo dozvole je najjači dokaz za to. Provereni i build i pokretanje. **M-1:** dva nova
+  instrumentisana testa (9 → 11). Plan je za negativan `dayIndex` tražio samo „ne-null"; to
+  ne bi bilo dovoljno jer SQLite **negativan `OFFSET` tretira kao nulu** (provereno), pa test
+  traži tačno preslikavanje — mutacija `dayIndex % n` ga obori. Drugi test na API 36 ne može
+  da padne (SQLite 3.50 prima 32.766 parametara, granica od 999 postoji tek na `minSdk 26`
+  uređajima), pa nosi i tvrdnju nad samom konstantom `MAX_EXCLUDED <= 999`; oboje zapisano u
+  komentaru testa. **M-8/M-10:** doc komentar vraćen nad svoju funkciju; `openFd(...).length`
+  → `.use { it.length }` (curio je po jedan fd po instanci repozitorijuma).
+  `testDebugUnitTest` 22/22, `connectedDebugAndroidTest` 11/11 (čitano iz XML-a, ne iz
+  izlaznog koda), `assembleDebug` uspešan.
