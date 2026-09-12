@@ -867,10 +867,10 @@ private fun LExplorer(viewModel: LearnViewModel) {
     // PROVERENO: `PieceExplorer` kao zasebna funkcija NE POSTOJI — istrazivac
     // figura je ugradjen u `Lesson1Content` (`LearnView.kt` ~576-690: birac
     // figura, `BoardView` sa `viewModel.board`, i kartica sa `infoTitle`).
-    // Task 4 ga izdvaja u `@Composable fun PieceExplorer(viewModel: LearnViewModel)`
-    // BEZ menjanja izgleda, pa se odatle poziva. Dok to ne uradi, ovaj poziv
-    // se NE kompajlira — i to je namerno: izdvajanje je deo Task-a 4, a ne
-    // nesto sto se moze zaboraviti.
+    // Step 3 ovog istog taska ga izdvaja u
+    // `@Composable fun PieceExplorer(viewModel: LearnViewModel)` BEZ menjanja
+    // izgleda. Do tada se ovaj poziv ne kompajlira, pa je izdvajanje uslov da
+    // Task 3 uopste prodje svoj build korak.
     PieceExplorer(viewModel)
 }
 
@@ -910,7 +910,26 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 > Ako `PieceExplorer` ne postoji kao izdvojena funkcija nego je ugrađen u `Lesson1Content`,
 > izdvoj ga u zasebnu `@Composable` bez menjanja izgleda i to navedi u izveštaju.
 
-- [ ] **Step 3: Build**
+- [ ] **Step 3: Izdvojiti istraživač figura iz `Lesson1Content`**
+
+`LExplorer` iznad zove `PieceExplorer(viewModel)`, a ta funkcija **ne postoji** — istraživač je
+ugrađen u `Lesson1Content` (`LearnView.kt`, otprilike 576–690: birač figura, `BoardView` sa
+`viewModel.board`, i kartica sa `infoTitle`). Bez izdvajanja Task 3 **ne može da se kompajlira**,
+pa izdvajanje pripada ovde, ne kasnije.
+
+U `LearnView.kt` izdvoj u:
+
+```kotlin
+@Composable
+fun PieceExplorer(viewModel: LearnViewModel) { /* premesten sadrzaj, BEZ izmena izgleda */ }
+```
+
+i pozovi je iz `Lesson1Content` na mestu odakle je izvađena. Premeštanje je doslovno: isti
+pozivi, isti parametri (`BoardTheme.CLASSIC`, `PieceStyle.CLASSIC`), ista kartica. Posle ovoga
+`Lesson1Content` i dalje izgleda isto — to je jedini prihvatljiv ishod. Ako se izgled promeni,
+to je regresija, ne poboljšanje.
+
+- [ ] **Step 4: Build**
 
 ```bash
 export ANDROID_HOME=~/Library/Android/sdk
@@ -919,7 +938,7 @@ cd ChesskoAndroid && ./gradlew assembleDebug
 Expected: `BUILD SUCCESSFUL`. Renderer se još nigde ne poziva — ovo je samo provera da se
 kompajlira uz stvarne potpise postojećih komponenti.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/ui/LessonRenderer.kt
@@ -1007,28 +1026,14 @@ Zameniti `when (info.id) { 1 -> Lesson1Content(...) … }` sa:
 
 Ključ `"Lekcija nije dostupna."` dodati u `Loc.kt` na svih 8 jezika.
 
-- [ ] **Step 4: Izdvojiti istraživač figura**
-
-Blok `explorer` renderer poziva kao `PieceExplorer(viewModel)`, a ta funkcija **ne postoji** —
-istraživač je ugrađen u `Lesson1Content` (birač figura + `BoardView` + kartica sa `infoTitle`,
-otprilike linije 576–690). Izdvoj ga u:
-
-```kotlin
-@Composable
-fun PieceExplorer(viewModel: LearnViewModel) { /* premesten sadrzaj, BEZ izmena izgleda */ }
-```
-
-Premeštanje je doslovno: isti pozivi, isti parametri (`BoardTheme.CLASSIC`, `PieceStyle.CLASSIC`),
-ista kartica. Ako se izgled promeni, to je regresija, ne poboljšanje.
-
-- [ ] **Step 5: Obrisati zakucan sadržaj**
+- [ ] **Step 4: Obrisati zakucan sadržaj**
 
 Obrisati `Lesson1Content`, `Lesson2Content`, `Lesson3Content`, `Lesson4Content` i sve
 `OpeningLine(...)` / `MateExerciseCard(...)` pozive koji su bili unutar njih. **Ne brisati**
 same komponente (`OpeningExerciseCard`, `MateExerciseCard`, `MatePuzzleCard`, `LBox`, `LPara`,
 `LBullet`, `LSectionHeader`, `LNumberedRule`) — renderer ih koristi.
 
-- [ ] **Step 6: Dokazati da zakucanih srpskih stringova više nema**
+- [ ] **Step 5: Dokazati da zakucanih srpskih stringova više nema**
 
 ```bash
 cd ChesskoAndroid
@@ -1037,7 +1042,7 @@ grep -cE 'LPara\("|LBullet\("|LSectionHeader\("|LNumberedRule\(' \
 ```
 Expected: **0**. (Renderer ih zove sa promenljivama, ne sa literalima.)
 
-- [ ] **Step 7: Vizuelni dokaz na engleskom**
+- [ ] **Step 6: Vizuelni dokaz na engleskom**
 
 Na emulatoru **bez prozora**, jezik na engleski, otvoriti **svih šest** lekcija i snimiti.
 Nijedna ne sme da prikaže srpski pasus. Posebno Lekciju 4 — baš ona je u Fazi 6a pokazala
@@ -1046,14 +1051,14 @@ ceo srpski tekst na engleskom UI-ju.
 Snimiti i srpsku varijantu radi poređenja, i **jednu lekciju koja postoji samo na sr+en**
 (`tactics`) na francuskom — mora pokazati engleski, ne prazno.
 
-- [ ] **Step 8: Testovi i build**
+- [ ] **Step 7: Testovi i build**
 
 ```bash
 cd ChesskoAndroid && ./gradlew testDebugUnitTest && ./gradlew assembleDebug
 ```
 Expected: **30 testova**, `BUILD SUCCESSFUL`.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/
