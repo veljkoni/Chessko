@@ -132,7 +132,10 @@ object LessonParser {
         solvedMessage = o.optStringOrNull("solvedMessage"),
         wrongMessage = o.optStringOrNull("wrongMessage"),
         playingPrompt = o.optStringOrNull("playingPrompt"),
-        mateIn = if (o.isNull("mateIn")) null else o.optInt("mateIn").takeIf { o.has("mateIn") }
+        // `isNull` je `true` I kad kljuca nema I kad je vrednost `null`, pa je
+        // `else` grana dostizna samo kad kljuc postoji sa brojem. Raniji
+        // `.takeIf { o.has(...) }` je time bio mrtav kod.
+        mateIn = if (o.isNull("mateIn")) null else o.getInt("mateIn")
     )
 
     private fun style(raw: String) = when (raw) {
