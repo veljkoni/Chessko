@@ -82,11 +82,38 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     private var rawMoves = listOf<String>()
     private var movePointer = 0
 
+    /// `true` dok traje skriptovana pauza (600 ms) izmedju igracevog TACNOG
+    /// poteza i protivnickog odgovora. Bez ovoga je `isPlayerTurn` u tom
+    /// prozoru `true`, pa brz dodir stize u `attempt()` i poredi se sa
+    /// PROTIVNICKIM potezom iz `rawMoves` — greska koju korisnik nije napravio,
+    /// a kosta ga niza (`currentPuzzleStreak` na 0) i Elo rejtinga, i trajno
+    /// gasi kredit za zadatak (`puzzleHadError`). Izmereno: cetiri dodira za
+    /// 101 ms obore niz, a ekran i dalje cestita kad se zadatak zavrsi tacno.
+    ///
+    /// `PuzzlePhase.LOADING` se ovde NE sme koristiti kao gejt: `PuzzleView` u
+    /// toj fazi crta ekran ucitavanja umesto table, pa bi tabla treptala posle
+    /// svakog tacnog poteza.
+    private var awaitingOpponent = false
+
+    /// Raste pri SVAKOM ucitavanju zadatka. Svaka odlozena korutina (prvi
+    /// protivnikov potez, odgovor posle tacnog poteza, reprodukcija resenja)
+    /// upamti vrednost pre `delay` i odustane ako se u medjuvremenu promenila.
+    ///
+    /// Bez toga zaostala korutina odigra potez nad NOVIM zadatkom: `rawMoves`
+    /// je vec zamenjen, pa se odigra tudji potez i `movePointer` odmakne za
+    /// jedan. Izmereno: tacan potez pa odmah strelica za datum — aplikacija je
+    /// sama odigrala IGRACEV potez novog zadatka, `movePointer` je ostao na
+    /// protivnickom potezu, i zadatak je postao NERESIV (jedini izlaz
+    /// „Prikazi resenje"). Strelice za datum su zive tokom svih tih pauza, pa
+    /// se prozor ne moze zatvoriti fazom.
+    private var loadGeneration = 0
+
     val isFlipped: Boolean
         get() = playerColor == PieceColor.BLACK
 
     val isPlayerTurn: Boolean
-        get() = phase == PuzzlePhase.PLAYING || phase == PuzzlePhase.WRONG_MOVE
+        get() = !awaitingOpponent &&
+            (phase == PuzzlePhase.PLAYING || phase == PuzzlePhase.WRONG_MOVE)
 
     val canGoPrevious: Boolean
         get() = true // Limit dates if desired
@@ -97,7 +124,10 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     val statusMessage: String
         get() = when (phase) {
             PuzzlePhase.LOADING -> loc("Učitavam zadatak...")
-            PuzzlePhase.NETWORK_ERROR -> "Greška pri učitavanju: $networkErrorMessage"
+            // Prevodi se SAMO okvir; `networkErrorMessage` je vec preveden na
+            // svom mestu nastanka. Prevod celog sklopa bi trazio kljuc po
+            // svakom razlogu greske.
+            PuzzlePhase.NETWORK_ERROR -> "${loc("Greška pri učitavanju")}: $networkErrorMessage"
             PuzzlePhase.PLAYING -> if (playerColor == PieceColor.WHITE) loc("Pronađi pravi potez za bele") else loc("Pronađi pravi potez za crne")
             PuzzlePhase.WRONG_MOVE -> loc("Pogrešno. Pokušaj ponovo.")
             PuzzlePhase.SOLVED -> loc("Odlično! Zadatak rešen! 🎉")
@@ -139,6 +169,15 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         sharedPrefs.edit().putStringSet(StatsManager.SOLVED_DATES_KEY, updated).apply()
     }
 
+    /// Javna tacka za osvezavanje SAMO kesa napretka, bez diranja zadatka.
+    ///
+    /// Zove se kad se ekran Zadataka ponovo prikaze. Namerno NE zove
+    /// `loadDailyPuzzle()`: taj bi restartovao zadatak u toku, a bas to je vec
+    /// jednom bio bug (iOS Faza 2: `.onAppear` je bezuslovno restartovao
+    /// napola resen zadatak). Ovde treba osvezi samo ono sto je „Resetuj
+    /// statistiku" moglo da promeni sa strane — kvacicu i skup iskljucenih.
+    fun refreshPersistedProgress() = reloadPersistedProgress()
+
     /// Ponovo cita napredak sa diska u kes.
     ///
     /// `solvedPuzzleIds` i `solvedDates` se ucitavaju JEDNOM, pri stvaranju
@@ -157,15 +196,6 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     /// propust dakle postoji i tamo; ovde je zatvoren razdvajanjem osvezavanja
     /// kesa od ucitavanja zadatka. Ne prepisivati ovo nazad na „iOS to ima
     /// reseno" — provereno da nema.
-    /// Javna tacka za osvezavanje SAMO kesa napretka, bez diranja zadatka.
-    ///
-    /// Zove se kad se ekran Zadataka ponovo prikaze. Namerno NE zove
-    /// `loadDailyPuzzle()`: taj bi restartovao zadatak u toku, a bas to je vec
-    /// jednom bio bug (iOS Faza 2: `.onAppear` je bezuslovno restartovao
-    /// napola resen zadatak). Ovde treba osvezi samo ono sto je „Resetuj
-    /// statistiku" moglo da promeni sa strane — kvacicu i skup iskljucenih.
-    fun refreshPersistedProgress() = reloadPersistedProgress()
-
     private fun reloadPersistedProgress() {
         solvedPuzzleIds.clear()
         sharedPrefs.getStringSet(SOLVED_PUZZLE_IDS_KEY, emptySet())?.let { solvedPuzzleIds.addAll(it) }
@@ -185,6 +215,8 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         phase = PuzzlePhase.LOADING
         currentPuzzle = null
         puzzleHadError = false
+        awaitingOpponent = false
+        loadGeneration++
 
         val epochStart = LocalDate.of(1970, 1, 1)
         val dayIndex = ChronoUnit.DAYS.between(epochStart, selectedDate)
@@ -210,6 +242,8 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         // streaka za OVAJ, potpuno nov zadatak (i tacan i pogresan potez u
         // `attempt()` proveravaju bas ovaj flag).
         puzzleHadError = false
+        awaitingOpponent = false
+        loadGeneration++
         viewModelScope.launch(Dispatchers.IO) {
             val r = statsManager.puzzleRating
             val windows = listOf(
@@ -234,14 +268,22 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
     /// nullable pa se mora pokriti). Ista poruka i faza koje je ranije
     /// koristio mrezni put za "nema rezultata".
     private fun showUnavailable() {
-        networkErrorMessage = "Nema dostupnih zadataka."
+        networkErrorMessage = loc("Nema dostupnih zadataka")
         phase = PuzzlePhase.NETWORK_ERROR
     }
 
     private fun setupPuzzle(puzzle: ChessPuzzle) {
+        // Ucitavanje ide preko IO korutine, pa dva brza zahteva (dve strelice
+        // za datum zaredom) mogu da stignu dovde OBA. Bez inkrementa bas ovde
+        // bi prvi `setupPuzzle` ostavio svoju odlozenu korutinu na istoj
+        // generaciji kao drugi, pa bi ona odigrala potez nad zadatkom koji je
+        // drugi u medjuvremenu postavio.
+        loadGeneration++
+        awaitingOpponent = false
+
         val state = GameState.fromFEN(puzzle.fen)
         if (state == null) {
-            networkErrorMessage = "Neispravan FEN u zadatku."
+            networkErrorMessage = loc("Neispravan FEN u zadatku")
             phase = PuzzlePhase.NETWORK_ERROR
             return
         }
@@ -256,8 +298,10 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         playerColor = state.currentTurn.opposite
         gameState = state
 
+        val generation = loadGeneration
         viewModelScope.launch {
             delay(400)
+            if (generation != loadGeneration) return@launch
             applyNextComputerMove()
         }
     }
@@ -329,22 +373,39 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         phase = PuzzlePhase.PLAYING
+        // Prozor u kome tabla NE sme da prima poteze — zatvara ga
+        // `applyNextComputerMove()` na svakom svom izlazu.
+        awaitingOpponent = true
+        val generation = loadGeneration
         viewModelScope.launch {
             delay(600)
+            if (generation != loadGeneration) return@launch
             applyNextComputerMove()
         }
     }
 
     private fun applyNextComputerMove() {
-        if (movePointer >= rawMoves.size) return
-        val move = ChessMove.fromUCI(rawMoves[movePointer], gameState) ?: return
+        try {
+            if (movePointer >= rawMoves.size) return
+            val move = ChessMove.fromUCI(rawMoves[movePointer], gameState) ?: return
 
-        applyMove(move)
-        movePointer++
-        phase = PuzzlePhase.PLAYING
+            applyMove(move)
+            movePointer++
+            phase = PuzzlePhase.PLAYING
+        } finally {
+            // `finally`, ne jedan red na kraju: funkcija ima tri izlaza
+            // (iscrpljena lista, nerazresiv potez, normalan kraj) i svaki mora
+            // da otvori tablu nazad. Inace bi zadatak ostao zamrznut.
+            awaitingOpponent = false
+        }
     }
 
     fun showSolution() {
+        // `!awaitingOpponent`: dok se ceka protivnikov odgovor faza je PLAYING,
+        // pa je dugme „Prikazi resenje" vidljivo. Bez ovog gejta bi odlozeni
+        // potez stigao usred reprodukcije, pregazio SHOWING_SOLUTION nazad u
+        // PLAYING i dvaput odmakao `movePointer`.
+        if (awaitingOpponent) return
         if (phase != PuzzlePhase.PLAYING && phase != PuzzlePhase.WRONG_MOVE) return
         phase = PuzzlePhase.SHOWING_SOLUTION
         if (!puzzleHadError) {
@@ -353,13 +414,19 @@ class PuzzleViewModel(application: Application) : AndroidViewModel(application) 
             currentPuzzle?.let { statsManager.applyPuzzleResult(it.rating, solved = false) }
         }
 
+        val generation = loadGeneration
         viewModelScope.launch {
             while (movePointer < rawMoves.size) {
+                // Reprodukcija traje ~700 ms po potezu; za to vreme strelice za
+                // datum nisu onemogucene (gase se samo na LOADING). Bez ove
+                // provere bi petlja nastavila da igra poteze NOVOG zadatka.
+                if (generation != loadGeneration) return@launch
                 val move = ChessMove.fromUCI(rawMoves[movePointer], gameState) ?: break
                 applyMove(move)
                 movePointer++
                 delay(700)
             }
+            if (generation != loadGeneration) return@launch
             phase = PuzzlePhase.SOLVED
         }
     }
