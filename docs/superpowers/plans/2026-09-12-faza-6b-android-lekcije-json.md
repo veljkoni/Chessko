@@ -530,7 +530,12 @@ class LessonRepositoryTest {
             for (lang in listOf("sr", "en", "fr", "de", "it", "ru", "zh-Hans", "hi")) {
                 val d = r.lesson(id, lang) ?: continue
                 assertTrue("prazna lekcija: $id.$lang", d.blocks.isNotEmpty())
-                parsed++
+                // Broji se SAMO kad je dokument stvarno na trazenom jeziku.
+                // `lesson()` pada na `en` pa `sr`, pa bi golo brojanje dalo
+                // 6 lekcija x 8 jezika = 48, a fajlova ima 36: nove dve lekcije
+                // postoje samo na sr+en. Bez ove provere test broji uspehe
+                // rezervnog lanca kao da su prevodi.
+                if (d.language == lang) parsed++
             }
         }
         // 4 originalne lekcije x 8 jezika + 2 nove x 2 jezika = 36
