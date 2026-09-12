@@ -94,7 +94,15 @@ struct GameAnalysis: Sendable, Equatable {
     static let maxCpLoss = 1000
 
     var turningPoint: AnalyzedMove? {
-        guard let worst = moves.max(by: { $0.cpLoss < $1.cpLoss }),
+        // `.best` se ISKLJUCUJE. `classify` daje `.best` cim je odigran potez
+        // motora, bez obzira na izmeren gubitak — a gubitak ume da ispadne
+        // veliki i za potez motora, jer se pozicija pre poteza i pozicija posle
+        // njega pretrazuju nezavisno, iz razlicitih cvorova. Bez ovog filtera
+        // kartica ume da kaze „Prelomni potez 15…Sxd7 (−1000)" i da je pritom
+        // oboji akcentom, kao najbolji potez u partiji. Potez koji bi i motor
+        // odigrao nije prelomni potez, ma sta merenje reklo.
+        guard let worst = moves.filter({ $0.moveClass != .best })
+                               .max(by: { $0.cpLoss < $1.cpLoss }),
               worst.cpLoss >= Self.turningPointMinLoss else { return nil }
         return worst
     }

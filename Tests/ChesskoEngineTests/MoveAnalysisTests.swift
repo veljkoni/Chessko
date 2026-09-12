@@ -150,6 +150,32 @@ import Testing
     #expect(withBlunder.turningPoint?.cpLoss == 400)
 }
 
+@Test func turningPointNeverPicksAMoveTheEngineItselfWouldPlay() {
+    // `classify` daje `.best` cim je odigran potez motora, i kad izmeren
+    // gubitak ispadne velik (dve nezavisne pretrage se ne poklope do
+    // centipiona). Takav potez ne sme da bude proglasen prelomnim — kartica bi
+    // ga prikazala kao najveci gubitak, a obojila kao najbolji potez.
+    let analysis = GameAnalysis.build(
+        notations: ["Sxd7", "Kh8"],
+        scores: [.cp(0), .cp(1000), .cp(-800)],
+        engineBestMatched: [true, false]
+    )
+    #expect(analysis.moves[0].cpLoss == 1000)
+    #expect(analysis.moves[0].moveClass == .best)
+    #expect(analysis.moves[1].cpLoss == 200)
+    // Prelomni je drugi potez, iako je njegov gubitak PETOSTRUKO manji.
+    #expect(analysis.turningPoint?.notation == "Kh8")
+}
+
+@Test func turningPointIsNilWhenEveryLosingMoveWasTheEngineMove() {
+    let analysis = GameAnalysis.build(
+        notations: ["Sxd7"],
+        scores: [.cp(0), .cp(1000)],
+        engineBestMatched: [true]
+    )
+    #expect(analysis.turningPoint == nil)
+}
+
 @Test func buildRejectsMismatchedInputLengthsInsteadOfCrashing() {
     // N poteza trazi tacno N+1 ocena. Neslaganje je greska pozivaoca i mora
     // da vrati praznu analizu, ne da srusi proces indeksiranjem van granica.

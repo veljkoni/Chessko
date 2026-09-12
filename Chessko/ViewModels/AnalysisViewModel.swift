@@ -35,13 +35,21 @@ final class AnalysisViewModel {
     /// Redni broj pokretanja analize. Isti obrazac koji `PuzzleViewModel` vec
     /// nosi kao `loadGeneration` (uveden 2026-09-07 zbog iste klase greske).
     ///
-    /// `task?.cancel()` otkazuje SAMO obuhvatajuci `Task`. Izvestaji o napretku
-    /// se salju iz aktora kroz zasebne `Task { @MainActor }` jedinice, koje NISU
-    /// deca tog task-a i ne nasledjuju njegovo otkazivanje. Bez ovog brojaca,
-    /// `cancel()` pa odmah `start()` (dugme „Analiziraj ponovo") pusta zaostali
-    /// izvestaj STARE analize da upise svoje brojeve — ili cak staro
-    /// `.failed` — preko tek pokrenute nove. `isRunning` to ne hvata: posle
-    /// restarta je ponovo `true`.
+    /// Sluzi kao zastita od ovoga: `task?.cancel()` otkazuje SAMO obuhvatajuci
+    /// `Task`, a izvestaji o napretku se salju kroz zasebne `Task { @MainActor }`
+    /// jedinice koje NISU njegova deca i ne nasledjuju otkazivanje. Bez identiteta
+    /// pokretanja, `isRunning` ih ne razlikuje — posle `cancel()` pa `start()` je
+    /// ponovo `true`.
+    ///
+    /// ALI: da je scenario stvarno dostizan NIJE dokazano, i to se ovde kaze
+    /// izricito. Sa uklonjena sva tri `guard`-a izmereno je **0 zastarelih
+    /// izvestaja kroz 14 pokretanja**. Razlog je sto `AsyncStream.Iterator.next()`
+    /// po otkazivanju zavrsi iteraciju, pa se do poslednjeg `onProgress` nikad ne
+    /// stigne, a zavrsna stanja vec pokriva `guard !Task.isCancelled`.
+    ///
+    /// Brojac ostaje jer je tacan, kosta jedan `Int` i cuva invarijantu koja je
+    /// tacna bez obzira na to sto je trenutni tok poziva ne dodiruje. Ne brise se,
+    /// ali se ni ne navodi kao dokazana zastita.
     @ObservationIgnored
     private var generation = 0
 
