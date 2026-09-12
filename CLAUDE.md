@@ -1118,3 +1118,27 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   grane `notation` ga koristi, i to je prvi put da se ta grana koda uopšte iscrtava.
   Ispravka bi dirnula Swift i oborila centralnu tvrdnju faze („nijedna linija Swift-a"),
   pa ide kao prvi zadatak sledeće faze.
+
+- **2026-09-12** — Faza 5, Task 5 (ekran analize partije). Nov `Chessko/Views/AnalysisView.swift`
+  (tačnost oba igrača, kartica prelomnog poteza, traka poteza obojena po klasi; dodir na potez
+  vodi u zatečen review mod preko `goToMove(ply + 1)`) i dugme „Analiziraj partiju" u `GameView`,
+  vidljivo samo na gotovoj partiji sa bar jednim potezom. Dugme stoji u **obe** grane rasporeda —
+  portret i pejzaž ne dele telo, pa bi jedno mesto ostavilo pejzaž bez dugmeta. Katalog 285 → 299
+  ključeva × 8 jezika. `swift test` 82/82.
+  **Popravljen stvarni bug, van obima taska:** `AnalysisViewModel.cancel()` postoji od Task-a 4
+  ali ga do ovog ekrana niko nije zvao — prvo izvršavanje ga je i srušilo. ChessKitEngine ne
+  pokreće zaseban proces: `EngineMessenger` `dup2`-uje `stdout` na sopstveni pipe, a `stop()`
+  zatvara čitajući kraj; svaki upis posle toga šalje **SIGPIPE**, koji gasi CEO proces i ne
+  ostavlja crash izveštaj. Zatvaranje lista analize u toku rada pa trenutno otvaranje obaralo je
+  aplikaciju **4 od 8 pokretanja** (`RBSProcessExitStatus| domain:signal(2) code:SIGPIPE(13)` u
+  logu simulatora); sa `signal(SIGPIPE, SIG_IGN)` u `ChesskoApp.init()` — **0 od 14**.
+  **Nalaz koji NIJE popravljen (prijavljen):** `generation` brojač iz Task-a 4 se ne može dovesti
+  u stanje koje brani. Mereno direktno (privremen brojač zaostalih izveštaja u `onProgress`):
+  kroz 14 pokretanja sa `cancel()` + `start()` stiglo je **0** zaostalih izveštaja, i sa zaštitom
+  i bez nje. Razlog: `AsyncStream.Iterator.next()` po otkazivanju završi iteraciju, pa se do
+  `onProgress` posle poslednje pozicije nikad ne stigne. Brojač je ostavljen (tačan je i ne košta
+  ništa), ali nije nosiv. Isto tako prijavljeno: ~15% brzih restart-ova završi na „Analiza nije
+  uspela." jer izlaz starog motora završi u pipe-u novog, i `GameAnalysis.turningPoint` ume da
+  izdvoji potez koji `MoveClass.classify` naziva „najboljim" (kartica tada nosi boju akcenta, ne
+  upozorenja). Pun izveštaj:
+  `.superpowers/sdd/2026-09-11-faza-5-analiza-partije/task-5-report.md`.
