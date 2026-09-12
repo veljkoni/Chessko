@@ -431,11 +431,13 @@ Dve stvari na koje treba paziti pri pisanju JSON-a:
   drugačiji `positionKey` od identične pozicije bez tog prava — brojač za
   trostruko ponavljanje se posle nadogradnje može "razdvojiti" i propustiti remi.
   Bezopasno (retko, ne ruši partiju), ali vredi zapisati.
-- **Isti bug sa rokadom postoji na Androidu** —
-  `ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/models/GameState.kt`
-  (grane `CastleKingside`/`CastleQueenside` i blok koji oduzima prava rokade
-  gledaju samo `move.from`, tačno ono što je iOS imao pre Faze 0). Popravka je
-  planirana za Fazu 6.
+- ~~Isti bug sa rokadom postoji na Androidu~~ — **POPRAVLJEN**, commit `bc58ab0`.
+  `ChesskoAndroid/.../models/GameState.kt` sada pomera POSTOJEĆEG topa u granama
+  `CastleKingside`/`CastleQueenside` i oduzima prava i po `move.to`. Android uz to ima
+  sopstvene regresione testove (`app/src/test/.../EngineTest.kt`: 6 perft pozicija,
+  `rookCapturedOnHomeSquareRevokesCastlingRight`, `noRookOnCornerMeansNoCastleEvenIfFlagStale`).
+  Ovaj unos je mesecima stajao kao „čeka Fazu 6" iako je popravka odavno u repozitorijumu —
+  zapisano da se vidi kako zastarela dokumentacija preživi sopstveni rok.
 - **Traka datuma stoji i nad vežbovnim zadatkom.** Kad se preko „Sledeći
   zadatak" pređe u vežbanje, u traci i dalje piše datum (npr. „Danas"), kvačica
   rešenosti tog DANA ostaje vidljiva i strelice za datum rade. Netačne tvrdnje
