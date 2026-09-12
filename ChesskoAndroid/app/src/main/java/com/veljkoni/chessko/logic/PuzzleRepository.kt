@@ -60,7 +60,9 @@ class PuzzleRepository(context: Context) {
     /// `excluding` se vezuje kao JEDAN parametar po id-ju. Na tavanici od
     /// 20.000 resenih to je 20k vezivanja po dodiru, protiv SQLite granice od
     /// 999 parametara na starijim verzijama — zato se skup ovde SECE na
-    /// `MAX_EXCLUDED` najskorijih. Ponovljen zadatak je bolji od pada.
+    /// `MAX_EXCLUDED` (redosled NIJE garantovan — `Set` ga nema, pa
+    /// `take` uzima proizvoljnih 900; ako ikad zatreba da to budu bas najskoriji,
+    /// pozivalac mora da posalje `LinkedHashSet` ili listu). Ponovljen zadatak je bolji od pada.
     fun randomPuzzle(ratingRange: IntRange, excluding: Set<String>): ChessPuzzle? {
         val excl = excluding.take(MAX_EXCLUDED)
         val holes = if (excl.isEmpty()) "" else
