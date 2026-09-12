@@ -686,7 +686,7 @@ for p in glob.glob("app/build/outputs/androidTest-results/connected/debug/*.xml"
 print(f"instrumentisanih: {t}, padova: {f}")
 EOF
 ```
-Expected: **25 testova** (19 posle Task-a 1 + 6 novih), **0 padova**.
+Expected: **26 testova** (20 posle Task-a 1 + 6 novih), **0 padova**.
 
 - [ ] **Step 6: Dokazati da lekcije stvarno ulaze u APK**
 
@@ -1130,7 +1130,7 @@ git commit -m "Faza 6b: dokumentacija lekcija iz JSON-a na Androidu"
 ## Završna provera faze
 
 - [ ] `./gradlew testDebugUnitTest` prolazi **22/22** (parser se testira instrumentisano, vidi Task 1 Step 5)
-- [ ] `./gradlew connectedDebugAndroidTest` prolazi **25/25** (čitano iz XML-a)
+- [ ] `./gradlew connectedDebugAndroidTest` prolazi **26/26** (čitano iz XML-a)
 - [ ] `./gradlew assembleDebug` → `BUILD SUCCESSFUL`
 - [ ] 36 JSON fajlova u APK-u (`unzip -l | grep -c assets/lessons/`)
 - [ ] `diff -r Chessko/Content/lessons ChesskoAndroid/app/src/main/assets/lessons` prazan
