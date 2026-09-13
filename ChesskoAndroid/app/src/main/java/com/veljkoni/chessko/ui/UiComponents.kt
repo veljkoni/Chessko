@@ -140,18 +140,26 @@ fun PlayerHeaderCard(
                          (color == PieceColor.BLACK && (evaluationMateIn ?: 0) < 0)
 
             if (evalText != null) {
+                // Zlatna oznaka mata namerno ostaje fiksna -- nije u tabeli preslikavanja,
+                // ista klasa izuzetka kao oznaka saha u BoardView. Krug ispravki 1/5: ta boja
+                // je NEVIDLJIVA (1,16:1) na `DS.fill` svetle teme, jer je `DS.fill` od ovog
+                // taska tema-zavisan a marker nije -- isto nacelo koje je Task 2 platio,
+                // izokrenuto (fiksna boja nad podlogom koja je postala token). Podloga ISPOD
+                // markera zato mora da bude isto tako fiksna, po analogiji sa oznakom saha
+                // koja stoji na tabli -- tabla nikad ne prati temu.
+                val mateBadgeBackground = Color(0xFF1E293B)
+                val mateBadgeBorder = Color.White.copy(alpha = 0.18f)
+
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(DS.fill)
-                        .border(1.dp, DS.line, RoundedCornerShape(6.dp))
+                        .background(if (isMate) mateBadgeBackground else DS.fill)
+                        .border(1.dp, if (isMate) mateBadgeBorder else DS.line, RoundedCornerShape(6.dp))
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = evalText,
-                        // Zlatna oznaka mata namerno ostaje fiksna -- nije u tabeli
-                        // preslikavanja, ista klasa izuzetka kao oznaka saha u BoardView.
                         color = if (isMate) Color(0xFFFFD700) else DS.ink,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
