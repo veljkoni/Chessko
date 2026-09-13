@@ -116,7 +116,7 @@ Isto kao iOS (`CLAUDE.md`, sekcija „Dizajn sistem"):
 ## Zamke — pročitati pre Task-a 1
 
 1. **`dynamicColor = true` je aktivan i vuče boje sa tapete.** `Theme.kt:40`. Za aplikaciju čiji spec traži jedan fiksan akcent to je greška. Uklanja se u Task-u 1 — ne „po mogućstvu", nego obavezno.
-2. **`DS.onAccent` MORA biti adaptivan.** iOS je ovo platio: `accent` menja svetlinu između tema (`#2E4A8A` svetla / `#7EA0E8` tamna), pa bela na svetloj varijanti daje **2,6:1** — ispod AA. `DS.onScrim` (fiksna bela) sme **samo** na `DS.scrim`.
+2. **`DS.onAccent` MORA biti adaptivan.** iOS je ovo platio: `accent` menja svetlinu između tema (`#2E4A8A` svetla / `#7EA0E8` tamna), pa bela na **tamnoj** varijanti daje **2,60:1** — ispod AA (na svetloj daje 8,53:1 i prolazi). `DS.onScrim` (fiksna bela) sme **samo** na `DS.scrim`.
 3. **Providnost nestaje pri prevođenju.** `Color.White.copy(alpha = 0.04f)` na tamnoj podlozi daje vrlo tamnu sivu; `DS.fill` je **puna** boja koja to zamenjuje. Ne pisati `DS.fill.copy(alpha = 0.04f)` — to bi dalo skoro nevidljivu ispunu.
 4. **`object DS` sa `@Composable` geterima ne može van kompozicije.** Sve migracije su u composable funkcijama, pa je to u redu — ali ako neki `remember { }` blok ili obična funkcija zatraži boju, ona mora da je primi kao parametar.
 5. **Tri para tokena su ispod WCAG AA u svetloj temi, i to je nasleđeno iz spec-a.** Izmereno pre pisanja plana (vidi Task 1). Ne rešava se spuštanjem praga u testu.
@@ -208,13 +208,14 @@ class ContrastTest {
     }
 
     /**
-     * Dokaz da je `onAccent` NEOPHODAN: fiksna bela pada u svetloj temi.
+     * Dokaz da je `onAccent` NEOPHODAN: fiksna bela pada u TAMNOJ temi, gde je
+     * akcent svetloplav. CLAUDE.md:1215 belezi isti smer.
      * Ako ovaj test ikad prestane da vazi, `onAccent` se sme ukloniti — do tada ne.
      */
     @Test
-    fun plainWhiteWouldFailOnTheLightAccent() {
-        val r = contrast(Color.White, LightColors.accent)
-        assertTrue("bela na svetlom akcentu daje %.2f — da je >= 4.5, onAccent ne bi trebao".format(r),
+    fun plainWhiteWouldFailOnTheDarkAccent() {
+        val r = contrast(Color.White, DarkColors.accent)
+        assertTrue("bela na tamnom akcentu daje %.2f — da je >= 4.5, onAccent ne bi trebao".format(r),
             r < 4.5)
     }
 
@@ -222,9 +223,12 @@ class ContrastTest {
      * TRI PARA SU ISPOD AA U SVETLOJ TEMI, i to je NASLEDJENO iz spec tabele
      * (iOS ima iste vrednosti). Izmereno pre pisanja ovog testa:
      *
-     *   inkMuted / ground : 4,36  (svetla)   5,94 (tamna)
-     *   inkMuted / fill   : 4,01  (svetla)   4,81 (tamna)
-     *   warning  / surface: 3,61  (svetla)   8,48 (tamna)
+     *   inkMuted / ground : 4,359966  (svetla)   5,94 (tamna)
+     *   inkMuted / fill   : 4,014258  (svetla)   4,81 (tamna)
+     *   warning  / surface: 3,611753  (svetla)   8,48 (tamna)
+     *
+     * Pragovi su u PUNOJ preciznosti, ne zaokruzeni na dve decimale: 4,36 bi bilo
+     * IZNAD stvarnih 4,359966, pa bi test pao na sopstvenom zaokruzivanju.
      *
      * Prag se NE spusta da bi test prosao. Umesto toga se tvrdi da se stanje ne
      * POGORSAVA: ako neko promeni token i obori kontrast ispod izmerenog, test
@@ -233,9 +237,9 @@ class ContrastTest {
      */
     @Test
     fun knownSubAAPairsDoNotGetWorse() {
-        check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.36)
-        check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.01)
-        check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.61)
+        check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.3599)
+        check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.0142)
+        check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.6117)
     }
 
     @Test
@@ -315,8 +319,8 @@ data class ChesskoColors(
     val inkFixed: Color,
     /**
      * Tekst i ikone NA `accent` podlozi. MORA biti adaptivan: `accent` menja
-     * svetlinu izmedju tema, pa bela na svetloj varijanti daje 2,6:1 — ispod AA.
-     * Cuva ga `ContrastTest.plainWhiteWouldFailOnTheLightAccent`.
+     * svetlinu izmedju tema, pa bela na TAMNOJ varijanti daje 2,60:1 — ispod AA (na svetloj 8,53:1).
+     * Cuva ga `ContrastTest.plainWhiteWouldFailOnTheDarkAccent`.
      */
     val onAccent: Color
 )
@@ -532,7 +536,7 @@ Kontrast se racuna, ne procenjuje. Test cuva par onAccent/accent, koji je iOS
 platio na ekranu: bela na svetlom akcentu daje 2,6:1.
 
 Tri para su ispod AA u svetloj temi i to je NASLEDJENO iz spec tabele
-(inkMuted/ground 4,36; inkMuted/fill 4,01; warning/surface 3,61). Prag NIJE
+(inkMuted/ground 4,3600; inkMuted/fill 4,0143; warning/surface 3,6118). Prag NIJE
 spusten -- test tvrdi da se stanje ne pogorsava, a razlika ide u dokumentaciju.
 
 JVM testovi 36 -> 41.
