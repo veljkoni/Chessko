@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.veljkoni.chessko.logic.LessonRepository
 import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.StepState
 import com.veljkoni.chessko.logic.Loc
@@ -58,9 +59,17 @@ fun PathView(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val store = remember { ProgressStore.getInstance(context) }
     val curriculum = remember { loadCurriculum(context) }
+    // Isti repozitorijum koji `LessonDetailView` koristi da otvori lekciju --
+    // ovde samo cita naslov, da kartica koraka ne pise golo „Lekcija" za svih
+    // sest lekcija u sest poglavlja.
+    val lessonRepo = remember { LessonRepository(context) }
 
     // Naslov poglavlja stize iz JSON-a vec preveden -- NE kroz loc().
     val lang = Loc.fileLanguageCode().substringBefore('-')
+    // Naslov LEKCIJE trazi PUN kod fajla (npr. "zh-Hans"), ne skraceni oblik
+    // iznad -- isti razlog kao u `LessonDetailView`: skraceno "zh" bi dalo
+    // engleski naslov kineskom korisniku.
+    val fileLang = Loc.fileLanguageCode()
 
     // Cita `store.snapshot`, pa se lista sama prekrsti kad se korak zavrsi na
     // drugom ekranu i korisnik se vrati.
@@ -116,6 +125,8 @@ fun PathView(modifier: Modifier = Modifier) {
                 progress = done to chapter.steps.size,
                 steps = chapter.steps,
                 states = states,
+                lessonRepo = lessonRepo,
+                fileLang = fileLang,
                 onOpen = { step -> routeFor(step)?.let { route = it } }
             )
         }
@@ -196,6 +207,8 @@ private fun ChapterSection(
     progress: Pair<Int, Int>,
     steps: List<CurriculumStep>,
     states: Map<String, StepState>,
+    lessonRepo: LessonRepository,
+    fileLang: String,
     onOpen: (CurriculumStep) -> Unit
 ) {
     Card(
@@ -228,9 +241,9 @@ private fun ChapterSection(
                 val state = states[step.id] ?: StepState.LOCKED
                 val hasRoute = routeFor(step) != null
                 StepRow(
-                    step = step,
                     state = state,
                     hasRoute = hasRoute,
+                    typeLabel = stepCardTitle(step, lessonRepo, fileLang),
                     onClick = { if (state != StepState.LOCKED && hasRoute) onOpen(step) }
                 )
             }
@@ -238,19 +251,28 @@ private fun ChapterSection(
     }
 }
 
-@Composable
-private fun StepRow(
-    step: CurriculumStep,
-    state: StepState,
-    hasRoute: Boolean,
-    onClick: () -> Unit
-) {
-    val typeLabel = when (step.kind) {
-        is StepKind.Lesson -> loc("Lekcija")
-        is StepKind.Practice -> loc("Vežba")
-        is StepKind.Test -> loc("Test")
+/**
+ * Naslov kartice koraka. Lekcija dobija SVOJ naslov iz JSON-a (isti
+ * `LessonRepository.lesson(...)` obrazac kao `LessonDetailView`) umesto golog
+ * „Lekcija" za svih sest lekcija u sest poglavlja; vezba/test nose broj
+ * zadataka istim kljucevima koje vec koristi `StepPracticeView`. Naslov
+ * lekcije stize vec preveden iz JSON-a i NE ide kroz `loc()`.
+ */
+private fun stepCardTitle(step: CurriculumStep, lessonRepo: LessonRepository, fileLang: String): String =
+    when (val k = step.kind) {
+        is StepKind.Lesson -> lessonRepo.lesson(k.lessonId, fileLang)?.title ?: loc("Lekcija")
+        is StepKind.Practice -> locF("Vežba · %d", k.count)
+        is StepKind.Test -> locF("Test · %d", k.count)
         is StepKind.Game -> loc("Partija")
     }
+
+@Composable
+private fun StepRow(
+    state: StepState,
+    hasRoute: Boolean,
+    typeLabel: String,
+    onClick: () -> Unit
+) {
     // Strelica SAMO ako korak nije zakljucan I ima rutu — vidi doc iznad
     // `routeFor`. Od Task-a 7 sva cetiri tipa koraka imaju rutu; provera
     // ostaje jer je `hasRoute` jedino mesto koje bi uhvatilo buduci tip

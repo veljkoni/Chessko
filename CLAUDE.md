@@ -267,8 +267,13 @@ kao lekcije (vidi „Android čita isti JSON" ispod).
   ključevi se čitaju jednom i **ne brišu**) i istim čistim funkcijama za otključavanje/cilj/streak
   (delegirane na `PathProgress`, isti naziv kao iOS-ov tip).
 - **Jedna namerna razlika**: `ProgressSnapshot` na Androidu nosi i `winsBeginner…winsStockfish`,
-  kojih iOS `ProgressSnapshot` nema — Android `StatsManager` ih već prikazuje na ekranu
-  podešavanja, pa bi fasada bez njih tiho izgubila podatke koje korisnik već vidi.
+  kojih iOS `ProgressSnapshot` nema — **ne** zato što bi ih ekran podešavanja prikazivao (ne
+  prikazuje; `grep -rn "winsBeginner|winsStockfish" ChesskoAndroid/app/src` pogađa samo
+  `ProgressStore.kt`, `StatsManager.kt` i jedan test, nijedan pogodak u `ui/` ni
+  `viewmodels/` — korisnik ih nikad nije video, ni pre ove grane ni posle). Pravi razlog:
+  ta polja postoje u `SharedPreferences` starijih verzija aplikacije, pa bi fasada bez njih
+  tiho pojela podatke pri migraciji — korisnik bi izgubio istoriju pobeda po težini iako je
+  nikad ne vidi.
 
 ### Zamke koje su već jednom ujele
 
@@ -645,11 +650,12 @@ Testovi: **36 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
   koraku Puta nego i u slobodnoj partiji na tabu Igra, jer je `autoPromoteToQueen`
   podrazumevano `false`. Faza 6c je dodala `PromotionOverlay.kt` (4 figure, poziva
   `confirmPromotion`/`cancelPromotion`) i okačila ga na oba mesta.
-- **`locF("Niz: %d dana", 1)` daje „Niz: 1 dana"**, gramatički pogrešno — srpski traži
-  „1 dan" / „2-4 dana" / „5+ dana". `Loc`/`locF` na Androidu nemaju podršku za množinske
-  oblike, pa ovo nije ispravka jednog stringa nego odluka o mehanizmu (najverovatnije
-  pogađa i ruski, koji ima sličnu množinsku gramatiku). Zapisano, nije popravljeno u
-  Fazi 6c.
+- **`locF("Niz: %d dana", 1)` daje pogrešnu množinu na bar 3 od 8 jezika, ne samo na
+  srpskom** — izmereno na uređaju, ne pretpostavljeno: srpski „Niz: 1 dana" (traži „1
+  dan"), engleski **„Streak: 1 days"**, ruski **„Серия: 1 дней"**. `Loc`/`locF` na
+  Androidu nemaju NIKAKVU podršku za množinske oblike (nema ni `stringsdict`-a ni
+  Android `<plurals>` resursa), pa ovo nije ispravka jednog stringa nego odluka o
+  mehanizmu — van obima Faze 6c, zapisano da se ne zaboravi.
 - **`BoardView.detectDragGestures` (Android) proguta ceo pokret prsta**, pa vertikalni
   skrol prestaje da radi kad su dve interaktivne table blizu u vidnom polju (npr. dve
   vežbe jedna ispod druge u istoj lekciji). Zatečeno pre Faze 6c, nije ga ova faza uvela
@@ -666,6 +672,22 @@ Testovi: **36 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
   ključa tiho dobija verziju 1. iOS ekvivalent baca ako ključa nema. Razmimoilaženje je
   bezopasno dok god `curriculum.json` ostaje bajt-identičan između platformi (što i jeste,
   vidi „Android čita isti kurikulum"), ali vredi znati ako se dekoderi ikad razdvoje.
+- **`loc("Uskoro")` (Android) je mrtav kod.** `routeFor` (`PathView.kt`) je iscrpan `when`
+  izraz nad `StepKind` koji od Task-a 7 (korak `game`) više ne može da vrati `null` ni za
+  jedan tip koraka — grana `StepState.AVAILABLE -> if (hasRoute) … else loc("Uskoro")` je
+  time nedostižna. Ostaje kao zaštita ako se doda peti tip koraka bez ekrana.
+- **Nema debug provere dva ručno vođena spiska težina na Androidu.**
+  `CurriculumParser.KNOWN_DIFFICULTIES` (`Curriculum.kt`) i `enum GameDifficulty`
+  (`SettingsManager.kt`) su dva odvojena spiska (kurikulum mora ostati bez `ui`/`logic`
+  zavisnosti); `StepGameView.kt` na nepoznatu težinu tiho pada na `MEDIUM`. iOS ima tačno
+  ovaj slučaj pokriven — `PathView.route(for:)` poredi `CurriculumStep.knownDifficulties` i
+  `GameDifficulty` u debug build-u „jer bi razlaz inače bio tih" (vidi „Zamke koje su već
+  jednom ujele"). Android ekvivalent te provere ne postoji.
+- **Naslov poglavlja na Androidu (`PathView.kt`) traži jezik sa
+  `fileLanguageCode().substringBefore('-')`**, što od „zh-Hans" pravi „zh". Danas
+  nedostižno — `curriculum.json` nosi naslove samo za `sr` i `en` — ali je istog oblika kao
+  bug koji `CLAUDE.md` već opisuje za lekcije (`Loc.fileLanguageCode()` vs. `getLanguage()`);
+  ako kurikulum ikad dobije kineski naslov, ovo mesto će ga tiho promašiti.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 

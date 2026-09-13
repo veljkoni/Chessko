@@ -60,7 +60,12 @@ class PuzzleViewModel(
 
     // `by lazy`: prva upotreba kopira 7 MB iz `assets` u `filesDir`, pa se to
     // ne radi u konstruktoru ViewModel-a (glavna nit pri otvaranju taba).
-    private val repository by lazy { PuzzleRepository(getApplication()) }
+    // `getInstance`, NE konstruktor: `PuzzleRepository` otvara SQLite konekciju
+    // koja se nikad ne zatvara, a od Faze 6c ima jedan `PuzzleViewModel` po
+    // ulasku u korak Puta (`StepPracticeView` ga pravi kroz `remember`, ne
+    // kroz `ViewModelStore`) — konstruktor bi tu ostavio po jednu otvorenu
+    // konekciju za svaki `practice`/`test` korak umesto jedne za ceo proces.
+    private val repository by lazy { PuzzleRepository.getInstance(getApplication()) }
 
     // Skup id-jeva vec resenih zadataka (nezavisno od kalendara - vidi
     // `solvedDates`). Ucitava se JEDNOM iz `SharedPreferences`; upisuje se tek

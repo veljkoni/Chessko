@@ -137,5 +137,20 @@ class PuzzleRepository(context: Context) {
         private const val SELECT_COLS = "SELECT id, fen, moves, rating, themes FROM puzzles"
         /// Granica broja iskljucenih id-jeva, vidi `randomPuzzle`.
         const val MAX_EXCLUDED = 900
+
+        @Volatile private var instance: PuzzleRepository? = null
+
+        /// Deljena instanca, isti obrazac kao `ProgressStore`/`StatsManager`.
+        /// Bez ovoga je svaki ulazak u korak Puta (`StepPracticeView`) pravio
+        /// SOPSTVENI `PuzzleViewModel`, a s njim i SOPSTVENU otvorenu SQLite
+        /// konekciju koja se nikad ne zatvara (`db` iznad nema `close()`) —
+        /// kurikulum nosi 9 `practice`/`test` koraka, pa bi obilazak celog
+        /// Puta ostavio 9 otvorenih konekcija u istom procesu. Jedna konekcija
+        /// koja zivi koliko i proces je ionako ono sto tab Zadaci oduvek imao
+        /// (jedan `PuzzleViewModel` za ceo zivot procesa, pre ove faze).
+        fun getInstance(context: Context): PuzzleRepository =
+            instance ?: synchronized(this) {
+                instance ?: PuzzleRepository(context.applicationContext).also { instance = it }
+            }
     }
 }

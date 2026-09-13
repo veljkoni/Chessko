@@ -100,7 +100,10 @@ fun LessonDetailView(
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Text(text = "◀ " + loc("Lekcije"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                // Dugme vodi na Put (spisak lekcija je ova grana obrisala -- vidi
+                // header komentar fajla), pa mora i da ga IMENUJE. Postojeci kljuc
+                // "Put" (vec koriscen u `PathView`/`StepPracticeView`), ne "Lekcije".
+                Text(text = "◀ " + loc("Put"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
 
