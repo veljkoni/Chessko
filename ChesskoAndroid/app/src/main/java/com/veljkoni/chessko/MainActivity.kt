@@ -316,11 +316,19 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         // PieceColor.WHITE se namerno NE tokenizuje -- ovaj krug
                                         // predstavlja stranu u igri, ne temu (CLAUDE.md, Dizajn sistem).
+                                        // Kartica ispod (DS.fill) JESTE tema-zavisna, pa u svetloj temi
+                                        // postaje skoro bela -- beli krug bez ivice bi tu imao ~1.20:1
+                                        // kontrast (racunato WCAG formulom), gotovo nevidljiv. Fiksna
+                                        // tamna ivica (isti obrazac kao fiksna svetla ivica oko crnog
+                                        // kruga ispod) drzi krug vidljivim u obe teme, bez obzira sta
+                                        // DS.fill trenutno vredi.
                                         Icon(
                                             imageVector = Icons.Default.Circle,
                                             contentDescription = null,
                                             tint = Color.White,
-                                            modifier = Modifier.size(32.dp)
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .border(1.dp, Color.Black.copy(alpha = 0.3f), CircleShape)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(text = loc("Beli"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -352,15 +360,23 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     // Black Color Card
+                                    //
+                                    // PieceColor.BLACK se namerno NE tokenizuje -- ova kartica
+                                    // prikazuje STRANU U IGRI, ne temu, pa je cela namerno
+                                    // tema-nezavisna (isti izuzetak kao "Beli" krug gore i "Crni"
+                                    // krug ispod). Zato SVE na njoj -- pozadina, ivica kartice i
+                                    // ivica kruga -- ostaje fiksna providna belo/crna, NIKAD DS
+                                    // token: tema-zavisan token nad tema-nezavisnom podlogom
+                                    // razilazi se cim se tema promeni (ovde je tako jednom vec
+                                    // otkriveno -- DS.line tamno #232C46 nad ovom skoro crnom
+                                    // podlogom davalo je ~1.36:1, prakticno nevidljivu ivicu;
+                                    // fiksna providna bela vraca ~2.88:1 u obe teme).
                                     Column(
                                         modifier = Modifier
                                             .weight(1f)
                                             .clip(RoundedCornerShape(12.dp))
-                                            // PieceColor.BLACK se namerno NE tokenizuje -- fiksna
-                                            // crna pozadina razlikuje ovu karticu od bele/nasumicne
-                                            // (vidi izvestaj, dilema #1).
                                             .background(Color.Black.copy(alpha = 0.4f))
-                                            .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
                                             .clickable {
                                                 showColorPicker = false
                                                 gameViewModel.newGame(GameMode.VS_COMPUTER, PieceColor.BLACK)
@@ -374,7 +390,7 @@ class MainActivity : ComponentActivity() {
                                             tint = Color.Black,
                                             modifier = Modifier
                                                 .size(32.dp)
-                                                .border(1.dp, DS.line, CircleShape)
+                                                .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(text = loc("Crni"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
