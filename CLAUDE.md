@@ -460,12 +460,19 @@ zatečeni `ExampleInstrumentedTest`.
 > $ANDROID_HOME/platform-tools/adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 1; done'
 > ```
 >
-> **Zašto baš tako — izmereno 2026-09-13, pošto je korisnik morao ručno da ubije `qemu-system`:**
-> emulator u MIROVANJU troši ~5% jednog jezgra i bezopasan je, ali tokom boot-a, build-a,
-> instalacije i `uiautomator` dumpova ume da uzme **5–6 jezgara** (mereno 568% i sa `-cores 2`,
-> jer `-cores` ograničava samo gostujuće vCPU-ove — host niti, pre svega GPU emulacija, i dalje
-> vrte). `-gpu off` je provereno bezopasan: screenshot je pun (1080×2400) i `uiautomator` čita
-> tekst normalno.
+> **Zašto baš tako — i zašto to NIJE dovoljno.** Izmereno 2026-09-13, pošto je korisnik
+> DVA PUTA morao ručno da ubije `qemu-system`: emulator u MIROVANJU troši ~5% jednog jezgra i
+> bezopasan je, ali čim nešto radi — boot, build, instalacija, `uiautomator` dump — uzme
+> **5–11 jezgara**. Mereno **568%** prvi put i **1076%** drugi put, oba puta sa punim gornjim
+> receptom. `-cores` ograničava samo gostujuće vCPU-ove; `nice` snižava prioritet ali ne broj
+> niti. **Gornje zastavice dakle rešavaju samo otimanje fokusa i mirovanje, NE opterećenje.**
+> Prvi zapis ovog pravila (2026-09-13, commit `7a5e3d5`) tvrdio je da recept obuzdava procesor —
+> ta tvrdnja je oborena već sledećim merenjem i ovo je njena ispravka. `-gpu off` je provereno
+> bezopasan za sam prikaz: screenshot je pun (1080×2400) i `uiautomator` čita tekst normalno.
+>
+> **Zato emulator ne sme da se diže u pozadinskom agentu bez nadzora.** Vizuelnu proveru
+> Androida raditi u prvom planu, uz korisnika, ili je zameniti proverom na stvarnom uređaju
+> preko USB-a (`adb devices`), gde `qemu` uopšte ne postoji.
 >
 > **Pravilo koje je iz toga izašlo:** emulator se diže **samo za korak koji ga stvarno traži**
 > i gasi (`adb emu kill`) odmah po tom koraku — ne drži se upaljen kroz ceo task. Vizuelne
