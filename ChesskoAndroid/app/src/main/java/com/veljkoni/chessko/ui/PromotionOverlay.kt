@@ -21,6 +21,7 @@ import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.models.ChessPiece
 import com.veljkoni.chessko.models.PieceType
+import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.GameViewModel
 
 /**
@@ -56,17 +57,20 @@ fun PromotionOverlay(viewModel: GameViewModel) {
     val choices = listOf(PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT)
 
     Dialog(onDismissRequest = { viewModel.cancelPromotion() }) {
+        // Ceo preklop stoji na scrim-u (isto kao iOS `PromotionOverlay.swift`), pa
+        // i kartica i sadrzaj na njoj idu na onScrim -- NIKAD na DS.ink, koji bi se
+        // u tamnoj temi izgubio na sopstvenoj tamnoj podlozi.
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFF1E293B))
+                .background(DS.scrim)
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
                 text = loc("Izaberi figuru"),
-                color = Color.White,
+                color = DS.onScrim,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
@@ -77,7 +81,7 @@ fun PromotionOverlay(viewModel: GameViewModel) {
                         modifier = Modifier
                             .size(64.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
+                            .background(DS.onScrim.copy(alpha = 0.08f))
                             .clickable {
                                 viewModel.confirmPromotion(type)
                             }

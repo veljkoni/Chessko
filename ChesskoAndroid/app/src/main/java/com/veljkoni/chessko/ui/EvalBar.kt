@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.veljkoni.chessko.ui.theme.DS
 import kotlin.math.abs
 import kotlin.math.pow
 
@@ -60,6 +61,8 @@ fun EvalBar(
     val topFraction = if (topIsWhite) animatedWhiteFraction else (1f - animatedWhiteFraction)
     val bottomFraction = 1f - topFraction
 
+    // Bela i crna strana su STRANE U IGRI, ne tema -- ostaju fiksne cak i kad
+    // se okvir/pozadina oko njih pomere na tokene (vidi CLAUDE.md, "NACELO").
     val whiteColor = Color(0xFFF1F5F9)
     val blackColor = Color(0xFF1E293B)
 
@@ -69,8 +72,8 @@ fun EvalBar(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(3.dp))
-            .background(Color.Black.copy(alpha = 0.4f))
-            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(3.dp))
+            .background(DS.scrim)
+            .border(1.dp, DS.line, RoundedCornerShape(3.dp))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top Section

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.*
+import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.GameMode
 import com.veljkoni.chessko.viewmodels.GameViewModel
 import kotlin.math.max
@@ -43,16 +44,12 @@ fun PlayerHeaderCard(
     showEvalBar: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val cardBackground = if (color == PieceColor.WHITE) {
-        Color.White.copy(alpha = 0.05f)
-    } else {
-        Color.Black.copy(alpha = 0.22f)
-    }
+    val cardBackground = DS.surface
 
     val borderColor = if (isActive) {
-        Color(0xFF00D2FF).copy(alpha = 0.50f)
+        DS.accent
     } else {
-        Color.White.copy(alpha = 0.07f)
+        DS.line
     }
 
     Row(
@@ -73,7 +70,7 @@ fun PlayerHeaderCard(
             modifier = Modifier
                 .size(38.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(if (color == PieceColor.WHITE) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.35f)),
+                .background(DS.fill),
             contentAlignment = Alignment.Center
         ) {
             val kingAsset = getAssetName(ChessPiece(PieceType.KING, color), pieceStyle, boardTheme)
@@ -97,14 +94,14 @@ fun PlayerHeaderCard(
             ) {
                 Text(
                     text = name,
-                    color = Color.White,
+                    color = DS.ink,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 if (materialAdvantage > 0) {
                     Text(
                         text = "+$materialAdvantage",
-                        color = Color(0xFF00D2FF).copy(alpha = 0.85f),
+                        color = DS.accent.copy(alpha = 0.85f),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -146,14 +143,16 @@ fun PlayerHeaderCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color.White.copy(alpha = 0.12f))
-                        .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(6.dp))
+                        .background(DS.fill)
+                        .border(1.dp, DS.line, RoundedCornerShape(6.dp))
                         .padding(horizontal = 7.dp, vertical = 3.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = evalText,
-                        color = if (isMate) Color(0xFFFFD700) else Color.White,
+                        // Zlatna oznaka mata namerno ostaje fiksna -- nije u tabeli
+                        // preslikavanja, ista klasa izuzetka kao oznaka saha u BoardView.
+                        color = if (isMate) Color(0xFFFFD700) else DS.ink,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -171,7 +170,7 @@ fun PlayerHeaderCard(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF10B981))
+                        .background(DS.success)
                 )
             }
         }
@@ -201,9 +200,9 @@ fun ThinkingDots() {
         horizontalArrangement = Arrangement.spacedBy(3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color.White.copy(alpha = dotAlpha(0))))
-        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color.White.copy(alpha = dotAlpha(200))))
-        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color.White.copy(alpha = dotAlpha(400))))
+        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(DS.ink.copy(alpha = dotAlpha(0))))
+        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(DS.ink.copy(alpha = dotAlpha(200))))
+        Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(DS.ink.copy(alpha = dotAlpha(400))))
     }
 }
 
@@ -213,13 +212,13 @@ fun StatusBanner(message: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(Color.White.copy(alpha = 0.05f))
+            .background(DS.fill)
             .padding(vertical = 10.dp, horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = message,
-            color = Color.White.copy(alpha = 0.9f),
+            color = DS.ink,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
@@ -234,7 +233,7 @@ fun RowScope.BottomNavItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val contentColor = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.5f)
+    val contentColor = if (isSelected) DS.accent else DS.inkMuted
 
     Button(
         onClick = onClick,
