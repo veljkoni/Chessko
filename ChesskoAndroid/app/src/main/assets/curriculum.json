@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "chapters": [
+    {
+      "id": "basics",
+      "title": { "sr": "Osnove", "en": "Basics" },
+      "steps": [
+        { "id": "basics-lesson", "type": "lesson", "lessonId": "board-and-pieces" },
+        { "id": "basics-practice", "type": "practice", "themes": ["mateIn1"], "count": 5, "ratingRange": [600, 1000] },
+        { "id": "basics-game", "type": "game", "difficulty": "beginner" }
+      ]
+    },
+    {
+      "id": "notation",
+      "title": { "sr": "Notacija", "en": "Notation" },
+      "steps": [
+        { "id": "notation-lesson", "type": "lesson", "lessonId": "notation" },
+        { "id": "notation-practice", "type": "practice", "themes": ["oneMove"], "count": 3, "ratingRange": [600, 1000] }
+      ]
+    },
+    {
+      "id": "opening",
+      "title": { "sr": "Otvaranje", "en": "The opening" },
+      "steps": [
+        { "id": "opening-lesson", "type": "lesson", "lessonId": "openings" },
+        { "id": "opening-practice", "type": "practice", "themes": ["opening"], "count": 5, "ratingRange": [600, 1400] },
+        { "id": "opening-game", "type": "game", "difficulty": "easy" }
+      ]
+    },
+    {
+      "id": "tactics",
+      "title": { "sr": "Taktika", "en": "Tactics" },
+      "steps": [
+        { "id": "tactics-lesson", "type": "lesson", "lessonId": "tactics" },
+        { "id": "tactics-practice", "type": "practice", "themes": ["fork", "pin", "skewer"], "count": 5, "ratingRange": [600, 1200] },
+        { "id": "tactics-test", "type": "test", "themes": ["fork", "pin", "discoveredAttack"], "count": 3, "ratingRange": [600, 1100] }
+      ]
+    },
+    {
+      "id": "middlegame",
+      "title": { "sr": "Središnjica", "en": "The middlegame" },
+      "steps": [
+        { "id": "middlegame-lesson", "type": "lesson", "lessonId": "middlegame" },
+        { "id": "middlegame-practice", "type": "practice", "themes": ["fork", "pin"], "count": 5, "ratingRange": [600, 1400] },
+        { "id": "middlegame-test", "type": "test", "themes": ["fork", "pin", "discoveredAttack"], "count": 3, "ratingRange": [600, 1200] }
+      ]
+    },
+    {
+      "id": "endgame",
+      "title": { "sr": "Završnica", "en": "The endgame" },
+      "steps": [
+        { "id": "endgame-lesson", "type": "lesson", "lessonId": "endgame" },
+        { "id": "endgame-practice", "type": "practice", "themes": ["endgame"], "count": 5, "ratingRange": [600, 1200] },
+        { "id": "endgame-test", "type": "test", "themes": ["endgame", "mateIn2"], "count": 3, "ratingRange": [600, 1200] }
+      ]
+    }
+  ]
+}
