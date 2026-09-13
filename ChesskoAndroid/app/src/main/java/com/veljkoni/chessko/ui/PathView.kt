@@ -1,0 +1,274 @@
+package com.veljkoni.chessko.ui
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.veljkoni.chessko.logic.PathProgress
+import com.veljkoni.chessko.logic.ProgressStore
+import com.veljkoni.chessko.logic.StepState
+import com.veljkoni.chessko.logic.Loc
+import com.veljkoni.chessko.logic.loc
+import com.veljkoni.chessko.logic.locF
+import com.veljkoni.chessko.models.CurriculumStep
+import com.veljkoni.chessko.models.StepKind
+import com.veljkoni.chessko.models.loadCurriculum
+
+/**
+ * Odluka o tome gde korak vodi stoji na JEDNOM mestu. Razmazana po UI-ju, ona
+ * se razilazi sa prikazom: iOS je tu imao bug u kome su vezba, test i partija
+ * izgledali aktivno i vodili na PRAZAN EKRAN.
+ *
+ * `null` znaci da korak nije podrzan -- kartica tada pise „Uskoro" i NEMA
+ * strelicu, umesto da se otvori u prazno.
+ */
+sealed class StepRoute {
+    data class Lesson(val lessonId: String, val stepId: String) : StepRoute()
+    data class Practice(val step: CurriculumStep) : StepRoute()
+    data class Game(val difficulty: String, val startFEN: String?, val stepId: String) : StepRoute()
+}
+
+fun routeFor(step: CurriculumStep): StepRoute? = when (val k = step.kind) {
+    is StepKind.Lesson -> StepRoute.Lesson(k.lessonId, step.id)
+    // Task 6 vraca StepRoute.Practice(step) za Practice i Test.
+    // Task 7 vraca StepRoute.Game(k.difficulty, k.startFEN, step.id).
+    // Do tada NULL: kartica pise „Uskoro" i NEMA strelicu. Nema poluotvorenog
+    // stanja u kome korak izgleda aktivno a vodi na prazan ekran.
+    is StepKind.Practice -> null
+    is StepKind.Test -> null
+    is StepKind.Game -> null
+}
+
+@Composable
+fun PathView(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val store = remember { ProgressStore.getInstance(context) }
+    val curriculum = remember { loadCurriculum(context) }
+
+    // Naslov poglavlja stize iz JSON-a vec preveden -- NE kroz loc().
+    val lang = Loc.fileLanguageCode().substringBefore('-')
+
+    // Cita `store.snapshot`, pa se lista sama prekrsti kad se korak zavrsi na
+    // drugom ekranu i korisnik se vrati.
+    val states = store.stepStates(curriculum)
+
+    var route by remember { mutableStateOf<StepRoute?>(null) }
+
+    // Nema NavHost-a (projekat nema androidx.navigation i nece je dobiti).
+    // Ruta je obicno stanje, a ekran koraka zamenjuje listu.
+    when (val r = route) {
+        is StepRoute.Lesson -> {
+            LessonDetailView(
+                lessonId = r.lessonId,
+                onClose = { route = null },
+                onComplete = { store.completeStep(r.stepId); route = null }
+            )
+            return
+        }
+        // Grane za Practice i Game dodaju Task 6 i Task 7, zajedno sa svojim
+        // ekranima. Task 5 ih NE pominje — `StepPracticeView`/`StepGameView`
+        // jos ne postoje, pa se fajl ne bi ni kompajlirao.
+        is StepRoute.Practice -> Unit
+        is StepRoute.Game -> Unit
+        null -> Unit
+    }
+
+    Column(
+        modifier = modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Nastavak: prvi korak koji nije zavrsen.
+        val next = curriculum.allStepIds.firstOrNull { states[it] == StepState.AVAILABLE }
+        val nextIndex = next?.let { curriculum.allStepIds.indexOf(it) + 1 }
+        PathHeader(
+            streak = store.currentStreak,
+            goalMet = store.goalMetToday,
+            continueLabel = nextIndex?.let { locF("Korak %d", it) },
+            onContinue = { next?.let { id -> curriculum.step(id)?.let { route = routeFor(it) } } }
+        )
+
+        for (chapter in curriculum.chapters) {
+            val done = chapter.steps.count { states[it.id] == StepState.COMPLETED }
+            ChapterSection(
+                title = chapter.title[lang] ?: chapter.title["en"] ?: chapter.id,
+                progress = done to chapter.steps.size,
+                steps = chapter.steps,
+                states = states,
+                onOpen = { step -> routeFor(step)?.let { route = it } }
+            )
+        }
+    }
+}
+
+/**
+ * Zaglavlje ekrana: streak, dnevni cilj i kartica „Nastavi" ka prvom
+ * nezavrsenom koraku sa rutom. Spec 5.1: pocetni ekran Puta NE prikazuje
+ * spisak lekcija nego NASTAVAK.
+ *
+ * `continueLabel == null` znaci da nema sledeceg koraka koji se moze
+ * otvoriti (ceo Put predjen, ili je sledeci korak jos bez rute) — kartica
+ * "Nastavi" se tad ne prikazuje.
+ */
+@Composable
+private fun PathHeader(
+    streak: Int,
+    goalMet: Boolean,
+    continueLabel: String?,
+    onContinue: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A2138)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = locF("Niz: %d dana", streak),
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = if (goalMet) loc("Cilj za danas je ispunjen") else loc("Cilj za danas nije ispunjen"),
+                color = if (goalMet) Color(0xFF34D399) else Color.White.copy(alpha = 0.6f),
+                fontSize = 13.sp
+            )
+
+            if (continueLabel != null) {
+                Button(
+                    onClick = onContinue,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = loc("Nastavi"), fontWeight = FontWeight.Bold)
+                        Text(text = continueLabel, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Jedno poglavlje: naslov + napredak (X/N) + spisak koraka. Svaki red
+ * prikazuje redni broj, tip koraka i stanje; strelica postoji SAMO ako je
+ * korak dostupan/zavrsen I ima rutu (`routeFor(step) != null`).
+ */
+@Composable
+private fun ChapterSection(
+    title: String,
+    progress: Pair<Int, Int>,
+    steps: List<CurriculumStep>,
+    states: Map<String, StepState>,
+    onOpen: (CurriculumStep) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF141B2E)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${progress.first}/${progress.second}",
+                    color = Color.White.copy(alpha = 0.5f),
+                    fontSize = 13.sp
+                )
+            }
+
+            for ((index, step) in steps.withIndex()) {
+                val state = states[step.id] ?: StepState.LOCKED
+                val hasRoute = routeFor(step) != null
+                StepRow(
+                    index = index + 1,
+                    step = step,
+                    state = state,
+                    hasRoute = hasRoute,
+                    onClick = { if (state != StepState.LOCKED && hasRoute) onOpen(step) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepRow(
+    index: Int,
+    step: CurriculumStep,
+    state: StepState,
+    hasRoute: Boolean,
+    onClick: () -> Unit
+) {
+    val typeLabel = when (step.kind) {
+        is StepKind.Lesson -> loc("Lekcija")
+        is StepKind.Practice -> loc("Vežba")
+        is StepKind.Test -> loc("Test")
+        is StepKind.Game -> loc("Partija")
+    }
+    // Strelica SAMO ako korak nije zakljucan I ima rutu — vidi doc iznad
+    // `routeFor`. Korak koji jos nema ekran (vezba/test/partija) pise
+    // "Uskoro" cak i kad je otkljucan, jer dodir nema kuda da vodi.
+    val clickable = state != StepState.LOCKED && hasRoute
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (clickable) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = "$index. $typeLabel",
+                color = if (state == StepState.LOCKED) Color.White.copy(alpha = 0.35f) else Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = when (state) {
+                    StepState.LOCKED -> loc("Zaključano")
+                    StepState.COMPLETED -> loc("Završeno")
+                    StepState.AVAILABLE -> if (hasRoute) loc("Dostupno") else loc("Uskoro")
+                },
+                color = Color.White.copy(alpha = 0.5f),
+                fontSize = 12.sp
+            )
+        }
+
+        if (clickable) {
+            Text(text = "›", color = Color.White.copy(alpha = 0.5f), fontSize = 20.sp)
+        }
+    }
+}

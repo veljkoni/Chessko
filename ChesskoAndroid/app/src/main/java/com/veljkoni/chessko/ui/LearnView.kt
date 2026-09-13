@@ -54,18 +54,8 @@ data class LessonInfo(
     val accentColor: Color
 )
 
-/// Boja lekcije je jedina stvar koja je ostala u kodu — JSON je ne nosi.
-/// Nepoznat id (nova lekcija bez unosa ovde) dobija podrazumevani akcent umesto
-/// da bude nevidljiv ili da obori ekran.
-private fun accentFor(id: String): Color = when (id) {
-    "board-and-pieces" -> Color(0xFF3B82F6)
-    "notation" -> Color(0xFF8B5CF6)
-    "openings" -> Color(0xFF10B981)
-    "tactics" -> Color(0xFF06B6D4)
-    "middlegame" -> Color(0xFFF59E0B)
-    "endgame" -> Color(0xFFEF4444)
-    else -> Color(0xFF3B82F6)
-}
+// `accentFor(id)` je premesten u `LessonDetailView.kt` (internal, isti
+// paket) — i lista i detalj lekcije treba da se slazu oko boje.
 
 enum class OpeningPhase {
     PLAYING, WRONG_MOVE, SOLVED
@@ -360,13 +350,15 @@ fun LearnView(
 
     val activeLesson = activeLessonId?.let { id -> lessons.find { it.id == id } }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        if (activeLesson == null) {
-            // Main list of lessons
+    if (activeLesson == null) {
+        // Main list of lessons. Margina je OVDE, ne u zajednickom Box-u iznad
+        // oba ogranka — `LessonDetailView` (ispod) sad nosi sopstvenu, jer
+        // zivi i van ovog ekrana (otvara ga `PathView`, bez ijednog Box-a).
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -398,98 +390,16 @@ fun LearnView(
                     )
                 }
             }
-        } else {
-            // Detailed lesson view
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // Back Button Toolbar
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(
-                        onClick = { activeLessonId = null },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.08f),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(text = "◀ " + loc("Lekcije"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Scrollable Lesson Content
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Lesson Main Title Card
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(activeLesson.accentColor.copy(alpha = 0.12f))
-                            .border(1.dp, activeLesson.accentColor.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(activeLesson.accentColor.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = activeLesson.icon, fontSize = 24.sp)
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = locF("Lekcija %d", activeLesson.number),
-                                color = activeLesson.accentColor,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = activeLesson.title,
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = activeLesson.subtitle,
-                                color = Color.White.copy(alpha = 0.6f),
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-
-                    // Telo lekcije dolazi iz JSON-a. `remember(id, lang)` je
-                    // ovde samo kes — `LessonRepository` ionako kesira; drzi
-                    // dokument stabilnim kroz rekompozicije skrola.
-                    val doc = remember(activeLesson.id, lang) { repo.lesson(activeLesson.id, lang) }
-                    if (doc == null) {
-                        // Kartica postoji samo ako se lekcija vec jednom ucitala,
-                        // pa je ovo prakticno nedostizno — ali tiha praznina bi
-                        // bila gora od recenice.
-                        Text(
-                            text = loc("Lekcija nije dostupna."),
-                            color = Color.White.copy(alpha = 0.6f),
-                            fontSize = 13.sp
-                        )
-                    } else {
-                        LessonBlocks(doc.blocks, activeLesson.accentColor, viewModel)
-                    }
-                }
-            }
         }
+    } else {
+        // Detalj lekcije je premesten u `LessonDetailView.kt` (Faza 6c,
+        // Task 5) da ga Put moze da otvori BEZ ovog spiska. `onComplete`
+        // ostaje `null` — obicno listanje lekcija (ovaj ekran) nema korak
+        // Puta koji bi trebalo zavrsiti.
+        LessonDetailView(
+            lessonId = activeLesson.id,
+            onClose = { activeLessonId = null }
+        )
     }
 }
 

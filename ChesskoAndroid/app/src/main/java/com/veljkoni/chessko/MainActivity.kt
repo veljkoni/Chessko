@@ -50,7 +50,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Timer
@@ -581,8 +581,8 @@ class MainActivity : ComponentActivity() {
                                 onClick = { activeTab = 1 }
                             )
                             BottomNavItem(
-                                icon = Icons.Default.Book,
-                                label = loc("Učenje"),
+                                icon = Icons.Filled.Map,
+                                label = loc("Put"),
                                 isSelected = activeTab == 2,
                                 onClick = { activeTab = 2 }
                             )
@@ -1028,7 +1028,7 @@ class MainActivity : ComponentActivity() {
                                 PuzzleView(viewModel = puzzleViewModel)
                             }
                             2 -> {
-                                LearnView(viewModel = learnViewModel)
+                                PathView()
                             }
                         }
                     }

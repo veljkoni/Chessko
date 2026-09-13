@@ -531,7 +531,26 @@ object Loc {
         // Vidi se samo ako lekcija postoji u spisku a ne moze da se ucita ni na
         // jednom jeziku iz lanca (jezik -> en -> sr) — npr. pokvaren JSON.
         "Lekcija nije dostupna." to mapOf("sr" to "Lekcija nije dostupna.", "en" to "This lesson is not available.", "fr" to "Cette leçon n’est pas disponible.", "de" to "Diese Lektion ist nicht verfügbar.", "it" to "Questa lezione non è disponibile.", "ru" to "Этот урок недоступен.", "zh-Hans" to "该课程不可用。", "hi" to "यह पाठ उपलब्ध नहीं है।"),
-        "Neispravan FEN u zadatku" to mapOf("sr" to "Neispravan FEN u zadatku", "en" to "Invalid FEN in puzzle", "fr" to "FEN invalide dans le problème", "de" to "Ungültiges FEN in der Aufgabe", "it" to "FEN non valido nel problema", "ru" to "Неверный FEN в задаче", "zh-Hans" to "谜题中的 FEN 无效", "hi" to "पहेली में अमान्य FEN")
+        "Neispravan FEN u zadatku" to mapOf("sr" to "Neispravan FEN u zadatku", "en" to "Invalid FEN in puzzle", "fr" to "FEN invalide dans le problème", "de" to "Ungültiges FEN in der Aufgabe", "it" to "FEN non valido nel problema", "ru" to "Неверный FEN в задаче", "zh-Hans" to "谜题中的 FEN 无效", "hi" to "पहेली में अमान्य FEN"),
+
+        // Faza 6c, Task 5: treci tab je Put (PathView.kt) umesto Ucenja.
+        "Put" to mapOf("sr" to "Put", "en" to "Path", "fr" to "Parcours", "de" to "Pfad", "it" to "Percorso", "ru" to "Путь", "zh-Hans" to "路径", "hi" to "पथ"),
+        "Korak %d" to mapOf("sr" to "Korak %d", "en" to "Step %d", "fr" to "Étape %d", "de" to "Schritt %d", "it" to "Passo %d", "ru" to "Шаг %d", "zh-Hans" to "第 %d 步", "hi" to "चरण %d"),
+        "Zaključano" to mapOf("sr" to "Zaključano", "en" to "Locked", "fr" to "Verrouillé", "de" to "Gesperrt", "it" to "Bloccato", "ru" to "Заблокировано", "zh-Hans" to "已锁定", "hi" to "बंद"),
+        "Završeno" to mapOf("sr" to "Završeno", "en" to "Completed", "fr" to "Terminé", "de" to "Abgeschlossen", "it" to "Completato", "ru" to "Завершено", "zh-Hans" to "已完成", "hi" to "पूर्ण"),
+        "Dostupno" to mapOf("sr" to "Dostupno", "en" to "Available", "fr" to "Disponible", "de" to "Verfügbar", "it" to "Disponibile", "ru" to "Доступно", "zh-Hans" to "可用", "hi" to "उपलब्ध"),
+        "Niz: %d dana" to mapOf("sr" to "Niz: %d dana", "en" to "Streak: %d days", "fr" to "Série : %d jours", "de" to "Serie: %d Tage", "it" to "Serie: %d giorni", "ru" to "Серия: %d дней", "zh-Hans" to "连续 %d 天", "hi" to "लगातार %d दिन"),
+        "Cilj za danas je ispunjen" to mapOf("sr" to "Cilj za danas je ispunjen", "en" to "Today's goal met", "fr" to "Objectif du jour atteint", "de" to "Tagesziel erreicht", "it" to "Obiettivo di oggi raggiunto", "ru" to "Цель на сегодня выполнена", "zh-Hans" to "今日目标已完成", "hi" to "आज का लक्ष्य पूरा"),
+        "Cilj za danas nije ispunjen" to mapOf("sr" to "Cilj za danas nije ispunjen", "en" to "Today's goal not met yet", "fr" to "Objectif du jour non atteint", "de" to "Tagesziel noch nicht erreicht", "it" to "Obiettivo di oggi non ancora raggiunto", "ru" to "Цель на сегодня ещё не выполнена", "zh-Hans" to "今日目标尚未完成", "hi" to "आज का लक्ष्य अभी पूरा नहीं हुआ"),
+        "Završi korak" to mapOf("sr" to "Završi korak", "en" to "Finish step", "fr" to "Terminer l'étape", "de" to "Schritt abschließen", "it" to "Completa il passo", "ru" to "Завершить шаг", "zh-Hans" to "完成此步", "hi" to "चरण पूरा करें"),
+        "Korak je završen" to mapOf("sr" to "Korak je završen", "en" to "Step completed", "fr" to "Étape terminée", "de" to "Schritt abgeschlossen", "it" to "Passo completato", "ru" to "Шаг завершён", "zh-Hans" to "此步已完成", "hi" to "चरण पूरा हो गया"),
+        "Vežba" to mapOf("sr" to "Vežba", "en" to "Practice", "fr" to "Entraînement", "de" to "Übung", "it" to "Esercizio", "ru" to "Практика", "zh-Hans" to "练习", "hi" to "अभ्यास"),
+        "Test" to mapOf("sr" to "Test", "en" to "Test", "fr" to "Test", "de" to "Test", "it" to "Test", "ru" to "Тест", "zh-Hans" to "测验", "hi" to "परीक्षा"),
+        "Partija" to mapOf("sr" to "Partija", "en" to "Game", "fr" to "Partie", "de" to "Partie", "it" to "Partita", "ru" to "Партия", "zh-Hans" to "对局", "hi" to "बाज़ी"),
+        "Lekcija" to mapOf("sr" to "Lekcija", "en" to "Lesson", "fr" to "Leçon", "de" to "Lektion", "it" to "Lezione", "ru" to "Урок", "zh-Hans" to "课程", "hi" to "पाठ"),
+        // Nije u brief-ovom spisku kljuceva, ali je uslov „gotovo" (tacka 2)
+        // trazi bas ovaj tekst za korak bez rute (routeFor(step) == null).
+        "Uskoro" to mapOf("sr" to "Uskoro", "en" to "Coming soon", "fr" to "Bientôt", "de" to "Demnächst", "it" to "Prossimamente", "ru" to "Скоро", "zh-Hans" to "即将推出", "hi" to "जल्द आ रहा है")
     )
 }
 
