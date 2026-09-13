@@ -451,12 +451,26 @@ zatečeni `ExampleInstrumentedTest`.
 > (npr. `INSTALL_FAILED_INSUFFICIENT_STORAGE`). Rezultat se čita iz
 > `app/build/outputs/androidTest-results/connected/debug/*.xml`, ne iz izlaznog koda.
 
-> **Emulator se pokreće bez prozora**, inače otima fokus korisniku:
+> **Emulator se pokreće bez prozora I ograničen**, inače otima i fokus i procesor:
 > ```bash
 > export ANDROID_HOME=~/Library/Android/sdk   # nije postavljen u okruženju
-> $ANDROID_HOME/emulator/emulator -avd Medium_Phone_API_36.1 -no-window -no-audio -no-boot-anim &
+> nice -n 10 $ANDROID_HOME/emulator/emulator -avd Medium_Phone_API_36.1 \
+>   -no-window -no-audio -no-boot-anim -gpu off -cores 2 -memory 2048 &
 > $ANDROID_HOME/platform-tools/adb wait-for-device
+> $ANDROID_HOME/platform-tools/adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 1; done'
 > ```
+>
+> **Zašto baš tako — izmereno 2026-09-13, pošto je korisnik morao ručno da ubije `qemu-system`:**
+> emulator u MIROVANJU troši ~5% jednog jezgra i bezopasan je, ali tokom boot-a, build-a,
+> instalacije i `uiautomator` dumpova ume da uzme **5–6 jezgara** (mereno 568% i sa `-cores 2`,
+> jer `-cores` ograničava samo gostujuće vCPU-ove — host niti, pre svega GPU emulacija, i dalje
+> vrte). `-gpu off` je provereno bezopasan: screenshot je pun (1080×2400) i `uiautomator` čita
+> tekst normalno.
+>
+> **Pravilo koje je iz toga izašlo:** emulator se diže **samo za korak koji ga stvarno traži**
+> i gasi (`adb emu kill`) odmah po tom koraku — ne drži se upaljen kroz ceo task. Vizuelne
+> provere grupisati u jedan prolaz umesto da svaki task diže svoj emulator. Faza 6b je
+> prekršila ovo pravilo i držala ga aktivnim satima.
 > Za razliku od iOS simulatora, **sintetički tapovi na Androidu rade**
 > (`adb shell input tap`, koordinate iz `uiautomator dump`), pa nije potreban nijedan
 > zaobilazni hak sa zakucavanjem korena. Screenshot: `adb exec-out screencap -p > …`.
