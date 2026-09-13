@@ -1373,8 +1373,12 @@ class StatsManager private constructor(context: Context) {
                 currentWinStreak = 0, bestWinStreak = 0,
                 winsBeginner = 0, winsEasy = 0, winsMedium = 0, winsHard = 0, winsStockfish = 0,
                 puzzlesSolved = 0, currentPuzzleStreak = 0, bestPuzzleStreak = 0,
-                puzzleRating = PuzzleRating.START,
-                puzzlesSolvedByDay = emptyMap()
+                puzzleRating = PuzzleRating.START
+                // `puzzlesSolvedByDay` se NE dira. To je istorija dnevnog CILJA, ne
+                // brojac — i `currentStreak` je racuna iz unije sa `stepsCompletedByDay`.
+                // Brisanjem bi korisnik posle reseta izgubio svaki dan u kome je cilj
+                // ispunio iskljucivo zadacima. iOS je isto ne dira
+                // (`Chessko/Logic/StatsManager.swift:137-157`).
             )
         }
         puzzlePrefs.edit()
