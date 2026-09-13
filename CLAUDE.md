@@ -1592,5 +1592,6 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `OpeningPhase`/`OpeningExerciseState`/`MateExerciseState` su i dalje jedini nosioci
   renderovanja sadržaja lekcije i `LessonRenderer.kt` ih zove direktno — to je većina sadržaja
   fajla, pa bi preseljavanje značilo premestiti skoro ceo fajl radi brisanja par stotina mrtvih
-  linija. `LearnView.kt`: 1111 → 883 linije. Uz to uklonjen neiskorišćen `learnViewModel` u
-  `MainActivity.kt` (deklarisan, nikad pročitan).
+  linija. `LearnView.kt`: 1111 → 1021 (Task 5, izdvajanje `LessonDetailView`) → 883 (ovo
+  brisanje). Uz to uklonjen neiskorišćen `learnViewModel` u `MainActivity.kt` (deklarisan,
+  nikad pročitan).
