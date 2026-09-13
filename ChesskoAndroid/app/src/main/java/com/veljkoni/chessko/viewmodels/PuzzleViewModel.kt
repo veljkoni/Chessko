@@ -29,23 +29,26 @@ enum class PuzzlePhase {
 }
 
 /**
- * `autoLoadDaily`: `false` za instance koje ekran koraka Puta pravi za
- * `StepPracticeView` (`PuzzleViewModel(app, autoLoadDaily = false)`).
+ * `init` VIŠE NE zove `loadDailyPuzzle()` sam. Ranije je to bilo bezuslovno,
+ * pa je svaka sveza instanca (i tab Zadaci, i, od Faze 6c, `StepPracticeView`)
+ * odmah pokretala ucitavanje dnevnog zadatka — a `startStepPractice()` radi
+ * ISTO, na istoj svezoj instanci. Dva asinhrona poziva su se trkala za
+ * `setupPuzzle()`; ko god stigne POSLEDNJI pobedi, redosled NIJE zagarantovan.
+ * Task 6 je to zaobisao parametrom `autoLoadDaily = false` za instance koje
+ * pravi `StepPracticeView` — zakrpa, ne resenje: podrazumevano `true` je i
+ * dalje znacilo da sledeci pozivalac koji napravi instancu i odmah je upotrebi
+ * (npr. `game` korak sa sopstvenim `GameViewModel`-om — vidi
+ * `StepGameView.kt` — pokazuje da ce ovakvih instanci biti vise) tiho upada u
+ * istu trku.
  *
- * Bez ovoga je `init` bezuslovno zvao `loadDailyPuzzle()`, koji radi na
- * `Dispatchers.IO` i zavrsava se pozivom `setupPuzzle()` na glavnoj niti — a
- * `startStepPractice()` iz `StepPracticeView`-a radi ISTO. Dva asinhrona
- * poziva na istoj svezoj instanci se trkaju za `setupPuzzle()`; ko god stigne
- * POSLEDNJI pobedi. Izmereno: dnevni poziv je stigao PRVI (upisao svoj FEN
- * dok je `mode` vec bio `STEP`, jer `startStepPractice()` postavlja `mode`
- * SINHRONO pre sopstvenog IO poziva), a red koraka je zatim ispravno
- * pregazio taj upis — ali redosled NIJE zagarantovan, pa bi obrnut tajming
- * ostavio ekran koraka da prikazuje DNEVNI zadatak dok brojac napretka i
- * dalje govori o redu koraka.
+ * Resenje je strukturno: `PuzzleViewModel` sad NIKAD sam ne ucitava dnevni
+ * zadatak. Tab Zadaci to radi eksplicitno, iz `LaunchedEffect(Unit)` u
+ * `MainActivity.kt` — isti obrazac koji `StepPracticeView` vec koristi za
+ * `startStepPractice()`. `loadDailyPuzzle()` ostaje javna funkcija (zove je i
+ * `goToPrevious`/`goToNext`/retry dugme), samo je vise niko ne zove iz `init`-a.
  */
 class PuzzleViewModel(
-    application: Application,
-    private val autoLoadDaily: Boolean = true
+    application: Application
 ) : AndroidViewModel(application) {
 
     private val soundManager = SoundManager(application)
@@ -209,16 +212,12 @@ class PuzzleViewModel(
             PuzzlePhase.SHOWING_SOLUTION -> loc("Rešenje...")
         }
 
-    init {
-        // `loadSolvedDates()` je ovde nekad stajao zasebno; sada je suvisan jer
-        // `loadDailyPuzzle()` odmah zove `reloadPersistedProgress()`, koji ga
-        // ionako zove. Rezultat bi se prepisao u istom dahu.
-        //
-        // `autoLoadDaily == false` za instance koje pravi `StepPracticeView`:
-        // taj ekran zove `startStepPractice()` sam, i ne sme da se trka sa
-        // dnevnim ucitavanjem koje mu ovde nista ne znaci.
-        if (autoLoadDaily) loadDailyPuzzle()
-    }
+    // NEMA `init` bloka koji sam poziva `loadDailyPuzzle()`. Svaki pozivalac koji
+    // pravi instancu (tab Zadaci preko `LaunchedEffect(Unit)` u `MainActivity.kt`,
+    // `StepPracticeView` preko `startStepPractice()`) mora eksplicitno da pokrene
+    // ucitavanje -- vidi doc-komentar klase. `loadDailyPuzzle()`/`startStepPractice()`
+    // ionako zovu `reloadPersistedProgress()` (koji ucitava i `solvedDates`), pa
+    // nema potrebe za posebnim ucitavanjem ovde.
 
     fun goToPrevious() {
         val prevDate = selectedDate.minusDays(1)

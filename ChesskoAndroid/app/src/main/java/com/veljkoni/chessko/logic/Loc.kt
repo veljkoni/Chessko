@@ -556,6 +556,8 @@ object Loc {
         "Greška — test kreće ispočetka" to mapOf("sr" to "Greška — test kreće ispočetka", "en" to "Mistake — the test restarts", "fr" to "Erreur — le test recommence", "de" to "Fehler — der Test beginnt von vorn", "it" to "Errore — il test ricomincia", "ru" to "Ошибка — тест начинается заново", "zh-Hans" to "失误 — 测验重新开始", "hi" to "गलती — परीक्षा फिर से शुरू"),
         "Partija" to mapOf("sr" to "Partija", "en" to "Game", "fr" to "Partie", "de" to "Partie", "it" to "Partita", "ru" to "Партия", "zh-Hans" to "对局", "hi" to "बाज़ी"),
         "Lekcija" to mapOf("sr" to "Lekcija", "en" to "Lesson", "fr" to "Leçon", "de" to "Lektion", "it" to "Lezione", "ru" to "Урок", "zh-Hans" to "课程", "hi" to "पाठ"),
+        // Faza 6c, Task 7: pokretac koraka `game` (StepGameView.kt).
+        "Korak se završava kad partija dođe do kraja." to mapOf("sr" to "Korak se završava kad partija dođe do kraja.", "en" to "The step is completed once the game reaches its end.", "fr" to "L'étape se termine lorsque la partie arrive à son terme.", "de" to "Der Schritt gilt als abgeschlossen, sobald die Partie zu Ende ist.", "it" to "Il passo si completa quando la partita arriva alla fine.", "ru" to "Шаг завершается, когда партия доходит до конца.", "zh-Hans" to "对局下到结束时，此步即完成。", "hi" to "बाज़ी के अंत तक पहुँचने पर यह चरण पूरा हो जाता है।"),
         // Nije u brief-ovom spisku kljuceva, ali je uslov „gotovo" (tacka 2)
         // trazi bas ovaj tekst za korak bez rute (routeFor(step) == null).
         "Uskoro" to mapOf("sr" to "Uskoro", "en" to "Coming soon", "fr" to "Bientôt", "de" to "Demnächst", "it" to "Prossimamente", "ru" to "Скоро", "zh-Hans" to "即将推出", "hi" to "जल्द आ रहा है")

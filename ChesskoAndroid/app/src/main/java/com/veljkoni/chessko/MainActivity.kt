@@ -131,6 +131,19 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // `PuzzleViewModel` vise ne ucitava dnevni zadatak sam iz svog `init`-a
+                // (Faza 6c, Task 7 -- zatvara isti rizik koji je Task 6 zaobisao parametrom
+                // `autoLoadDaily`). Mora se pokrenuti eksplicitno, TACNO JEDNOM za zivotni
+                // vek ovog `puzzleViewModel`-a -- zato je OVDE, van `when (activeTab)`
+                // grane: `puzzleViewModel` je `remember`-ovan na ovom istom nivou (unutar
+                // `key(languageKey)`), pa se ovaj efekat ne ponavlja pri prebacivanju
+                // tabova, samo pri promeni jezika (kad se ceo primerak ionako pravi iznova).
+                // `PuzzleView`-ov sopstveni `LaunchedEffect(Unit) { refreshPersistedProgress() }`
+                // (vidi `ui/PuzzleView.kt`) I DALJE radi na svaki povratak na tab -- to je
+                // namerno odvojeno: on samo osvezava kes (kvacica, iskljuceni zadaci), ne
+                // dira zadatak u toku.
+                LaunchedEffect(Unit) { puzzleViewModel.loadDailyPuzzle() }
+
                 var activeTab by remember { mutableStateOf(0) }
 
                 if (showSettings) {
@@ -429,6 +442,14 @@ class MainActivity : ComponentActivity() {
                         containerColor = Color(0xFF1E293B),
                         shape = RoundedCornerShape(16.dp)
                     )
+                }
+
+                // Ziv bug (Faza 6c, Task 7): GameViewModel je od pocetka postavljao
+                // showPromotion = true i cekao izbor figure, a taj izbor nije
+                // renderovao NIKO -- promocija pesaka je zauvek blokirala tablu
+                // slobodne partije (autoPromoteToQueen je podrazumevano false).
+                if (gameViewModel.showPromotion) {
+                    PromotionOverlay(gameViewModel)
                 }
 
                 if (gameViewModel.isGameOver && !dismissGameOverOverlay) {

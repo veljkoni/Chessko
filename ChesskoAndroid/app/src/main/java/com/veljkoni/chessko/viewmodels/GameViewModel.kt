@@ -19,7 +19,52 @@ enum class GameMode {
     VS_COMPUTER, LOCAL_FRIEND
 }
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
+/**
+ * `saveKey` odredjuje slot u SharedPreferences u koji OVAJ primerak cuva i
+ * cita partiju. Podrazumevano [FREE_PLAY_SAVE_KEY] -- tab Igra.
+ *
+ * Korak `game` Puta pravi sopstveni primerak sa [stepSaveKey]. Sa jednim
+ * zajednickim kljucem bi taj primerak pri kreiranju ucitao partiju koju
+ * korisnik ima u toku na tabu Igra i prvim potezom je pregazio -- `save()`
+ * upisuje celu partiju posle SVAKOG poteza.
+ */
+class GameViewModel(
+    application: Application,
+    private val saveKey: String = FREE_PLAY_SAVE_KEY
+) : AndroidViewModel(application) {
+
+    companion object {
+        const val FREE_PLAY_SAVE_KEY = "saved_game"
+
+        /**
+         * Korak dobija SOPSTVENI slot. Sa jednim kljucem bi drugi primerak
+         * modela ucitao partiju koju korisnik ima u toku na tabu Igra i prvim
+         * potezom je pregazio -- model snima celu partiju posle SVAKOG poteza.
+         */
+        fun stepSaveKey(stepId: String) = "saved_game.step.$stepId"
+    }
+
+    /// Izvedeno iz `saveKey`, ne zasebno stanje -- nema dva izvora istine o
+    /// tome da li je ovaj primerak partija koraka Puta ili slobodna partija.
+    val isStepGame: Boolean
+        get() = saveKey != FREE_PLAY_SAVE_KEY
+
+    /// Tezina koju propisuje `game` korak Puta (postavlja je `startStepGame`).
+    /// Kad je postavljena, ima prednost nad globalnim podesavanjem korisnika
+    /// -- bez ovoga bi `startStepGame` morao da pise u `SettingsManager`, a to
+    /// bi pregazilo tezinu koju je korisnik izabrao za slobodnu partiju na
+    /// tabu Igra (i obrnuto, sledeca slobodna partija bi nasledila tezinu
+    /// koraka).
+    // `mutableStateOf`, NE obican `var`: `startStepGame` ga postavlja u ISTOM
+    // pozivu u kom cesto postavlja i `gameState` na NOVU ALI STRUKTURNO JEDNAKU
+    // vrednost (fresh `game` korak bez `startFEN`-a resetuje na `GameState.initial()`,
+    // isto kao pocetna vrednost) -- Compose-ov `mutableStateOf` za `gameState`
+    // koristi strukturnu jednakost i NE prijavljuje promenu kad je nova vrednost
+    // `equals()` staroj, pa se ekran ne bi ponovo iscrtao ni zbog cega. Da je i
+    // ovo obican `var`, kartica protivnika bi ostala zaglavljena na globalnoj
+    // (pogresnoj) tezini sve dok neka DRUGA, stvarno razlicita promena stanja ne
+    // izazove recompose iz nekog drugog razloga.
+    private var stepDifficultyOverride: GameDifficulty? by mutableStateOf<GameDifficulty?>(null)
 
     private val soundManager = SoundManager(application)
     private val hapticManager = HapticManager(application)
@@ -42,7 +87,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     var difficulty: GameDifficulty
-        get() = settings.difficulty
+        get() = stepDifficultyOverride ?: settings.difficulty
         set(value) {
             settings.updateDifficulty(value)
         }
@@ -216,7 +261,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         hapticManager.warning()
         updateEvaluation()
 
-        if (gameMode == GameMode.VS_COMPUTER && !hasRecordedGameEnd) {
+        // Predaja u koraku Puta se NE upisuje u statistiku -- to je jedini
+        // predvidjen izlaz iz koraka koji se ne moze dobiti. Odigrana partija
+        // u koraku (mat/remi, ispod u `triggerAudioAndHapticFeedback`) se broji
+        // normalno, kao i svaka druga partija.
+        if (gameMode == GameMode.VS_COMPUTER && !hasRecordedGameEnd && !isStepGame) {
             hasRecordedGameEnd = true
             val stats = StatsManager.getInstance(getApplication())
             if (loser == playerColor) {
@@ -409,6 +458,54 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Priprema partiju za `game` korak Puta.
+     *
+     * NAMERNO ne zove `newGame()`: on tezinu upisuje kroz `SettingsManager`
+     * (globalno podesavanje), pa bi njome pregazio tezinu koju bira korisnik
+     * za slobodnu partiju na tabu Igra. Ovaj primerak umesto toga postavlja
+     * [stepDifficultyOverride] -- slobodna partija ga nikad ne vidi.
+     *
+     * Zapoceta partija IZ ISTOG koraka (isti `saveKey`) se nastavlja -- `load()`
+     * u `init`-u je vec ucitao stanje sa diska. Zavrsena se NE nastavlja:
+     * ulazak u vec odigran korak bi inace zavrsio na gotovoj tabli bez ijednog
+     * poteza koji se moze odigrati -- korak se moze odigrati ponovo.
+     */
+    fun startStepGame(difficulty: GameDifficulty, startFEN: String?) {
+        stepDifficultyOverride = difficulty
+        gameMode = GameMode.VS_COMPUTER
+
+        if (gameState.moveNotations.isNotEmpty() && !isGameOver) {
+            return // nastavak vec ucitane, nezavrsene partije koraka
+        }
+
+        hasRecordedGameEnd = false
+        viewingMoveIndex = null
+        history.clear()
+        selectedPosition = null
+        legalMovesForSelected = emptyList()
+        showPromotion = false
+        promotionMove = null
+        lastMove = null
+        isThinking = false
+
+        // Neispravan FEN ne sme da ostavi korak bez table.
+        val start = startFEN?.let { GameState.fromFEN(it) } ?: GameState.initial()
+        // Igrac vodi stranu koja je na potezu u startnoj poziciji -- bez ovoga
+        // bi korak sa startFEN-om u kome je crni na potezu odmah cekao potez
+        // igraca koji tu stranu uopste ne igra. Danas nedostizno (nijedan
+        // `game` korak u curriculum.json ne nosi startFEN), ali cena je nula.
+        playerColor = start.currentTurn
+        gameState = start
+
+        save() // slot koraka postoji od prvog trenutka, ne tek od prvog poteza
+        updateEvaluation()
+
+        if (gameMode == GameMode.VS_COMPUTER && gameState.currentTurn != playerColor) {
+            triggerAI()
+        }
+    }
+
     private fun triggerAI() {
         if (gameMode != GameMode.VS_COMPUTER) return
         if (gameState.currentTurn == playerColor) return
@@ -569,7 +666,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             json.put("moveNotations", notationsArray)
             
             val prefs = getApplication<Application>().getSharedPreferences("chessko_save", Context.MODE_PRIVATE)
-            prefs.edit().putString("saved_game", json.toString()).apply()
+            prefs.edit().putString(saveKey, json.toString()).apply()
             Log.d("GameViewModel", "Game saved successfully!")
         } catch (e: Exception) {
             Log.e("GameViewModel", "Failed to save game state", e)
@@ -579,7 +676,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun load() {
         try {
             val prefs = getApplication<Application>().getSharedPreferences("chessko_save", Context.MODE_PRIVATE)
-            val savedString = prefs.getString("saved_game", null) ?: return
+            val savedString = prefs.getString(saveKey, null) ?: return
             val json = JSONObject(savedString)
             
             val savedFen = json.getString("fen")
@@ -648,7 +745,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun clearSave() {
         val prefs = getApplication<Application>().getSharedPreferences("chessko_save", Context.MODE_PRIVATE)
-        prefs.edit().remove("saved_game").apply()
+        prefs.edit().remove(saveKey).apply()
     }
 
     override fun onCleared() {

@@ -48,10 +48,9 @@ fun routeFor(step: CurriculumStep): StepRoute? = when (val k = step.kind) {
     // ruta za oba.
     is StepKind.Practice -> StepRoute.Practice(step)
     is StepKind.Test -> StepRoute.Practice(step)
-    // Task 7 vraca StepRoute.Game(k.difficulty, k.startFEN, step.id). Do tada
-    // NULL: kartica pise „Uskoro" i NEMA strelicu. Nema poluotvorenog stanja u
-    // kome korak izgleda aktivno a vodi na prazan ekran.
-    is StepKind.Game -> null
+    // `routeFor` od Task-a 7 vise ni za jedan tip koraka ne vraca `null` sa
+    // isporucenim kurikulumom — poglavlja sa `game` korakom su prohodna.
+    is StepKind.Game -> StepRoute.Game(k.difficulty, k.startFEN, step.id)
 }
 
 @Composable
@@ -84,9 +83,15 @@ fun PathView(modifier: Modifier = Modifier) {
             StepPracticeView(step = r.step, onClose = { route = null })
             return
         }
-        // Grana za Game dodaje Task 7, zajedno sa svojim ekranom. Do tada
-        // `routeFor` za `Game` vraca `null`, pa se ova grana ne dostize.
-        is StepRoute.Game -> Unit
+        is StepRoute.Game -> {
+            StepGameView(
+                difficulty = r.difficulty,
+                startFEN = r.startFEN,
+                stepId = r.stepId,
+                onClose = { route = null }
+            )
+            return
+        }
         null -> Unit
     }
 
@@ -247,8 +252,9 @@ private fun StepRow(
         is StepKind.Game -> loc("Partija")
     }
     // Strelica SAMO ako korak nije zakljucan I ima rutu — vidi doc iznad
-    // `routeFor`. Korak koji jos nema ekran (vezba/test/partija) pise
-    // "Uskoro" cak i kad je otkljucan, jer dodir nema kuda da vodi.
+    // `routeFor`. Od Task-a 7 sva cetiri tipa koraka imaju rutu; provera
+    // ostaje jer je `hasRoute` jedino mesto koje bi uhvatilo buduci tip
+    // koraka bez ekrana, umesto da tiho vodi u prazno.
     val clickable = state != StepState.LOCKED && hasRoute
 
     Row(

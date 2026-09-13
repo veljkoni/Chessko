@@ -50,10 +50,10 @@ import com.veljkoni.chessko.viewmodels.PuzzleViewModel
 fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
     val context = LocalContext.current
     val app = context.applicationContext as Application
-    // `autoLoadDaily = false`: bez ovoga bi konstruktor sam pokrenuo ucitavanje
-    // dnevnog zadatka i trkao se sa `startStepPractice()` ispod — merena posledica
-    // je dokumentovana na `PuzzleViewModel.autoLoadDaily`.
-    val viewModel = remember { PuzzleViewModel(app, autoLoadDaily = false) }
+    // `PuzzleViewModel` vise NEMA autoload u `init`-u (Faza 6c, Task 7) -- pravljenje
+    // instance ovde vise ne pokrece ucitavanje dnevnog zadatka koje bi se trkalo sa
+    // `startStepPractice()` ispod.
+    val viewModel = remember { PuzzleViewModel(app) }
 
     // `step.id` kao kljuc: ako se ikad otvori drugi korak dok je ovaj ekran
     // ziv (nije slucaj danas), red se ponovo puni za novi korak.
