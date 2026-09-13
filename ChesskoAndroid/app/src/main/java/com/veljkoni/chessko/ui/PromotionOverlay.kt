@@ -25,6 +25,28 @@ import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.GameViewModel
 
 /**
+ * Podloga plocice ispod figure — FIKSNA, iz istog razloga iz kog je fiksan i
+ * okvir eval trake (`EvalBar.kt`): sadrzaj na njoj (SVG figure) ne prati temu.
+ *
+ * Plocica je pre ovoga bila `DS.onScrim` @8% nad `DS.scrim` nad dim-om
+ * `Dialog`-a, sto se slaze u **#3D3D3D (svetla) / #17181A (tamna)**. Na toj
+ * plocici crna figura stila „Ravne" (`piece_black_*_flat.svg`, puna silueta
+ * `#2C2C30`) meri **1,280 odnosno 1,278** — prakticno nevidljiva. To NIJE greska
+ * ove grane; postojalo je i pre nje, samo je selidba kartice na `DS.surface`
+ * ucinila da se mora presuditi. Sa `DS.surface` plocicom bio bi isti problem sa
+ * BELIM figurama u svetloj temi, pa nijedan tema-zavisan token ovde ne prolazi.
+ *
+ * `#708090` je izabran merenjem: jedini ton koji omedji i near-belu i near-crnu
+ * siluetu. Izmereno (WCAG 2.1) prema stvarnim bojama iz isporucenih SVG-ova:
+ *   „Ravne" bela `#FFFFFF` = 4,06    „Ravne" crna `#2C2C30` = 3,43
+ *   podrazumevani set `#fff` = 4,06  podrazumevani set `#0c0c0c` = 4,83
+ *   prema kartici `DS.surface`       = 4,05 (svetla) / 4,12 (tamna)
+ * Set „Jednostavne tanke" nosi OBE boje (`#F4F7FA` 3,77 i `#34364C` 2,91) u obe
+ * varijante figure, pa se omedjuje sam sobom.
+ */
+private val PromotionTile = Color(0xFF708090)
+
+/**
  * Modalni preklop za izbor figure pri promociji.
  *
  * `GameViewModel` od pocetka postavlja `showPromotion = true` i ceka izbor
@@ -57,20 +79,31 @@ fun PromotionOverlay(viewModel: GameViewModel) {
     val choices = listOf(PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT)
 
     Dialog(onDismissRequest = { viewModel.cancelPromotion() }) {
-        // Ceo preklop stoji na scrim-u (isto kao iOS `PromotionOverlay.swift`), pa
-        // i kartica i sadrzaj na njoj idu na onScrim -- NIKAD na DS.ink, koji bi se
-        // u tamnoj temi izgubio na sopstvenoj tamnoj podlozi.
+        // Zatamnjenje IZA kartice je scrim (ovde: sopstveni dim `Dialog`-a, 0,6
+        // crno — iOS to radi eksplicitno, `DS.scrim.ignoresSafeArea()`,
+        // `Chessko/Views/PromotionOverlay.swift:24`). Kartica NIJE scrim.
+        //
+        // Prethodna verzija je na oba mesta stavljala `DS.scrim` i to branila sa
+        // „isto kao iOS". To NIJE bilo tacno: na iOS-u je kartica
+        // `.ultraThinMaterial` (`:49`), a `DS.scrim` je iskljucivo celoekranska
+        // podloga. `DS.scrim` je 55% crno i PROVIDNO — polja table su se citala
+        // kroz panel, a tabela preslikavanja ovog plana salje `Color(0xFF1E293B)`
+        // na `DS.surface`, sto grana postuje na svih pet ostalih mesta
+        // (`MainActivity.kt:164,280,480`, `StepGameView.kt:222`, `SettingsView.kt:176`).
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(20.dp))
-                .background(DS.scrim)
+                .background(DS.surface)
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // Kartica je `DS.surface`, pa naslov ide na `DS.ink` — `DS.onScrim` je
+            // fiksna bela i nad `DS.surface` vise nije ispravna (u svetloj temi
+            // bela na beloj). `ink`/`surface` = 17,43 (svetla) / 14,76 (tamna).
             Text(
                 text = loc("Izaberi figuru"),
-                color = DS.onScrim,
+                color = DS.ink,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
@@ -81,7 +114,7 @@ fun PromotionOverlay(viewModel: GameViewModel) {
                         modifier = Modifier
                             .size(64.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(DS.onScrim.copy(alpha = 0.08f))
+                            .background(PromotionTile)
                             .clickable {
                                 viewModel.confirmPromotion(type)
                             }

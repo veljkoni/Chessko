@@ -130,10 +130,20 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                     enabled = viewModel.canUndo,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
-                        contentColor = DS.inkMuted,
-                        // Van tacnog opsega (0.5-0.75f) iz tabele preslikavanja, isti
-                        // slucaj kao Task 4 dilema #1/#3: nizu providnost za
-                        // "disabled" nego sto inkMuted nosi sistem ne razlikuje.
+                        contentColor = DS.ink,
+                        // `disabledContainerColor` se NE sme izostaviti: M3
+                        // podrazumevano daje `onSurface` @12%, pa afordansa cita
+                        // naopako — onemoguceno dugme postane popunjena siva pilula,
+                        // a omoguceno goli glif.
+                        disabledContainerColor = Color.Transparent,
+                        // Ranije je i ovo bilo `DS.inkMuted`, identicno sa
+                        // `contentColor` — dugme je izgledalo isto u oba stanja.
+                        // Ostatak grane razlikuje stanja bas ovim parom
+                        // (`MainActivity.kt:1239-1241`, `:1275-1277`,
+                        // `PuzzleView.kt:454-457`): `DS.ink` ukljuceno, `DS.inkMuted`
+                        // iskljuceno. Podloga je `DS.ground`; izmereno
+                        // `ink`/`ground` = 15,72 (svetla) / 16,15 (tamna),
+                        // `inkMuted`/`ground` = 4,36 / 5,94.
                         disabledContentColor = DS.inkMuted
                     )
                 ) {

@@ -180,12 +180,25 @@ fun SettingsView(
                 )
             }
 
+            // JEDINA kartica na ovom ekranu koja nosi SEMANTICKI obojen tekst
+            // (`success`/`danger`/`warning`/`accent` brojeve), pa je jedina koja
+            // ide na `DS.surface` umesto na `DS.fill` kao ostale.
+            //
+            // Nad `DS.fill` je izmereno: `warning` 3,00 i `success` 4,18 u svetloj
+            // temi — oba ispod AA (17sp Bold NIJE „large text" po WCAG-u, prag je
+            // 4,5). Nad `DS.surface`: `success` 5,04 i `inkMuted` labela 4,83 —
+            // oboje preko praga; `warning` ostaje 3,61, sto je TACNO isti par koji
+            // iOS `StatBox` ima na istom mestu (`SettingsSheet.swift:399-415`, broj
+            // u boji na `systemBackground`) i koji je vec upisan u „Poznata
+            // ogranicenja". Popravka same boje bi znacila razlaz sa iOS paletom;
+            // popravka podloge ne znaci nista osim da kartica koristi token koji
+            // tabela preslikavanja ionako propisuje za ispunu kartice.
             SettingsSection(title = loc("Statistika igranja")) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(DS.fill)
+                        .background(DS.surface)
                         .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -634,7 +647,34 @@ fun SettingsToggle(
         }
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            // ISKLJUCENO stanje se NE sme prepustiti M3 podrazumevanim vrednostima.
+            // `SwitchTokens` vodi palac i ivicu na `Outline`, a traku na
+            // `SurfaceContainerHighest`; `Theme.kt` to mapira na `DS.line` odnosno
+            // `DS.fill`, a taj par meri **1,067 (svetla) / 1,071 (tamna)** — palac je
+            // bukvalno iste boje kao traka. Red ispod (`.background(DS.fill)`) je jos
+            // jednom ista boja, pa se ceo iskljucen prekidac gubi u sopstvenoj podlozi:
+            // ne vidi se ni gde da se tapne.
+            //
+            // Pouka koja je to propustila: i komentar u `Theme.kt` i pregled Task-a 6
+            // proverili su da su uloge MAPIRANE — i to tacno — ali nijedno nije
+            // proverilo da su mapirane vrednosti MEDJUSOBNO razlicite. Analiziran je
+            // token, ne par. Od ove ispravke par `line`/`fill` cuva `ContrastTest`
+            // (blok `nonTextPairsOverFillAreDistinguishable`).
+            //
+            // Izmereno posle popravke (WCAG 2.1, ista formula kao `ContrastTest`):
+            //   palac / traka  `inkMuted` / `surface` = 4,83 (svetla) / 5,43 (tamna)
+            //   palac / red    `inkMuted` / `fill`    = 4,01 (svetla) / 4,81 (tamna)
+            //   ivica / red    isti par               = 4,01 / 4,81
+            // Sve preko WCAG praga 3:1 za ne-tekstualni kontrast, u obe teme.
+            //
+            // UKLJUCENO stanje ostaje na podrazumevanom (`accent` traka, `onAccent`
+            // palac = 8,53 / 6,71) — ono je od pocetka bilo tacno.
+            colors = SwitchDefaults.colors(
+                uncheckedThumbColor = DS.inkMuted,
+                uncheckedTrackColor = DS.surface,
+                uncheckedBorderColor = DS.inkMuted
+            )
         )
     }
 }

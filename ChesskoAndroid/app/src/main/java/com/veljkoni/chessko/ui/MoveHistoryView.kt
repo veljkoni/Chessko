@@ -93,7 +93,15 @@ fun MoveHistoryView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 itemsIndexed(pairRows) { index, row ->
-                    val bg = if (index % 2 == 0) Color.Transparent else DS.fill
+                    // Kontejner iznad je `DS.fill`, pa je parni (providan) red vec
+                    // `DS.fill`; neparni MORA biti drugi token, inace se slika
+                    // `DS.fill` preko `DS.fill` i obe grane daju **identican piksel**
+                    // (izmereno 1,000 — zebre nema ni u jednoj temi, a kod izgleda kao
+                    // da nesto radi). Pre prelaska na tokene su se redovi razlikovali
+                    // (`White 5%` vs `White 2%`).
+                    // Izmereno posle popravke: `surface`/`fill` = 1,204 (svetla) /
+                    // 1,129 (tamna) — suptilno ali vidljivo, sto pruga i treba da bude.
+                    val bg = if (index % 2 == 0) Color.Transparent else DS.surface
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -17,9 +17,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.veljkoni.chessko.ui.theme.DS
 import kotlin.math.abs
 import kotlin.math.pow
+
+/**
+ * Okvir eval trake — FIKSAN, iz istog razloga iz kog je i sadrzaj trake fiksan.
+ *
+ * Prvi prelazak na tokene je ostavio dve polovine fiksne (tacno) ali je okvir oko
+ * njih pustio na `DS.line`/`DS.scrim`, a stranica iza je `DS.ground`. Izmereno:
+ * bela polovina prema `DS.ground` **1,012 u svetloj temi**, crna polovina prema
+ * `DS.ground` **1,249 u tamnoj**, ivica `DS.line` prema `DS.ground` 1,159 / 1,323.
+ * U svakoj temi se po jedna polovina utopi u stranicu, a ivica je preslaba da je
+ * omedji — traka cija je cela poenta ODNOS dve polovine gubi vidljiv kraj.
+ *
+ * `#708090` je izabran merenjem, ne okom: jedan jedini fiksan ton mora da omedji
+ * i near-bele i near-crne piksele, i to u obe teme. Izmereno (WCAG 2.1):
+ *   bela polovina  `#F1F5F9` = 3,70      crna polovina `#1E293B` = 3,61
+ *   `DS.ground` svetla       = 3,66      `DS.ground` tamna       = 4,51
+ * Sve preko praga 3:1 za ne-tekstualni kontrast.
+ *
+ * Isti izuzetak kao sat (`CLAUDE.md`, „Sta NAMERNO nije token"): fiksan sadrzaj
+ * mora imati i fiksan okvir.
+ */
+private val EvalBarFrame = Color(0xFF708090)
 
 @Composable
 fun EvalBar(
@@ -61,8 +81,8 @@ fun EvalBar(
     val topFraction = if (topIsWhite) animatedWhiteFraction else (1f - animatedWhiteFraction)
     val bottomFraction = 1f - topFraction
 
-    // Bela i crna strana su STRANE U IGRI, ne tema -- ostaju fiksne cak i kad
-    // se okvir/pozadina oko njih pomere na tokene (vidi CLAUDE.md, "NACELO").
+    // Bela i crna strana su STRANE U IGRI, ne tema -- ostaju fiksne, a sa njima
+    // i okvir oko njih (`EvalBarFrame` gore; vidi CLAUDE.md, "NACELO").
     val whiteColor = Color(0xFFF1F5F9)
     val blackColor = Color(0xFF1E293B)
 
@@ -72,8 +92,8 @@ fun EvalBar(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(3.dp))
-            .background(DS.scrim)
-            .border(1.dp, DS.line, RoundedCornerShape(3.dp))
+            .background(EvalBarFrame)
+            .border(1.dp, EvalBarFrame, RoundedCornerShape(3.dp))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top Section
