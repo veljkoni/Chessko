@@ -13,6 +13,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,6 +55,14 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
     // instance ovde vise ne pokrece ucitavanje dnevnog zadatka koje bi se trkalo sa
     // `startStepPractice()` ispod.
     val viewModel = remember { PuzzleViewModel(app) }
+
+    // `viewModel` je napravljen kroz `remember`, NE kroz `ViewModelStore`, pa mu se
+    // `onCleared()` NIKAD ne izvrsi -- `SoundManager` (nije singleton, svaki
+    // `PuzzleViewModel` pravi SVOJ `SoundPool`) bi bez ovoga procureo na svaki izlazak
+    // iz koraka. Isti obrazac kao `ChessClockView.kt` (`DisposableEffect` + `release()`).
+    DisposableEffect(Unit) {
+        onDispose { viewModel.releaseSounds() }
+    }
 
     // `step.id` kao kljuc: ako se ikad otvori drugi korak dok je ovaj ekran
     // ziv (nije slucaj danas), red se ponovo puni za novi korak.

@@ -766,8 +766,21 @@ class GameViewModel(
         prefs.edit().remove(saveKey).apply()
     }
 
+    /**
+     * Oslobadja `SoundPool`. Postoji kao javna metoda (ne samo `onCleared()`)
+     * zato sto `StepGameView` pravi ovaj model kroz `remember`, NE kroz
+     * `ViewModelStore` -- `onCleared()` mu se zato nikad ne izvrsi, a
+     * `SoundManager` nije singleton (svaki `GameViewModel` pravi SVOJ
+     * `SoundPool` koji niko drugi ne deli). Ekran ga zove iz
+     * `DisposableEffect(Unit) { onDispose { ... } }` pri izlasku; `onCleared()`
+     * ispod zove ISTO mesto da se `soundManager.release()` ne duplira.
+     */
+    fun releaseSounds() {
+        soundManager.release()
+    }
+
     override fun onCleared() {
         super.onCleared()
-        soundManager.release()
+        releaseSounds()
     }
 }

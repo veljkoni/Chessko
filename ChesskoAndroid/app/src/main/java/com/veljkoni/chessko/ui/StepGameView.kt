@@ -11,6 +11,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,6 +68,17 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
     // Sopstveni model po `stepId`: novi korak dobija nov primerak, a s njim i
     // nov slot za cuvanje (`stepSaveKey`).
     val viewModel = remember(stepId) { GameViewModel(app, GameViewModel.stepSaveKey(stepId)) }
+
+    // `viewModel` je napravljen kroz `remember`, NE kroz `ViewModelStore`, pa mu se
+    // `onCleared()` NIKAD ne izvrsi -- `SoundManager` (nije singleton, svaki
+    // `GameViewModel` pravi SVOJ `SoundPool`) bi bez ovoga procureo na svaki izlazak
+    // iz koraka. Kljuc je `stepId`, isto kao `remember` iznad: ako se `stepId`
+    // promeni dok je ekran ziv, STARI model se oslobadja pre nego sto se efekat
+    // za novi instalira, ne tek kad ceo ekran nestane. Isti obrazac kao
+    // `ChessClockView.kt` (`DisposableEffect` + `release()`).
+    DisposableEffect(stepId) {
+        onDispose { viewModel.releaseSounds() }
+    }
 
     // `null` znaci "vec upisan" -- zavrsetak se okida TACNO jednom po ulasku,
     // ne na svako ponovno izracunavanje statusa partije.
