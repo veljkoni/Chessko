@@ -40,8 +40,9 @@ data class ChesskoColors(
     val inkFixed: Color,
     /**
      * Tekst i ikone NA `accent` podlozi. MORA biti adaptivan: `accent` menja
-     * svetlinu izmedju tema, pa bela na svetloj varijanti daje 2,6:1 — ispod AA.
-     * Cuva ga `ContrastTest.plainWhiteWouldFailOnTheLightAccent`.
+     * svetlinu izmedju tema, pa bela na TAMNOJ varijanti (svetloplavi
+     * `#7EA0E8`) daje 2,6:1 — ispod AA (CLAUDE.md, Faza 2 changelog).
+     * Cuva ga `ContrastTest.plainWhiteWouldFailOnTheDarkAccent`.
      */
     val onAccent: Color
 )
