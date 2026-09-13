@@ -145,6 +145,28 @@ korisnik; tabla ostaje jedini šaroliki element.
 - prikaz tema table i stilova figura u podešavanjima — to je sadržaj, ne hrom
 - `PieceColor.white/.black` nisu boje nego strane u igri
 
+### Android dizajn sistem
+
+Od Faze 6d-1 isti sistem postoji i na Androidu, ista paleta kao iOS (`ChesskoColors` u
+`ChesskoAndroid/.../ui/theme/DesignSystem.kt`, vrednosti bit-za-bit iste kao gornja tabela).
+Mehanizam je `CompositionLocalProvider(LocalChesskoColors provides colors)` u `ChesskoTheme`
+(`Theme.kt`) — `staticCompositionLocalOf` namerno umesto `compositionLocalOf`, jer se paleta
+menja retko (promena teme) a čita je na stotine mesta; pozivna mesta čitaju `DS.accent` itd.,
+isti oblik kao iOS. `DS` dobija i `DS.onAccent` (tekst/ikone NA `accent` podlozi) — `accent`
+menja svetlinu između tema, pa nijedna fiksna boja za tekst na njemu ne radi u obe; čuva ga
+`ContrastTest.plainWhiteWouldFailOnTheDarkAccent` i `onAccentMeetsAAInBothThemes` (5 testova
+ukupno u `ContrastTest.kt`, JVM, bez emulatora — kontrast se računa WCAG formulom, ne
+procenjuje). `dynamicColor` (Android Studio šablon, boja sa korisnikove tapete na Androidu 12+)
+je uklonjen — sa spec-om koji traži jedan fiksan akcent to nije funkcija nego greška.
+
+**Izričito, koji ekrani prate temu a koji ne (stanje na kraju 6d-1):** `MainActivity.kt`,
+`PuzzleView.kt`, `PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt`, `SettingsView.kt` i
+zajedničke komponente (`UiComponents.kt`, `CapturedPiecesView.kt`, `MoveHistoryView.kt`,
+`EvalBar.kt`, `PromotionOverlay.kt`) su migrirane. Sat (`ChessClockView.kt`), lekcije
+(`LearnView.kt`, `LessonRenderer.kt`, `LessonDetailView.kt`) i tabla (`BoardView.kt`,
+`BoardTheme.kt`) **još ne** — to je Faza 6d-2. Do tada je aplikacija u svetloj temi vidljivo
+neujednačena: migrirani ekrani prate temu, ta tri ne.
+
 ## Arhitektura (MVVM)
 
 ```
@@ -471,16 +493,17 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | Faza | Preneto? | Napomena |
 |---|---|---|
 | 0 — higijena | **da** | rokada popravljena (`bc58ab0`), 9 JVM testova: 6 perft + 3 regresiona za rokadu |
-| 1 — dizajn sistem | ne | ima `ui/theme`, nema `DS` tokene |
+| 1 — dizajn sistem | **delimično (6d-1)** | sedam ekrana na `DS.*` tokenima (vidi „Android dizajn sistem"); sat, lekcije, tabla čekaju 6d-2 |
 | 2 — offline zadaci | **da** | to JESTE Faza 6a — ista stavka pod dva broja (iOS je numeriše 2, Android plan 6a) |
 | **6a — offline zadaci** | **da** | deljena `puzzles.sqlite`, `PuzzleRepository`, Elo rejting, „Sledeći zadatak" |
 | **6b — lekcije u JSON** (Faza 3) | **da** | isti 36 JSON fajlova kao iOS; `LearnView.kt` 1322 → 1111 linija |
 | 4 — Put | **da** | ista stavka pod dva broja kao 2/6a — isporučeno kao **6c** |
 | **6c — Put** | **da** | isti `curriculum.json` kao iOS, bajt-identičan (dokaz `diff`); `ProgressStore` (JSON u `filesDir`, migracija iz `SharedPreferences`); `PathView` sa sva četiri tipa koraka (`lesson`/`practice`/`test`/`game`) |
+| **6d-1 — dizajn sistem, deo 1** | **da** | `ChesskoColors`/`DS`/`ChesskoTheme` (ista paleta kao iOS) + sedam ekrana (`MainActivity`, Zadaci, Put, `practice`/`test`/`game` koraci, Podešavanja) prebačeno sa zakucanih boja na tokene; `dynamicColor` uklonjen |
 | 5 — analiza partije | ne | — |
 
-Testovi: **36 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `PathProgressTest` 9,
-`LocTest` 5, `PuzzleRatingTest` 9, `StepWindowTest` 3, `EngineTest` 9) + **46 instrumentisanih**
+Testovi: **41 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `PathProgressTest` 9,
+`LocTest` 5, `PuzzleRatingTest` 9, `ContrastTest` 5, `StepWindowTest` 3, `EngineTest` 9) + **46 instrumentisanih**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
 `ProgressStoreTest` 10, `LessonRepositoryTest` 6, `PuzzleRepositoryTest` 10, `StatsFacadeTest` 4,
 `LessonContentTest` 9).
@@ -540,6 +563,19 @@ Testovi: **36 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
 
 ## Poznata ograničenja / TODO kandidati
 
+- **Tri para tokena su ispod WCAG AA u svetloj temi**, nasleđeno iz spec tabele i identično na
+  obe platforme: `inkMuted`/`ground` 4,36; `inkMuted`/`fill` 4,01; `warning`/`surface` 3,61
+  (pune vrednosti, ne zaokružene: `ContrastTest.knownSubAAPairsDoNotGetWorse` na Androidu
+  proverava tačno 4.359965479387139 / 4.014258257780754 / 3.611752903947211 — čuva od
+  pogoršanja, ne od postojanja). Popravka bi značila razlaz sa iOS paletom, pa se ne radi.
+- **Na Androidu sat, lekcije i tabla još ne prate temu** (`ChessClockView.kt`, `LearnView.kt`,
+  `LessonRenderer.kt`, `LessonDetailView.kt`, `BoardView.kt`, `BoardTheme.kt`) — to je Faza
+  6d-2. Do tada je aplikacija u svetloj temi vidljivo neujednačena: sedam ekrana iz 6d-1 prate
+  temu, ta tri ne.
+- **`dynamicColor` je uklonjen sa Android teme** (`ChesskoTheme` u `Theme.kt`). Zatečena verzija
+  je bila Android Studio šablon sa `dynamicColor = true`, koji na Androidu 12+ vuče boje sa
+  korisnikove tapete — za spec koji traži jedan fiksan akcent to nije funkcija nego greška
+  (akcent bi se menjao sa pozadinom telefona).
 - **Analiza pretpostavlja da je prvi potez beli.** `GameAnalysis.build` računa
   `byWhite = ply % 2 == 0` i broj poteza iz istog izraza. Za partiju iz početne pozicije to je
   tačno, ali `CurriculumStep.game` nosi opcioni `startFEN` koji je do kraja provučen kroz
@@ -1632,3 +1668,30 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   linija. `LearnView.kt`: 1111 → 1021 (Task 5, izdvajanje `LessonDetailView`) → 880 (ovo
   brisanje, uz tri mrtva importa). Uz to uklonjen neiskorišćen `learnViewModel` u
   `MainActivity.kt` (deklarisan, nikad pročitan).
+
+- **2026-09-14** — Faza 6d-1 (Android: dizajn sistem, deo 1). Sedam ekrana Android UI-ja
+  prebačeno sa zakucanih boja na `DS.*` tokene, ista paleta kao iOS (`ChesskoColors` u
+  `ui/theme/DesignSystem.kt`, `CompositionLocalProvider` u `ChesskoTheme`). Task 1: tokeni +
+  `ContrastTest` (5 testova, kontrast se računa WCAG formulom). Task 2: `MainActivity.kt`.
+  Task 3: zajedničke komponente (`UiComponents.kt`, `CapturedPiecesView.kt`,
+  `MoveHistoryView.kt`, `EvalBar.kt`, `PromotionOverlay.kt`). Task 4: tab Zadaci. Task 5: tab
+  Put. Task 6: Podešavanja. `dynamicColor` (Android Studio šablon, boja sa tapete) uklonjen.
+  Detalji, tačne vrednosti i spisak namernih izuzetaka — vidi „Dizajn sistem" → „Android dizajn
+  sistem" i „Poznata ograničenja".
+
+  **Task 7 (zatvaranje kriške).** Preostalih zakucanih boja u sedam migriranih fajlova: **22**,
+  sve namerne (birač boje figure u `MainActivity.kt` — 6, gradijenti uzetih figura u
+  `CapturedPiecesView.kt` — 10, zlatna oznaka mata i njena fiksna podloga u `UiComponents.kt` —
+  3, bela/crna polovina eval trake u `EvalBar.kt` — 2; `MoveHistoryView.kt`, `PromotionOverlay.kt`,
+  `PuzzleView.kt`, `PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt`, `SettingsView.kt` su
+  na nuli). Sve prate ISTU logiku kao iOS-ovi „šta namerno nije token": boje strane u igri i
+  sadržaj, ne hrom. Provere celog stabla: `Chessko`/`Chessko.xcodeproj` netaknuti (dokaz `git
+  diff --stat` prema početku faze), nema novih zavisnosti u `build.gradle.kts`/
+  `libs.versions.toml`, `Purple80`/`Pink40` šablon obrisan. Testovi na završnom stablu: **JVM
+  41/41** (0 padova, iz `test-results/testDebugUnitTest/*.xml`), **instrumentisani 46/46** (0
+  padova, iz `androidTest-results/connected/debug/*.xml`, emulator dignut `-gpu host` samo za
+  ovaj prolaz i ugašen odmah posle).
+
+  **Jedan lažan pogodak, namerno NE upisan kao izuzetak:** `ui/PathView.kt` daje 1 pogodak na
+  naivan grep za `Color.White`, ali je to unutar komentara na liniji 175 — fajl ima nula
+  zakucanih boja u kodu. Grepovana kontrolna lista mora se čitati, ne samo brojati.
