@@ -1,58 +1,47 @@
 package com.veljkoni.chessko.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
-
+/**
+ * `dynamicColor` je UKLONJEN, namerno.
+ *
+ * Zatecena verzija je bila Android Studio sablon sa `dynamicColor = true`, koji
+ * na Androidu 12+ vuce boje sa KORISNIKOVE TAPETE. Za aplikaciju ciji spec
+ * (5.6) trazi jedan fiksan akcent to nije funkcija nego greska — akcent bi se
+ * menjao sa pozadinom telefona.
+ *
+ * `MaterialTheme.colorScheme` se i dalje popunjava, jer ga koriste zatecene
+ * Material komponente (`Switch`, `Slider`, `Card`); bez toga bi one ostale
+ * ljubicaste iz sablona.
+ */
 @Composable
 fun ChesskoTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val colors = if (darkTheme) DarkColors else LightColors
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val material = if (darkTheme) {
+        darkColorScheme(
+            primary = colors.accent, onPrimary = colors.onAccent,
+            background = colors.ground, onBackground = colors.ink,
+            surface = colors.surface, onSurface = colors.ink,
+            error = colors.danger, outline = colors.line
+        )
+    } else {
+        lightColorScheme(
+            primary = colors.accent, onPrimary = colors.onAccent,
+            background = colors.ground, onBackground = colors.ink,
+            surface = colors.surface, onSurface = colors.ink,
+            error = colors.danger, outline = colors.line
+        )
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalChesskoColors provides colors) {
+        MaterialTheme(colorScheme = material, typography = Typography, content = content)
+    }
 }
