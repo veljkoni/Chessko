@@ -76,6 +76,44 @@ class PuzzleRepository(context: Context) {
         ).use { c -> if (c.moveToFirst()) c.toPuzzle() else null }
     }
 
+    /// Zadaci za korak Puta (`practice`/`test`): filtrirani po TEMI, u opsegu
+    /// rejtinga, bez vec iskljucenih id-jeva. Filtrira preko RAZLOZENE tabele
+    /// `puzzle_themes` (`JOIN` + `IN`), NE `LIKE` nad tekstom — `LIKE '%mate%'`
+    /// bi pogodio i `mateIn1`, `mateIn2` i `smotheredMate`, jer `IN` nad
+    /// razlozenom tabelom poredi ceo string a `LIKE` pogadja podniz.
+    /// Prazna lista tema preskace filter po temi (bilo koja tema). `GROUP BY
+    /// p.id` sklanja duplikate koje bi JOIN napravio kad zadatak nosi vise od
+    /// jedne trazene teme. Red se puni JEDNIM upitom (`ORDER BY RANDOM()
+    /// LIMIT ?`), ne pojedinacnim izvlacenjima — traka napretka koraka mora da
+    /// zna ukupan broj UNAPRED, a `test` koji krece ispocetka mora da garantuje
+    /// NOVE zadatke u jednom potezu.
+    fun puzzlesForStep(
+        themes: List<String>, ratingRange: IntRange, excluding: Set<String>, limit: Int
+    ): List<ChessPuzzle> {
+        if (limit <= 0) return emptyList()
+        val excl = excluding.take(MAX_EXCLUDED)
+
+        val sql = StringBuilder("SELECT p.id, p.fen, p.moves, p.rating, p.themes FROM puzzles p")
+        if (themes.isNotEmpty()) sql.append("\nJOIN puzzle_themes t ON t.puzzle_id = p.id")
+        sql.append("\nWHERE p.rating BETWEEN ? AND ?")
+        if (themes.isNotEmpty()) {
+            sql.append("\nAND t.theme IN (${themes.joinToString(",") { "?" }})")
+        }
+        if (excl.isNotEmpty()) {
+            sql.append("\nAND p.id NOT IN (${excl.joinToString(",") { "?" }})")
+        }
+        sql.append("\nGROUP BY p.id\nORDER BY RANDOM()\nLIMIT ?")
+
+        val args = (listOf(ratingRange.first.toString(), ratingRange.last.toString())
+            + themes + excl + limit.toString()).toTypedArray()
+
+        val out = ArrayList<ChessPuzzle>(limit)
+        db.rawQuery(sql.toString(), args).use { c ->
+            while (c.moveToNext()) out.add(c.toPuzzle())
+        }
+        return out
+    }
+
     /// Svi zadaci, deterministicno po `id`. Postoji zbog testa integriteta koji
     /// prolazi CELU bazu; aplikacija ga ne zove.
     fun allPuzzlesOrderedById(): List<ChessPuzzle> {

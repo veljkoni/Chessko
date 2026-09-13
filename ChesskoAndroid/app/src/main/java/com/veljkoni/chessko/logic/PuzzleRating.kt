@@ -35,4 +35,17 @@ object PuzzleRating {
         val hi = maxOf(lo, minOf(MAX, playerRating + 100))
         return lo..hi
     }
+
+    /**
+     * Prozor rejtinga za korak Puta: prozor igraca presecen opsegom koraka.
+     * Kad je presek prazan, prednost ima OPSEG KORAKA -- kurikulum zna sta se uci,
+     * rejting je samo podesavanje (spec 5.4). Bez ovoga bi jak igrac dobio prazan
+     * red i korak koji se ne moze zavrsiti.
+     */
+    fun stepWindow(playerRating: Int, stepRange: IntRange): IntRange {
+        val p = practiceWindow(playerRating)
+        val lo = maxOf(p.first, stepRange.first)
+        val hi = minOf(p.last, stepRange.last)
+        return if (lo <= hi) lo..hi else stepRange
+    }
 }

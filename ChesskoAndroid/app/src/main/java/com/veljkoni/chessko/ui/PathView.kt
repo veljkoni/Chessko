@@ -43,12 +43,14 @@ sealed class StepRoute {
 
 fun routeFor(step: CurriculumStep): StepRoute? = when (val k = step.kind) {
     is StepKind.Lesson -> StepRoute.Lesson(k.lessonId, step.id)
-    // Task 6 vraca StepRoute.Practice(step) za Practice i Test.
-    // Task 7 vraca StepRoute.Game(k.difficulty, k.startFEN, step.id).
-    // Do tada NULL: kartica pise „Uskoro" i NEMA strelicu. Nema poluotvorenog
-    // stanja u kome korak izgleda aktivno a vodi na prazan ekran.
-    is StepKind.Practice -> null
-    is StepKind.Test -> null
+    // `test` se od `practice`-a razlikuje SAMO po toleranciji na gresku, koju
+    // `StepPracticeView`/`PuzzleViewModel` citaju direktno iz `step.kind` — ista
+    // ruta za oba.
+    is StepKind.Practice -> StepRoute.Practice(step)
+    is StepKind.Test -> StepRoute.Practice(step)
+    // Task 7 vraca StepRoute.Game(k.difficulty, k.startFEN, step.id). Do tada
+    // NULL: kartica pise „Uskoro" i NEMA strelicu. Nema poluotvorenog stanja u
+    // kome korak izgleda aktivno a vodi na prazan ekran.
     is StepKind.Game -> null
 }
 
@@ -78,10 +80,12 @@ fun PathView(modifier: Modifier = Modifier) {
             )
             return
         }
-        // Grane za Practice i Game dodaju Task 6 i Task 7, zajedno sa svojim
-        // ekranima. Task 5 ih NE pominje — `StepPracticeView`/`StepGameView`
-        // jos ne postoje, pa se fajl ne bi ni kompajlirao.
-        is StepRoute.Practice -> Unit
+        is StepRoute.Practice -> {
+            StepPracticeView(step = r.step, onClose = { route = null })
+            return
+        }
+        // Grana za Game dodaje Task 7, zajedno sa svojim ekranom. Do tada
+        // `routeFor` za `Game` vraca `null`, pa se ova grana ne dostize.
         is StepRoute.Game -> Unit
         null -> Unit
     }
