@@ -928,7 +928,7 @@ Očekivano: **JVM 41**, **instrumentisani 46**, 0 padova.
 | Boje ostaju gde nose značenje | 1 (`success`/`warning`/`danger`), tabela izuzetaka |
 | Tabla ostaje jedini šaroliki element | tabela izuzetaka; `BoardView` je u 6d-2 |
 | Ikone tabova (puzzle za Zadatke) | **već urađeno** na Androidu — spec to i kaže |
-| Emoji u UI → ikone | **6d-2** (`LearnView`, `LessonRenderer`) |
+| Emoji u UI → ikone | **6d-2, za SVE fajlove obe kriske** — izmereno: 16 linija u 6d-1 fajlovima (`MainActivity` 8, `PuzzleView` 4, `SettingsView` 1, `StepPracticeView` 1, `StepGameView` 2) i 13 u 6d-2 (`LessonRenderer` 9, `LearnView` 3, `ChessClockView` 1). Spec 5.6 imenuje bas `🔄`, koji je u `MainActivity` — dakle NIJE samo 6d-2 problem. Odvojeno od tokena namerno: to je izbor ikonografije, ne boja, i jednim prolazom kroz sve fajlove daje doslednost koju migracija po fajlu ne bi. |
 | Mrtav prostor, kartice igrača, eval bar | Faza 4 ih je već rešila na Androidu kroz Put; `EvalBar` u Task-u 3 |
 | Duplirani naslovi | ne postoji na Androidu (`PathView` ima jedan naslov) |
 
