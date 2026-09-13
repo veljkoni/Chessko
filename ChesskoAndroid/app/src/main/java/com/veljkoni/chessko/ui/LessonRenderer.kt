@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.models.BoxStyle
+import com.veljkoni.chessko.models.ChessPiece
+import com.veljkoni.chessko.models.PieceColor
+import com.veljkoni.chessko.models.PieceType
 import com.veljkoni.chessko.models.ExerciseKind
 import com.veljkoni.chessko.models.LessonBlock
 import com.veljkoni.chessko.models.PieceValueRow
@@ -78,12 +81,62 @@ private fun LQuote(text: String, author: String) {
     }
 }
 
+/**
+ * Brojna vrednost figure iz JSON-a u vidljivu oznaku: `"1"` -> „1 bod" / „1 point".
+ *
+ * Isto sto iOS radi u `L_PieceValueTable` kad `valueLabel` nedostaje — a nedostaje
+ * u sva 36 isporucena fajla. Kljucevi su namerno LITERALI unutar `loc()`, da ih
+ * `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary` vidi i proveri; sklapanje
+ * kljuca iz promenljive bi ga sakrilo od tog testa.
+ *
+ * „∞" (kralj) se ne prevodi — isto je na svih 8 jezika. Nepoznata vrednost se vraca
+ * kakva jeste: bolje gola brojka nego izmisljena jedinica.
+ */
+internal fun valueUnitLabel(value: String): String = when (value) {
+    "1" -> loc("1 bod")
+    "3" -> loc("3 boda")
+    "5" -> loc("5 boda")
+    "9" -> loc("9 bodova")
+    else -> value
+}
+
+/**
+ * Naziv figure iz JSON-a (`"pawn"`, `"rook"`…) u Unicode simbol.
+ *
+ * Nepoznat naziv vraca `null`, a pozivalac tada crta upozorenje umesto figure —
+ * isto kao iOS (`LessonRenderer.pieceType(lessonKey:)`). Tiho crtanje bilo koje
+ * figure bi znacilo da tipfeler u sadrzaju niko nikad ne primeti.
+ */
+internal fun lessonPieceSymbol(lessonKey: String): String? = when (lessonKey) {
+    "king" -> ChessPiece(PieceType.KING, PieceColor.WHITE).symbol
+    "queen" -> ChessPiece(PieceType.QUEEN, PieceColor.WHITE).symbol
+    "rook" -> ChessPiece(PieceType.ROOK, PieceColor.WHITE).symbol
+    "bishop" -> ChessPiece(PieceType.BISHOP, PieceColor.WHITE).symbol
+    "knight" -> ChessPiece(PieceType.KNIGHT, PieceColor.WHITE).symbol
+    "pawn" -> ChessPiece(PieceType.PAWN, PieceColor.WHITE).symbol
+    else -> null
+}
+
+@Composable
+private fun LessonPieceGlyph(piece: String) {
+    val symbol = lessonPieceSymbol(piece)
+    Text(
+        text = symbol ?: "\u26A0",
+        fontSize = if (symbol != null) 22.sp else 15.sp,
+        color = if (symbol != null) Color.White.copy(alpha = 0.9f) else Color(0xFFE05A5A),
+        modifier = Modifier.width(30.dp)
+    )
+}
+
 @Composable
 fun LPieceRow(piece: String, name: String, count: String, accent: Color) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Figura se crta iz `piece`; bez nje je red samo naziv i broj, a lekcija
+        // o figurama upravo trazi da se figura VIDI (iOS crta `PieceImageView`).
+        LessonPieceGlyph(piece)
         // `name` i `count` dolaze iz JSON-a vec prevedeni — NE kroz `loc()`.
         Text(text = name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accent)
         Spacer(Modifier.weight(1f))
@@ -99,13 +152,15 @@ fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                LessonPieceGlyph(r.piece)
                 Text(text = r.name, fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f))
                 Spacer(Modifier.weight(1f))
-                // `valueLabel` ako postoji, inace gola vrednost. NE sklapa se
-                // „$value bodova" u kodu: srpska mnozina se ne poklapa ni sa
-                // jednim drugim jezikom, a `value` je string jer kralj nosi „∞".
+                // `valueLabel` je vec preveden (stize iz JSON-a na tom jeziku), ali
+                // ga nijedna isporucena lekcija ne zadaje — pa se u praksi UVEK ide
+                // na `valueUnitLabel`. Bez njega tabela pise golo „1" umesto
+                // „1 bod" / „1 point", sto iOS crta na istom JSON-u.
                 Text(
-                    text = r.valueLabel ?: r.value,
+                    text = r.valueLabel ?: valueUnitLabel(r.value),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = accent

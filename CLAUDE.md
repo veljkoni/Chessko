@@ -402,6 +402,13 @@ na jednom mestu i menja se na obe platforme.
 - **Vežba sa `mateIn` ide u `MatePuzzleCard`**, bez njega u `OpeningExerciseCard` — isti izbor
   kao iOS. Obe kartice primaju `solvedMessage`/`wrongMessage`/`playingPrompt` iz JSON-a; bez
   toga bi za mat-zadatke izmena sadržaja tiho nestala, i pao bi ugovor „sadržaj je u JSON-u".
+- **Figura i jedinica u `pieceRow`/`pieceValueTable` se crtaju iz `piece` i `value`.** Android
+  koristi Unicode simbole (`ChessPiece.symbol` — ♙♘♗♖♕♔), iOS crta SVG kroz `PieceImageView`;
+  to je jedina namerna vizuelna razlika. Jedinicu sklapa `valueUnitLabel()` (`"1"` → `loc("1 bod")`),
+  jer **nijedan od 36 fajlova ne zadaje `valueLabel`** pa se uvek ide na taj put — bez njega
+  tabela piše golo „1" umesto „1 bod" / „1 point". Ključevi su namerno literali unutar `loc()`
+  da ih `everyLocCallInTheSourceHasAKeyInTheDictionary` proveri. Nepoznat naziv figure daje
+  crveno `⚠`, ne tiho nacrtanog Kralja.
 
 ### Kako se dodaje nova lekcija
 
@@ -422,7 +429,8 @@ Bez ijedne linije Swift-a — provereno na simulatoru, ne pretpostavljeno:
 Dve stvari na koje treba paziti pri pisanju JSON-a:
 
 - **Nepoznat `type` bloka ruši dekodiranje namerno** — bolje glasan pad nego lekcija sa
-  rupom koju niko ne primeti. Isto važi za nepoznat naziv figure i za `interactive: true`
+  rupom koju niko ne primeti. Isto važi za nepoznat naziv figure (iOS crta prekriženi
+  upitnik, Android crveno `⚠`) i za `interactive: true`
   (interaktivna tabla još ne postoji): oba daju vidljivu poruku u tekstu lekcije.
 - **`pieceValueTable` redovi treba da zadaju `valueLabel`** („1 bod" / „1 point"). Bez njega
   renderer sklapa labelu iz `value` po srpskoj množini i traži ključ u katalogu — a ključevi
@@ -439,7 +447,7 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | 1 — dizajn sistem | ne | ima `ui/theme`, nema `DS` tokene |
 | 2 — offline zadaci | **da** | to JESTE Faza 6a — ista stavka pod dva broja (iOS je numeriše 2, Android plan 6a) |
 | **6a — offline zadaci** | **da** | deljena `puzzles.sqlite`, `PuzzleRepository`, Elo rejting, „Sledeći zadatak" |
-| **6b — lekcije u JSON** (Faza 3) | **da** | isti 36 JSON fajlova kao iOS; `LearnView.kt` 1322 → 1098 linija |
+| **6b — lekcije u JSON** (Faza 3) | **da** | isti 36 JSON fajlova kao iOS; `LearnView.kt` 1322 → 1111 linija |
 | 4 — Put | ne | nema kurikuluma ni `ProgressStore` |
 | 5 — analiza partije | ne | — |
 
@@ -483,6 +491,18 @@ zatečeni `ExampleInstrumentedTest`.
 >
 > `-cores` ograničava samo gostujuće vCPU-ove, a `nice` snižava prioritet ne i broj niti (127
 > niti u merenju) — nijedno od to dvoje nije rešavalo ništa.
+>
+> **Zastavice su samo pola priče — drugo pola je ŽIVOTNI VEK.** `-gpu host` snižava cenu dok
+> emulator radi, ali ne sprečava da stoji upaljen satima. Zato: emulator se diže **samo za
+> korak koji ga stvarno traži**, vizuelne provere se **grupišu u jedan prolaz** umesto da svaki
+> task diže svoj, a odmah po tom prolazu ide gašenje i provera da je stvarno ugašen:
+> ```bash
+> $ANDROID_HOME/platform-tools/adb emu kill
+> (cd ChesskoAndroid && ./gradlew --stop)
+> pgrep -f qemu-system || echo "qemu: nema"
+> ```
+> Faza 6b je ovo prekršila i držala emulator aktivnim satima. Finalni pregled iste faze, sa
+> pravilom na snazi, završio je ceo vizuelni deo za **15,5 minuta na ~149%**.
 >
 > Za razliku od iOS simulatora, **sintetički tapovi na Androidu rade**
 > (`adb shell input tap`, koordinate iz `uiautomator dump`), pa nije potreban nijedan
@@ -1456,7 +1476,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   izlaznog koda), `assembleDebug` uspešan.
 
 - **2026-09-13** — Faza 6b (Android: sadržaj lekcija iz JSON-a). Ekran Učenja više ne nosi tekst
-  zakucan u Kotlinu: `LearnView.kt` je sa 1322 pao na 1098 linija, 49 srpskih stringova je
+  zakucan u Kotlinu: `LearnView.kt` je sa 1322 pao na 1111 linija, 49 srpskih stringova je
   nestalo, a šest lekcija se čita iz istih 36 JSON fajlova koje isporučuje iOS. Novi fajlovi:
   `models/LessonContent.kt` (šema + `org.json` parser), `logic/LessonRepository.kt`,
   `ui/LessonRenderer.kt`. Testova 22 → 24 JVM + 26 instrumentisanih. **Spec 4.5 je time zatvoren
@@ -1465,7 +1485,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
 
   **Pet defekata koje je otkrio tek stvarni ekran, nijedan vidljiv iz koda:** `icon` je ime SF
   simbola pa bi na svakom naslovu pisalo `crown.fill`; markdown `**bold**` se video kao
-  zvezdice (307 pojava); `playingPrompt` iz JSON-a se nigde nije prikazivao, pa je 13 od 16
+  zvezdice (614 pojave `**`, dakle 307 parova); `playingPrompt` iz JSON-a se nigde nije prikazivao, pa je 13 od 16
   vežbi gubilo uputstvo; četiri srpska stringa koja ni pretraga po `LPara("…")` ne vidi; i moj
   brief koji se nije kompajlirao jer `LessonInfo` više nema redni broj.
 

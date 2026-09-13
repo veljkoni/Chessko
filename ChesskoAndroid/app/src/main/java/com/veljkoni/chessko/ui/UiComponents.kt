@@ -266,62 +266,6 @@ fun RowScope.BottomNavItem(
     }
 }
 
-@Composable
-fun LearnPlaceholderView() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(
-            text = "📖 " + loc("Učenje i Taktike"),
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 12.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Cards list
-        LearnCard("Osnovna šahovska pravila", "Nauči kretanje figura, rokadu, en passant i pravila za mat i remi.", "📚 Pravila")
-        Spacer(modifier = Modifier.height(12.dp))
-        LearnCard("Otvaranja (Openings)", "Savladaj klasične šahovske sisteme poput Španske partije, Sicilijanske odbrane i Daminog gambita.", "♟️ Otvaranja")
-        Spacer(modifier = Modifier.height(12.dp))
-        LearnCard("Taktički motivi", "Vežbaj motive kao što su dvostruki udar (viljuška), vezivanje, ražanj i otkriveni šah.", "💥 Taktika")
-    }
-}
-
-@Composable
-fun LearnCard(title: String, desc: String, tag: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFF00D2FF).copy(alpha = 0.15f))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) {
-                    Text(text = tag, color = Color(0xFF00D2FF), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = desc, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-        }
-    }
-}
 
 fun getPlayerName(viewModel: GameViewModel, color: PieceColor): String {
     return if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
