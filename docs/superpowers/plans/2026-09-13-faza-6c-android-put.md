@@ -1584,7 +1584,9 @@ fun PathView(modifier: Modifier = Modifier) {
 }
 ```
 
-`PathHeader` i `ChapterSection` su privatni composable-i u istom fajlu: zaglavlje prikazuje `locF("Niz: %d dana", streak)`, `loc("Cilj za danas je ispunjen")`/`loc("Cilj za danas nije ispunjen")` i dugme `loc("Nastavi")`; kartica koraka prikazuje redni broj, tip (`loc("Lekcija")`/`loc("Vežba")`/`loc("Test")`/`loc("Partija")`) i stanje, a **strelicu ima samo ako `states[id] != LOCKED` i `routeFor(step) != null`**.
+`PathHeader` i `ChapterSection` su privatni composable-i u istom fajlu: zaglavlje prikazuje `locF("Niz: %d dana", streak)`, `loc("Cilj za danas je ispunjen")`/`loc("Cilj za danas nije ispunjen")` i dugme `loc("Nastavi")`; kartica koraka prikazuje tip (`loc("Lekcija")`/`loc("Vežba")`/`loc("Test")`/`loc("Partija")`) i stanje, a **strelicu ima samo ako `states[id] != LOCKED` i `routeFor(step) != null`**.
+
+> **Kartica koraka NEMA redni broj.** Oznaka koraka stoji iskljucivo na kartici Nastavi, gde je i spec 5.1 stavlja, i racuna se iz **globalne** pozicije u `curriculum.allStepIds`. Redni broj i po redu znacio bi dva numerisanja koja se moraju drzati uskladjena: lokalno po poglavlju je `notation-lesson` prvi, a globalno cetvrti korak — dva razlicita broja za isti korak na istom ekranu. iOS ga po redu ne prikazuje (`Chessko/Views/PathView.swift:258` je jedino mesto sa tom oznakom, i to na kartici Nastavi).
 
 - [ ] **Step 4: Zameni tab u `MainActivity.kt`**
 
