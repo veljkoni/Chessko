@@ -379,6 +379,30 @@ python3 build_lesson_json.py     # ZAMRZNUT — odmah odustaje, ne regeneriše N
   `5 boda` / `9 bodova`) koje `L_PieceValueTable` **sastavlja interpolacijom**
   iz brojne vrednosti u JSON-u, pa moraju da ostanu ključevi.
 
+### Android čita isti JSON
+
+Od Faze 6b (2026-09-13) isti sadržaj čita i Android, iz
+`ChesskoAndroid/app/src/main/assets/lessons/` — **bajt-identično**, dokaz je
+`diff -r Chessko/Content/lessons ChesskoAndroid/app/src/main/assets/lessons`. Lekcija se menja
+na jednom mestu i menja se na obe platforme.
+
+- **Parser ide kroz `org.json`** (ugrađen u Android), ne `kotlinx.serialization` — ta bi bila
+  nova zavisnost. Šema je `models/LessonContent.kt`, bez ijednog `android.*` uvoza, pa je
+  prenosiva; ali se **njeni testovi ne mogu pokrenuti bez emulatora**, jer Android JVM testovi
+  nose *stub* `org.json`-a koji baca. Zato `LessonContentTest` živi u `androidTest`, a ne u
+  `test`. Test-only zavisnost `org.json:json` je odbijena ne zbog štednje nego zato što bi
+  parser testirala protiv **druge implementacije** od one koja se isporučuje na uređaju.
+- **Parser BACA na nepoznat tip bloka**, isto kao iOS. Sadržaj je van dometa kompajlera, pa je
+  to jedino mesto koje može da vikne.
+- **`icon` u JSON-u je ime SF simbola** (`crown.fill`, `tuningfork`). iOS ih crta nativno;
+  Android ih mapira u emoji kroz `lessonIcon()` u `LessonRenderer.kt` (49 simbola). Bez te mape
+  na svakom naslovu bi pisalo bukvalno `crown.fill`.
+- **Markdown `**bold**` se mora obraditi** — `mdBold()` u istom fajlu. Bez toga se u sadržaju
+  vidi 307 parova zvezdica. iOS to radi kroz `mdText()`.
+- **Vežba sa `mateIn` ide u `MatePuzzleCard`**, bez njega u `OpeningExerciseCard` — isti izbor
+  kao iOS. Obe kartice primaju `solvedMessage`/`wrongMessage`/`playingPrompt` iz JSON-a; bez
+  toga bi za mat-zadatke izmena sadržaja tiho nestala, i pao bi ugovor „sadržaj je u JSON-u".
+
 ### Kako se dodaje nova lekcija
 
 Bez ijedne linije Swift-a — provereno na simulatoru, ne pretpostavljeno:
@@ -415,11 +439,11 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | 1 — dizajn sistem | ne | ima `ui/theme`, nema `DS` tokene |
 | 2 — offline zadaci | **da** | to JESTE Faza 6a — ista stavka pod dva broja (iOS je numeriše 2, Android plan 6a) |
 | **6a — offline zadaci** | **da** | deljena `puzzles.sqlite`, `PuzzleRepository`, Elo rejting, „Sledeći zadatak" |
-| 3 — lekcije u JSON | ne | `LearnView.kt` nosi sadržaj zakucan u kodu (vidi „Poznata ograničenja") |
+| **6b — lekcije u JSON** (Faza 3) | **da** | isti 36 JSON fajlova kao iOS; `LearnView.kt` 1322 → 1098 linija |
 | 4 — Put | ne | nema kurikuluma ni `ProgressStore` |
 | 5 — analiza partije | ne | — |
 
-Testovi: **22 JVM** (`./gradlew testDebugUnitTest`) + **11 instrumentisanih**
+Testovi: **24 JVM** (`./gradlew testDebugUnitTest`) + **26 instrumentisanih**
 (`./gradlew connectedDebugAndroidTest`, traži emulator) — 10 u `PuzzleRepositoryTest` plus
 zatečeni `ExampleInstrumentedTest`.
 
@@ -456,17 +480,23 @@ zatečeni `ExampleInstrumentedTest`.
   uvek `nil` i nijedan `setoption` ne ode motoru. Analiza radi jer sama biblioteka pri
   `Engine.start()` šalje iste dve opcije iz `Bundle.main`. Detalji i razlog zašto nije
   „popravljeno" pred merge — u komentaru na mestu.
-- **Spec 4.5 („Android meša jezike") je rešen SAMO za ekran Zadataka.** To jeste doslovan
-  primer iz spec-a i sada je čist — ekran na engleskom nema nijednu srpsku reč. Ta tvrdnja je
-  postala tačna tek u talasu ispravki 2026-09-12: do tada su tri stringa u `PuzzleViewModel`
-  zaobilazila `loc()` („Greška pri učitavanju: …", „Nema dostupnih zadataka.", „Neispravan FEN
-  u zadatku."), a prva dva se stvarno iscrtavaju. Provereno grep-om nad `PuzzleView.kt` i
-  `PuzzleViewModel.kt` (nijedan literal sa srpskim slovima van `loc()`) i na uređaju. Ali **ekran
-  Učenja i dalje meša jezike**: `ChesskoAndroid/.../ui/LearnView.kt` nosi **46 zakucanih
-  srpskih stringova** prosleđenih kao *pozicioni* argumenti (`LPara("…")`, `LBullet("…")`,
-  `LSectionHeader("…")`). Pretraga po `text = "…"` ih ne vidi — zato su promašeni pri
-  planiranju. Potvrđeno na uređaju: engleska Lekcija 4 prikazuje ceo srpski pasus. Popravka je
-  po obimu ekvivalent iOS Faze 3 (sadržaj lekcija u JSON), ne krpljenje, pa čeka tu podfazu.
+- ~~Spec 4.5 je rešen samo za ekran Zadataka~~ — **ZATVOREN U CELOSTI** u Fazi 6b. Ekran
+  Učenja više ne nosi sadržaj u kodu: 49 zakucanih srpskih stringova je nestalo, lekcije se
+  čitaju iz JSON-a. Provereno na tri načina, jer srpski može da procuri na tri:
+  (1) literal sa srpskim slovima van `loc()` u lekcijskim fajlovima — **0**;
+  (2) `loc()` sa ključem koji NE POSTOJI u rečniku — **0**, i to sada čuva test
+  `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary`;
+  (3) srpski tekst u ne-`sr` JSON fajlu — **0**.
+  Uz to je svih šest lekcija prošetano na engleskom, sa skrolovanjem do kraja, bez ijednog
+  srpskog slova. Put (2) je bio stvaran do same završnice Faze 6b: scenario „Promocija" je
+  prikazivao ceo srpski pasus na svakom stranom jeziku, jer je literal u kodu bio bez
+  „(redovi 8)" a rečnik i iOS sa njim. Stari tekst ovog unosa (o tri stringa u
+  `PuzzleViewModel` i 46 u `LearnView`) opisuje stanje pre 2026-09-13.
+- **Lekcije se traže `Loc.fileLanguageCode()`, NE `Loc.getLanguage()`.** `getLanguage()` vraća
+  `"zh"` (za UI birač jezika), a fajlovi se zovu `board-and-pieces.zh-Hans.json`. Repozitorijum
+  koji bi koristio `getLanguage()` tiho bi vratio **engleski svakom kineskom korisniku** — bez
+  pada i bez poruke. Čuvaju ga `LocTest.fileLanguageCodeKeepsScriptForChinese` i
+  `LessonRepositoryTest.chineseResolvesToItsOwnFileNotEnglish`.
 - **`Loc.get` na nepoznat ključ tiho vraća sam ključ**, dakle srpski tekst na svim jezicima.
   Krnj unos se zato ne vidi kao greška nego kao „mešanje jezika". Jedina zaštita je
   `LocTest.everyEntryHasAllEightLanguages`; ne isključivati ga.
@@ -1397,3 +1427,28 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   → `.use { it.length }` (curio je po jedan fd po instanci repozitorijuma).
   `testDebugUnitTest` 22/22, `connectedDebugAndroidTest` 11/11 (čitano iz XML-a, ne iz
   izlaznog koda), `assembleDebug` uspešan.
+
+- **2026-09-13** — Faza 6b (Android: sadržaj lekcija iz JSON-a). Ekran Učenja više ne nosi tekst
+  zakucan u Kotlinu: `LearnView.kt` je sa 1322 pao na 1098 linija, 49 srpskih stringova je
+  nestalo, a šest lekcija se čita iz istih 36 JSON fajlova koje isporučuje iOS. Novi fajlovi:
+  `models/LessonContent.kt` (šema + `org.json` parser), `logic/LessonRepository.kt`,
+  `ui/LessonRenderer.kt`. Testova 22 → 24 JVM + 26 instrumentisanih. **Spec 4.5 je time zatvoren
+  u celosti** — vidi „Poznata ograničenja" za tri puta kojima srpski može da procuri i za dokaz
+  da su sva tri zatvorena.
+
+  **Pet defekata koje je otkrio tek stvarni ekran, nijedan vidljiv iz koda:** `icon` je ime SF
+  simbola pa bi na svakom naslovu pisalo `crown.fill`; markdown `**bold**` se video kao
+  zvezdice (307 pojava); `playingPrompt` iz JSON-a se nigde nije prikazivao, pa je 13 od 16
+  vežbi gubilo uputstvo; četiri srpska stringa koja ni pretraga po `LPara("…")` ne vidi; i moj
+  brief koji se nije kompajlirao jer `LessonInfo` više nema redni broj.
+
+  **Blokirajući nalaz je proizvela jedna netačna rečenica u izveštaju** — tvrdnja da „ključ
+  postoji". Nije postojao: literal je bio bez „(redovi 8)", pa je scenario „Promocija"
+  prikazivao ceo srpski pasus na svakom stranom jeziku. Odatle i sistemska zaštita:
+  `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary` izvlači **sve** `loc()` literale iz
+  izvora i traži ih u rečniku. Stari test hvata samo krnje unose — ključ koji ne postoji mu je
+  nevidljiv.
+
+  **Usput ispravljena i posledica sopstvene popravke:** usmeravanje mat-zadataka u
+  `MatePuzzleCard` je isključilo tri polja iz JSON-a. Razlika se danas ne bi videla jer se
+  vrednosti poklapaju sa podrazumevanima, ali bi pao ugovor cele faze.
