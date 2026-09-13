@@ -29,6 +29,7 @@ import com.veljkoni.chessko.logic.GameDifficulty
 import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.logic.loc
+import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.GameViewModel
 
 // MARK: - Pokretac koraka `game` (Faza 6c, Task 7)
@@ -119,7 +120,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
         ) {
             Text(
                 text = loc("Partija"),
-                color = Color.White,
+                color = DS.ink,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -129,8 +130,11 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                     enabled = viewModel.canUndo,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
-                        contentColor = Color.White.copy(alpha = 0.7f),
-                        disabledContentColor = Color.White.copy(alpha = 0.25f)
+                        contentColor = DS.inkMuted,
+                        // Van tacnog opsega (0.5-0.75f) iz tabele preslikavanja, isti
+                        // slucaj kao Task 4 dilema #1/#3: nizu providnost za
+                        // "disabled" nego sto inkMuted nosi sistem ne razlikuje.
+                        disabledContentColor = DS.inkMuted
                     )
                 ) {
                     Text(text = "↩︎")
@@ -140,7 +144,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                         onClick = { showResignConfirm = true },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent,
-                            contentColor = Color(0xFFEF4444)
+                            contentColor = DS.danger
                         )
                     ) {
                         Text(text = "🏳")
@@ -150,7 +154,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                     onClick = onClose,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
-                        contentColor = Color.White.copy(alpha = 0.7f)
+                        contentColor = DS.inkMuted
                     )
                 ) {
                     Text(text = loc("Zatvori"))
@@ -196,22 +200,26 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
     if (showResignConfirm) {
         AlertDialog(
             onDismissRequest = { showResignConfirm = false },
-            title = { Text(text = loc("Predaja partije"), color = Color.White, fontWeight = FontWeight.Bold) },
-            text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = Color.White.copy(alpha = 0.8f)) },
+            title = { Text(text = loc("Predaja partije"), color = DS.ink, fontWeight = FontWeight.Bold) },
+            // 0.8f je van tacnog opsega inkMuted (0.5-0.75f) iz tabele, ali je
+            // ovo bas telo/supporting tekst dijaloga -- isti M3 slot
+            // (`DialogTokens.SupportingTextColor`) koji `Theme.kt` vec mapira na
+            // `onSurfaceVariant` = `inkMuted` po podrazumevanoj vrednosti.
+            text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.inkMuted) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.resign()
                     showResignConfirm = false
                 }) {
-                    Text(text = loc("Predaj"), color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                    Text(text = loc("Predaj"), color = DS.danger, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResignConfirm = false }) {
-                    Text(text = loc("Nastavi igru"), color = Color.White.copy(alpha = 0.6f))
+                    Text(text = loc("Nastavi igru"), color = DS.inkMuted)
                 }
             },
-            containerColor = Color(0xFF1E293B),
+            containerColor = DS.surface,
             shape = RoundedCornerShape(16.dp)
         )
     }
@@ -225,15 +233,15 @@ private fun OpponentCard(viewModel: GameViewModel) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.06f))
+            .background(DS.fill)
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
         Text(text = "🤖", fontSize = 16.sp)
-        Text(text = loc("Računar"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        Text(text = viewModel.difficulty.label, color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+        Text(text = loc("Računar"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Text(text = viewModel.difficulty.label, color = DS.inkMuted, fontSize = 12.sp)
         Spacer(modifier = Modifier.weight(1f))
         if (viewModel.isThinking) {
-            Text(text = loc("Računar razmišlja..."), color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+            Text(text = loc("Računar razmišlja..."), color = DS.inkMuted, fontSize = 12.sp)
         }
     }
 }
@@ -245,10 +253,10 @@ private fun StatusCard(message: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.06f))
+            .background(DS.fill)
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Text(text = message, color = Color.White, fontSize = 14.sp)
+        Text(text = message, color = DS.ink, fontSize = 14.sp)
     }
 }
 
@@ -261,13 +269,13 @@ private fun StepGameFooter(isGameOver: Boolean, onClose: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF34D399)))
-                Text(text = loc("Korak je završen"), color = Color.White, fontWeight = FontWeight.SemiBold)
+                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(DS.success))
+                Text(text = loc("Korak je završen"), color = DS.ink, fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onClose,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+                colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)
             ) {
                 Text(text = loc("Nazad na Put"), fontWeight = FontWeight.Bold)
             }
@@ -275,7 +283,7 @@ private fun StepGameFooter(isGameOver: Boolean, onClose: () -> Unit) {
     } else {
         Text(
             text = loc("Korak se završava kad partija dođe do kraja."),
-            color = Color.White.copy(alpha = 0.5f),
+            color = DS.inkMuted,
             fontSize = 12.sp,
             modifier = Modifier.fillMaxWidth()
         )

@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.models.CurriculumStep
 import com.veljkoni.chessko.models.StepKind
+import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.PuzzlePhase
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
 
@@ -81,7 +82,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
         ) {
             Text(
                 text = stepTitle(step),
-                color = Color.White,
+                color = DS.ink,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -89,7 +90,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                 onClick = onClose,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent,
-                    contentColor = Color.White.copy(alpha = 0.7f)
+                    contentColor = DS.inkMuted
                 )
             ) {
                 Text(text = loc("Zatvori"))
@@ -101,7 +102,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color(0xFF00D2FF))
+                CircularProgressIndicator(color = DS.accent)
             }
             PuzzlePhase.NETWORK_ERROR -> Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -112,7 +113,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = viewModel.networkErrorMessage,
-                        color = Color.White,
+                        color = DS.ink,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center
                     )
@@ -167,12 +168,15 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = locF("Zadatak %d od %d", current, total),
-            color = Color.White.copy(alpha = 0.7f),
+            color = DS.inkMuted,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold
         )
 
-        // Po jedna pilula za svaki zadatak u redu.
+        // Po jedna pilula za svaki zadatak u redu: reseno -> success, tekuce
+        // (index == progress.first, upravo se resava) -> accent, jos
+        // neodigrano -> fill. Ranije su "reseno" i "tekuce" delili istu
+        // (accent) boju -- tri stanja sad se stvarno razlikuju.
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
             for (index in 0 until total) {
                 Box(
@@ -180,7 +184,13 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
                         .weight(1f)
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp))
-                        .background(if (index < progress.first) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.12f))
+                        .background(
+                            when {
+                                index < progress.first -> DS.success
+                                index == progress.first -> DS.accent
+                                else -> DS.fill
+                            }
+                        )
                 )
             }
         }
@@ -188,7 +198,7 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
         if (requiresFlawless) {
             Text(
                 text = loc("Test mora biti rešen bez greške"),
-                color = Color(0xFFF59E0B),
+                color = DS.warning,
                 fontSize = 12.sp
             )
         }
@@ -216,14 +226,14 @@ private fun StepFooter(progress: Pair<Int, Int>, stepFailed: Boolean, onClose: (
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Box(
-                modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF34D399))
+                modifier = Modifier.size(8.dp).clip(CircleShape).background(DS.success)
             )
-            Text(text = loc("Korak je završen"), color = Color.White, fontWeight = FontWeight.SemiBold)
+            Text(text = loc("Korak je završen"), color = DS.ink, fontWeight = FontWeight.SemiBold)
         }
         Button(
             onClick = onClose,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+            colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)
         ) {
             Text(text = loc("Nazad na Put"), fontWeight = FontWeight.Bold)
         }
