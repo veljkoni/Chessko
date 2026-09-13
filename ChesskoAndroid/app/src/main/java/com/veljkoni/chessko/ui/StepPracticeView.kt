@@ -196,10 +196,22 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
         }
 
         if (requiresFlawless) {
+            // `DS.warning` tekst direktno na `DS.ground` (ovaj red nema Card ni
+            // background omotac) pada na 3,26:1 u svetloj temi -- gore od vec
+            // poznatog `warning/surface` para (3,61) i van svih ContrastTest
+            // provera. Standardan obrazac trake upozorenja: tonirana `DS.warning`
+            // podloga (providnost je ovde NAMERNA, deo tog obrasca -- ne pokusaj
+            // da se nadoknadi providnost izgubljena pri prevodjenju) + `DS.ink`
+            // tekst. Izracunato: DS.ink na (DS.warning @15% preko DS.ground) =
+            // 13,47 svetla / 12,30 tamna -- daleko iznad AA u obe teme.
             Text(
                 text = loc("Test mora biti rešen bez greške"),
-                color = DS.warning,
-                fontSize = 12.sp
+                color = DS.ink,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(DS.warning.copy(alpha = 0.15f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
     }
