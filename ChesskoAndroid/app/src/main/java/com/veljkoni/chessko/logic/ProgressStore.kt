@@ -62,14 +62,24 @@ data class ProgressSnapshot(
 
     companion object {
         /**
-         * SVE se cita kroz `opt*`, nikad `get*`.
+         * SVE se cita defanzivno -- i polja najviseg nivoa, i UNOSI unutar
+         * mapa/niza jedan nivo dublje.
          *
-         * `getInt` baca za kljuc kog nema u fajlu. Da je ovde, prvo sledece
-         * polje dodato u ovu strukturu razbilo bi `progress.json` svakog
-         * postojeceg korisnika: citanje pukne -> fajl se proglasi pokvarenim ->
-         * krene migracija -> ceo napredak na Putu i cela istorija streak-a
-         * nestanu bez ijedne poruke. Sa `opt*` stariji fajl se cita, a nova
-         * polja dobiju podrazumevanu vrednost.
+         * Polja najviseg nivoa idu kroz `opt*` (`optInt`, `optJSONObject`, ...),
+         * nikad `get*`: `getInt` baca za kljuc kog nema u fajlu. Da je ovde,
+         * prvo sledece polje dodato u ovu strukturu razbilo bi `progress.json`
+         * svakog postojeceg korisnika: citanje pukne -> fajl se proglasi
+         * pokvarenim -> krene migracija -> ceo napredak nestane bez poruke.
+         *
+         * Isto pravilo vazi i JEDAN NIVO DUBLJE: `toStringSet`/`toStringMap`/
+         * `toIntMap` citaju svaki UNOS preko `opt(key)` i PRESKACU unos ciji
+         * tip ne odgovara, umesto da pozovu `getString`/`getInt` koji bi bacili
+         * na prvi neispravan unos i oborili citanje cele mape/niza. Ovo nije
+         * kozmetika: `completedSteps`, `stepCompletionDates` i
+         * `stepsCompletedByDay` (napredak na Putu) ne postoje u
+         * `SharedPreferences` i NE MOGU se migrirati nazad -- jedan pokvaren
+         * unos za jedan dan bi bez ove zastite trajno obrisao ceo Put, iako je
+         * ostatak fajla savrseno citljiv.
          */
         fun fromJson(s: String): ProgressSnapshot {
             val o = JSONObject(s)
@@ -97,16 +107,24 @@ data class ProgressSnapshot(
             )
         }
 
+        /** Preskace unos ciji tip nije `String` umesto da baci -- vidi doc iznad `fromJson`. */
         private fun JSONArray?.toStringSet(): Set<String> =
-            if (this == null) emptySet() else (0 until length()).map { getString(it) }.toSet()
+            if (this == null) emptySet()
+            else (0 until length()).mapNotNull { opt(it) as? String }.toSet()
 
+        /** Preskace unos ciji tip nije `String` umesto da baci -- vidi doc iznad `fromJson`. */
         private fun JSONObject?.toStringMap(): Map<String, String> =
             if (this == null) emptyMap()
-            else keys().asSequence().associateWith { getString(it) }
+            else keys().asSequence()
+                .mapNotNull { key -> (opt(key) as? String)?.let { key to it } }
+                .toMap()
 
+        /** Preskace unos ciji tip nije broj umesto da baci -- vidi doc iznad `fromJson`. */
         private fun JSONObject?.toIntMap(): Map<String, Int> =
             if (this == null) emptyMap()
-            else keys().asSequence().associateWith { getInt(it) }
+            else keys().asSequence()
+                .mapNotNull { key -> (opt(key) as? Number)?.let { key to it.toInt() } }
+                .toMap()
     }
 }
 

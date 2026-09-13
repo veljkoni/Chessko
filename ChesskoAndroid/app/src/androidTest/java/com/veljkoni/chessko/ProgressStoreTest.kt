@@ -121,6 +121,23 @@ class ProgressStoreTest {
         assertTrue(s.goalMetToday)
     }
 
+    /**
+     * Jedan pokvaren unos u mapi ne sme da odnese ceo fajl. Napredak na Putu ne
+     * postoji u SharedPreferences, pa se ne moze migrirati nazad -- ako se fajl
+     * proglasi pokvarenim, taj napredak je izgubljen zauvek.
+     */
+    @Test
+    fun oneBadEntryInsideAMapDoesNotDiscardTheWholeFile() {
+        file.writeText("""{"version":1,"completedSteps":["basics-lesson"],
+            "stepsCompletedByDay":{"2026-09-13":2,"2026-09-12":["nije broj"]},
+            "puzzleRating":912}""")
+        val s = ProgressStore(context, file, prefs("bad-entry"))
+        assertTrue(s.snapshot.completedSteps.contains("basics-lesson"))
+        assertEquals(912, s.snapshot.puzzleRating)
+        assertEquals(2, s.snapshot.stepsCompletedByDay["2026-09-13"])
+        assertFalse(File(file.path + ".corrupt").exists())
+    }
+
     @Test
     fun snapshotRoundTripsThroughJson() {
         val a = ProgressSnapshot(
