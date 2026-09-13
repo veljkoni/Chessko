@@ -236,7 +236,9 @@ class CurriculumTest {
         all: List<com.veljkoni.chessko.models.ChessPuzzle>,
         stepId: String, themes: List<String>, count: Int, range: IntRange
     ) {
-        val n = all.count { p -> p.rating in range && p.themes.any { it in themes } }
+        // `ChessPuzzle.themes` je STRING razdvojen razmacima, ne lista —
+        // `p.themes.any { }` bi iteriralo po znakovima i ne bi se ni kompajliralo.
+        val n = all.count { p -> p.rating in range && p.themes.split(" ").any { it in themes } }
         assertTrue("Korak $stepId trazi $count zadataka za teme $themes u $range, a ima ih $n",
             n >= count)
     }
@@ -1008,7 +1010,12 @@ class ProgressStore(
                 Log.e("Chessko", "progress.json se ne cita (${e.message}); odlozen u ${backup.name}")
             }
         }
-        snapshot = loaded ?: migratedFromPrefs().also { snapshot = it; save() }
+        if (loaded != null) {
+            snapshot = loaded
+        } else {
+            snapshot = migratedFromPrefs()
+            save()
+        }
     }
 
     /** Prvo pokretanje posle nadogradnje: statistika se preuzima i OSTAVLJA. */
@@ -1502,9 +1509,13 @@ sealed class StepRoute {
 
 fun routeFor(step: CurriculumStep): StepRoute? = when (val k = step.kind) {
     is StepKind.Lesson -> StepRoute.Lesson(k.lessonId, step.id)
-    is StepKind.Practice -> StepRoute.Practice(step)
-    is StepKind.Test -> StepRoute.Practice(step)
-    is StepKind.Game -> StepRoute.Game(k.difficulty, k.startFEN, step.id)
+    // Task 6 vraca StepRoute.Practice(step) za Practice i Test.
+    // Task 7 vraca StepRoute.Game(k.difficulty, k.startFEN, step.id).
+    // Do tada NULL: kartica pise „Uskoro" i NEMA strelicu. Nema poluotvorenog
+    // stanja u kome korak izgleda aktivno a vodi na prazan ekran.
+    is StepKind.Practice -> null
+    is StepKind.Test -> null
+    is StepKind.Game -> null
 }
 
 @Composable
@@ -1533,17 +1544,11 @@ fun PathView(modifier: Modifier = Modifier) {
             )
             return
         }
-        is StepRoute.Practice -> {
-            StepPracticeView(step = r.step, onClose = { route = null })
-            return
-        }
-        is StepRoute.Game -> {
-            StepGameView(
-                difficulty = r.difficulty, startFEN = r.startFEN, stepId = r.stepId,
-                onClose = { route = null }
-            )
-            return
-        }
+        // Grane za Practice i Game dodaju Task 6 i Task 7, zajedno sa svojim
+        // ekranima. Task 5 ih NE pominje — `StepPracticeView`/`StepGameView`
+        // jos ne postoje, pa se fajl ne bi ni kompajlirao.
+        is StepRoute.Practice -> Unit
+        is StepRoute.Game -> Unit
         null -> Unit
     }
 
@@ -1715,7 +1720,14 @@ Proširi `PuzzleMode` sa `STEP`, dodaj `stepQueue`/`stepSolved`/`stepFailed`/`cu
 
 Tok rešavanja se **ne duplira** — `tap`/`attempt`/`applyMove` su isti kao na tabu Zadaci, pa i `StatsManager.recordPuzzleSolved()` ide postojećim putem. `isPlayerTurn` dobija `&& !stepFailed`.
 
-- [ ] **Step 4: Napiši `StepPracticeView.kt`**
+- [ ] **Step 4: Proširi `routeFor` i `PathView` na vežbu i test**
+
+U `PathView.kt`: `is StepKind.Practice -> StepRoute.Practice(step)` i
+`is StepKind.Test -> StepRoute.Practice(step)` umesto `null`; u `when (val r = route)`
+grana `is StepRoute.Practice -> { StepPracticeView(step = r.step, onClose = { route = null }); return }`.
+Tek sada kartice vežbe i testa dobijaju strelicu.
+
+- [ ] **Step 5: Napiši `StepPracticeView.kt`**
 
 Tanak ekran: traka pilula, brojač `locF("Zadatak %d od %d", solved, total)`, status, `BoardView`. **Sopstvena instanca modela**:
 
@@ -1727,11 +1739,11 @@ LaunchedEffect(step.id) { viewModel.startStepPractice(step) }
 
 Namerno **NE** nudi „Prikaži rešenje" (bio bi izlaz iz provere) ni „Sledeći zadatak" (red je fiksan).
 
-- [ ] **Step 5: Testovi + vizuelna provera u jednom prolazu emulatora**
+- [ ] **Step 6: Testovi + vizuelna provera u jednom prolazu emulatora**
 
 Očekivano: JVM **36** (33 + 3), instrumentisani 44. Vizuelno: vežba se igra i završava korak; **test pada na prvu grešku i kreće iznova sa drugim zadacima** (uporediti FEN pre i posle).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/logic/PuzzleRating.kt \
@@ -1811,11 +1823,18 @@ class GameViewModel(
 }
 ```
 
-- [ ] **Step 5: Napiši `StepGameView.kt`**
+- [ ] **Step 5: Proširi `routeFor` i `PathView` na partiju**
+
+U `PathView.kt`: `is StepKind.Game -> StepRoute.Game(k.difficulty, k.startFEN, step.id)` umesto
+`null`, i grana `is StepRoute.Game -> { StepGameView(r.difficulty, r.startFEN, r.stepId,
+onClose = { route = null }); return }`. Time `routeFor` više ni za jedan tip koraka ne vraća
+`null` sa isporučenim kurikulumom — poglavlja sa `game` korakom postaju prohodna.
+
+- [ ] **Step 6: Napiši `StepGameView.kt`**
 
 Sopstveni `GameViewModel(app, GameViewModel.stepSaveKey(stepId))`, kartica protivnika, status, `BoardView`, `PromotionOverlay`, predaja i undo. Korak se završava kad `isGameOver` postane `true`, **tačno jednom** po ulasku (`var pendingStepId by remember { mutableStateOf<String?>(stepId) }`) i **bez obzira na ishod** — predaja i poraz završavaju korak isto kao pobeda (spec: „partija odigrana do kraja", ne pobeda).
 
-- [ ] **Step 6: Dokaži da tab Igra ostaje netaknut**
+- [ ] **Step 7: Dokaži da tab Igra ostaje netaknut**
 
 ```bash
 # pre ulaska u korak
@@ -1825,7 +1844,7 @@ adb shell "run-as com.veljkoni.chessko cat shared_prefs/chessko_save.xml" | shas
 ```
 Očekivano: **isti sha** pre i posle — korak piše u svoj slot.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/ui/PromotionOverlay.kt \
