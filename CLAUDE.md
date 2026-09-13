@@ -688,6 +688,21 @@ Testovi: **36 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
   nedostižno — `curriculum.json` nosi naslove samo za `sr` i `en` — ali je istog oblika kao
   bug koji `CLAUDE.md` već opisuje za lekcije (`Loc.fileLanguageCode()` vs. `getLanguage()`);
   ako kurikulum ikad dobije kineski naslov, ovo mesto će ga tiho promašiti.
+- **`SoundManager` se ne oslobadja kad promena jezika remontira glavni ekran.**
+  `MainActivity.kt:100-101` pravi `gameViewModel` i `puzzleViewModel` kroz `remember { ... }`,
+  unutar `key(languageKey) { ... }` bloka, bez ijednog `DisposableEffect`. Svaki od tih
+  modela pravi **sopstveni** `SoundManager` (`PuzzleViewModel.kt:54`, `GameViewModel.kt:87`)
+  — `SoundManager` nije singleton. Posto se ne prave kroz `ViewModelStore`, `onCleared()` im
+  se nikad ne izvrši, pa `soundManager.release()` ne radi. Kad korisnik promeni jezik,
+  `key(languageKey)` odbacuje ceo blok i pravi NOVE modele sa novim `SoundPool`-ovima;
+  stari ostaju neoslobodjeni do gašenja procesa. **Ovo je ZATEČENO, ne uvedeno Fazom 6c:**
+  `git show 17dd16e:.../MainActivity.kt` već ima isti `remember { GameViewModel(...) }`
+  obrazac, a `git diff 17dd16e..HEAD -- .../MainActivity.kt` ne pokazuje nijednu izmenu tog
+  obrasca. Ekrani koraka (`StepPracticeView`, `StepGameView`) su u Fazi 6c dobili
+  `DisposableEffect` + `releaseSounds()` baš zbog ovog obrasca; **`MainActivity` nije**,
+  jer je van obima te faze. Popravka je ista i jeftina: `DisposableEffect` u `MainActivity`,
+  po uzoru na `ChessClockView.kt:129-133` koji to već radi. Uticaj je uzak: promena jezika
+  je redak događaj, a curenje je ograničeno na po jedan `SoundPool` za Igru i Zadatke.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
