@@ -89,8 +89,20 @@ class StatsManager private constructor(context: Context) {
 
     /**
      * „Resetuj statistiku" NE dira Put: `completedSteps`,
-     * `stepCompletionDates` i `stepsCompletedByDay` ostaju. Napredak nije
+     * `stepCompletionDates`, `stepsCompletedByDay` ostaju. Napredak nije
      * statistika (spec 5.4, isto kao iOS).
+     *
+     * Isto vazi i za `puzzlesSolvedByDay` — to je istorija DNEVNOG CILJA
+     * (`ProgressStore.currentStreak` je racuna iz unije sa
+     * `stepsCompletedByDay`), ne brojac koji ovaj reset cisti. Brisanje bi
+     * tiho pojelo streak svakog dana u kome je cilj ispunjen ISKLJUCIVO
+     * zadacima, bez ijednog koraka Puta. iOS
+     * (`Logic/StatsManager.swift`) je ne dira, pa ni ovde ne sme.
+     *
+     * Ono sto SE brise ispod, u `puzzlePrefs`, je drugi mehanizam:
+     * `SOLVED_PUZZLE_IDS_KEY`/`SOLVED_DATES_KEY` pamte KOJI su zadaci
+     * reseni (da se ne ponavljaju u vezbanju, i za kvacicu u kalendaru) —
+     * to jeste statistika, pa ide u reset.
      */
     fun resetStats() {
         store.updateStats {
@@ -99,8 +111,7 @@ class StatsManager private constructor(context: Context) {
                 currentWinStreak = 0, bestWinStreak = 0,
                 winsBeginner = 0, winsEasy = 0, winsMedium = 0, winsHard = 0, winsStockfish = 0,
                 puzzlesSolved = 0, currentPuzzleStreak = 0, bestPuzzleStreak = 0,
-                puzzleRating = PuzzleRating.START,
-                puzzlesSolvedByDay = emptyMap()
+                puzzleRating = PuzzleRating.START
             )
         }
         puzzlePrefs.edit()
