@@ -67,7 +67,6 @@ import com.veljkoni.chessko.ui.theme.ChesskoTheme
 import com.veljkoni.chessko.viewmodels.GameMode
 import com.veljkoni.chessko.viewmodels.GameViewModel
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
-import com.veljkoni.chessko.viewmodels.LearnViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,8 +99,7 @@ class MainActivity : ComponentActivity() {
                 key(languageKey) {
                     val gameViewModel = remember { GameViewModel(context.applicationContext as Application) }
                     val puzzleViewModel = remember { PuzzleViewModel(context.applicationContext as Application) }
-                    val learnViewModel = remember { LearnViewModel() }
-                
+
                 var showSettings by remember { mutableStateOf(false) }
                 var showNewGameMenu by remember { mutableStateOf(false) }
                 var showColorPicker by remember { mutableStateOf(false) }

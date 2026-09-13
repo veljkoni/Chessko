@@ -42,6 +42,24 @@ class GameViewModel(
          * potezom je pregazio -- model snima celu partiju posle SVAKOG poteza.
          */
         fun stepSaveKey(stepId: String) = "saved_game.step.$stepId"
+
+        /**
+         * Brise sacuvanu partiju KORAKA sa diska, bez potrebe za zivim
+         * primerkom modela. Zavrsen `game` korak ostaje klikabilan
+         * (`PathView`: `clickable = state != LOCKED`, a `COMPLETED != LOCKED`),
+         * pa drugi ulazak u isti korak pravi NOV primerak (`remember(stepId)`)
+         * ciji `init` sinhrono ucita staru ZAVRSENU partiju sa diska -- tek
+         * asinhroni `LaunchedEffect(stepId)` je posle toga resetuje, pa
+         * korisnik nakratko vidi staru gotovu tablu. iOS ovo resava brisanjem
+         * ODMAH po zavrsetku koraka (`GameViewModel.clearStepSave()`,
+         * `Chessko/ViewModels/GameViewModel.swift:814`, zvano iz
+         * `StepGameView.swift:133`) -- isti obrazac ovde, pozvano odmah posle
+         * `progressStore.completeStep(stepId)`.
+         */
+        fun clearStepSave(context: Context, stepId: String) {
+            val prefs = context.getSharedPreferences("chessko_save", Context.MODE_PRIVATE)
+            prefs.edit().remove(stepSaveKey(stepId)).apply()
+        }
     }
 
     /// Izvedeno iz `saveKey`, ne zasebno stanje -- nema dva izvora istine o

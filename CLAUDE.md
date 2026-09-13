@@ -248,6 +248,28 @@ Okosnica v2 od Faze 4a. Treći tab je **Put**, ne više Učenje.
 - Otključavanje, cilj i streak su **čiste funkcije** u `PathProgress` — dan ulazi kao string,
   pa testovi ne zavise od vremenske zone ni od trenutka pokretanja.
 
+### Android čita isti kurikulum
+
+Od Faze 6c isti `curriculum.json` čita i Android, iz
+`ChesskoAndroid/app/src/main/assets/curriculum.json` — **bajt-identično**, dokaz je
+`diff Chessko/Content/curriculum.json ChesskoAndroid/app/src/main/assets/curriculum.json`
+(prazan izlaz). Kurikulum se menja na jednom mestu i menja se na obe platforme, isti obrazac
+kao lekcije (vidi „Android čita isti JSON" ispod).
+
+- **`CurriculumParser` (Android) je isto Foundation/`org.json`-only kao iOS dekoder** — bez
+  ijednog `android.*` uvoza, pa je prenosiv, ali mu se JVM testovi ne mogu pokrenuti bez
+  emulatora (isti razlog kao `LessonContentTest`: JVM stub za `org.json` baca). Zato
+  `CurriculumTest` živi u `androidTest`.
+- **Parser BACA na nepoznat tip koraka i na obrnut `ratingRange`**, isto kao iOS — sadržaj je
+  van dometa kompajlera na obe platforme.
+- `ProgressStore.kt` je Android ekvivalent `ProgressStore.swift`: JSON fajl u `filesDir`
+  (`progress.json`, ne `SharedPreferences`), sa istom migracijom (stari `SharedPreferences`
+  ključevi se čitaju jednom i **ne brišu**) i istim čistim funkcijama za otključavanje/cilj/streak
+  (delegirane na `PathProgress`, isti naziv kao iOS-ov tip).
+- **Jedna namerna razlika**: `ProgressSnapshot` na Androidu nosi i `winsBeginner…winsStockfish`,
+  kojih iOS `ProgressSnapshot` nema — Android `StatsManager` ih već prikazuje na ekranu
+  podešavanja, pa bi fasada bez njih tiho izgubila podatke koje korisnik već vidi.
+
 ### Zamke koje su već jednom ujele
 
 - **`GameViewModel` ima parametrizovan ključ za čuvanje partije.** Slobodna partija drži
@@ -448,12 +470,15 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | 2 — offline zadaci | **da** | to JESTE Faza 6a — ista stavka pod dva broja (iOS je numeriše 2, Android plan 6a) |
 | **6a — offline zadaci** | **da** | deljena `puzzles.sqlite`, `PuzzleRepository`, Elo rejting, „Sledeći zadatak" |
 | **6b — lekcije u JSON** (Faza 3) | **da** | isti 36 JSON fajlova kao iOS; `LearnView.kt` 1322 → 1111 linija |
-| 4 — Put | ne | nema kurikuluma ni `ProgressStore` |
+| 4 — Put | **da** | ista stavka pod dva broja kao 2/6a — isporučeno kao **6c** |
+| **6c — Put** | **da** | isti `curriculum.json` kao iOS, bajt-identičan (dokaz `diff`); `ProgressStore` (JSON u `filesDir`, migracija iz `SharedPreferences`); `PathView` sa sva četiri tipa koraka (`lesson`/`practice`/`test`/`game`) |
 | 5 — analiza partije | ne | — |
 
-Testovi: **24 JVM** (`./gradlew testDebugUnitTest`) + **26 instrumentisanih**
-(`./gradlew connectedDebugAndroidTest`, traži emulator) — 10 u `PuzzleRepositoryTest` plus
-zatečeni `ExampleInstrumentedTest`.
+Testovi: **36 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `PathProgressTest` 9,
+`LocTest` 5, `PuzzleRatingTest` 9, `StepWindowTest` 3, `EngineTest` 9) + **46 instrumentisanih**
+(`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
+`ProgressStoreTest` 10, `LessonRepositoryTest` 6, `PuzzleRepositoryTest` 10, `StatsFacadeTest` 4,
+`LessonContentTest` 9).
 
 > **`connectedDebugAndroidTest` ume da kaže `BUILD SUCCESSFUL` a da ne pokrene nijedan test**
 > (npr. `INSTALL_FAILED_INSUFFICIENT_STORAGE`). Rezultat se čita iz
@@ -613,6 +638,34 @@ zatečeni `ExampleInstrumentedTest`.
   izvornog koda (bez prevoda — Xcode ih sam vrati pri sledećem build-u), ali
   diff od ~28.000 linija po pokretanju može sakriti stvaran gubitak ako se
   ikad desi.
+- **Promocija pešaka na Androidu je do Faze 6c bila neupotrebljiva.** `showPromotion`/
+  `confirmPromotion`/`cancelPromotion` su postojali u `GameViewModel.kt` od ranije, ali
+  nijedan ekran nije crtao izbor figure — potez do zadnjeg reda je tablu jednostavno
+  BLOKIRAO (potez se nikad ne primenjuje, dalji dodiri ne rade), i to ne samo u `game`
+  koraku Puta nego i u slobodnoj partiji na tabu Igra, jer je `autoPromoteToQueen`
+  podrazumevano `false`. Faza 6c je dodala `PromotionOverlay.kt` (4 figure, poziva
+  `confirmPromotion`/`cancelPromotion`) i okačila ga na oba mesta.
+- **`locF("Niz: %d dana", 1)` daje „Niz: 1 dana"**, gramatički pogrešno — srpski traži
+  „1 dan" / „2-4 dana" / „5+ dana". `Loc`/`locF` na Androidu nemaju podršku za množinske
+  oblike, pa ovo nije ispravka jednog stringa nego odluka o mehanizmu (najverovatnije
+  pogađa i ruski, koji ima sličnu množinsku gramatiku). Zapisano, nije popravljeno u
+  Fazi 6c.
+- **`BoardView.detectDragGestures` (Android) proguta ceo pokret prsta**, pa vertikalni
+  skrol prestaje da radi kad su dve interaktivne table blizu u vidnom polju (npr. dve
+  vežbe jedna ispod druge u istoj lekciji). Zatečeno pre Faze 6c, nije ga ova faza uvela
+  — zapisano jer ga je Put prvi put učinio vidljivim (koraci `practice`/`test`/`game` su
+  nove table u novim kontekstima skrolovanja).
+- **`StatsFacadeTest` (Android) koristi prave singletone nad stvarnim `filesDir`**, za
+  razliku od `ProgressStoreTest`, koji izoluje po jedan fajl po testu. Ponovljen prolaz
+  istog dana bez `pm clear` (ili deinstalacije) može da pretvori neki test u tautologiju
+  (čita stanje koje je sam prethodni prolaz ostavio, ne stanje koje test misli da postavlja).
+- **`ProgressSnapshot.toStringSet`/`toStringMap` (Android) nemaju dokaz mutacijom**, za
+  razliku od `toIntMap`, koji ga ima (vidi Task 3 changelog). Kod je strukturno identičan
+  sa `toIntMap`, pa je rizik nizak, ali tvrdnja nije dokazana istim standardom.
+- **`CurriculumParser` (Android) čita `version` kroz `optInt(key, 1)`** — fajl bez tog
+  ključa tiho dobija verziju 1. iOS ekvivalent baca ako ključa nema. Razmimoilaženje je
+  bezopasno dok god `curriculum.json` ostaje bajt-identičan između platformi (što i jeste,
+  vidi „Android čita isti kurikulum"), ali vredi znati ako se dekoderi ikad razdvoje.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
@@ -1499,3 +1552,45 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   **Usput ispravljena i posledica sopstvene popravke:** usmeravanje mat-zadataka u
   `MatePuzzleCard` je isključilo tri polja iz JSON-a. Razlika se danas ne bi videla jer se
   vrednosti poklapaju sa podrazumevanima, ali bi pao ugovor cele faze.
+
+- **2026-09-13** — Faza 6c (Android: Put). Treći tab je od ove faze **Put** i na Androidu,
+  isto kao na iOS-u od Faze 4a — `MainActivity.kt` menja `loc("Učenje")`/`Icons.Default.Book`
+  u `loc("Put")`/`Icons.Filled.Map` i poziva `PathView()` umesto `LearnView(...)`. Sva četiri
+  tipa koraka rade: `lesson`, `practice`, `test` (nula grešaka), `game`. Novi fajlovi:
+  `models/Curriculum.kt` (`StepKind` sealed class, `CurriculumParser` — baca na nepoznat tip
+  koraka i na obrnut `ratingRange`, isto kao iOS), `logic/PathProgress.kt` (čiste funkcije za
+  otključavanje/cilj/streak, `object` bez ijednog `android.*` uvoza), `logic/ProgressStore.kt`
+  (JSON u `filesDir`, migracija iz zatečenog `SharedPreferences` bez brisanja starih ključeva),
+  `ui/PathView.kt`, `ui/StepPracticeView.kt`, `ui/StepGameView.kt`, `ui/PromotionOverlay.kt`.
+  `ChesskoAndroid/app/src/main/assets/curriculum.json` je kopija
+  `Chessko/Content/curriculum.json`, bajt-identična (`diff` prazan) — deljena baš kao lekcije i
+  `puzzles.sqlite`, ne generisana po platformi. Testova 24 → 36 JVM + 26 → 46 instrumentisanih,
+  0 padova (čitano iz XML-a) na završnom stablu. Nijedna nova Gradle zavisnost.
+
+  **Živ bug pronađen i popravljen u Task-u 7, van teksta brief-a:** `showPromotion`/
+  `confirmPromotion`/`cancelPromotion` su u `GameViewModel.kt` postojali od ranije, ali
+  nijedan ekran nije crtao izbor figure — potez do zadnjeg reda je BLOKIRAO tablu (potez se
+  nikad ne primenjuje), i to ne samo u koraku `game` nego i u slobodnoj partiji na tabu Igra,
+  jer je `autoPromoteToQueen` podrazumevano `false`. Dokazano na emulatoru pre popravke
+  (tabla se zamrzne posle tapa a7→a8) i posle (`PromotionOverlay.kt`, dijalog sa 4 figure,
+  partija nastavlja).
+
+  **Task 8 (zatvaranje faze) je popravio i drugi bug koji je Task 7 ostavio pod „Nedoumice":**
+  završen `game` korak ostaje klikabilan (`PathView.kt`: `clickable = state != LOCKED`, a
+  `COMPLETED != LOCKED`), pa drugi ulazak pravi nov `GameViewModel` čiji `init` SINHRONO učita
+  staru ZAVRŠENU partiju sa diska — tek asinhroni `LaunchedEffect(stepId)` je posle toga
+  resetuje, pa korisnik nakratko vidi staru gotovu tablu. Preneto od iOS-a
+  (`GameViewModel.clearStepSave()`, `Chessko/ViewModels/GameViewModel.swift:814`): nov
+  `GameViewModel.clearStepSave(context, stepId)` u `companion object`-u (radi direktno nad
+  `SharedPreferences`, bez potrebe za živim primerkom modela), pozvan u `StepGameView.kt`
+  odmah posle `progressStore.completeStep(stepId)`, na oba mesta gde se korak može završiti.
+
+  **Odluka o `LearnView.kt`:** ekran spiska lekcija (`LearnView()` composable, `LessonCard`,
+  `LessonInfo`) je posle Task-a 5 nedostižan iz UI-ja — obrisan, isto kao iOS (Faza 4a). Fajl
+  SAM po sebi nije obrisan: `LBox`/`LPara`/`LBullet`/`LSectionHeader`/`LNumberedRule`/
+  `PieceExplorer`/`OpeningExerciseCard`/`MateExerciseCard`/`MatePuzzleCard`/`OpeningLine`/
+  `OpeningPhase`/`OpeningExerciseState`/`MateExerciseState` su i dalje jedini nosioci
+  renderovanja sadržaja lekcije i `LessonRenderer.kt` ih zove direktno — to je većina sadržaja
+  fajla, pa bi preseljavanje značilo premestiti skoro ceo fajl radi brisanja par stotina mrtvih
+  linija. `LearnView.kt`: 1111 → 883 linije. Uz to uklonjen neiskorišćen `learnViewModel` u
+  `MainActivity.kt` (deklarisan, nikad pročitan).

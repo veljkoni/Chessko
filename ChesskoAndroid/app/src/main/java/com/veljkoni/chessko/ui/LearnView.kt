@@ -3,7 +3,6 @@ package com.veljkoni.chessko.ui
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 import com.veljkoni.chessko.logic.Loc
-import com.veljkoni.chessko.logic.LessonRepository
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,24 +37,27 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/// Kartica lekcije na spisku. Od Faze 6b vise NE nosi tekst iz koda — sve sem
-/// boje dolazi iz `assets/lessons/<id>.<jezik>.json`.
-///
-/// `id` je String (`"board-and-pieces"`), a ne redni broj: lekcije se otkrivaju
-/// iz imena fajlova, pa redni broj vise nije identitet. `number` postoji samo
-/// zbog natpisa „Lekcija N" i racuna se iz POLOZAJA u spisku — nova lekcija
-/// ubacena u sredinu pomera brojeve ispod sebe, sto je i ocekivano.
-data class LessonInfo(
-    val id: String,
-    val number: Int,
-    val title: String,
-    val subtitle: String,
-    val icon: String,
-    val accentColor: Color
-)
-
-// `accentFor(id)` je premesten u `LessonDetailView.kt` (internal, isti
-// paket) — i lista i detalj lekcije treba da se slazu oko boje.
+// MARK: - Sta je ovaj fajl posle Faze 6c (Task 8)
+//
+// Do Task-a 5 ove faze ovaj fajl je bio i EKRAN (spisak lekcija, `LearnView`
+// composable + `LessonCard`/`LessonInfo`) i skladiste deljenih komponenti za
+// renderovanje sadrzaja lekcije. Otkad je treci tab postao Put (`PathView`),
+// `LearnView(` se odnigde ne poziva — isto stanje u kom je iOS `LearnView.swift`
+// u Fazi 4a OBRISAN u celosti.
+//
+// Android ovaj fajl NIJE obrisao: `LBox`/`LPara`/`LBullet`/`LSectionHeader`/
+// `LNumberedRule`/`PieceExplorer`/`OpeningExerciseCard`/`MateExerciseCard`/
+// `MatePuzzleCard`/`OpeningLine`/`OpeningPhase`/`OpeningExerciseState`/
+// `MateExerciseState` su i dalje jedini nosioci renderovanja sadrzaja lekcije
+// i `LessonRenderer.kt` ih zove direktno (isti paket, bez importa) — to je
+// vecina sadrzaja ovog fajla. Preseljavanje bi značilo premestiti skoro citav
+// fajl u `LessonRenderer.kt`/`LessonDetailView.kt` radi brisanja par stotina
+// mrtvih linija; odluka je da OSTANE pod ovim imenom, uz brisanje SAMO onoga
+// sto je stvarno mrtvo: `LearnView()` composable, `LessonCard()` i
+// `LessonInfo` (spisak lekcija i njegova kartica — zamenio ih je Put), plus
+// neiskoriscen `learnViewModel` u `MainActivity.kt`. `accentFor(id)` je vec
+// ranije (Faza 6c, Task 5) premesten u `LessonDetailView.kt`, jer ga i lista
+// (dok je postojala) i detalj lekcije dele.
 
 enum class OpeningPhase {
     PLAYING, WRONG_MOVE, SOLVED
@@ -308,146 +310,6 @@ class MateExerciseState(
         legalMovesForSelected = emptyList()
         lastMove = null
         isThinking = false
-    }
-}
-
-@Composable
-fun LearnView(
-    viewModel: LearnViewModel,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val repo = remember { LessonRepository(context) }
-
-    // NIJE `Loc.getLanguage()`: on za kineski vraca „zh", a fajl se zove
-    // `.zh-Hans.json`. Sa pogresnim kodom bi kineski korisnik tiho dobio
-    // engleski — bez pada i bez poruke.
-    val lang = Loc.fileLanguageCode()
-
-    // Ucitavanje je sinhrono, na glavnoj niti: sest fajlova od ~10 KB, i ceo
-    // podstablo se ionako ponovo gradi pri promeni jezika (`key(languageKey)` u
-    // `MainActivity`). Ako ovo ikad ode u pozadinu, kes u `LessonRepository`
-    // mora prvo da postane thread-safe — danas je obican `HashMap`.
-    val lessons = remember(lang) {
-        repo.discoveredLessonIds()
-            // `id` je onaj iz IMENA FAJLA, ne `d.id` iz sadrzaja: telo lekcije
-            // se kasnije trazi istim tim kodom, pa bi neslaganje ta dva dalo
-            // karticu koja se otvara u prazno.
-            .mapNotNull { id -> repo.lesson(id, lang)?.let { id to it } }
-            .mapIndexed { index, (id, d) ->
-                LessonInfo(
-                    id = id,
-                    number = index + 1,
-                    title = d.title,
-                    subtitle = d.subtitle,
-                    icon = lessonIcon(d.icon),
-                    accentColor = accentFor(id)
-                )
-            }
-    }
-
-    var activeLessonId by remember { mutableStateOf<String?>(null) }
-
-    val activeLesson = activeLessonId?.let { id -> lessons.find { it.id == id } }
-
-    if (activeLesson == null) {
-        // Main list of lessons. Margina je OVDE, ne u zajednickom Box-u iznad
-        // oba ogranka — `LessonDetailView` (ispod) sad nosi sopstvenu, jer
-        // zivi i van ovog ekrana (otvara ga `PathView`, bez ijednog Box-a).
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                // Header
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    Text(
-                        text = loc("Nauči šah"),
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = loc("Od osnova do završnice"),
-                        color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 14.sp
-                    )
-                }
-
-                // Lesson Cards list
-                lessons.forEach { lesson ->
-                    LessonCard(
-                        info = lesson,
-                        onClick = { activeLessonId = lesson.id }
-                    )
-                }
-            }
-        }
-    } else {
-        // Detalj lekcije je premesten u `LessonDetailView.kt` (Faza 6c,
-        // Task 5) da ga Put moze da otvori BEZ ovog spiska. `onComplete`
-        // ostaje `null` — obicno listanje lekcija (ovaj ekran) nema korak
-        // Puta koji bi trebalo zavrsiti.
-        LessonDetailView(
-            lessonId = activeLesson.id,
-            onClose = { activeLessonId = null }
-        )
-    }
-}
-
-@Composable
-fun LessonCard(info: LessonInfo, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.04f))
-            .border(1.dp, info.accentColor.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(info.accentColor.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = info.icon, fontSize = 22.sp)
-        }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = locF("Lekcija %d", info.number),
-                color = info.accentColor.copy(alpha = 0.9f),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = info.title,
-                color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = info.subtitle,
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 12.sp
-            )
-        }
-
-        Text(text = "▶", color = Color.White.copy(alpha = 0.3f), fontSize = 14.sp)
     }
 }
 

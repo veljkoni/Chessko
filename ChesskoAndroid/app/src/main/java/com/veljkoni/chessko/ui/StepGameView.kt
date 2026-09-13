@@ -83,6 +83,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
         if (viewModel.isGameOver && pendingStepId == stepId) {
             pendingStepId = null
             progressStore.completeStep(stepId)
+            GameViewModel.clearStepSave(app, stepId)
         }
     }
 
@@ -91,6 +92,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
         if (viewModel.isGameOver && pendingStepId == stepId) {
             pendingStepId = null
             progressStore.completeStep(stepId)
+            GameViewModel.clearStepSave(app, stepId)
         }
     }
 
