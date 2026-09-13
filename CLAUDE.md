@@ -455,29 +455,35 @@ zatečeni `ExampleInstrumentedTest`.
 > ```bash
 > export ANDROID_HOME=~/Library/Android/sdk   # nije postavljen u okruženju
 > nice -n 10 $ANDROID_HOME/emulator/emulator -avd Medium_Phone_API_36.1 \
->   -no-window -no-audio -no-boot-anim -gpu off -cores 2 -memory 2048 &
+>   -no-window -no-audio -no-boot-anim -gpu host -cores 2 -memory 2048 &
 > $ANDROID_HOME/platform-tools/adb wait-for-device
 > $ANDROID_HOME/platform-tools/adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 1; done'
 > ```
 >
-> **Zašto baš tako — i zašto to NIJE dovoljno.** Izmereno 2026-09-13, pošto je korisnik
-> DVA PUTA morao ručno da ubije `qemu-system`: emulator u MIROVANJU troši ~5% jednog jezgra i
-> bezopasan je, ali čim nešto radi — boot, build, instalacija, `uiautomator` dump — uzme
-> **5–11 jezgara**. Mereno **568%** prvi put i **1076%** drugi put, oba puta sa punim gornjim
-> receptom. `-cores` ograničava samo gostujuće vCPU-ove; `nice` snižava prioritet ali ne broj
-> niti. **Gornje zastavice dakle rešavaju samo otimanje fokusa i mirovanje, NE opterećenje.**
-> Prvi zapis ovog pravila (2026-09-13, commit `7a5e3d5`) tvrdio je da recept obuzdava procesor —
-> ta tvrdnja je oborena već sledećim merenjem i ovo je njena ispravka. `-gpu off` je provereno
-> bezopasan za sam prikaz: screenshot je pun (1080×2400) i `uiautomator` čita tekst normalno.
+> **`-gpu host` je jedina zastavica koja stvarno smanjuje opterećenje — i to sedmostruko.**
+> Izmereno 2026-09-13, isti posao (hladan boot, otvaranje ekrana, šest skrolova, `uiautomator
+> dump`, `screencap`), dva režima jedan za drugim:
 >
-> **Zato emulator ne sme da se diže u pozadinskom agentu bez nadzora.** Vizuelnu proveru
-> Androida raditi u prvom planu, uz korisnika, ili je zameniti proverom na stvarnom uređaju
-> preko USB-a (`adb devices`), gde `qemu` uopšte ne postoji.
+> | Faza | `-gpu off` | `-gpu host` |
+> |---|---|---|
+> | boot | 691% vrhunac / 213% prosek | **227% / 105%** |
+> | posao | 745% / **503%** | **216% / 73%** |
+> | mirovanje | 95% / 24% | **40% / 13%** |
 >
-> **Pravilo koje je iz toga izašlo:** emulator se diže **samo za korak koji ga stvarno traži**
-> i gasi (`adb emu kill`) odmah po tom koraku — ne drži se upaljen kroz ceo task. Vizuelne
-> provere grupisati u jedan prolaz umesto da svaki task diže svoj emulator. Faza 6b je
-> prekršila ovo pravilo i držala ga aktivnim satima.
+> Uzrok: `-gpu off` isključuje grafički čip, pa procesor **softverski rasterizuje 1080×2400 =
+> 2,6 miliona piksela po kadru**. `-gpu host` to prepušta Metal-u. Gost je `arm64-v8a` na
+> Apple Silicon-u, dakle instrukcije se i ne emuliraju — skoro sve opterećenje je bilo
+> iscrtavanje.
+>
+> **Ovo je ispravka sopstvene greške, dvaput ponovljene.** Korisnik je dva puta morao ručno da
+> ubije `qemu-system` (mereno 568%, pa 1076%), oba puta dok je bio na snazi recept sa
+> `-gpu off` koji sam ja uveo i opisao kao „provereno bezopasan". Proverio sam da ne kvari
+> sliku; nikad nisam proverio šta košta. `-gpu host` je provereno na oba: screenshot je pun
+> (1080×2400, 215 KB, vizuelno potvrđen — ikone, boje, tekst) i `uiautomator` čita tekst.
+>
+> `-cores` ograničava samo gostujuće vCPU-ove, a `nice` snižava prioritet ne i broj niti (127
+> niti u merenju) — nijedno od to dvoje nije rešavalo ništa.
+>
 > Za razliku od iOS simulatora, **sintetički tapovi na Androidu rade**
 > (`adb shell input tap`, koordinate iz `uiautomator dump`), pa nije potreban nijedan
 > zaobilazni hak sa zakucavanjem korena. Screenshot: `adb exec-out screencap -p > …`.
