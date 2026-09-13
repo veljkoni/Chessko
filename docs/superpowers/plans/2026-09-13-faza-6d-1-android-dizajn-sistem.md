@@ -27,7 +27,7 @@ Dakle ova faza mora i da **uvede svetlu temu po prvi put**. Podeljena je na dve 
 
 | | Fajlovi | Zakucanih boja |
 |---|---|---|
-| **6d-1 (ovaj plan)** | `DesignSystem.kt`, `Theme.kt`, `Color.kt`, `Type.kt`, `MainActivity.kt`, `UiComponents.kt`, `CapturedPiecesView.kt`, `MoveHistoryView.kt`, `EvalBar.kt`, `PromotionOverlay.kt`, `PuzzleView.kt`, `PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt`, `SettingsView.kt` | **~280** |
+| **6d-1 (ovaj plan)** | `DesignSystem.kt`, `Theme.kt`, `Color.kt`, `Type.kt`, `MainActivity.kt`, `UiComponents.kt`, `CapturedPiecesView.kt`, `MoveHistoryView.kt`, `EvalBar.kt`, `PromotionOverlay.kt`, `PuzzleView.kt`, `PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt`, `SettingsView.kt` | **259 linija / 280 pojava** |
 | 6d-2 (sledeći plan) | `ChessClockView.kt`, `LearnView.kt`, `BoardView.kt`, `BoardTheme.kt`, `LessonDetailView.kt`, `LessonRenderer.kt` | ~173 |
 
 **Međustanje je vidljivo neujednačeno** i to je prihvaćeno: posle 6d-1 tri taba i podešavanja prate temu, a sat i lekcije su i dalje tamni. Zato 6d-1 **ne dira** podešavanje „Svetla/Tamna" — ono postaje iskreno tek kad 6d-2 završi.
@@ -67,11 +67,11 @@ Važi za **svaki** task.
 | `.../ui/theme/Theme.kt` | prepisuje se — bez `dynamicColor`, bira paletu, objavljuje je, i preslikava u `MaterialTheme.colorScheme` |
 | `.../ui/theme/Color.kt` | **briše se** — `Purple80`/`Pink40` je šablon koji niko ne koristi |
 | `.../ui/theme/Type.kt` | tipografska skala `DS.Type.*` |
-| `.../MainActivity.kt` | migracija (91 mesto) |
-| `.../ui/UiComponents.kt`, `CapturedPiecesView.kt`, `MoveHistoryView.kt`, `EvalBar.kt`, `PromotionOverlay.kt` | migracija (49) |
+| `.../MainActivity.kt` | migracija (86 linija / 91 pojava) |
+| `.../ui/UiComponents.kt`, `CapturedPiecesView.kt`, `MoveHistoryView.kt`, `EvalBar.kt`, `PromotionOverlay.kt` | migracija (44 linije / 49 pojava) |
 | `.../ui/PuzzleView.kt` | migracija (27) |
-| `.../ui/PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt` | migracija (43) |
-| `.../ui/SettingsView.kt` | migracija (70) |
+| `.../ui/PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt` | migracija (40 linija / 43 pojave) |
+| `.../ui/SettingsView.kt` | migracija (62 linije / 70 pojava) |
 | `app/src/test/.../ContrastTest.kt` | **novo** — WCAG kontrast, čista matematika, JVM |
 
 ---
@@ -79,6 +79,11 @@ Važi za **svaki** task.
 ## Tabela preslikavanja — jedan izvor istine za sve taskove migracije
 
 Izmereno prebrojavanjem po celom Android izvoru. **Svaki task migracije koristi OVU tabelu**, ne sopstvenu procenu.
+
+> **Dva merila, oba tacna.** Brojevi uz fajlove su **linije** (`grep -c`), jer to broje koraci u
+> taskovima. Jedna linija ume da nosi vise boja, pa je broj POJAVA veci: 259 linija naspram 280
+> pojava u celoj krisci. Ako ti se brojevi ne poklope, proveri kojim merilom si brojao pre nego
+> sto prijavis nesklad.
 
 | Zatečeno | Postaje | Napomena |
 |---|---|---|
@@ -608,7 +613,7 @@ EOF
 ## Task 3: Zajedničke komponente
 
 **Files:**
-- Modify: `ui/UiComponents.kt` (20), `ui/CapturedPiecesView.kt` (10), `ui/MoveHistoryView.kt` (12), `ui/EvalBar.kt` (4), `ui/PromotionOverlay.kt` (3) — ukupno **49 mesta**
+- Modify: `ui/UiComponents.kt` (17), `ui/CapturedPiecesView.kt` (10), `ui/MoveHistoryView.kt` (10), `ui/EvalBar.kt` (4), `ui/PromotionOverlay.kt` (3) — ukupno **44 linije** (49 pojava)
 
 **Interfaces:**
 - Consumes: `DS.*`, `DS.Space.*`, `DS.Radius.*` iz Task-a 1
@@ -673,7 +678,7 @@ EOF
 ## Task 4: Tab Zadaci — `PuzzleView.kt`
 
 **Files:**
-- Modify: `ui/PuzzleView.kt` (27 mesta)
+- Modify: `ui/PuzzleView.kt` — **27 linija**
 
 **Interfaces:**
 - Consumes: `DS.*`, `DS.Space.*`, `DS.Radius.*`, `DS.Type.*` iz Task-a 1
@@ -734,7 +739,7 @@ EOF
 ## Task 5: Tab Put — `PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt`
 
 **Files:**
-- Modify: `ui/PathView.kt` (12), `ui/StepPracticeView.kt` (11), `ui/StepGameView.kt` (20) — ukupno **43 mesta**
+- Modify: `ui/PathView.kt` (10), `ui/StepPracticeView.kt` (10), `ui/StepGameView.kt` (20) — ukupno **40 linija** (43 pojave)
 
 **Interfaces:**
 - Consumes: `DS.*`, `DS.Space.*`, `DS.Radius.*`, `DS.Type.*` iz Task-a 1
@@ -799,7 +804,7 @@ EOF
 ## Task 6: Podesavanja — `SettingsView.kt`
 
 **Files:**
-- Modify: `ui/SettingsView.kt` (70 mesta) — najveci pojedinacni fajl u ovoj krisci
+- Modify: `ui/SettingsView.kt` — **62 linije** (70 pojava), najveci pojedinacni fajl u ovoj krisci
 
 **Interfaces:**
 - Consumes: `DS.*`, `DS.Space.*`, `DS.Radius.*`, `DS.Type.*` iz Task-a 1
