@@ -546,7 +546,7 @@ EOF
 ## Task 2: Tab Igra — `MainActivity.kt`
 
 **Files:**
-- Modify: `ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/MainActivity.kt` (91 mesta)
+- Modify: `ChesskoAndroid/app/src/main/java/com/veljkoni/chessko/MainActivity.kt` — **86 linija** (91 pojava)
 
 **Interfaces:**
 - Consumes: `DS.*`, `ChesskoTheme(darkTheme:)` iz Task-a 1
