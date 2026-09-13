@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.veljkoni.chessko.logic.PathProgress
 import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.StepState
 import com.veljkoni.chessko.logic.Loc
@@ -170,8 +169,17 @@ private fun PathHeader(
 
 /**
  * Jedno poglavlje: naslov + napredak (X/N) + spisak koraka. Svaki red
- * prikazuje redni broj, tip koraka i stanje; strelica postoji SAMO ako je
- * korak dostupan/zavrsen I ima rutu (`routeFor(step) != null`).
+ * prikazuje tip koraka i stanje; strelica postoji SAMO ako je korak
+ * dostupan/zavrsen I ima rutu (`routeFor(step) != null`).
+ *
+ * NAMERNO bez rednog broja po koraku unutar poglavlja: `notation-lesson` je
+ * globalno cetvrti korak (`curriculum.allStepIds`), ali u svom poglavlju
+ * prvi -- ista kartica bi cim korisnik predje granicu poglavlja nosila dva
+ * razlicita broja istovremeno (jedan ovde, drugi na kartici "Nastavi"). Redni
+ * broj postoji SAMO na kartici "Nastavi" (`PathHeader`, globalni indeks iz
+ * `curriculum.allStepIds`) -- isto mesto gde ga iOS prikazuje
+ * (`Chessko/Views/PathView.swift:258`, jedino mesto sa "Korak %lld" na celoj
+ * platformi) i tacno gde ga spec 5.1 trazi.
  */
 @Composable
 private fun ChapterSection(
@@ -207,11 +215,10 @@ private fun ChapterSection(
                 )
             }
 
-            for ((index, step) in steps.withIndex()) {
+            for (step in steps) {
                 val state = states[step.id] ?: StepState.LOCKED
                 val hasRoute = routeFor(step) != null
                 StepRow(
-                    index = index + 1,
                     step = step,
                     state = state,
                     hasRoute = hasRoute,
@@ -224,7 +231,6 @@ private fun ChapterSection(
 
 @Composable
 private fun StepRow(
-    index: Int,
     step: CurriculumStep,
     state: StepState,
     hasRoute: Boolean,
@@ -251,7 +257,7 @@ private fun StepRow(
     ) {
         Column {
             Text(
-                text = "$index. $typeLabel",
+                text = typeLabel,
                 color = if (state == StepState.LOCKED) Color.White.copy(alpha = 0.35f) else Color.White,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium

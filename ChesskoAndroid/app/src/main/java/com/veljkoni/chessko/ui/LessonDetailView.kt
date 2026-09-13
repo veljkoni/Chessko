@@ -58,9 +58,12 @@ fun LessonDetailView(
 ) {
     val context = LocalContext.current
     val repo = remember { LessonRepository(context) }
-    // Sopstveni model po ekranu — isti obrazac kao Faza 4a na iOS-u:
-    // `LessonExplorer` unutar lekcije 1 treba sopstveno stanje, ne deljeno sa
-    // ostatkom aplikacije.
+    // Sopstveni model po ekranu, NE isti obrazac kao iOS: tamo jedan
+    // `LearnViewModel` zivi u `ContentView`-u i ubacuje se kroz `@Environment`
+    // (`Chessko/Views/PathView.swift:20-23`, `Chessko/Views/LessonRenderer.swift:222-228`).
+    // Lokalna instanca je ovde svesno drugaciji izbor (jednostavnije, bez
+    // ekvivalenta @Environment-u u ovom Compose kodu) — ostaje kako jeste, ali
+    // komentar ne sme da tvrdi paritet koji ne postoji.
     val explorerViewModel = remember { LearnViewModel() }
 
     // NIJE `Loc.getLanguage()`: on za kineski vraca „zh", a fajl se zove
