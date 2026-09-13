@@ -66,7 +66,7 @@ class ContrastTest {
      * Ako ovaj test ikad prestane da vazi, `onAccent` se sme ukloniti — do tada ne.
      */
     @Test
-    fun plainWhiteWouldFailOnTheLightAccent() {
+    fun plainWhiteWouldFailOnTheDarkAccent() {
         val r = contrast(Color.White, DarkColors.accent)
         assertTrue("bela na (svetlijem, tamna tema) akcentu daje %.2f — da je >= 4.5, onAccent ne bi trebao".format(r),
             r < 4.5)
@@ -76,14 +76,17 @@ class ContrastTest {
      * TRI PARA SU ISPOD AA U SVETLOJ TEMI, i to je NASLEDJENO iz spec tabele
      * (iOS ima iste vrednosti). Izmereno pre pisanja ovog testa:
      *
-     *   inkMuted / ground : 4,359965...  (svetla)   5,94 (tamna)
-     *   inkMuted / fill   : 4,014258...  (svetla)   4,81 (tamna)
-     *   warning  / surface: 3,611753...  (svetla)   8,48 (tamna)
+     *   inkMuted / ground : 4,359965479387139  (svetla)   5,94 (tamna)
+     *   inkMuted / fill   : 4,014258257780754  (svetla)   4,81 (tamna)
+     *   warning  / surface: 3,611752903947211  (svetla)   8,48 (tamna)
      *
-     * Pragovi ispod nose punu izmerenu preciznost (ne zaokruzeno „4,36"), jer
-     * bi doslovno "4.36" kao Double literal bio ZA DLAKU iznad stvarno
-     * izmerene vrednosti (4.359965...) i test bi lazno pao na sopstvenom
-     * zaokruzivanju, ne na stvarnoj regresiji.
+     * Pragovi ispod nose PUNU preciznost stvarno izmerenu OVIM testom na JVM-u
+     * (ne zaokruzeno „4,36", i ne double-precision racun izveden nezavisno u
+     * Python-u — `Color.red/green/blue` su `Float`, pa `toDouble()` nasledjuje
+     * float32 zaokruzivanje pre ovog racuna; nezavisan double-precision racun
+     * (bez tog koraka) daje 4.359965543674367 — vidljivo drugaciju vrednost na
+     * 8. decimali). Puna preciznost ne ostavlja marginu za procenu — prag je
+     * bukvalno izmerena vrednost.
      *
      * Prag se NE spusta da bi test prosao. Umesto toga se tvrdi da se stanje ne
      * POGORSAVA: ako neko promeni token i obori kontrast ispod izmerenog, test
@@ -92,9 +95,9 @@ class ContrastTest {
      */
     @Test
     fun knownSubAAPairsDoNotGetWorse() {
-        check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.3599)
-        check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.0142)
-        check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.6117)
+        check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.359965479387139)
+        check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.014258257780754)
+        check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.611752903947211)
     }
 
     @Test
