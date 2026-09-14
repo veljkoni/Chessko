@@ -51,6 +51,7 @@ import androidx.compose.material.icons.filled.Check
 import com.veljkoni.chessko.logic.GameDifficulty
 import com.veljkoni.chessko.logic.StockfishLevel
 import com.veljkoni.chessko.logic.StatsManager
+import com.veljkoni.chessko.ui.theme.DS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,14 +70,14 @@ fun SettingsView(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(DS.ground)
     ) {
         // Toolbar header
         CenterAlignedTopAppBar(
             title = {
                 Text(
                     text = loc("Podešavanja"),
-                    color = Color.White,
+                    color = DS.ink,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -84,11 +85,11 @@ fun SettingsView(
             navigationIcon = {},
             actions = {
                 TextButton(onClick = onDismiss) {
-                    Text(text = loc("Gotovo"), color = Color(0xFF00D2FF), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                    Text(text = loc("Gotovo"), color = DS.accent, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                 }
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = Color(0xFF0F172A)
+                containerColor = DS.ground
             )
         )
 
@@ -105,8 +106,8 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.03f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                        .background(DS.fill)
+                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                 ) {
                     val languages = listOf(
                         "sr" to "Srpski",
@@ -134,7 +135,7 @@ fun SettingsView(
                         ) {
                             Text(
                                 text = endonym,
-                                color = if (isSelected) Color(0xFF00D2FF) else Color.White,
+                                color = if (isSelected) DS.accent else DS.ink,
                                 fontSize = 14.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 modifier = Modifier.weight(1f)
@@ -143,13 +144,13 @@ fun SettingsView(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = Color(0xFF00D2FF),
+                                    tint = DS.accent,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
                         if (index < languages.size - 1) {
-                            HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                            HorizontalDivider(color = DS.line)
                         }
                     }
                 }
@@ -159,33 +160,46 @@ fun SettingsView(
             if (showResetStatsConfirm) {
                 AlertDialog(
                     onDismissRequest = { showResetStatsConfirm = false },
-                    title = { Text(text = loc("Potvrda"), color = Color.White, fontWeight = FontWeight.Bold) },
-                    text = { Text(text = loc("Da li želite da resetujete sve statistike?"), color = Color.White.copy(alpha = 0.8f)) },
+                    title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
+                    text = { Text(text = loc("Da li želite da resetujete sve statistike?"), color = DS.inkMuted) },
                     confirmButton = {
                         TextButton(onClick = {
                             stats.resetStats()
                             showResetStatsConfirm = false
                         }) {
-                            Text(text = loc("Potvrdi"), color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                            Text(text = loc("Potvrdi"), color = DS.danger, fontWeight = FontWeight.Bold)
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showResetStatsConfirm = false }) {
-                            Text(text = loc("Otkaži"), color = Color.White.copy(alpha = 0.6f))
+                            Text(text = loc("Otkaži"), color = DS.inkMuted)
                         }
                     },
-                    containerColor = Color(0xFF1E293B),
+                    containerColor = DS.surface,
                     shape = RoundedCornerShape(16.dp)
                 )
             }
 
+            // JEDINA kartica na ovom ekranu koja nosi SEMANTICKI obojen tekst
+            // (`success`/`danger`/`warning`/`accent` brojeve), pa je jedina koja
+            // ide na `DS.surface` umesto na `DS.fill` kao ostale.
+            //
+            // Nad `DS.fill` je izmereno: `warning` 3,00 i `success` 4,18 u svetloj
+            // temi — oba ispod AA (17sp Bold NIJE „large text" po WCAG-u, prag je
+            // 4,5). Nad `DS.surface`: `success` 5,04 i `inkMuted` labela 4,83 —
+            // oboje preko praga; `warning` ostaje 3,61, sto je TACNO isti par koji
+            // iOS `StatBox` ima na istom mestu (`SettingsSheet.swift:399-415`, broj
+            // u boji na `systemBackground`) i koji je vec upisan u „Poznata
+            // ogranicenja". Popravka same boje bi znacila razlaz sa iOS paletom;
+            // popravka podloge ne znaci nista osim da kartica koristi token koji
+            // tabela preslikavanja ionako propisuje za ispunu kartice.
             SettingsSection(title = loc("Statistika igranja")) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.03f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                        .background(DS.surface)
+                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -194,32 +208,32 @@ fun SettingsView(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        StatItem(label = loc("Odigrano"), value = "${stats.gamesPlayed}", color = Color.White)
-                        StatItem(label = loc("Pobede"), value = "${stats.gamesWon}", color = Color(0xFF10B981))
-                        StatItem(label = loc("Porazi"), value = "${stats.gamesLost}", color = Color(0xFFEF4444))
-                        StatItem(label = loc("Remi"), value = "${stats.gamesDrawn}", color = Color(0xFFF59E0B))
+                        StatItem(label = loc("Odigrano"), value = "${stats.gamesPlayed}", color = DS.ink)
+                        StatItem(label = loc("Pobede"), value = "${stats.gamesWon}", color = DS.success)
+                        StatItem(label = loc("Porazi"), value = "${stats.gamesLost}", color = DS.danger)
+                        StatItem(label = loc("Remi"), value = "${stats.gamesDrawn}", color = DS.warning)
                     }
 
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                    HorizontalDivider(color = DS.line)
 
                     // Row 2: Win Rate & Streaks
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        StatItem(label = loc("Uspešnost"), value = "${stats.winRate}%", color = Color(0xFF00D2FF))
-                        StatItem(label = loc("Najbolji niz"), value = "${stats.bestWinStreak} 🔥", color = Color(0xFFF59E0B))
-                        StatItem(label = loc("Rešeno zadataka"), value = "${stats.puzzlesSolved} 🧩", color = Color(0xFFA855F7))
+                        StatItem(label = loc("Uspešnost"), value = "${stats.winRate}%", color = DS.accent)
+                        StatItem(label = loc("Najbolji niz"), value = "${stats.bestWinStreak} 🔥", color = DS.warning)
+                        StatItem(label = loc("Rešeno zadataka"), value = "${stats.puzzlesSolved} 🧩", color = DS.accent)
                         // Rejting igraca BIRA zadatke (`PuzzleRating.practiceWindow`),
                         // pa mora da se vidi — inace se tesina vezbanja menja bez
                         // ijednog vidljivog razloga. („Rejting" u zaglavlju
                         // Zadataka je rejting ZADATKA, ne igraca.) iOS ovo ima
                         // na istom mestu, u istom redu.
-                        StatItem(label = loc("Rejting zadataka"), value = "${stats.puzzleRating}", color = Color(0xFF00D2FF))
+                        StatItem(label = loc("Rejting zadataka"), value = "${stats.puzzleRating}", color = DS.accent)
                     }
 
                     if (stats.gamesPlayed > 0 || stats.puzzlesSolved > 0) {
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                        HorizontalDivider(color = DS.line)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
@@ -230,7 +244,7 @@ fun SettingsView(
                             ) {
                                 Text(
                                     text = loc("Resetuj statistiku"),
-                                    color = Color(0xFFEF4444).copy(alpha = 0.85f),
+                                    color = DS.danger,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -246,8 +260,8 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.03f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                        .background(DS.fill)
+                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                 ) {
                     val difficulties = listOf(
                         GameDifficulty.BEGINNER,
@@ -265,7 +279,7 @@ fun SettingsView(
                             onClick = { gameViewModel.difficulty = diff }
                         )
                         if (index < difficulties.size - 1) {
-                            HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+                            HorizontalDivider(color = DS.line)
                         }
                     }
                 }
@@ -276,7 +290,7 @@ fun SettingsView(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = loc("Tema table"),
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = DS.inkMuted,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -301,7 +315,7 @@ fun SettingsView(
                                         .clip(RoundedCornerShape(8.dp))
                                         .border(
                                             width = if (isSelected) 2.5.dp else 1.dp,
-                                            color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.12f),
+                                            color = if (isSelected) DS.accent else DS.line,
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                 ) {
@@ -319,7 +333,7 @@ fun SettingsView(
 
                                 Text(
                                     text = loc(theme.label),
-                                    color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.7f),
+                                    color = if (isSelected) DS.accent else DS.inkMuted,
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
@@ -364,7 +378,7 @@ fun SettingsView(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = loc("Stil"),
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = DS.inkMuted,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -392,10 +406,10 @@ fun SettingsView(
                                                 modifier = Modifier
                                                     .size(46.dp)
                                                     .clip(RoundedCornerShape(8.dp))
-                                                    .background(Color.White.copy(alpha = 0.04f))
+                                                    .background(DS.fill)
                                                     .border(
                                                         width = if (isSelected) 2.dp else 1.dp,
-                                                        color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.1f),
+                                                        color = if (isSelected) DS.accent else DS.line,
                                                         shape = RoundedCornerShape(8.dp)
                                                     ),
                                                 contentAlignment = Alignment.Center
@@ -416,7 +430,7 @@ fun SettingsView(
 
                                             Text(
                                                 text = loc(style.label),
-                                                color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.7f),
+                                                color = if (isSelected) DS.accent else DS.inkMuted,
                                                 fontSize = 10.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                             )
@@ -486,8 +500,8 @@ fun SettingsView(
                         Button(
                             onClick = { settings.updateColorScheme(value) },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.05f),
-                                contentColor = if (isSelected) Color.Black else Color.White
+                                containerColor = if (isSelected) DS.accent else DS.fill,
+                                contentColor = if (isSelected) DS.onAccent else DS.ink
                             ),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f)
@@ -523,19 +537,19 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.White.copy(alpha = 0.03f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                        .background(DS.fill)
+                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = loc("Chessko"), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text(text = loc("Verzija 1.0.0"), color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
+                    Text(text = loc("Chessko"), color = DS.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(text = loc("Verzija 1.0.0"), color = DS.inkMuted, fontSize = 12.sp)
 
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+                    HorizontalDivider(color = DS.line)
 
                     Text(
                         text = loc("Ova aplikacija je otvorenog koda, koristi Stockfish šahovski pokretač pod GPLv3 licencom i preuzima šahovske zadatke iz slobodne Lichess baze."),
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = DS.inkMuted,
                         fontSize = 11.sp,
                         lineHeight = 15.sp
                     )
@@ -552,8 +566,8 @@ fun SettingsView(
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White.copy(alpha = 0.08f),
-                                contentColor = Color.White
+                                containerColor = DS.fill,
+                                contentColor = DS.ink
                             ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.weight(1f),
@@ -568,8 +582,8 @@ fun SettingsView(
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White.copy(alpha = 0.08f),
-                                contentColor = Color.White
+                                containerColor = DS.fill,
+                                contentColor = DS.ink
                             ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.weight(1f),
@@ -595,7 +609,7 @@ fun SettingsSection(
     ) {
         Text(
             text = title,
-            color = Color(0xFF00D2FF),
+            color = DS.accent,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold
         )
@@ -614,7 +628,7 @@ fun SettingsToggle(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.03f))
+            .background(DS.fill)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -626,19 +640,40 @@ fun SettingsToggle(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color(0xFF00D2FF),
+                tint = DS.accent,
                 modifier = Modifier.size(20.dp)
             )
-            Text(text = label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Text(text = label, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            // ISKLJUCENO stanje se NE sme prepustiti M3 podrazumevanim vrednostima.
+            // `SwitchTokens` vodi palac i ivicu na `Outline`, a traku na
+            // `SurfaceContainerHighest`; `Theme.kt` to mapira na `DS.line` odnosno
+            // `DS.fill`, a taj par meri **1,067 (svetla) / 1,071 (tamna)** — palac je
+            // bukvalno iste boje kao traka. Red ispod (`.background(DS.fill)`) je jos
+            // jednom ista boja, pa se ceo iskljucen prekidac gubi u sopstvenoj podlozi:
+            // ne vidi se ni gde da se tapne.
+            //
+            // Pouka koja je to propustila: i komentar u `Theme.kt` i pregled Task-a 6
+            // proverili su da su uloge MAPIRANE — i to tacno — ali nijedno nije
+            // proverilo da su mapirane vrednosti MEDJUSOBNO razlicite. Analiziran je
+            // token, ne par. Od ove ispravke par `line`/`fill` cuva `ContrastTest`
+            // (blok `nonTextPairsOverFillAreDistinguishable`).
+            //
+            // Izmereno posle popravke (WCAG 2.1, ista formula kao `ContrastTest`):
+            //   palac / traka  `inkMuted` / `surface` = 4,83 (svetla) / 5,43 (tamna)
+            //   palac / red    `inkMuted` / `fill`    = 4,01 (svetla) / 4,81 (tamna)
+            //   ivica / red    isti par               = 4,01 / 4,81
+            // Sve preko WCAG praga 3:1 za ne-tekstualni kontrast, u obe teme.
+            //
+            // UKLJUCENO stanje ostaje na podrazumevanom (`accent` traka, `onAccent`
+            // palac = 8,53 / 6,71) — ono je od pocetka bilo tacno.
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.Black,
-                checkedTrackColor = Color(0xFF00D2FF),
-                uncheckedThumbColor = Color.White.copy(alpha = 0.5f),
-                uncheckedTrackColor = Color.White.copy(alpha = 0.1f)
+                uncheckedThumbColor = DS.inkMuted,
+                uncheckedTrackColor = DS.surface,
+                uncheckedBorderColor = DS.inkMuted
             )
         )
     }
@@ -662,7 +697,7 @@ fun DifficultyOptionRow(
         Column(modifier = Modifier.weight(1f, fill = false)) {
             Text(
                 text = label,
-                color = if (isSelected) Color(0xFF00D2FF) else Color.White,
+                color = if (isSelected) DS.accent else DS.ink,
                 fontSize = 14.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
@@ -670,7 +705,7 @@ fun DifficultyOptionRow(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = DS.inkMuted,
                     fontSize = 11.sp
                 )
             }
@@ -679,7 +714,7 @@ fun DifficultyOptionRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color(0xFF00D2FF),
+                tint = DS.accent,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -690,7 +725,7 @@ fun DifficultyOptionRow(
 fun StatItem(
     label: String,
     value: String,
-    color: Color = Color.White
+    color: Color = DS.ink
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -702,7 +737,7 @@ fun StatItem(
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            color = Color.White.copy(alpha = 0.55f),
+            color = DS.inkMuted,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium
         )

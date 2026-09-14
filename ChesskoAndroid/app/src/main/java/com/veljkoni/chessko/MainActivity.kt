@@ -23,7 +23,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
@@ -64,6 +63,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.foundation.shape.CircleShape
 import com.veljkoni.chessko.ui.theme.ChesskoTheme
+import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.GameMode
 import com.veljkoni.chessko.viewmodels.GameViewModel
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
@@ -161,7 +161,7 @@ class MainActivity : ComponentActivity() {
                     Dialog(onDismissRequest = { showNewGameMenu = false }) {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFF1E293B),
+                            color = DS.surface,
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Column(
@@ -172,7 +172,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Text(
                                     text = loc("Nova igra"),
-                                    color = Color.White,
+                                    color = DS.ink,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.fillMaxWidth(),
@@ -185,8 +185,8 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color.White.copy(alpha = 0.04f))
-                                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                        .background(DS.fill)
+                                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                                         .clickable {
                                             showNewGameMenu = false
                                             showColorPicker = true
@@ -198,12 +198,12 @@ class MainActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.Default.Computer,
                                         contentDescription = null,
-                                        tint = Color(0xFF00D2FF),
+                                        tint = DS.accent,
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Column {
-                                        Text(text = loc("Igraj protiv računara"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Igraj protiv veštačke inteligencije sa izborom boje"), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                        Text(text = loc("Igraj protiv računara"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Igraj protiv veštačke inteligencije sa izborom boje"), color = DS.inkMuted, fontSize = 11.sp)
                                     }
                                 }
 
@@ -212,8 +212,8 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color.White.copy(alpha = 0.04f))
-                                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                        .background(DS.fill)
+                                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                                         .clickable {
                                             showNewGameMenu = false
                                             gameViewModel.newGame(GameMode.LOCAL_FRIEND, PieceColor.WHITE)
@@ -225,12 +225,12 @@ class MainActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.Default.People,
                                         contentDescription = null,
-                                        tint = Color(0xFF00D2FF),
+                                        tint = DS.accent,
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Column {
-                                        Text(text = loc("Igraj sa prijateljem"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Lokalna igra na istom telefonu sa rotiranjem table"), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                        Text(text = loc("Igraj sa prijateljem"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Lokalna igra na istom telefonu sa rotiranjem table"), color = DS.inkMuted, fontSize = 11.sp)
                                     }
                                 }
 
@@ -239,8 +239,8 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color.White.copy(alpha = 0.04f))
-                                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                        .background(DS.fill)
+                                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                                         .clickable {
                                             showNewGameMenu = false
                                             showChessClock = true
@@ -252,12 +252,12 @@ class MainActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.Default.Timer,
                                         contentDescription = null,
-                                        tint = Color(0xFF00D2FF),
+                                        tint = DS.accent,
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Column {
-                                        Text(text = loc("Šahovski sat"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Premium šahovski sat sa vremenskim kontrolama"), color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                                        Text(text = loc("Šahovski sat"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Premium šahovski sat sa vremenskim kontrolama"), color = DS.inkMuted, fontSize = 11.sp)
                                     }
                                 }
 
@@ -266,7 +266,7 @@ class MainActivity : ComponentActivity() {
                                     onClick = { showNewGameMenu = false },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text(text = loc("Zatvori"), color = Color(0xFF00D2FF), fontWeight = FontWeight.Bold)
+                                    Text(text = loc("Zatvori"), color = DS.accent, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -277,7 +277,7 @@ class MainActivity : ComponentActivity() {
                     Dialog(onDismissRequest = { showColorPicker = false }) {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = Color(0xFF1E293B),
+                            color = DS.surface,
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Column(
@@ -289,7 +289,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Text(
                                     text = loc("Izaberi boju figura"),
-                                    color = Color.White,
+                                    color = DS.ink,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.fillMaxWidth(),
@@ -305,8 +305,8 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .weight(1f)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .background(Color.White.copy(alpha = 0.08f))
-                                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                            .background(DS.fill)
+                                            .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                                             .clickable {
                                                 showColorPicker = false
                                                 gameViewModel.newGame(GameMode.VS_COMPUTER, PieceColor.WHITE)
@@ -314,14 +314,24 @@ class MainActivity : ComponentActivity() {
                                             .padding(vertical = 16.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
+                                        // PieceColor.WHITE se namerno NE tokenizuje -- ovaj krug
+                                        // predstavlja stranu u igri, ne temu (CLAUDE.md, Dizajn sistem).
+                                        // Kartica ispod (DS.fill) JESTE tema-zavisna, pa u svetloj temi
+                                        // postaje skoro bela -- beli krug bez ivice bi tu imao ~1.20:1
+                                        // kontrast (racunato WCAG formulom), gotovo nevidljiv. Fiksna
+                                        // tamna ivica (isti obrazac kao fiksna svetla ivica oko crnog
+                                        // kruga ispod) drzi krug vidljivim u obe teme, bez obzira sta
+                                        // DS.fill trenutno vredi.
                                         Icon(
                                             imageVector = Icons.Default.Circle,
                                             contentDescription = null,
                                             tint = Color.White,
-                                            modifier = Modifier.size(32.dp)
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .border(1.dp, Color.Black.copy(alpha = 0.3f), CircleShape)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        Text(text = loc("Beli"), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Beli"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                     }
 
                                     // Random Color Card
@@ -329,8 +339,8 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .weight(1f)
                                             .clip(RoundedCornerShape(12.dp))
-                                            .background(Color.White.copy(alpha = 0.08f))
-                                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                            .background(DS.fill)
+                                            .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                                             .clickable {
                                                 showColorPicker = false
                                                 val selectedColor = if (Math.random() < 0.5) PieceColor.WHITE else PieceColor.BLACK
@@ -342,14 +352,25 @@ class MainActivity : ComponentActivity() {
                                         Icon(
                                             imageVector = Icons.Default.Shuffle,
                                             contentDescription = null,
-                                            tint = Color(0xFF00D2FF),
+                                            tint = DS.accent,
                                             modifier = Modifier.size(32.dp)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        Text(text = loc("Nasumično"), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Nasumično"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                     }
 
                                     // Black Color Card
+                                    //
+                                    // PieceColor.BLACK se namerno NE tokenizuje -- ova kartica
+                                    // prikazuje STRANU U IGRI, ne temu, pa je cela namerno
+                                    // tema-nezavisna (isti izuzetak kao "Beli" krug gore i "Crni"
+                                    // krug ispod). Zato SVE na njoj -- pozadina, ivica kartice i
+                                    // ivica kruga -- ostaje fiksna providna belo/crna, NIKAD DS
+                                    // token: tema-zavisan token nad tema-nezavisnom podlogom
+                                    // razilazi se cim se tema promeni (ovde je tako jednom vec
+                                    // otkriveno -- DS.line tamno #232C46 nad ovom skoro crnom
+                                    // podlogom davalo je ~1.36:1, prakticno nevidljivu ivicu;
+                                    // fiksna providna bela vraca ~2.88:1 u obe teme).
                                     Column(
                                         modifier = Modifier
                                             .weight(1f)
@@ -372,7 +393,7 @@ class MainActivity : ComponentActivity() {
                                                 .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        Text(text = loc("Crni"), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Crni"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
@@ -380,7 +401,7 @@ class MainActivity : ComponentActivity() {
                                     onClick = { showColorPicker = false },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text(text = loc("Zatvori"), color = Color(0xFF00D2FF), fontWeight = FontWeight.Bold)
+                                    Text(text = loc("Zatvori"), color = DS.accent, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -399,22 +420,22 @@ class MainActivity : ComponentActivity() {
                 if (showResetConfirm) {
                     AlertDialog(
                         onDismissRequest = { showResetConfirm = false },
-                        title = { Text(text = loc("Potvrda"), color = Color.White, fontWeight = FontWeight.Bold) },
-                        text = { Text(text = loc("Da li ste sigurni? Trenutna partija će biti izgubljena."), color = Color.White.copy(alpha = 0.8f)) },
+                        title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
+                        text = { Text(text = loc("Da li ste sigurni? Trenutna partija će biti izgubljena."), color = DS.inkMuted) },
                         confirmButton = {
                             TextButton(onClick = {
                                 gameViewModel.resetGame()
                                 showResetConfirm = false
                             }) {
-                                Text(text = loc("Potvrdi"), color = Color(0xFF00D2FF), fontWeight = FontWeight.Bold)
+                                Text(text = loc("Potvrdi"), color = DS.accent, fontWeight = FontWeight.Bold)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showResetConfirm = false }) {
-                                Text(text = loc("Otkaži"), color = Color.White.copy(alpha = 0.6f))
+                                Text(text = loc("Otkaži"), color = DS.inkMuted)
                             }
                         },
-                        containerColor = Color(0xFF1E293B),
+                        containerColor = DS.surface,
                         shape = RoundedCornerShape(16.dp)
                     )
                 }
@@ -422,22 +443,22 @@ class MainActivity : ComponentActivity() {
                 if (showResignConfirm) {
                     AlertDialog(
                         onDismissRequest = { showResignConfirm = false },
-                        title = { Text(text = loc("Predaja partije"), color = Color.White, fontWeight = FontWeight.Bold) },
-                        text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = Color.White.copy(alpha = 0.8f)) },
+                        title = { Text(text = loc("Predaja partije"), color = DS.ink, fontWeight = FontWeight.Bold) },
+                        text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.inkMuted) },
                         confirmButton = {
                             TextButton(onClick = {
                                 gameViewModel.resign()
                                 showResignConfirm = false
                             }) {
-                                Text(text = loc("Predaj"), color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+                                Text(text = loc("Predaj"), color = DS.danger, fontWeight = FontWeight.Bold)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showResignConfirm = false }) {
-                                Text(text = loc("Nastavi igru"), color = Color.White.copy(alpha = 0.6f))
+                                Text(text = loc("Nastavi igru"), color = DS.inkMuted)
                             }
                         },
-                        containerColor = Color(0xFF1E293B),
+                        containerColor = DS.surface,
                         shape = RoundedCornerShape(16.dp)
                     )
                 }
@@ -456,7 +477,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Surface(
                             shape = RoundedCornerShape(20.dp),
-                            color = Color(0xFF1E293B),
+                            color = DS.surface,
                             tonalElevation = 8.dp,
                             modifier = Modifier
                                 .padding(16.dp)
@@ -499,7 +520,7 @@ class MainActivity : ComponentActivity() {
 
                                 Text(
                                     text = loc("Kraj partije"),
-                                    color = Color.White.copy(alpha = 0.6f),
+                                    color = DS.inkMuted,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     letterSpacing = 1.sp
@@ -507,7 +528,7 @@ class MainActivity : ComponentActivity() {
 
                                 Text(
                                     text = getStatusMessage(gameViewModel),
-                                    color = Color.White,
+                                    color = DS.ink,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
@@ -525,9 +546,12 @@ class MainActivity : ComponentActivity() {
                                         .fillMaxWidth()
                                         .height(48.dp),
                                     shape = RoundedCornerShape(12.dp),
+                                    // Nema tacnog pogotka u tabeli preslikavanja za solidnu 0xFF334155 --
+                                    // ista uloga (sekundarno dugme) kao svi ostali translucentni beli
+                                    // fill-ovi u ovom fajlu, pa ide na isti DS.fill (vidi izvestaj).
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF334155),
-                                        contentColor = Color.White
+                                        containerColor = DS.fill,
+                                        contentColor = DS.ink
                                     )
                                 ) {
                                     Icon(
@@ -554,8 +578,8 @@ class MainActivity : ComponentActivity() {
                                         .height(48.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF00D2FF),
-                                        contentColor = Color(0xFF0B132B)
+                                        containerColor = DS.accent,
+                                        contentColor = DS.onAccent
                                     )
                                 ) {
                                     Icon(
@@ -582,7 +606,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(68.dp)
-                                .background(Color(0xFF0B0F19))
+                                .background(DS.navBar)
                                 .padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
@@ -608,19 +632,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    // Deep Indigo Gradient Background
+                    // Pozadina ekrana -- ravna DS.ground umesto fiksnog tamnog gradijenta
+                    // (brief Task-a 2: "pozadina ekrana -> DS.ground"), da bi svetla tema
+                    // stvarno posvetlila i ovaj deo ekrana.
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFF0F172A),
-                                        Color(0xFF1E1B4B),
-                                        Color(0xFF0F172A)
-                                    )
-                                )
-                            )
+                            .background(DS.ground)
                             .padding(innerPadding)
                     ) {
                         when (activeTab) {
@@ -726,14 +744,14 @@ class MainActivity : ComponentActivity() {
                                                     Icon(
                                                         imageVector = Icons.Default.Add,
                                                         contentDescription = loc("Nova igra"),
-                                                        tint = Color.White,
+                                                        tint = DS.ink,
                                                         modifier = Modifier.size(22.dp)
                                                     )
                                                 }
 
                                                 Text(
                                                     text = loc("Chessko"),
-                                                    color = Color.White,
+                                                    color = DS.ink,
                                                     fontSize = 20.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     textAlign = TextAlign.Center,
@@ -747,7 +765,7 @@ class MainActivity : ComponentActivity() {
                                                     Icon(
                                                         imageVector = Icons.Default.Menu,
                                                         contentDescription = loc("Podešavanja"),
-                                                        tint = Color.White,
+                                                        tint = DS.ink,
                                                         modifier = Modifier.size(22.dp)
                                                     )
                                                 }
@@ -795,7 +813,7 @@ class MainActivity : ComponentActivity() {
                                             if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
                                                 Text(
                                                     text = loc("Potezi"),
-                                                    color = Color.White.copy(alpha = 0.6f),
+                                                    color = DS.inkMuted,
                                                     fontSize = 13.sp,
                                                     fontWeight = FontWeight.SemiBold
                                                 )
@@ -866,14 +884,14 @@ class MainActivity : ComponentActivity() {
                                                     Icon(
                                                         imageVector = Icons.Default.Add,
                                                         contentDescription = loc("Nova igra"),
-                                                        tint = Color.White,
+                                                        tint = DS.ink,
                                                         modifier = Modifier.size(24.dp)
                                                     )
                                                 }
 
                                                 Text(
                                                     text = loc("Chessko"),
-                                                    color = Color.White,
+                                                    color = DS.ink,
                                                     fontSize = 22.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     textAlign = TextAlign.Center,
@@ -887,7 +905,7 @@ class MainActivity : ComponentActivity() {
                                                     Icon(
                                                         imageVector = Icons.Default.Menu,
                                                         contentDescription = loc("Podešavanja"),
-                                                        tint = Color.White,
+                                                        tint = DS.ink,
                                                         modifier = Modifier.size(24.dp)
                                                     )
                                                 }
@@ -998,7 +1016,7 @@ class MainActivity : ComponentActivity() {
                                                 if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
                                                     Text(
                                                         text = loc("Potezi"),
-                                                        color = Color.White.copy(alpha = 0.6f),
+                                                        color = DS.inkMuted,
                                                         fontSize = 14.sp,
                                                         fontWeight = FontWeight.SemiBold,
                                                         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
@@ -1070,8 +1088,8 @@ fun ReviewControlsRow(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.08f))
-            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+            .background(DS.fill)
+            .border(1.dp, DS.line, RoundedCornerShape(12.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -1085,7 +1103,7 @@ fun ReviewControlsRow(
             Icon(
                 imageVector = Icons.Default.FirstPage,
                 contentDescription = loc("Početna pozicija"),
-                tint = if (viewModel.canStepBackward) Color.White else Color.White.copy(alpha = 0.2f),
+                tint = if (viewModel.canStepBackward) DS.ink else DS.inkMuted,
                 modifier = Modifier.size(26.dp)
             )
         }
@@ -1099,7 +1117,7 @@ fun ReviewControlsRow(
             Icon(
                 imageVector = Icons.Default.ChevronLeft,
                 contentDescription = loc("Prethodni"),
-                tint = if (viewModel.canStepBackward) Color.White else Color.White.copy(alpha = 0.2f),
+                tint = if (viewModel.canStepBackward) DS.ink else DS.inkMuted,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -1112,7 +1130,7 @@ fun ReviewControlsRow(
         }
         Text(
             text = label,
-            color = if (viewModel.isReviewing) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.95f),
+            color = if (viewModel.isReviewing) DS.accent else DS.ink,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold
         )
@@ -1126,7 +1144,7 @@ fun ReviewControlsRow(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = loc("Sledeći"),
-                tint = if (viewModel.canStepForward) Color.White else Color.White.copy(alpha = 0.2f),
+                tint = if (viewModel.canStepForward) DS.ink else DS.inkMuted,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -1140,7 +1158,7 @@ fun ReviewControlsRow(
             Icon(
                 imageVector = Icons.Default.LastPage,
                 contentDescription = loc("Kraj"),
-                tint = if (viewModel.canStepForward) Color.White else Color.White.copy(alpha = 0.2f),
+                tint = if (viewModel.canStepForward) DS.ink else DS.inkMuted,
                 modifier = Modifier.size(26.dp)
             )
         }
@@ -1170,8 +1188,8 @@ fun ActionsRow(
                 }
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.08f),
-                contentColor = Color.White
+                containerColor = DS.fill,
+                contentColor = DS.ink
             ),
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.weight(1f),
@@ -1195,8 +1213,8 @@ fun ActionsRow(
                     viewModel.difficulty = nextDiff
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White
+                    containerColor = DS.fill,
+                    contentColor = DS.ink
                 ),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.weight(1f),
@@ -1218,10 +1236,10 @@ fun ActionsRow(
             onClick = { viewModel.undo() },
             enabled = viewModel.canUndo,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.08f),
-                contentColor = Color.White,
-                disabledContainerColor = Color.White.copy(alpha = 0.02f),
-                disabledContentColor = Color.White.copy(alpha = 0.25f)
+                containerColor = DS.fill,
+                contentColor = DS.ink,
+                disabledContainerColor = DS.fill,
+                disabledContentColor = DS.inkMuted
             ),
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.weight(0.7f),
@@ -1234,9 +1252,12 @@ fun ActionsRow(
         if (viewModel.canResign) {
             Button(
                 onClick = { onResign() },
+                // 0xFFEF4444/0xFFFCA5A5 nisu bukvalni pogodci u tabeli (to je "soft danger"
+                // dugme -- providna pozadina + puna boja teksta), ali obe boje su semanticki
+                // DS.danger; vidi izvestaj, dilema.
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFEF4444).copy(alpha = 0.15f),
-                    contentColor = Color(0xFFFCA5A5)
+                    containerColor = DS.danger.copy(alpha = 0.15f),
+                    contentColor = DS.danger
                 ),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.weight(0.7f),
@@ -1251,10 +1272,10 @@ fun ActionsRow(
             onClick = { onShare() },
             enabled = viewModel.gameState.moveNotations.isNotEmpty(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.08f),
-                contentColor = Color.White,
-                disabledContainerColor = Color.White.copy(alpha = 0.02f),
-                disabledContentColor = Color.White.copy(alpha = 0.25f)
+                containerColor = DS.fill,
+                contentColor = DS.ink,
+                disabledContainerColor = DS.fill,
+                disabledContentColor = DS.inkMuted
             ),
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.weight(0.7f),
@@ -1267,8 +1288,8 @@ fun ActionsRow(
         Button(
             onClick = { onReset() },
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.08f),
-                contentColor = Color.White
+                containerColor = DS.fill,
+                contentColor = DS.ink
             ),
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.weight(0.7f),

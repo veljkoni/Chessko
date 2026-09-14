@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.ChessPiece
 import com.veljkoni.chessko.models.PieceColor
+import com.veljkoni.chessko.ui.theme.DS
 
 @Composable
 fun CapturedPiecesView(
@@ -36,7 +37,9 @@ fun CapturedPiecesView(
             Text(
                 text = "–",
                 fontSize = 12.sp,
-                color = Color.Gray.copy(alpha = 0.5f)
+                // Hrom (prazno stanje), ne sadrzaj stila figure -- za razliku od metalik
+                // gradijenata ispod, ovo mora da prati temu.
+                color = DS.inkMuted
             )
         } else {
             Row(

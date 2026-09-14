@@ -27,6 +27,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import com.veljkoni.chessko.logic.SettingsManager
+import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.PuzzlePhase
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
 import java.time.format.DateTimeFormatter
@@ -67,11 +69,11 @@ fun PuzzleView(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            CircularProgressIndicator(color = Color(0xFF00D2FF))
+                            CircularProgressIndicator(color = DS.accent)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = loc("Učitavam zadatak..."),
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = DS.inkMuted,
                                 fontSize = 14.sp
                             )
                         }
@@ -86,7 +88,7 @@ fun PuzzleView(
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = loc("Greška pri učitavanju zadatka"),
-                                color = Color.White,
+                                color = DS.ink,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
@@ -94,9 +96,9 @@ fun PuzzleView(
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
                                 onClick = { viewModel.loadDailyPuzzle() },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D2FF))
+                                colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
                             ) {
-                                Text(text = loc("Pokušaj ponovo"), color = Color.Black)
+                                Text(text = loc("Pokušaj ponovo"), color = DS.onAccent)
                             }
                         }
                     }
@@ -145,7 +147,7 @@ fun PuzzleView(
 
                 if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
                     PuzzleMetadataHeader(viewModel)
-                    StatusBanner(message = viewModel.statusMessage)
+                    PuzzleStatusBanner(phase = viewModel.phase, message = viewModel.statusMessage)
                     Spacer(modifier = Modifier.height(8.dp))
                     PuzzleActionsRow(viewModel)
                 }
@@ -185,11 +187,11 @@ fun PuzzleView(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            CircularProgressIndicator(color = Color(0xFF00D2FF))
+                            CircularProgressIndicator(color = DS.accent)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = loc("Učitavam zadatak..."),
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = DS.inkMuted,
                                 fontSize = 14.sp
                             )
                         }
@@ -207,7 +209,7 @@ fun PuzzleView(
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = loc("Greška pri učitavanju zadatka"),
-                                color = Color.White,
+                                color = DS.ink,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
@@ -215,16 +217,16 @@ fun PuzzleView(
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = viewModel.networkErrorMessage,
-                                color = Color.White.copy(alpha = 0.6f),
+                                color = DS.inkMuted,
                                 fontSize = 13.sp,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(
                                 onClick = { viewModel.loadDailyPuzzle() },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D2FF))
+                                colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
                             ) {
-                                Text(text = loc("Pokušaj ponovo"), color = Color.Black)
+                                Text(text = loc("Pokušaj ponovo"), color = DS.onAccent)
                             }
                         }
                     }
@@ -259,7 +261,7 @@ fun PuzzleView(
 
             // 4. Status banner
             if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
-                StatusBanner(message = viewModel.statusMessage)
+                PuzzleStatusBanner(phase = viewModel.phase, message = viewModel.statusMessage)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -278,7 +280,7 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.05f))
+            .background(DS.fill)
             .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -288,7 +290,7 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             onClick = { viewModel.goToPrevious() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
-                contentColor = Color.White
+                contentColor = DS.ink
             ),
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
@@ -303,10 +305,13 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             val dateStr = viewModel.selectedDate.format(DateTimeFormatter.ofPattern("d. MMMM yyyy."))
             Text(
                 text = dateStr,
-                color = Color.White,
+                color = DS.ink,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )
+            // Kvacica resenosti: emoji glif (✅) nosi sopstvenu boju, nema
+            // Color literal u kodu -- emoji migracija je namerno van obima
+            // 6d-1 (ide u 6d-2 za sve fajlove odjednom), pa ostaje nedirnuta.
             if (viewModel.isSolved(viewModel.selectedDate)) {
                 Text(text = "✅", fontSize = 14.sp)
             }
@@ -318,9 +323,9 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             enabled = viewModel.canGoNext,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
-                contentColor = Color.White,
+                contentColor = DS.ink,
                 disabledContainerColor = Color.Transparent,
-                disabledContentColor = Color.White.copy(alpha = 0.2f)
+                disabledContentColor = DS.inkMuted
             ),
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
@@ -334,9 +339,9 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
     val puzzle = viewModel.currentPuzzle ?: return
     
     val diffColor = when (puzzle.difficultyColor) {
-        "green" -> Color(0xFF10B981)
-        "yellow" -> Color(0xFFF59E0B)
-        else -> Color(0xFFEF4444)
+        "green" -> DS.success
+        "yellow" -> DS.warning
+        else -> DS.danger
     }
 
     Row(
@@ -350,13 +355,13 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = loc("Rejting: "),
-                color = Color.White.copy(alpha = 0.6f),
+                color = DS.inkMuted,
                 fontSize = 13.sp
             )
             Text(
                 text = puzzle.rating.toString(),
-                color = Color.White,
-                fontSize = 13.sp,
+                style = Type.mono,
+                color = DS.ink,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -376,6 +381,41 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+/**
+ * Statusna kartica specificna za tab Zadaci — menja podlogu po ishodu
+ * (reseno/pogresan potez/u toku), za razliku od generickog `StatusBanner`-a
+ * (`UiComponents.kt`) koji ostaje neutralan i koriste ga tab Igra i
+ * `StepPracticeView`. Tekst je uvek `DS.onAccent`: `accent`/`success`/`danger`
+ * dele isti obrazac tamno<->svetlo izmedju tema (tamna nijansa u svetloj temi,
+ * pastelna u tamnoj), pa `onAccent` (bela u svetloj, `inkFixed` u tamnoj) daje
+ * >=4.5:1 kontrast na sve tri podloge u obe teme -- provereno racunski, vidi
+ * task-4-report.md.
+ */
+@Composable
+fun PuzzleStatusBanner(phase: PuzzlePhase, message: String) {
+    val backgroundColor = when (phase) {
+        PuzzlePhase.SOLVED -> DS.success
+        PuzzlePhase.WRONG_MOVE -> DS.danger
+        else -> DS.accent
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(backgroundColor)
+            .padding(vertical = 10.dp, horizontal = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            color = DS.onAccent,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -411,10 +451,10 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 enabled = viewModel.isPlayerTurn &&
                     (viewModel.phase == PuzzlePhase.PLAYING || viewModel.phase == PuzzlePhase.WRONG_MOVE),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White,
-                    disabledContainerColor = Color.White.copy(alpha = 0.02f),
-                    disabledContentColor = Color.White.copy(alpha = 0.25f)
+                    containerColor = DS.fill,
+                    contentColor = DS.ink,
+                    disabledContainerColor = DS.fill,
+                    disabledContentColor = DS.inkMuted
                 ),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.weight(1f),
@@ -427,8 +467,8 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
             Button(
                 onClick = { viewModel.loadDailyPuzzle() },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White
+                    containerColor = DS.fill,
+                    contentColor = DS.ink
                 ),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.weight(1f),

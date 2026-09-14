@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,6 +26,7 @@ import com.veljkoni.chessko.logic.locF
 import com.veljkoni.chessko.models.CurriculumStep
 import com.veljkoni.chessko.models.StepKind
 import com.veljkoni.chessko.models.loadCurriculum
+import com.veljkoni.chessko.ui.theme.DS
 
 /**
  * Odluka o tome gde korak vodi stoji na JEDNOM mestu. Razmazana po UI-ju, ona
@@ -151,7 +151,7 @@ private fun PathHeader(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A2138)),
+        colors = CardDefaults.cardColors(containerColor = DS.surface),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
@@ -160,21 +160,26 @@ private fun PathHeader(
         ) {
             Text(
                 text = locF("Niz: %d dana", streak),
-                color = Color.White,
+                color = DS.ink,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = if (goalMet) loc("Cilj za danas je ispunjen") else loc("Cilj za danas nije ispunjen"),
-                color = if (goalMet) Color(0xFF34D399) else Color.White.copy(alpha = 0.6f),
+                color = if (goalMet) DS.success else DS.inkMuted,
                 fontSize = 13.sp
             )
 
             if (continueLabel != null) {
+                // Jedina primarna akcija na ekranu Puta -- accent podloga + onAccent
+                // tekst (nikad Color.White, vidi zamku 2 iz plana).
                 Button(
                     onClick = onContinue,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DS.accent,
+                        contentColor = DS.onAccent
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -213,7 +218,7 @@ private fun ChapterSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF141B2E)),
+        colors = CardDefaults.cardColors(containerColor = DS.surface),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
@@ -226,13 +231,13 @@ private fun ChapterSection(
             ) {
                 Text(
                     text = title,
-                    color = Color.White,
+                    color = DS.ink,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "${progress.first}/${progress.second}",
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = DS.inkMuted,
                     fontSize = 13.sp
                 )
             }
@@ -290,7 +295,14 @@ private fun StepRow(
         Column {
             Text(
                 text = typeLabel,
-                color = if (state == StepState.LOCKED) Color.White.copy(alpha = 0.35f) else Color.White,
+                // Tri stanja koraka moraju da se razlikuju i u svetloj temi, ne
+                // samo kroz providnost: zavrseno -> success, dostupno -> ink,
+                // zakljucano -> inkMuted (brief Task 5).
+                color = when (state) {
+                    StepState.COMPLETED -> DS.success
+                    StepState.AVAILABLE -> DS.ink
+                    StepState.LOCKED -> DS.inkMuted
+                },
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -300,13 +312,13 @@ private fun StepRow(
                     StepState.COMPLETED -> loc("Završeno")
                     StepState.AVAILABLE -> if (hasRoute) loc("Dostupno") else loc("Uskoro")
                 },
-                color = Color.White.copy(alpha = 0.5f),
+                color = DS.inkMuted,
                 fontSize = 12.sp
             )
         }
 
         if (clickable) {
-            Text(text = "›", color = Color.White.copy(alpha = 0.5f), fontSize = 20.sp)
+            Text(text = "›", color = DS.inkMuted, fontSize = 20.sp)
         }
     }
 }

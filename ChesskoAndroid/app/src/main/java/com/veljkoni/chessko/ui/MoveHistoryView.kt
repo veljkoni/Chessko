@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.veljkoni.chessko.ui.theme.DS
 
 data class MovePair(
     val number: Int,
@@ -74,15 +75,15 @@ fun MoveHistoryView(
         modifier = modifier
             .height(80.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+            .background(DS.fill)
+            .border(1.dp, DS.line, RoundedCornerShape(10.dp))
             .padding(vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         if (notations.isEmpty()) {
             Text(
                 text = loc("Nema odigranih poteza"),
-                color = Color.White.copy(alpha = 0.3f),
+                color = DS.inkMuted,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Normal
             )
@@ -92,7 +93,15 @@ fun MoveHistoryView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 itemsIndexed(pairRows) { index, row ->
-                    val bg = if (index % 2 == 0) Color.Transparent else Color.White.copy(alpha = 0.02f)
+                    // Kontejner iznad je `DS.fill`, pa je parni (providan) red vec
+                    // `DS.fill`; neparni MORA biti drugi token, inace se slika
+                    // `DS.fill` preko `DS.fill` i obe grane daju **identican piksel**
+                    // (izmereno 1,000 — zebre nema ni u jednoj temi, a kod izgleda kao
+                    // da nesto radi). Pre prelaska na tokene su se redovi razlikovali
+                    // (`White 5%` vs `White 2%`).
+                    // Izmereno posle popravke: `surface`/`fill` = 1,204 (svetla) /
+                    // 1,129 (tamna) — suptilno ali vidljivo, sto pruga i treba da bude.
+                    val bg = if (index % 2 == 0) Color.Transparent else DS.surface
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -119,7 +128,7 @@ fun MoveHistoryView(
                                 modifier = Modifier
                                     .width(1.dp)
                                     .height(16.dp)
-                                    .background(Color.White.copy(alpha = 0.1f))
+                                    .background(DS.line)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             
@@ -159,7 +168,7 @@ fun RowScope.MovePairCell(
     ) {
         Text(
             text = "${pair.number}.",
-            color = Color.White.copy(alpha = 0.3f),
+            color = DS.inkMuted,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.width(26.dp)
@@ -168,14 +177,14 @@ fun RowScope.MovePairCell(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(4.dp))
-                .background(if (isLastWhite) Color(0xFF00D2FF).copy(alpha = 0.2f) else Color.Transparent)
+                .background(if (isLastWhite) DS.accent.copy(alpha = 0.2f) else Color.Transparent)
                 .clickable(onClick = onWhiteClick)
                 .padding(horizontal = 4.dp, vertical = 2.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
                 text = pair.white,
-                color = if (isLastWhite) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.9f),
+                color = if (isLastWhite) DS.accent else DS.ink,
                 fontSize = 12.sp,
                 fontWeight = if (isLastWhite) FontWeight.Bold else FontWeight.Normal
             )
@@ -185,14 +194,14 @@ fun RowScope.MovePairCell(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(4.dp))
-                .background(if (isLastBlack) Color(0xFF00D2FF).copy(alpha = 0.2f) else Color.Transparent)
+                .background(if (isLastBlack) DS.accent.copy(alpha = 0.2f) else Color.Transparent)
                 .clickable(enabled = pair.black != null, onClick = onBlackClick)
                 .padding(horizontal = 4.dp, vertical = 2.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
                 text = pair.black ?: "",
-                color = if (isLastBlack) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.9f),
+                color = if (isLastBlack) DS.accent else DS.ink,
                 fontSize = 12.sp,
                 fontWeight = if (isLastBlack) FontWeight.Bold else FontWeight.Normal
             )
