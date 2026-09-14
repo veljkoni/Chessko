@@ -1706,12 +1706,13 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   Detalji, tačne vrednosti i spisak namernih izuzetaka — vidi „Dizajn sistem" → „Android dizajn
   sistem" i „Poznata ograničenja".
 
-  **Task 7 (zatvaranje kriške).** Preostalih zakucanih boja u sedam migriranih fajlova: **21**,
+  **Task 7 (zatvaranje kriške).** Preostalih zakucanih boja u sedam migriranih fajlova: **23**,
   sve namerne (birač boje figure u `MainActivity.kt` — 6, gradijenti uzetih figura u
   `CapturedPiecesView.kt` — 10, zlatna oznaka mata i njena fiksna podloga u `UiComponents.kt` —
-  3, bela/crna polovina eval trake u `EvalBar.kt` — 2; `MoveHistoryView.kt`, `PromotionOverlay.kt`,
-  `PuzzleView.kt`, `PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt`, `SettingsView.kt` su
-  na nuli). Sve prate ISTU logiku kao iOS-ovi „šta namerno nije token": boje strane u igri i
+  3, bela i crna polovina eval trake plus njen fiksni okvir u `EvalBar.kt` — 3, fiksna pločica
+  ispod figure u `PromotionOverlay.kt` — 1; `MoveHistoryView.kt`, `PuzzleView.kt`, `PathView.kt`,
+  `StepPracticeView.kt`, `StepGameView.kt`, `SettingsView.kt` su na nuli). Poslednja dva
+  (`#708090`, oba) dodao je talas ispravki pred spajanje — objašnjena su niže, uz merenje. Sve prate ISTU logiku kao iOS-ovi „šta namerno nije token": boje strane u igri i
   sadržaj, ne hrom. Provere celog stabla: `Chessko`/`Chessko.xcodeproj` netaknuti (dokaz `git
   diff --stat` prema početku faze), nema novih zavisnosti u `build.gradle.kts`/
   `libs.versions.toml`, `Purple80`/`Pink40` šablon obrisan. Testovi na završnom stablu: **JVM
@@ -1719,12 +1720,20 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   padova, iz `androidTest-results/connected/debug/*.xml`, emulator dignut `-gpu host` samo za
   ovaj prolaz i ugašen odmah posle).
 
-  **Jedan lažan pogodak, namerno NE upisan kao izuzetak:** `ui/PathView.kt` daje 1 pogodak na
-  naivan grep za `Color.White`, ali je to unutar komentara na liniji 175 — fajl ima nula
-  zakucanih boja u kodu. Zato sirovi `grep -c` vraća 22 a tačan broj je 21: razlika je baš taj
-  komentar. Grepovana kontrolna lista mora se čitati, ne samo brojati. (Ranija verzija ovog
-  pasusa je tvrdila 22 uz raščlanu koja daje 21 — broj je došao iz dispatch beleške sa uputstvom
-  „već izmereno, NE meri ponovo", pa je tuđa netačnost preneta poslušno.)
+  **Dva lažna pogotka, namerno NE upisana kao izuzeci:** `ui/PathView.kt:175` i
+  `ui/PromotionOverlay.kt:90` pogađaju naivan grep za `Color.White`/`Color(0x`, ali oba pogotka
+  su unutar komentara — oba fajla imaju nula takvih boja na tim mestima u kodu. Zato sirovi
+  `grep -c` vraća 25 a tačan broj je 23. **Grepovana kontrolna lista mora se čitati, ne samo
+  brojati.**
+
+  Taj broj je u ovoj fazi bio pogrešan **tri puta uzastopno**, svaki put drugačije, i to je
+  poučnije od samog broja. Prvo je dispatch beleška tvrdila 22 uz raščlanu koja daje 21, uz
+  uputstvo „već izmereno, NE meri ponovo" — pa je izvršilac poslušno preneo tuđu netačnost;
+  pouka nije „proveri brojeve" nego: **ko prosledi izmerenu vrednost sa zabranom ponovnog
+  merenja, preuzima odgovornost za nju.** Zatim je ispravka na 21 zastarela u istom commit-u,
+  jer su popravke eval trake i overlay-a promocije dodale dva nova namerna tona. I na kraju je
+  ponovno prebrojavanje dalo 24, jer je naletelo na drugi komentar — isti oblik greške protiv
+  koga ovaj pasus upozorava.
 
   **Talas ispravki posle finalnog pregleda cele grane (7 nalaza, 1 blokirajući).** Svaka
   vrednost ispod je IZMERENA WCAG 2.1 formulom, istom koju koristi `ContrastTest`.
