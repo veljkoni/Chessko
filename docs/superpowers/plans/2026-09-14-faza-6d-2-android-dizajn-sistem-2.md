@@ -478,7 +478,14 @@ Izmereno poređenjem sa `Chessko/Views/SquareView.swift`:
 | oznaka | iOS | Android sada | posle |
 |---|---|---|---|
 | poslednji potez | `Color.yellow` @ **0,40** | @ 0,35 | 0,40 |
-| prsten uzimanja | `#00D2FF` @ **0,65** | @ 0,45 | 0,65 |
+| prsten uzimanja | `#00D2FF` @ **0,65** | @ 0,55 | 0,65 |
+| tačka praznog polja | `#00D2FF` @ **0,55** | @ 0,45 | 0,55 |
+
+> **Ispravka plana.** Prvo izdanje je tvrdilo da prsten uzimanja stoji na 0,45 i navodilo „samo
+> dve vrednosti". Pogrešno: 0,45 je **tačka praznog polja**, a prsten je bio 0,55
+> (`BoardView.kt:436-450`, komentari `Capture ring` / `Empty-square dot`). Obe oznake su nosile
+> isti pomak od −0,10 prema iOS-u, pa se popravljaju obe. Izvršilac Task-a 4 je razliku prijavio
+> umesto da je prećuti i primenio popravku na semantički tačnu liniju — to je i otkrilo grešku.
 
 - [ ] **Korak 4: Poravnaj dve vrednosti**
 
