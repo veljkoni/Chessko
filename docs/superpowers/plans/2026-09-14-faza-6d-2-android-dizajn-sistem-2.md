@@ -46,9 +46,16 @@ Faza 6d-1 je na ovome pukla **četiri puta**, svaki put drugačije:
 Četvrti je najopasniji jer izgleda ispravno: obe strane su „uredno tokenizovane". **Token nije
 jedinica provere — par jeste.** Za svaku boju koju upišeš pitaj se šta je tačno iza nje i izmeri.
 
-Sve tri greške su nevidljive dok se tema ne promeni. Zato svaki task koji uvodi nov par **mora
-dodati tvrdnju u `ContrastTest`** — to je JVM test, ne traži emulator, i hvata grešku pre nego
-što iko pogleda ekran.
+Sve tri greške su nevidljive dok se tema ne promeni. Zato svaki task koji uvodi **nov par** mora
+dodati tvrdnju u `ContrastTest` — to je JVM test, ne traži emulator, i hvata grešku pre nego što
+iko pogleda ekran.
+
+> **„Nov par" znači nov, ne novo ime.** Pre pisanja testa pročitaj postojećih sedam i proveri da
+> par već nije pokriven — `textOnBackgroundsMeetsAA` u petlji prolazi obe palete, pa jedno ime
+> pokriva mnogo parova. Task 1 je po prvom izdanju ovog plana napisao test koji je ponavljao
+> četiri već postojeće tvrdnje; uklonjen je, a razlog je upisan u postojeći test. **Test koji ne
+> može da padne a da i neki drugi ne padne nije dokaz nego šum.** Ako je par već pokriven, umesto
+> novog testa dopiši komentar u postojeći — imenuj novog potrošača para.
 
 ---
 
@@ -249,11 +256,14 @@ git commit -m "Faza 6d-2, Task 1: hrom sata prelazi na tokene"
 
 **Interfejsi:**
 - Koristi: sve tokene iz tabele preslikavanja
-- Proizvodi: `lessonAccent()` više ne vraća boju po lekciji — Task 3 se na to oslanja
+- Proizvodi: ništa što drugi taskovi troše. `accentFor()` ima **tačno jedno pozivno mesto**
+  (`LessonDetailView.kt:75`) i nestaje unutar ovog taska; `LearnView.kt:55` ga samo pominje u
+  komentaru.
 
 - [ ] **Korak 1: Sruši sedam boja po lekciji u jedan akcent**
 
-`LessonDetailView.kt:44-50` mapira svaku lekciju u svoju boju:
+Funkcija se zove **`accentFor(id: String): Color`** (`LessonDetailView.kt:43-52`) i mapira
+svaku lekciju u svoju boju:
 
 ```kotlin
 "board-and-pieces" -> Color(0xFF3B82F6)   // plava
@@ -269,9 +279,20 @@ iOS je tačno ovo uklonio u Fazi 1: *„per-lekcijske boje (plava/zelena/narand�
 svedene na jedan akcent, a boja zadržana samo tamo gde nosi značenje"*. Spec 5.6 traži **jedan
 uzdržan akcent**; šest boja po lekciji je suprotno od toga.
 
-Zameni celu funkciju tako da vraća `DS.accent`. **Ne briši funkciju** — poziva se sa više mesta
-i zadržavanje potpisa drži izmenu malom. Iznad nje napiši komentar zašto boje više nema, sa
-pozivom na iOS presedan.
+**Obriši funkciju i pozovi `DS.accent` na jedinom mestu koje je koristi.**
+
+Provereno pre pisanja plana, ne pretpostavljeno: `accentFor` ima **tačno jedno** pozivno mesto —
+`LessonDetailView.kt:75` (`val accent = accentFor(lessonId)`). Drugi pogodak, `LearnView.kt:55`,
+je pomen u komentaru, ne poziv.
+
+Zadržavanje potpisa ovde ne bi bilo jeftinije nego brisanje, nego **skuplje**: `DS.accent` je
+`@Composable @ReadOnlyComposable` geter, a `accentFor` je obična `internal fun`. Da funkcija
+ostane, morala bi i sama postati `@Composable` — što je veća izmena od brisanja jednog poziva.
+
+Na mestu brisanja ostavi komentar zašto boje po lekciji više nema, sa pozivom na iOS presedan
+(Faza 1). Doc-komentar iznad funkcije (`LessonDetailView.kt:40-42`) tvrdi da je „boja lekcije
+jedina stvar koja je ostala u kodu" — ta rečenica posle ovog taska više nije tačna i mora nestati
+sa funkcijom.
 
 - [ ] **Korak 2: Migriraj `LessonDetailView` hrom**
 

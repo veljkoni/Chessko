@@ -41,6 +41,10 @@ class ContrastTest {
 
     @Test
     fun textOnBackgroundsMeetsAA() {
+        // `ink`/`inkMuted` nad `surface` nose i dijaloge sata (izbor vremenske kontrole,
+        // info), koje je Faza 6d-2 prevela na tokene. Zaseban test za njih je bio napisan
+        // pa uklonjen: ponavljao je bas ove cetiri tvrdnje, pa nije mogao da padne a da i
+        // ovaj ne padne. Test koji ne moze da doda informaciju nije dokaz nego sum.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/ground", p, { it.ink }, { it.ground }, 4.5)
             check("$label ink/surface", p, { it.ink }, { it.surface }, 4.5)
@@ -171,13 +175,6 @@ class ContrastTest {
      * preseta) — da promena tih poziva na neki treci token bude uhvacena i po imenu,
      * ne samo posredno preko opsteg testa.
      */
-    @Test
-    fun clockDialogTextMeetsAA() {
-        check("ink/surface", LightColors, { it.ink }, { it.surface }, 4.5)
-        check("ink/surface", DarkColors, { it.ink }, { it.surface }, 4.5)
-        check("inkMuted/surface", LightColors, { it.inkMuted }, { it.surface }, 4.5)
-        check("inkMuted/surface", DarkColors, { it.inkMuted }, { it.surface }, 4.5)
-    }
 
     @Test
     fun everyAdaptiveTokenActuallyDiffersBetweenThemes() {
