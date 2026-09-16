@@ -50,6 +50,19 @@ class ContrastTest {
         // ekranskoj podlozi bez Card/Surface iza sebe -- citat (`LQuote`), naziv
         // figure u `LPieceValueTable`, poznat simbol u `LessonPieceGlyph`, naslov
         // lekcije u `LessonDetailView`.
+        //
+        // Task 3 (`LearnView.kt`) dodaje STVARNE potrosace za sva cetiri para u ovoj
+        // petlji odjednom: `OpeningExerciseCard`/`MateExerciseCard`/`MatePuzzleCard`
+        // i `PieceExplorer`-ov grid + info panel sede na `DS.surface` (birano bas
+        // zato sto ovde, za razliku od `DS.fill`, ni `success` ni `inkMuted` nisu
+        // sub-AA ni u jednoj temi -- vidi `knownSubAAPairsDoNotGetWorse`, gde su oba
+        // sub-AA SAMO nad `fill`/`ground`). `ink/surface` nosi naslove kartica i
+        // odabranu/neodabranu figuru u pikeru; `inkMuted/surface` nosi hint tekst i
+        // status „u toku"; `success/surface` i `danger/surface` nose status
+        // „reseno"/„pogresan potez" u sve tri kartice -- boja koja NOSI ZNACENJE.
+        // Ove kartice nemaju ni Card ni Surface izmedju sebe i `DS.ground` (isto
+        // stablo kao lekcijski blokovi iznad), pa je `DS.surface` bas ono sto stoji
+        // ISPOD teksta, ne priblizna procena.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/ground", p, { it.ink }, { it.ground }, 4.5)
             check("$label ink/surface", p, { it.ink }, { it.surface }, 4.5)
@@ -65,6 +78,10 @@ class ContrastTest {
      */
     @Test
     fun onAccentMeetsAAInBothThemes() {
+        // Task 3 dodaje odabranu figuru u `PieceExplorer`-ovom pikeru i aktivno
+        // dugme scenarija (`LearnView.kt`) kao stvarne potrosace -- isti par
+        // (`DS.accent`/`DS.onAccent`) kao birac teme u `SettingsView.kt` i kategorije
+        // u `ChessClockView.kt`.
         check("svetla onAccent/accent", LightColors, { it.onAccent }, { it.accent }, 4.5)
         check("tamna onAccent/accent", DarkColors, { it.onAccent }, { it.accent }, 4.5)
     }
@@ -149,6 +166,9 @@ class ContrastTest {
      */
     @Test
     fun textOnFillMeetsAA() {
+        // `ink/fill` (Task 3) nosi i „Reset"/„Ponovo" dugme u sve tri kartice vezbi
+        // i neodabranu figuru u `PieceExplorer`-ovom pikeru (`LearnView.kt`) -- isti
+        // par kao dugme "Nazad" u `LessonDetailView.kt` (vidi komentar tamo).
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/fill", p, { it.ink }, { it.fill }, 4.5)
             check("$label accent/fill", p, { it.accent }, { it.fill }, 4.5)

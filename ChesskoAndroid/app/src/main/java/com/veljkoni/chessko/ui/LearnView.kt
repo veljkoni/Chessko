@@ -29,6 +29,7 @@ import com.veljkoni.chessko.logic.ChessAI
 import com.veljkoni.chessko.logic.MoveGenerator
 import com.veljkoni.chessko.viewmodels.LearnScenario
 import com.veljkoni.chessko.viewmodels.LearnViewModel
+import com.veljkoni.chessko.ui.theme.DS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -52,9 +53,10 @@ import kotlinx.coroutines.withContext
 // mrtvih linija; odluka je da OSTANE pod ovim imenom, uz brisanje SAMO onoga
 // sto je stvarno mrtvo: `LearnView()` composable, `LessonCard()` i
 // `LessonInfo` (spisak lekcija i njegova kartica — zamenio ih je Put), plus
-// neiskoriscen `learnViewModel` u `MainActivity.kt`. `accentFor(id)` je vec
-// ranije (Faza 6c, Task 5) premesten u `LessonDetailView.kt`, jer ga i lista
-// (dok je postojala) i detalj lekcije dele.
+// neiskoriscen `learnViewModel` u `MainActivity.kt`. `accentFor(id)` je bio u
+// `LessonDetailView.kt` od Faze 6c, Task 5 — Faza 6d-2, Task 2 ga je OBRISAO u
+// celosti (jedino pozivno mesto sada cita `DS.accent` direktno, vidi komentar
+// iznad `LessonDetailView` u tom fajlu).
 
 enum class OpeningPhase {
     PLAYING, WRONG_MOVE, SOLVED
@@ -328,7 +330,7 @@ fun LBox(icon: String, title: String, text: String, color: Color) {
             Text(text = title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = mdBold(text), color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+        Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
     }
 }
 
@@ -337,7 +339,7 @@ fun LPara(text: String) {
     Text(
         // Podebljanje iz JSON-a (`**ovako**`) — vidi `mdBold` u LessonRenderer.kt.
         text = mdBold(text),
-        color = Color.White.copy(alpha = 0.8f),
+        color = DS.inkMuted,
         fontSize = 13.sp,
         lineHeight = 18.sp,
         modifier = Modifier.fillMaxWidth()
@@ -355,8 +357,8 @@ fun LBullet(icon: String, title: String, text: String, color: Color) {
     ) {
         Text(text = icon, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(text = mdBold(text), color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
+            Text(text = title, color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
         }
     }
 }
@@ -392,8 +394,8 @@ fun LNumberedRule(number: Int, title: String, text: String, color: Color) {
             Text(text = number.toString(), color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(text = mdBold(text), color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp)
+            Text(text = title, color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
         }
     }
 }
@@ -417,14 +419,22 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
             .fillMaxWidth()
             .height(110.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.04f))
+            .background(DS.surface)
             .padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         items(piecesList) { piece ->
             val isSelected = viewModel.selectedPieceType == piece
-            val bg = if (isSelected) Color.White.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.04f)
+            // Isti par kao birac teme/tezine u `SettingsView.kt` i kategorije u
+            // `ChessClockView.kt` (`if (isSelected) DS.accent else DS.fill` +
+            // `DS.onAccent`/`DS.ink`) — NE providna bela preko tamne podloge.
+            // Zamka istog oblika kao nalaz 2 iz 6d-1: `Color.White.copy(alpha=0.18f)`
+            // je bilo svetlije od `0.04f` SAMO zato sto je podloga bila tamna; u
+            // svetloj temi bi se `DS.fill` (svetliji od `DS.surface`) ponasao
+            // suprotno. Akcent-cip resava to u oba pravca odjednom.
+            val bg = if (isSelected) DS.accent else DS.fill
+            val fg = if (isSelected) DS.onAccent else DS.ink
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
@@ -444,7 +454,7 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
                 // `srbName` je bukvalno srpski string u modelu; kljucevi („Kralj",
                 // „Dama"...) postoje u `Loc.kt` na svih 8 jezika. Bez `loc()` je
                 // birac figura u lekciji pisao srpski i na engleskom UI-ju.
-                Text(text = loc(piece.srbName), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(text = loc(piece.srbName), color = fg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -466,14 +476,14 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.05f))
+            .background(DS.surface)
             .padding(12.dp)
     ) {
         Text(text = viewModel.infoTitle, color = accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(2.dp))
-        Text(text = viewModel.infoText, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+        Text(text = viewModel.infoText, color = DS.inkMuted, fontSize = 12.sp)
         Spacer(modifier = Modifier.height(6.dp))
-        Text(text = viewModel.movesCountLabel, color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp)
+        Text(text = viewModel.movesCountLabel, color = DS.inkMuted, fontSize = 11.sp)
     }
 
     // Scenario selectors
@@ -488,8 +498,11 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
                 Button(
                     onClick = { viewModel.toggleScenario(sc) },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (active) Color(0xFFF59E0B) else Color.White.copy(alpha = 0.08f),
-                        contentColor = if (active) Color.Black else Color.White
+                        // `DS.warning` (narandzasta) je ovde bio UKRAS — aktivno stanje
+                        // dugmeta, ne upozorenje — pa ide na `DS.accent`/`DS.onAccent`,
+                        // isti par kao selekcija u `SettingsView.kt`/`ChessClockView.kt`.
+                        containerColor = if (active) DS.accent else DS.fill,
+                        contentColor = if (active) DS.onAccent else DS.ink
                     ),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
@@ -521,7 +534,7 @@ fun OpeningExerciseCard(line: OpeningLine) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.04f))
+            .background(DS.surface)
             .border(1.dp, line.accentColor.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
@@ -545,8 +558,8 @@ fun OpeningExerciseCard(line: OpeningLine) {
                     Text(text = line.icon, fontSize = 14.sp)
                 }
                 Column {
-                    Text(text = line.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text(text = line.hint, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                    Text(text = line.name, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(text = line.hint, color = DS.inkMuted, fontSize = 11.sp)
                 }
             }
             if (state.phase == OpeningPhase.SOLVED) {
@@ -591,9 +604,9 @@ fun OpeningExerciseCard(line: OpeningLine) {
                 else
                     state.statusMessage,
                 color = when (state.phase) {
-                    OpeningPhase.SOLVED -> Color(0xFF10B981)
-                    OpeningPhase.WRONG_MOVE -> Color(0xFFEF4444)
-                    else -> Color.White.copy(alpha = 0.8f)
+                    OpeningPhase.SOLVED -> DS.success
+                    OpeningPhase.WRONG_MOVE -> DS.danger
+                    else -> DS.inkMuted
                 },
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
@@ -602,8 +615,8 @@ fun OpeningExerciseCard(line: OpeningLine) {
             Button(
                 onClick = { state.reset() },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White
+                    containerColor = DS.fill,
+                    contentColor = DS.ink
                 ),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(6.dp)
@@ -632,7 +645,7 @@ fun MateExerciseCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.04f))
+            .background(DS.surface)
             .border(1.dp, color.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
@@ -656,8 +669,8 @@ fun MateExerciseCard(
                     Text(text = icon, fontSize = 14.sp)
                 }
                 Column {
-                    Text(text = title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text(text = hint, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                    Text(text = title, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(text = hint, color = DS.inkMuted, fontSize = 11.sp)
                 }
             }
             if (state.isSolved) {
@@ -694,9 +707,9 @@ fun MateExerciseCard(
             Text(
                 text = state.statusMessage,
                 color = when {
-                    state.isSolved -> Color(0xFF10B981)
-                    state.isOver && !state.isSolved -> Color(0xFFEF4444)
-                    else -> Color.White.copy(alpha = 0.8f)
+                    state.isSolved -> DS.success
+                    state.isOver && !state.isSolved -> DS.danger
+                    else -> DS.inkMuted
                 },
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
@@ -705,8 +718,8 @@ fun MateExerciseCard(
             Button(
                 onClick = { state.reset() },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White
+                    containerColor = DS.fill,
+                    contentColor = DS.ink
                 ),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(6.dp)
@@ -764,12 +777,18 @@ fun MatePuzzleCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.04f))
+            .background(DS.surface)
             .border(
                 width = 1.5.dp,
                 color = when (state.phase) {
-                    OpeningPhase.SOLVED -> Color(0xFFF59E0B).copy(alpha = 0.6f)
-                    OpeningPhase.WRONG_MOVE -> Color(0xFFEF4444).copy(alpha = 0.5f)
+                    // Bila je narandzasta (`#F59E0B`) dok ISTA kartica dva reda ispod
+                    // (status traka) i sestarske kartice (`OpeningExerciseCard`,
+                    // `MateExerciseCard`) koriste zelenu za RESENO — jedina
+                    // nedoslednost boje u ovom fajlu. iOS `MatePuzzleCard`
+                    // (`Chessko/Views/LessonRenderer.swift:626,691`) potvrdjeno koristi
+                    // `DS.success` i za trofej i za ivicu kad je `.solved`; poravnato.
+                    OpeningPhase.SOLVED -> DS.success.copy(alpha = 0.6f)
+                    OpeningPhase.WRONG_MOVE -> DS.danger.copy(alpha = 0.5f)
                     OpeningPhase.PLAYING -> accentColor.copy(alpha = 0.3f)
                 },
                 shape = RoundedCornerShape(14.dp)
@@ -804,7 +823,7 @@ fun MatePuzzleCard(
                     ) {
                         Text(
                             text = title,
-                            color = Color.White,
+                            color = DS.ink,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f, fill = false)
@@ -819,7 +838,7 @@ fun MatePuzzleCard(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                    Text(text = hint, color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp)
+                    Text(text = hint, color = DS.inkMuted, fontSize = 11.sp)
                 }
             }
             if (state.phase == OpeningPhase.SOLVED) {
@@ -856,9 +875,12 @@ fun MatePuzzleCard(
             Text(
                 text = if (state.phase == OpeningPhase.PLAYING && line.playingPrompt != null) line.playingPrompt else state.statusMessage,
                 color = when (state.phase) {
-                    OpeningPhase.SOLVED -> Color(0xFFF59E0B)
-                    OpeningPhase.WRONG_MOVE -> Color(0xFFEF4444)
-                    OpeningPhase.PLAYING -> Color.White.copy(alpha = 0.65f)
+                    // Ista odluka kao ivica iznad — poravnato sa iOS-om, `DS.success`
+                    // umesto narandzaste, umesto necitljive zelena/narandzasta podele
+                    // izmedju ove kartice i sestarskih.
+                    OpeningPhase.SOLVED -> DS.success
+                    OpeningPhase.WRONG_MOVE -> DS.danger
+                    OpeningPhase.PLAYING -> DS.inkMuted
                 },
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
@@ -867,8 +889,8 @@ fun MatePuzzleCard(
             Button(
                 onClick = { state.reset() },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.1f),
-                    contentColor = Color.White
+                    containerColor = DS.fill,
+                    contentColor = DS.ink
                 ),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(6.dp)
