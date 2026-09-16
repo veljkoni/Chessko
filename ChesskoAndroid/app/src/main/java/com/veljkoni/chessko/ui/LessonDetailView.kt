@@ -1,7 +1,6 @@
 package com.veljkoni.chessko.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -123,14 +122,19 @@ fun LessonDetailView(
                     fontSize = 13.sp
                 )
             } else {
-                // Lesson Main Title Card
+                // Lesson Header — BEZ kartice ispod naslova. iOS (`LessonDetailView.swift:128-150`,
+                // `lessonHeader`) nema pozadinu/ivicu na celom header-u; tint akcenta stoji SAMO
+                // iza kvadrata sa ikonom. Kriska 6d-2, krug ispravki 1: prethodna verzija je
+                // tintovala CEO red (`accent@12%` preko `DS.ground`), pa je podnaslov
+                // (`DS.inkMuted`, 12sp, nije bold) pao na 3,62:1 u svetloj temi -- ispod AA i
+                // NOV sub-AA par kog iOS nema, jer iOS ovde nema kompozitnu podlogu uopste.
+                // Uklanjanjem tinta sa reda podnaslov pada na goli `DS.ground`, gde je
+                // `inkMuted`/`ground` = 4,36 (svetla) / 5,94 (tamna) -- vec poznat, vec pinovan
+                // par (`ContrastTest.knownSubAAPairsDoNotGetWorse`), i tacno ono sto iOS ima.
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(accent.copy(alpha = 0.12f))
-                        .border(1.dp, accent.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
-                        .padding(14.dp),
+                        .padding(vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(

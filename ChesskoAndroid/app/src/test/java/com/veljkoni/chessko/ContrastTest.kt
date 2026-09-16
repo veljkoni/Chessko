@@ -191,22 +191,36 @@ class ContrastTest {
      * `BoxStyle.RULE` (zlatno pravilo) i `BoxStyle.WARNING` (upozorenje) u
      * lekcijama nose znacenje (CLAUDE.md, Faza 6d-2 brief: „Dve stvari koje
      * nose znacenje i ne idu na akcent") — idu na `DS.warning`/`DS.danger`,
-     * ne na akcent lekcije. Podloga je `DS.ground`: `LessonRenderer.colorFor`
-     * boji SAMO tekst; kutija (`LBox`/`LBullet` u `LearnView.kt`) crta
-     * sopstvenu providnu tintu (`color.copy(alpha = 0.1f)`) preko ekrana, a
-     * `LessonDetailView`-ov skrol nema Card ni Surface iza sebe — sedi
-     * direktno na `DS.ground` iz `MainActivity`-jevog Box-a (linija ~641).
-     * 10% providnosti pomera stvarnu boju piksela SAMO neznatno ka
-     * semantickoj boji, pa je `DS.ground` posteno priblizenje, ne pogadjanje.
+     * ne na akcent lekcije. Test ispod meri protiv `DS.ground`, ali stvarna
+     * podloga NA EKRANU je jedan stepen gora: kutija (`LBox`/`LBullet` u
+     * `LearnView.kt`) crta sopstvenu providnu tintu (`color.copy(alpha =
+     * 0.1f)`) preko `DS.ground` (`LessonDetailView`-ov skrol nema Card ni
+     * Surface iza sebe — sedi direktno na `DS.ground` iz `MainActivity`-jevog
+     * Box-a, linija ~641), i TAJ kompozit je stvarni piksel iza teksta.
+     *
+     * IZMERENO (ne procenjeno), isti float32-preko-Double put racuna kao
+     * `luminance()`/`contrast()` iznad, kompozit = `boja @10%` preko `ground`:
+     *
+     *   warning na warning@10% tintu: 2,941624 (svetla)   7,848961 (tamna)
+     *   danger  na danger@10% tintu : 5,026419 (svetla)   6,371957 (tamna)
+     *
+     * Sve cetiri su 10-15% GORE od merenja protiv golog `ground`-a ispod
+     * (svetla warning 3,26 -> 2,94, svetla danger 5,89 -> 5,03, tamna warning
+     * 9,27 -> 7,85, tamna danger 7,32 -> 6,37) — providnost dosledno pomera
+     * kompozit KA semantickoj boji, nikad od nje. Test ispod je zato DONJA
+     * GRANICA merenja, ne tacna vrednost stvarnog piksela; gde tacna vrednost
+     * i dalje prelazi 4,5 (sve osim svetle `warning`, vec poznat slucaj ispod)
+     * marza je dovoljna da razlika ne menja ishod.
      *
      * `danger/surface` (oba testa u `textOnBackgroundsMeetsAA`) NIJE isti par
      * kao `danger/ground` ovde — ne preklapa se, samo je slucajno vec
      * pokriven drugom podlogom pre ovog taska.
      *
-     * `warning/ground` u SVETLOJ temi pada ispod 4,5 (3,26) — ista klasa
-     * ogranicenja kao `warning/surface` (vec u `knownSubAAPairsDoNotGetWorse`
-     * ispod), pa ide tamo umesto ovde. Prag se ne pomera; vidi „Poznata
-     * ogranicenja" u CLAUDE.md.
+     * `warning/ground` u SVETLOJ temi pada ispod 4,5 (3,26 protiv golog
+     * `ground`-a, 2,94 protiv stvarnog kompozita) — ista klasa ogranicenja kao
+     * `warning/surface` (vec u `knownSubAAPairsDoNotGetWorse` ispod), pa ide
+     * tamo umesto ovde. Prag se ne pomera; vidi „Poznata ogranicenja" u
+     * CLAUDE.md.
      */
     @Test
     fun lessonBoxStylesMeetAA() {
