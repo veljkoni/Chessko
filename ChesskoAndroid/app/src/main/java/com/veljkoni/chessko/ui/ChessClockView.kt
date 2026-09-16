@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -411,11 +412,18 @@ fun ControlBar(
 
         // Reset Button
         val canReset = hasStarted || p1Time != baseSeconds
+        // Onemoguceno stanje se NE sme oslanjati na `color=` teksta: `\uD83D\uDD04` je
+        // pun-kolor emoji glif, a Skia za takve glifove ignorise boju teksta — zatecen kod
+        // je zato razlikovao stanja samo podlogom (`White 6%` / `White 2%`), sto je nad crnom
+        // pozadinom sata 1,063:1, dakle takodje nevidljivo. Merenjem utvrdjeno: dugme se ni
+        // pre ove faze nije videlo kao onemoguceno. `Modifier.alpha` radi na slojevima, pa
+        // deluje i na emoji — to je jedini signal ovde koji stvarno radi.
         IconButton(
             onClick = onResetClick,
             enabled = canReset,
             modifier = Modifier
                 .size(44.dp)
+                .alpha(if (canReset) 1f else 0.38f)
                 .background(DS.fill, CircleShape)
         ) {
             Text(

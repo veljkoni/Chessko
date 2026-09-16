@@ -167,14 +167,6 @@ class ContrastTest {
         }
     }
 
-    /**
-     * Dijalozi sata (izbor vremenske kontrole, info) stoje na `surface`, ne na `ground`.
-     * `ink/surface` i `inkMuted/surface` su vec pokriveni generickim
-     * `textOnBackgroundsMeetsAA`, ali ovaj test postoji da imenuje TACNO ta tri nova
-     * poziva koja Task 1 uvodi (naslov dijaloga, opis vremenske kontrole, podnaslov
-     * preseta) — da promena tih poziva na neki treci token bude uhvacena i po imenu,
-     * ne samo posredno preko opsteg testa.
-     */
 
     @Test
     fun everyAdaptiveTokenActuallyDiffersBetweenThemes() {
