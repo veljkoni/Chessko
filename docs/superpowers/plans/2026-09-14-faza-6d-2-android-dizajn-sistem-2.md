@@ -66,9 +66,29 @@ iko pogleda ekran.
 | `Color(0xFF00D2FF)` | `DS.accent` | stari akcent aplikacije |
 | `Color.White` (tekst) | `DS.ink` | |
 | `Color.White.copy(alpha = 0.4…0.7)` | `DS.inkMuted` | sekundarni tekst |
+| `Color.White.copy(alpha = 0.75…0.9)` | **`DS.ink`** | **glavni** tekst, samo prigušen; vidi ispod |
+
+> **Ispravka plana (posle finalnog pregleda).** Prvo izdanje tabele je pokrivalo 0,4–0,7 i punu
+> belu, a **preskočilo raspon 0,75–0,9** — pa je izvršilac morao da pogađa, i pogodio je naniže.
+> Posledica: 30 `paragraph` blokova i tela 24 `box` kutije pala su na `DS.inkMuted` (4,36 na
+> `ground`, **3,73 na tintu kutije** — ispod AA), dok iOS za isti tekst koristi
+> `.primary.opacity(0.85)`, dakle **`ink`** (15,72 / 13,44). Raspon 0,75–0,9 je *prigušen glavni
+> tekst*, ne sekundarni — ide na `ink`.
+>
+> Zamka koju je to usput napravilo: u `PieceExplorer`-u su `infoText` (bio 0,8) i
+> `movesCountLabel` (bio 0,4) završili na **istoj** boji, pa je hijerarhija nestala. Kad dva
+> zatečena alfa nivoa odu na isti token, to je znak da je preslikavanje pregrubo.
 | `Color.White.copy(alpha = 0.02…0.12)` kao **podloga** | `DS.fill` | |
 | `Color.White.copy(alpha = 0.02…0.12)` kao **ivica** | `DS.line` | ali vidi Task 4 |
-| `Color(0xFF1E293B)` | `DS.surface` | kartica/dijalog |
+| `Color(0xFF1E293B)` | `DS.surface` | kartica/dijalog — **ali NE kontrolna traka sata**, vidi ispod |
+
+> **Druga ispravka plana (isti pregled).** Red iznad je bez uslova; primenjen doslovno, poslao je
+> i podlogu `ChessClockView.ControlBar` na `DS.surface`. Ta traka stoji IZMEĐU dve namerno fiksne
+> polovine sata, pa je u svetloj temi postala ista boja kao bela polovina — šav je pao sa
+> **14,63 na 1,000**. `#1E293B` → `DS.surface` važi za kartice i dijaloge, koji lebde nad
+> `ground`/scrim-om. Ne važi za površinu koja dodiruje fiksni sadržaj: **fiksna površina dobija i
+> fiksne članove** (`ClockBarBackground`/`ClockBarWell`/`ClockBarAccent`, sadržaj iz
+> `DarkColors`).
 | `Color(0xFF0F172A)` | `DS.ground` | podloga ekrana |
 | `Color(0xFF10B981)` | `DS.success` | nosi značenje |
 | `Color(0xFFF59E0B)` | `DS.warning` | nosi značenje |

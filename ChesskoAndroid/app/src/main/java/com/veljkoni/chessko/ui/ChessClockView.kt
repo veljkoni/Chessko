@@ -31,8 +31,37 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.veljkoni.chessko.logic.HapticManager
 import com.veljkoni.chessko.logic.SoundManager
+import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.DS
 import kotlinx.coroutines.delay
+
+// MARK: - Fiksne boje kontrolne trake
+//
+// Sat je u `CLAUDE.md` naveden kao izuzet od tokena U CELOSTI, i traka izmedju dve
+// njegove polovine je deo tog izuzetka, ne hrom: ona dodiruje crnu polovinu odozgo i
+// belu odozdo, pa je njena podloga vezana za STRANU U IGRI, ne za sistemsku temu.
+// `DS.surface` je tu u svetloj temi bio bukvalno ista boja kao bela polovina (1,000:1).
+//
+// Sadrzaj trake zato cita `DarkColors` — fiksnu paletu, ne `DS.*`. To NIJE mesanje:
+// vrednost je konstanta kao i podloga, pa je par merljiv i isti u obe teme. Dijalozi
+// sata (`PresetChooserDialog`, `InfoDialog`) su druga prica — oni lebde nad scrim-om
+// i legitimno prate temu, pa i dalje koriste `DS.*`.
+//
+// Cuva ih `ContrastTest.clockControlBarIsReadableOverFixedHalves`.
+
+/** Podloga trake. Zatecena vrednost, vracena posle regresije opisane u `ControlBar`. */
+val ClockBarBackground = Color(0xFF1E293B)
+
+/**
+ * Udubljenje ispod „zatvori" i „resetuj" dugmadi. Cisto dekorativno — nosilac radnje je
+ * emoji glif, ne krug. Zatecenih `White@6%` daje 1,198 prema traci; `12%` daje 1,458.
+ * Nijedna vrednost u ovom registru ne stize do 3:1 a da krug ne pocne da vice glasnije
+ * od glifa, pa je uzeta veca od dve izmerene.
+ */
+val ClockBarWell = Color.White.copy(alpha = 0.12f)
+
+/** Akcent NA fiksno tamnoj traci: 5,629 prema podlozi (svetla varijanta bi dala 1,716). */
+val ClockBarAccent = DarkColors.accent
 
 data class TimeControlPreset(
     val name: String,
@@ -349,10 +378,27 @@ fun ControlBar(
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // TRAKA IZMEDJU DVE NAMERNO FIKSNE POLOVINE JE I SAMA FIKSNA.
+    //
+    // Prvi prelaz ove faze poslao je podlogu trake na `DS.surface` a polovine ostavio
+    // fiksnim — ispravno svako za sebe, ali par se nikad nije izmerio. U svetloj temi
+    // `DS.surface` je `#FFFFFF`, bas boja bele polovine ispod: sav je pao sa **14,63
+    // na 1,000**. Traka NIJE `clickable`, pa korisnik koji cilja vrh „svoje" bele
+    // polovine pogadja inertnu traku i sat se ne prebacuje — bez vidljivog sava ne zna
+    // gde polovina pocinje.
+    //
+    // Zato se ovde vraca zatecena fiksna `#1E293B` i CEO sadrzaj trake cita `DarkColors`
+    // (fiksna paleta, jer je ovo trajno tamna povrsina — ne `DS.*`, koji bi u svetloj
+    // temi dao `DS.ink` `#161A22` na `#1E293B`, tj. 1,19:1). Mereno, ista formula kao
+    // `ContrastTest`, isto u obe teme:
+    //   traka prema beloj polovini: 14,629 (aktivna) / 11,652 (mirna) / 11,205 (istek)
+    //   `DarkColors.ink` na traci 12,929; `DarkColors.accent` 5,629
+    // Sav prema CRNOJ polovini iznad ostaje nevidljiv (1,281 / 1,050) — to nije uveo
+    // ovaj prelaz, isto je bilo i pre grane; upisano u „Poznata ogranicenja".
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(DS.surface)
+            .background(ClockBarBackground)
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -362,7 +408,7 @@ fun ControlBar(
             onClick = onClose,
             modifier = Modifier
                 .size(44.dp)
-                .background(DS.fill, CircleShape)
+                .background(ClockBarWell, CircleShape)
         ) {
             Text(text = "❌", fontSize = 14.sp)
         }
@@ -376,7 +422,10 @@ fun ControlBar(
                 Row(
                     modifier = Modifier
                         .clip(CapsuleShape)
-                        .background(DS.accent.copy(alpha = 0.15f))
+                        // 0,12 a ne 0,15: nad fiksnom trakom akcent na sopstvenom
+                        // @15% tintu daje 4,339 (ispod AA), na @12% daje 4,583.
+                        // 0,12 je uz to i iOS vrednost (`ChessClockView.swift:278`).
+                        .background(ClockBarAccent.copy(alpha = 0.12f))
                         .clickable { onPresetClick() }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -385,14 +434,17 @@ fun ControlBar(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = selectedPresetName,
-                        color = DS.accent,
+                        color = ClockBarAccent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
                 IconButton(onClick = onInfoClick) {
-                    Text(text = "ℹ️", color = DS.accent, fontSize = 18.sp)
+                    // Bez `color=`: `ℹ️` je pun-kolor emoji glif i Skia za
+                    // takve glifove IGNORISE boju teksta. Zatecen `color = DS.accent`
+                    // je izgledao kao da mehanizam radi — nije radio nikad.
+                    Text(text = "ℹ️", fontSize = 18.sp)
                 }
             }
         } else {
@@ -400,12 +452,13 @@ fun ControlBar(
                 onClick = onPlayPauseClick,
                 modifier = Modifier
                     .size(52.dp)
-                    .background(DS.accent, CircleShape)
+                    .background(ClockBarAccent, CircleShape)
             ) {
+                // Isto kao `ℹ️` iznad: `▶️`/`⏸️` su pun-kolor
+                // emoji glifovi, pa je zatecen `color = DS.onAccent` bio mrtav.
                 Text(
                     text = if (isPaused) "▶️" else "⏸️",
-                    fontSize = 18.sp,
-                    color = DS.onAccent
+                    fontSize = 18.sp
                 )
             }
         }
@@ -417,19 +470,21 @@ fun ControlBar(
         // je zato razlikovao stanja samo podlogom (`White 6%` / `White 2%`), sto je nad crnom
         // pozadinom sata 1,063:1, dakle takodje nevidljivo. Merenjem utvrdjeno: dugme se ni
         // pre ove faze nije videlo kao onemoguceno. `Modifier.alpha` radi na slojevima, pa
-        // deluje i na emoji — to je jedini signal ovde koji stvarno radi.
+        // deluje i na emoji — to je jedini signal ovde koji stvarno radi. Zato ovde vise
+        // NEMA `color=`: prethodni prelaz ga je preveo na `DS.ink`/`DS.inkMuted` i time
+        // ostavio kod koji izgleda kao da mehanizam radi, iako ta boja nikad ne stigne
+        // do glifa.
         IconButton(
             onClick = onResetClick,
             enabled = canReset,
             modifier = Modifier
                 .size(44.dp)
                 .alpha(if (canReset) 1f else 0.38f)
-                .background(DS.fill, CircleShape)
+                .background(ClockBarWell, CircleShape)
         ) {
             Text(
                 text = "🔄",
-                fontSize = 14.sp,
-                color = if (canReset) DS.ink else DS.inkMuted
+                fontSize = 14.sp
             )
         }
     }

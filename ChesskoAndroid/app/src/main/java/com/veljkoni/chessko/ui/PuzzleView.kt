@@ -310,8 +310,11 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
                 fontWeight = FontWeight.SemiBold
             )
             // Kvacica resenosti: emoji glif (✅) nosi sopstvenu boju, nema
-            // Color literal u kodu -- emoji migracija je namerno van obima
-            // 6d-1 (ide u 6d-2 za sve fajlove odjednom), pa ostaje nedirnuta.
+            // Color literal u kodu. Zamena emojija ikonama je ostavljena van obima i
+            // 6d-1 I 6d-2 (odluka korisnika u 6d-2) — nije zakazana ni za jednu fazu,
+            // pa ostaje nedirnuta dok se o njoj ne odluci posebno. Raniji oblik ovog
+            // komentara je obecavao da 6d-2 to resava „za sve fajlove odjednom";
+            // nije se desilo i nije bilo planirano.
             if (viewModel.isSolved(viewModel.selectedDate)) {
                 Text(text = "✅", fontSize = 14.sp)
             }

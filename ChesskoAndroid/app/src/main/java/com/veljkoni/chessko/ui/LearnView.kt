@@ -330,7 +330,12 @@ fun LBox(icon: String, title: String, text: String, color: Color) {
             Text(text = title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
+        // TELO kutije, ne sporedan tekst: zateceno `White@0,85`, iOS `L_Box` daje
+        // `.primary.opacity(0.85)` (`Chessko/Views/LessonRenderer.swift:447`) — dakle
+        // `ink`, ne `inkMuted`. Prvi prelaz je 0,85 preslikao naniže i telo je u svetloj
+        // temi palo na 3,73:1 nad sopstvenim tintom (`ink` vraca 13,40–14,19, po stilu
+        // kutije) — mereno u `ContrastTest.lessonBoxStylesMeetAA`.
+        Text(text = mdBold(text), color = DS.ink, fontSize = 13.sp)
     }
 }
 
@@ -339,7 +344,11 @@ fun LPara(text: String) {
     Text(
         // Podebljanje iz JSON-a (`**ovako**`) — vidi `mdBold` u LessonRenderer.kt.
         text = mdBold(text),
-        color = DS.inkMuted,
+        // Zateceno `White@0,8`; iOS `L_Para` je `.primary.opacity(0.85)`
+        // (`Chessko/Views/LessonRenderer.swift:395`). Ovo je NOSECI tekst lekcije (30
+        // blokova u isporucenom sadrzaju), ne podnaslov: `inkMuted` bi ga u svetloj temi
+        // drzao na 4,36:1 nad `DS.ground`, `ink` daje 15,72.
+        color = DS.ink,
         fontSize = 13.sp,
         lineHeight = 18.sp,
         modifier = Modifier.fillMaxWidth()
@@ -426,9 +435,13 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
     ) {
         items(piecesList) { piece ->
             val isSelected = viewModel.selectedPieceType == piece
-            // Isti par kao birac teme/tezine u `SettingsView.kt` i kategorije u
+            // Isti par kao birac TEME u `SettingsView.kt:506-507` i kategorije u
             // `ChessClockView.kt` (`if (isSelected) DS.accent else DS.fill` +
             // `DS.onAccent`/`DS.ink`) — NE providna bela preko tamne podloge.
+            // Birac TEZINE nije isti par i namerno se ne pominje: `DifficultyOptionRow`
+            // (`SettingsView.kt:690-721`) nosi izbor `DS.accent` TEKSTOM plus kvacicom,
+            // bez akcent-ispune i bez `DS.onAccent` — tvrdnja „isto kao tezina" je
+            // stajala ovde neproverena i bila je netacna.
             // Zamka istog oblika kao nalaz 2 iz 6d-1: `Color.White.copy(alpha=0.18f)`
             // je bilo svetlije od `0.04f` SAMO zato sto je podloga bila tamna; u
             // svetloj temi bi se `DS.fill` (svetliji od `DS.surface`) ponasao
@@ -481,7 +494,13 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
     ) {
         Text(text = viewModel.infoTitle, color = accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(2.dp))
-        Text(text = viewModel.infoText, color = DS.inkMuted, fontSize = 12.sp)
+        // Tri nivoa, tri boje. `infoText` je zatecen na `White@0,8` a
+        // `movesCountLabel` na `White@0,4`; prvi prelaz ih je oba poslao na
+        // `inkMuted`, pa je hijerarhija nestala — „Najjaca figura…" i „27 mogucih
+        // poteza" su se citali kao isti red. iOS ovde nema par za poredjenje
+        // (`LessonPieceExplorer` u `Chessko/Views/LessonRenderer.swift` uopste nema
+        // info panel), pa vazi pravilo raspona: 0,75–0,9 → `ink`, 0,4–0,7 → `inkMuted`.
+        Text(text = viewModel.infoText, color = DS.ink, fontSize = 12.sp)
         Spacer(modifier = Modifier.height(6.dp))
         Text(text = viewModel.movesCountLabel, color = DS.inkMuted, fontSize = 11.sp)
     }
@@ -606,6 +625,12 @@ fun OpeningExerciseCard(line: OpeningLine) {
                 color = when (state.phase) {
                     OpeningPhase.SOLVED -> DS.success
                     OpeningPhase.WRONG_MOVE -> DS.danger
+                    // IZUZETAK od pravila „zateceno 0,75–0,9 → `ink`": zateceno jeste
+                    // bilo `White@0,8`, ali iOS `OpeningExerciseCard.statusColor` za
+                    // `.playing` vraca `.secondary`
+                    // (`Chessko/Views/LessonRenderer.swift:685`) — provereno, ne
+                    // pretpostavljeno. Ovo je mirno stanje pored dva obojena; da je
+                    // `ink`, „u toku" bi vikalo jace od „reseno".
                     else -> DS.inkMuted
                 },
                 fontSize = 12.sp,
@@ -709,6 +734,9 @@ fun MateExerciseCard(
                 color = when {
                     state.isSolved -> DS.success
                     state.isOver && !state.isSolved -> DS.danger
+                    // Isti izuzetak kao u `OpeningExerciseCard` iznad: zateceno
+                    // `White@0,8`, ali iOS `MateExerciseCard.statusColor` za `.playing`
+                    // vraca `.secondary` (`Chessko/Views/LessonRenderer.swift:809`).
                     else -> DS.inkMuted
                 },
                 fontSize = 12.sp,

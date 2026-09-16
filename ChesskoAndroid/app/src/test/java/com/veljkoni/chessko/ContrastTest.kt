@@ -1,6 +1,8 @@
 package com.veljkoni.chessko
 
 import androidx.compose.ui.graphics.Color
+import com.veljkoni.chessko.ui.ClockBarAccent
+import com.veljkoni.chessko.ui.ClockBarBackground
 import com.veljkoni.chessko.ui.theme.ChesskoColors
 import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.LightColors
@@ -37,6 +39,19 @@ class ContrastTest {
                       bg: (ChesskoColors) -> Color, min: Double) {
         val r = contrast(fg(p), bg(p))
         assertTrue("$name: %.2f, a trazi se >= %.2f".format(r, min), r >= min)
+    }
+
+    /** Isto sto radi Compose kad crta `top.copy(alpha = a)` preko `bottom`. */
+    private fun over(top: Color, alpha: Float, bottom: Color): Color = Color(
+        red = alpha * top.red + (1f - alpha) * bottom.red,
+        green = alpha * top.green + (1f - alpha) * bottom.green,
+        blue = alpha * top.blue + (1f - alpha) * bottom.blue
+    )
+
+    /** Par bez palete iza sebe — za fiksne boje sata, koje nisu ni u jednoj temi. */
+    private fun checkPair(name: String, fg: Color, bg: Color, min: Double) {
+        val r = contrast(fg, bg)
+        assertTrue("$name: %.3f, a trazi se >= %.3f".format(r, min), r >= min)
     }
 
     @Test
@@ -186,8 +201,10 @@ class ContrastTest {
      *  - `line` nad `fill` NE prelazi prag i nikad nece, jer su to dve susedne
      *    vrednosti iste palete (`#DFE3EC` / `#E7EAF1`, odnosno `#232C46` /
      *    `#1E2740`). Zato se `DS.line` ne sme koristiti kao granica NAD `DS.fill`
-     *    — ivica kartica u Podesavanjima to i dalje radi i zato se ne vidi
-     *    (upisano u „Poznata ogranicenja", ceka 6d-2).
+     *    — zbog toga je Task 4 ove faze uklonio ivicu sa cetiri kartice u
+     *    Podesavanjima (odvajanje sada nosi `surface`/`ground` razlika, vidi
+     *    `settingsCardsSeparateFromGround`). Raniji oblik ovog komentara je jos pisao
+     *    da to „ceka 6d-2"; ovo JESTE 6d-2 i vise ne ceka.
      *
      * Negativna polovina je namerno tvrdnja o STANJU, ne prag koji se popravlja:
      * popravka bi znacila promenu vrednosti `line` ili `fill`, dakle razlaz sa
@@ -247,6 +264,70 @@ class ContrastTest {
         check("tamna warning/ground", DarkColors, { it.warning }, { it.ground }, 4.5)
         check("svetla danger/ground", LightColors, { it.danger }, { it.ground }, 4.5)
         check("tamna danger/ground", DarkColors, { it.danger }, { it.ground }, 4.5)
+
+        // TELO kutije, dodato u talasu ispravki pred spajanje. Tvrdnje iznad mere samo
+        // NASLOV (obojen bojom stila); telo nosi ceo tekst i nijedan test ga do sada
+        // nije merio — a bas ono je bilo pogresno: prvi prelaz je zateceni `White@0,85`
+        // preslikao na `inkMuted`, pa je u svetloj temi palo na 3,72–3,94 nad sopstvenim
+        // tintom, ispod AA. Sada je `DS.ink` (`LearnView.LBox`), sto nad sva tri tinta
+        // daje 13,40–14,19 u svetloj i 13,67–14,06 u tamnoj temi.
+        //
+        // Ovde se meri STVARAN kompozit (`boja@10%` preko `ground`), ne priblizenje nad
+        // golim `ground`-om — kutija svoju podlogu sama crta.
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            for ((styleName, styleColor) in listOf(
+                "INFO/null" to p.accent, "RULE" to p.warning, "WARNING" to p.danger
+            )) {
+                checkPair("$label telo kutije ($styleName): ink na ${styleName}@10%% tintu",
+                    p.ink, over(styleColor, 0.1f, p.ground), 4.5)
+            }
+        }
+    }
+
+    /**
+     * Kontrolna traka sata, popravka regresije nadjene u finalnom pregledu Faze 6d-2.
+     *
+     * Traka stoji IZMEDJU dve polovine sata koje su namerno fiksne (prate stranu u igri,
+     * ne sistemsku temu). Prvi prelaz ove faze poslao je njenu podlogu na `DS.surface` a
+     * polovine ostavio kakve jesu — svaki clan para „uredno" obradjen, par nikad
+     * izmeren. U svetloj temi je `DS.surface` bukvalno `#FFFFFF`, ista boja kao bela
+     * polovina ispod: sav je pao sa **14,63 na 1,000**. To nije kozmetika — traka nije
+     * `clickable`, pa korisnik koji cilja vrh svoje polovine pogadja inertnu traku.
+     *
+     * Zato je podloga vracena na fiksnu (`ClockBarBackground`), a CEO sadrzaj trake cita
+     * `DarkColors`, ne `DS.*`: fiksna povrsina dobija fiksne clanove, pa je par merljiv i
+     * isti u obe teme.
+     *
+     * Sav prema CRNOJ polovini iznad trake ostaje nevidljiv (1,281 aktivna / 1,050 mirna)
+     * i to je tvrdnja o STANJU, ne prag: bilo je tako i pre ove grane, i nijedna boja ne
+     * prelazi 3:1 istovremeno prema `#FFFFFF` i prema `#121212` a da ostane u registru
+     * sata. Upisano u „Poznata ogranicenja" u `CLAUDE.md`.
+     */
+    @Test
+    fun clockControlBarIsReadableOverFixedHalves() {
+        val bar = ClockBarBackground
+        // Sav prema beloj polovini: WCAG ne-tekstualni prag 3:1. Izmereno 14,629
+        // (aktivna), 11,652 (mirna, `#E5E5EA`), 11,205 (istek, `#FADAD8`).
+        checkPair("sav traka/bela aktivna polovina", bar, Color(0xFFFFFFFF), 3.0)
+        checkPair("sav traka/bela mirna polovina", bar, Color(0xFFE5E5EA), 3.0)
+        checkPair("sav traka/bela polovina u isteku", bar, Color(0xFFFADAD8), 3.0)
+
+        // Sadrzaj NA traci. `DS.ink` bi ovde u svetloj temi dao 1,19 — zato `DarkColors`.
+        checkPair("DarkColors.ink na traci", DarkColors.ink, bar, 4.5)
+        checkPair("akcent trake na traci", ClockBarAccent, bar, 4.5)
+        // Cip vremenske kontrole crta akcent na SOPSTVENOM tintu preko trake. Na @15%
+        // je to 4,339 — ispod AA; na @12% (iOS vrednost) 4,583.
+        checkPair("akcent trake na sopstvenom @12%% cipu",
+            ClockBarAccent, over(ClockBarAccent, 0.12f, bar), 4.5)
+
+        // Negativna polovina, kao `plainWhiteWouldFailOnTheDarkAccent`: dokaz da
+        // `DarkColors` ovde NIJE stvar ukusa nego jedina vrednost koja radi.
+        val svetliAkcentNaTraci = contrast(LightColors.accent, bar)
+        assertTrue(
+            "svetli akcent na traci daje %.3f — da je >= 4.5, traka bi smela `DS.accent`"
+                .format(svetliAkcentNaTraci),
+            svetliAkcentNaTraci < 4.5
+        )
     }
 
     @Test

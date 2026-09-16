@@ -149,6 +149,11 @@ fun LPieceRow(piece: String, name: String, count: String, accent: Color) {
         // `name` i `count` dolaze iz JSON-a vec prevedeni — NE kroz `loc()`.
         Text(text = name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accent)
         Spacer(Modifier.weight(1f))
+        // IZUZETAK od pravila „zateceno 0,75–0,9 → `ink`": zateceno je bilo
+        // `White@0,75`, ali iOS `L_PieceRow` daje kolicini `.secondary`
+        // (`Chessko/Views/LessonRenderer.swift:474`) — otvoreno i provereno. `name`
+        // levo je `accent`; da je i kolicina `ink`, red bi imao dva jednako jaka
+        // glasa umesto naziva i njegovog dodatka.
         Text(text = count, fontSize = 15.sp, color = DS.inkMuted)
     }
 }
