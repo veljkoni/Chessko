@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +24,7 @@ import com.veljkoni.chessko.models.PieceType
 import com.veljkoni.chessko.models.ExerciseKind
 import com.veljkoni.chessko.models.LessonBlock
 import com.veljkoni.chessko.models.PieceValueRow
+import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.LearnViewModel
 
 // MARK: - Lesson Renderer
@@ -57,27 +59,32 @@ fun LessonBlocks(
             is LessonBlock.Exercise -> LExercise(b.spec, accent)
             is LessonBlock.Divider -> HorizontalDivider(
                 modifier = Modifier.padding(vertical = 12.dp),
-                color = Color.White.copy(alpha = 0.08f)
+                color = DS.line
             )
         }
     }
 }
 
-/// `null` znaci „koristi akcent lekcije". `WARNING` je jedini koji namerno
-/// izlazi iz akcenta — nosi znacenje, nije ukras.
+/// `null` znaci „koristi akcent lekcije". `RULE` i `WARNING` su jedina dva koja
+/// namerno izlaze iz akcenta — zlatno pravilo i upozorenje NOSE ZNACENJE, nisu
+/// ukras (CLAUDE.md: „Dve stvari koje nose znacenje i ne idu na akcent").
+/// Podloga iza oba je `DS.ground` (kutije crtaju sopstvenu providnu tintu preko
+/// njega, ne opipljivu Card/Surface) — provereno u `ContrastTest.lessonBoxStylesMeetAA`.
+@Composable
+@ReadOnlyComposable
 private fun colorFor(style: BoxStyle?, accent: Color): Color = when (style) {
     null -> accent
     BoxStyle.INFO -> accent
-    BoxStyle.RULE -> Color(0xFFE0B252)
-    BoxStyle.WARNING -> Color(0xFFF2857A)
+    BoxStyle.RULE -> DS.warning
+    BoxStyle.WARNING -> DS.danger
 }
 
 @Composable
 private fun LQuote(text: String, author: String) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(text = mdBold(text), fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f))
+        Text(text = mdBold(text), fontSize = 15.sp, color = DS.ink)
         Spacer(Modifier.height(4.dp))
-        Text(text = "— $author", fontSize = 13.sp, color = Color.White.copy(alpha = 0.55f))
+        Text(text = "— $author", fontSize = 13.sp, color = DS.inkMuted)
     }
 }
 
@@ -123,7 +130,9 @@ private fun LessonPieceGlyph(piece: String) {
     Text(
         text = symbol ?: "\u26A0",
         fontSize = if (symbol != null) 22.sp else 15.sp,
-        color = if (symbol != null) Color.White.copy(alpha = 0.9f) else Color(0xFFE05A5A),
+        // Nepoznat naziv figure daje `DS.danger`, ne ukras -- vidljiva poruka o
+        // pokvarenom sadrzaju JSON-a (CLAUDE.md, „Android cita isti JSON").
+        color = if (symbol != null) DS.ink else DS.danger,
         modifier = Modifier.width(30.dp)
     )
 }
@@ -140,7 +149,7 @@ fun LPieceRow(piece: String, name: String, count: String, accent: Color) {
         // `name` i `count` dolaze iz JSON-a vec prevedeni — NE kroz `loc()`.
         Text(text = name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accent)
         Spacer(Modifier.weight(1f))
-        Text(text = count, fontSize = 15.sp, color = Color.White.copy(alpha = 0.75f))
+        Text(text = count, fontSize = 15.sp, color = DS.inkMuted)
     }
 }
 
@@ -153,7 +162,7 @@ fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LessonPieceGlyph(r.piece)
-                Text(text = r.name, fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f))
+                Text(text = r.name, fontSize = 15.sp, color = DS.ink)
                 Spacer(Modifier.weight(1f))
                 // `valueLabel` je vec preveden (stize iz JSON-a na tom jeziku), ali
                 // ga nijedna isporucena lekcija ne zadaje — pa se u praksi UVEK ide
@@ -176,7 +185,7 @@ private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         if (state == null) {
             // Pokvaren FEN u sadrzaju mora da se VIDI, ne da ostavi prazninu.
-            Text(text = "⚠︎ $fen", fontSize = 13.sp, color = Color(0xFFF2857A))
+            Text(text = "⚠︎ $fen", fontSize = 13.sp, color = DS.danger)
         } else {
             // POTPIS JE PROVEREN uz stvarni `BoardView` (`ui/BoardView.kt`):
             // prima `board`, ne `gameState`, i `onTap`, ne `onSquareClick`.
@@ -198,13 +207,13 @@ private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
         }
         if (caption.isNotEmpty()) {
             Spacer(Modifier.height(6.dp))
-            Text(text = caption, fontSize = 13.sp, color = Color.White.copy(alpha = 0.6f))
+            Text(text = caption, fontSize = 13.sp, color = DS.inkMuted)
         }
         if (interactive) {
             // Interaktivna tabla u lekciji jos ne postoji ni na iOS-u. Umesto
             // tihe razlike izmedju platformi, kaze se sta fali.
             Text(text = loc("Interaktivna tabla još nije dostupna."),
-                 fontSize = 12.sp, color = Color.White.copy(alpha = 0.5f))
+                 fontSize = 12.sp, color = DS.inkMuted)
         }
     }
 }

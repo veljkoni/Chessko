@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,6 +23,7 @@ import com.veljkoni.chessko.logic.Loc
 import com.veljkoni.chessko.logic.LessonRepository
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
+import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.viewmodels.LearnViewModel
 
 // MARK: - Detalj lekcije
@@ -37,18 +37,10 @@ import com.veljkoni.chessko.viewmodels.LearnViewModel
 // znaci da je lekcija otvorena iz obicnog spiska (`LearnView`), gde nema sta
 // da se "zavrsi".
 
-/// Boja lekcije je jedina stvar koja je ostala u kodu — JSON je ne nosi.
-/// Nepoznat id (nova lekcija bez unosa ovde) dobija podrazumevani akcent umesto
-/// da bude nevidljiv ili da obori ekran.
-internal fun accentFor(id: String): Color = when (id) {
-    "board-and-pieces" -> Color(0xFF3B82F6)
-    "notation" -> Color(0xFF8B5CF6)
-    "openings" -> Color(0xFF10B981)
-    "tactics" -> Color(0xFF06B6D4)
-    "middlegame" -> Color(0xFFF59E0B)
-    "endgame" -> Color(0xFFEF4444)
-    else -> Color(0xFF3B82F6)
-}
+// `accentFor(id)` (sest boja, jedna po lekciji) je OBRISANA u Fazi 6d-2, Task 2.
+// iOS je tacno ovo uklonio u Fazi 1: „per-lekcijske boje svedene na jedan
+// akcent, a boja zadrzana samo tamo gde nosi znacenje" — spec 5.6 trazi jedan
+// uzdrzan akcent, ne sest. Jedino pozivno mesto sada cita `DS.accent` direktno.
 
 @Composable
 fun LessonDetailView(
@@ -72,7 +64,7 @@ fun LessonDetailView(
     val lang = Loc.fileLanguageCode()
 
     val doc = remember(lessonId, lang) { repo.lesson(lessonId, lang) }
-    val accent = accentFor(lessonId)
+    val accent = DS.accent
     val number = remember(lessonId) {
         repo.discoveredLessonIds().indexOf(lessonId).let { if (it >= 0) it + 1 else null }
     }
@@ -94,8 +86,11 @@ fun LessonDetailView(
             Button(
                 onClick = onClose,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.08f),
-                    contentColor = Color.White
+                    // Isti par kao `StepGameView`/`OpponentCard`: providna bela
+                    // podloga na neutralnom ekranu -> `DS.fill` + `DS.ink`
+                    // (pokriveno sa `textOnFillMeetsAA`).
+                    containerColor = DS.fill,
+                    contentColor = DS.ink
                 ),
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
@@ -122,7 +117,9 @@ fun LessonDetailView(
                 // bila gora od recenice.
                 Text(
                     text = loc("Lekcija nije dostupna."),
-                    color = Color.White.copy(alpha = 0.6f),
+                    // Direktno na `DS.ground` (skrol nema Card ni Surface iza ovog
+                    // teksta) — isti par kao `inkMuted`/`ground` u `PathView`.
+                    color = DS.inkMuted,
                     fontSize = 13.sp
                 )
             } else {
@@ -157,13 +154,13 @@ fun LessonDetailView(
                         }
                         Text(
                             text = doc.title,
-                            color = Color.White,
+                            color = DS.ink,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = doc.subtitle,
-                            color = Color.White.copy(alpha = 0.6f),
+                            color = DS.inkMuted,
                             fontSize = 12.sp
                         )
                     }
@@ -180,7 +177,7 @@ fun LessonDetailView(
                         modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+                        HorizontalDivider(color = DS.line)
                         Button(
                             onClick = onComplete,
                             modifier = Modifier.fillMaxWidth(),
@@ -189,7 +186,12 @@ fun LessonDetailView(
                             Text(
                                 text = loc("Završi korak"),
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color.White
+                                // Tekst NA `accent` podlozi -> `DS.onAccent`, ne
+                                // `DS.ink`/bela. `accent` menja svetlinu izmedju
+                                // tema (`DS.onAccent` doc-komentar u
+                                // `DesignSystem.kt`); bela bi u tamnoj temi pala
+                                // na 2,6:1 (ista greska koju je iOS vec pravio).
+                                color = DS.onAccent
                             )
                         }
                     }

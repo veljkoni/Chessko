@@ -45,6 +45,11 @@ class ContrastTest {
         // info), koje je Faza 6d-2 prevela na tokene. Zaseban test za njih je bio napisan
         // pa uklonjen: ponavljao je bas ove cetiri tvrdnje, pa nije mogao da padne a da i
         // ovaj ne padne. Test koji ne moze da doda informaciju nije dokaz nego sum.
+        //
+        // `ink/ground` (Task 2) nosi i tekst blokova lekcije koji sede direktno na
+        // ekranskoj podlozi bez Card/Surface iza sebe -- citat (`LQuote`), naziv
+        // figure u `LPieceValueTable`, poznat simbol u `LessonPieceGlyph`, naslov
+        // lekcije u `LessonDetailView`.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/ground", p, { it.ink }, { it.ground }, 4.5)
             check("$label ink/surface", p, { it.ink }, { it.surface }, 4.5)
@@ -77,15 +82,23 @@ class ContrastTest {
     }
 
     /**
-     * PET PAROVA JE ISPOD AA U SVETLOJ TEMI. Prva tri su NASLEDJENA iz spec
-     * tabele (iOS ima iste vrednosti); poslednja dva su dodata u talasu ispravki
-     * pred spajanje i danas nemaju pozivno mesto (vidi komentar uz njih).
+     * SEST PAROVA JE ISPOD AA U SVETLOJ TEMI. Prva tri su NASLEDJENA iz spec
+     * tabele (iOS ima iste vrednosti); cetvrti i peti su dodata u talasu ispravki
+     * pred spajanje i danas nemaju pozivno mesto (vidi komentar uz njih); sesti je
+     * dodat u Fazi 6d-2, Task 2 (vidi komentar ispod tabele).
      *
      *   inkMuted / ground : 4,359965479387139   (svetla)   5,94 (tamna)
      *   inkMuted / fill   : 4,014258257780754   (svetla)   4,81 (tamna)
      *   warning  / surface: 3,611752903947211   (svetla)   8,48 (tamna)
      *   success  / fill   : 4,184348841952418   (svetla)   7,78 (tamna)
      *   warning  / fill   : 2,9989738277199414  (svetla)   7,51 (tamna)
+     *   warning  / ground : 3,257244931140301   (svetla)   9,27 (tamna)
+     *
+     * Sesti par je dodat u Fazi 6d-2, Task 2: `BoxStyle.RULE` kutije u
+     * lekcijama (`LessonRenderer.colorFor`) crtaju `DS.warning` tekst nad
+     * `DS.ground`. Ista klasa kao `warning/surface` iznad — ne popravlja se
+     * ovde jer bi znacilo razlaz sa iOS paletom; tamna varijanta (9,27) ide u
+     * `lessonBoxStylesMeetAA` jer prolazi.
      *
      * Pragovi ispod nose PUNU preciznost stvarno izmerenu OVIM testom na JVM-u
      * (ne zaokruzeno „4,36", i ne double-precision racun izveden nezavisno u
@@ -102,6 +115,11 @@ class ContrastTest {
      */
     @Test
     fun knownSubAAPairsDoNotGetWorse() {
+        // Task 2 dodaje jos potrosaca za `inkMuted/ground`: "Lekcija nije dostupna."
+        // (`LessonDetailView`), potpis citata i sitni tekstovi ispod table
+        // (`LQuote`, `LPieceRow` kolicina, `LStaticBoard` natpis i poruka o
+        // interaktivnoj tabli u `LessonRenderer`). Isti vec-poznat granicni slucaj,
+        // ne nov par.
         check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.359965479387139)
         check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.014258257780754)
         check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.611752903947211)
@@ -112,6 +130,7 @@ class ContrastTest {
         // koji ipak stavi semanticku boju nad `fill` ne moze to da pogorsa u tisini.
         check("svetla success/fill", LightColors, { it.success }, { it.fill }, 4.184348841952418)
         check("svetla warning/fill", LightColors, { it.warning }, { it.fill }, 2.9989738277199414)
+        check("svetla warning/ground", LightColors, { it.warning }, { it.ground }, 3.257244931140301)
     }
 
     /**
@@ -167,6 +186,34 @@ class ContrastTest {
         }
     }
 
+
+    /**
+     * `BoxStyle.RULE` (zlatno pravilo) i `BoxStyle.WARNING` (upozorenje) u
+     * lekcijama nose znacenje (CLAUDE.md, Faza 6d-2 brief: „Dve stvari koje
+     * nose znacenje i ne idu na akcent") — idu na `DS.warning`/`DS.danger`,
+     * ne na akcent lekcije. Podloga je `DS.ground`: `LessonRenderer.colorFor`
+     * boji SAMO tekst; kutija (`LBox`/`LBullet` u `LearnView.kt`) crta
+     * sopstvenu providnu tintu (`color.copy(alpha = 0.1f)`) preko ekrana, a
+     * `LessonDetailView`-ov skrol nema Card ni Surface iza sebe — sedi
+     * direktno na `DS.ground` iz `MainActivity`-jevog Box-a (linija ~641).
+     * 10% providnosti pomera stvarnu boju piksela SAMO neznatno ka
+     * semantickoj boji, pa je `DS.ground` posteno priblizenje, ne pogadjanje.
+     *
+     * `danger/surface` (oba testa u `textOnBackgroundsMeetsAA`) NIJE isti par
+     * kao `danger/ground` ovde — ne preklapa se, samo je slucajno vec
+     * pokriven drugom podlogom pre ovog taska.
+     *
+     * `warning/ground` u SVETLOJ temi pada ispod 4,5 (3,26) — ista klasa
+     * ogranicenja kao `warning/surface` (vec u `knownSubAAPairsDoNotGetWorse`
+     * ispod), pa ide tamo umesto ovde. Prag se ne pomera; vidi „Poznata
+     * ogranicenja" u CLAUDE.md.
+     */
+    @Test
+    fun lessonBoxStylesMeetAA() {
+        check("tamna warning/ground", DarkColors, { it.warning }, { it.ground }, 4.5)
+        check("svetla danger/ground", LightColors, { it.danger }, { it.ground }, 4.5)
+        check("tamna danger/ground", DarkColors, { it.danger }, { it.ground }, 4.5)
+    }
 
     @Test
     fun everyAdaptiveTokenActuallyDiffersBetweenThemes() {
