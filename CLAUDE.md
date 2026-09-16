@@ -154,34 +154,67 @@ Mehanizam je `CompositionLocalProvider(LocalChesskoColors provides colors)` u `C
 menja retko (promena teme) a čita je na stotine mesta; pozivna mesta čitaju `DS.accent` itd.,
 isti oblik kao iOS. `DS` dobija i `DS.onAccent` (tekst/ikone NA `accent` podlozi) — `accent`
 menja svetlinu između tema, pa nijedna fiksna boja za tekst na njemu ne radi u obe; čuva ga
-`ContrastTest.plainWhiteWouldFailOnTheDarkAccent` i `onAccentMeetsAAInBothThemes` (7 testova
-ukupno u `ContrastTest.kt`, JVM, bez emulatora — kontrast se računa WCAG formulom, ne
-procenjuje). `dynamicColor` (Android Studio šablon, boja sa korisnikove tapete na Androidu 12+)
-je uklonjen — sa spec-om koji traži jedan fiksan akcent to nije funkcija nego greška.
+`ContrastTest.plainWhiteWouldFailOnTheDarkAccent` i `onAccentMeetsAAInBothThemes` (11 testova
+ukupno u `ContrastTest.kt` posle talasa ispravki 6d-2 — bilo 7 na kraju 6d-1, 10 pre talasa —
+JVM, bez emulatora, kontrast se računa WCAG formulom, ne procenjuje; od talasa ispravki test
+ume da meri i **stvaran kompozit** providnog tinta, `private fun over(...)`, umesto približenja
+nad golom podlogom). `dynamicColor` (Android Studio šablon, boja sa
+korisnikove tapete na Androidu 12+) je uklonjen — sa spec-om koji traži jedan fiksan akcent to
+nije funkcija nego greška.
 
-**6d-1 je prenela PALETU, ne ceo sistem.** `DS.Space`, `DS.Radius`, `DS.maxBoardSide` i
-`Type.title/heading/body/caption` postoje kao tokeni ali **nemaju nijedno pozivno mesto** —
-svih sedam ekrana i dalje zakucava `12.dp`, `RoundedCornerShape(16.dp)` i `fontSize = 14.sp`;
-jedina upotreba tipografske skale je `Type.mono`. Primena razmaka, radijusa i tipografije kroz
-sedam ekrana je posao veličine cele još jedne kriške, pa je to **Faza 6d-2**. Tokeni se ne
-brišu u međuvremenu: brisanje bi značilo da ih 6d-2 ponovo uvodi.
+**6d-1 i 6d-2 su prenele PALETU, ne ceo sistem.** `DS.Space`, `DS.Radius`, `DS.maxBoardSide` i
+`Type.title/heading/body/caption` postoje kao tokeni ali **i dalje nemaju nijedno pozivno
+mesto** — svi ekrani i dalje zakucavaju `12.dp`, `RoundedCornerShape(16.dp)` i
+`fontSize = 14.sp`; jedina upotreba tipografske skale je `Type.mono`. Ovo je odloženo odlukom
+korisnika (vidi „Poznata ograničenja"), ne propust: primena razmaka, radijusa i tipografije kroz
+sve ekrane je posao veličine cele još jedne kriške. Tokeni se ne brišu u međuvremenu: brisanje
+bi značilo da ih neka buduća faza ponovo uvodi.
 
-**Načelo koje je ova kriška platila četiri puta:** *tema-zavisna boja i tema-izuzeta podloga ne
-smeju se mešati — ni u jednom smeru.* Prva tri puta je to bilo mešanje fiksnog i tokenizovanog
-(fiksni tekst na tokenizovanoj podlozi i obrnuto). Četvrti put je bio podmukliji i nije mešanje
-uopšte: `Switch` je M3 podrazumevanim vrednostima dobio **par čija su oba člana tokeni**,
-`DS.line` palac na `DS.fill` traci — **1,067:1**, nevidljiva kontrola. I komentar u `Theme.kt` i
-pregled Task-a 6 proverili su da je uloga MAPIRANA, i to tačno; nijedno nije proverilo da su
-mapirane vrednosti **međusobno različite**. Analiziran je token, ne par. Otuda i pravilo:
-**svaka boja koju upišeš ima podlogu, i par se meri, ne pretpostavlja.**
+**Načelo koje je 6d-1 platila četiri puta, a 6d-2 mu je ostala verna:** *tema-zavisna boja i
+tema-izuzeta podloga ne smeju se mešati — ni u jednom smeru.* Prva tri puta u 6d-1 je to bilo
+mešanje fiksnog i tokenizovanog (fiksni tekst na tokenizovanoj podlozi i obrnuto). Četvrti put
+je bio podmukliji i nije mešanje uopšte: `Switch` je M3 podrazumevanim vrednostima dobio **par
+čija su oba člana tokeni**, `DS.line` palac na `DS.fill` traci — **1,067:1**, nevidljiva
+kontrola. I komentar u `Theme.kt` i pregled Task-a 6 proverili su da je uloga MAPIRANA, i to
+tačno; nijedno nije proverilo da su mapirane vrednosti **međusobno različite**. Analiziran je
+token, ne par. Otuda i pravilo: **svaka boja koju upišeš ima podlogu, i par se meri, ne
+pretpostavlja.**
 
-**Izričito, koji ekrani prate temu a koji ne (stanje na kraju 6d-1):** `MainActivity.kt`,
-`PuzzleView.kt`, `PathView.kt`, `StepPracticeView.kt`, `StepGameView.kt`, `SettingsView.kt` i
-zajedničke komponente (`UiComponents.kt`, `CapturedPiecesView.kt`, `MoveHistoryView.kt`,
-`EvalBar.kt`, `PromotionOverlay.kt`) su migrirane. Sat (`ChessClockView.kt`), lekcije
-(`LearnView.kt`, `LessonRenderer.kt`, `LessonDetailView.kt`) i tabla (`BoardView.kt`,
-`BoardTheme.kt`) **još ne** — to je Faza 6d-2. Do tada je aplikacija u svetloj temi vidljivo
-neujednačena: migrirani ekrani prate temu, ta tri ne.
+**Peti oblik je našao finalni pregled 6d-2, i to je ispravka a ne fusnota.** Kontrolna traka
+sata (`ChessClockView.ControlBar`) prešla je na `DS.surface`, a dve polovine sata su ostale
+namerno fiksne — svaki član „uredno" obrađen, par nikad izmeren. U svetloj temi je `DS.surface`
+bukvalno `#FFFFFF`, ista boja kao aktivna bela polovina ispod: šav je pao sa **14,63 na 1,000**.
+Nije kozmetika — traka nije `clickable`, pa igrač koji cilja vrh svoje polovine pogađa inertnu
+traku. Talas ispravki je vratio podlogu na fiksnu (`ClockBarBackground = #1E293B`) i sav sadržaj
+trake na `DarkColors` (fiksnu paletu, ne `DS.*`): **fiksna površina dobija fiksne članove.**
+Čuva to `ContrastTest.clockControlBarIsReadableOverFixedHalves`.
+
+**Od Faze 6d-2 svi ekrani prate temu — spisak izuzetaka je zatvoren.** Sat (`ChessClockView.kt`,
+Task 1), blokovi i okvir lekcije (`LessonRenderer.kt`, `LessonDetailView.kt`, Task 2), ekran
+učenja i sve tri kartice vežbi (`LearnView.kt`, Task 3) i četiri kartice u Podešavanjima
+(Task 4, deo A) su prešli na `DS.*` tokene — pridružili su se sedam ekrana koje je 6d-1 već
+migrirala. Ostaje isti obrazac izuzetaka koji ima i iOS (vidi „Šta NAMERNO nije token" gore).
+
+**Spisak namerno fiksnih mesta, pun — raniji oblik ovog pasusa je nabrajao tri kategorije a
+zvučao kao da je iscrpan:**
+
+- boje table i osam tema table (`BoardView.kt`, `BoardTheme.kt`; Task 4 deo B ih je samo
+  poravnao sa iOS vrednostima, ne tokenizovao — tabla je i dalje jedini šareni element)
+- **cela kontrolna traka sata** (`ChessClockView.kt`): dve polovine prate STRANU u igri, a od
+  talasa ispravki i traka između njih i sav njen sadržaj (`ClockBarBackground`/`ClockBarWell`/
+  `ClockBarAccent`) — vidi „peti oblik" iznad. Dijalozi sata (izbor vremenske kontrole, info)
+  NISU izuzeti: oni lebde nad scrim-om i legitimno prate temu.
+- zlatna oznaka mata (`UiComponents.kt:150-163`)
+- strane eval trake (`EvalBar.kt:86-87`)
+- pločica promocije (`PromotionOverlay.kt:47`)
+- gradijenti figura (`CapturedPiecesView.kt:54-68`)
+- birač boje igrača (`MainActivity.kt:328-393`)
+- emoji u UI hromu i u `lessonIcon()` mapi (izbor ikonografije, odložen odlukom korisnika)
+
+> **Emoji glif ne prima `color=`.** Skia za pun-kolor emoji glifove IGNORIŠE boju teksta, pa
+> `Text("🔄", color = DS.ink)` izgleda kao da mehanizam radi a ne radi nikad. Talas ispravki je
+> uklonio tri takva mrtva `color=` iz `ChessClockView.kt` (`🔄`, `ℹ️`, `▶️`/`⏸️`). Jedini signal
+> koji na emojiju stvarno radi je `Modifier.alpha` — on dejstvuje na sloj.
 
 ## Arhitektura (MVVM)
 
@@ -234,7 +267,10 @@ Chessko/
   (D/T/L/S) — `confirmPromotion(_:)`/`cancelPromotion()`. Postoji i podešavanje za
   automatsku promociju u damu (bez overlay-a) za korisnike koji to žele.
 - **Boje table** (`SquareView`): `squareLight #e9ebde`, `squareDark #8592af`,
-  `boardBackground #17234f`. Highlight: žuto za poslednji potez, sivo za selekciju.
+  `boardBackground #17234f`. Highlight: žuto za poslednji potez, cijan `#00D2FF` za selekciju
+  (`SquareView.swift:101`). **Ova rečenica je do Faze 6d-2 pogrešno govorila „sivo za
+  selekciju"** — nikad nije bilo tačno ni na jednoj platformi; ispravljeno kad je Android
+  pregled (`BoardView.kt:408`) potvrdio isti cijan na obe strane.
 - **Rotacija table**: `viewModel.isFlipped` → `BoardView` iterira redove/kolone u obrnutom
   redosledu; `SquareView` dobija `isBottomEdge`/`isLeftEdge` za koordinatne labele.
   `AnimatingPieceView` i `flyingCapture` overlay koriste display koordinate.
@@ -509,17 +545,18 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | Faza | Preneto? | Napomena |
 |---|---|---|
 | 0 — higijena | **da** | rokada popravljena (`bc58ab0`), 9 JVM testova: 6 perft + 3 regresiona za rokadu |
-| 1 — dizajn sistem | **delimično (6d-1)** | sedam ekrana na `DS.*` tokenima (vidi „Android dizajn sistem"); sat, lekcije, tabla čekaju 6d-2 |
+| 1 — dizajn sistem | **da** | svi ekrani na `DS.*` tokenima (vidi „Android dizajn sistem"); 6d-1 sedam ekrana, 6d-2 sat/lekcije/učenje/podešavanja/tabla |
 | 2 — offline zadaci | **da** | to JESTE Faza 6a — ista stavka pod dva broja (iOS je numeriše 2, Android plan 6a) |
 | **6a — offline zadaci** | **da** | deljena `puzzles.sqlite`, `PuzzleRepository`, Elo rejting, „Sledeći zadatak" |
 | **6b — lekcije u JSON** (Faza 3) | **da** | isti 36 JSON fajlova kao iOS; `LearnView.kt` 1322 → 1111 linija |
 | 4 — Put | **da** | ista stavka pod dva broja kao 2/6a — isporučeno kao **6c** |
 | **6c — Put** | **da** | isti `curriculum.json` kao iOS, bajt-identičan (dokaz `diff`); `ProgressStore` (JSON u `filesDir`, migracija iz `SharedPreferences`); `PathView` sa sva četiri tipa koraka (`lesson`/`practice`/`test`/`game`) |
 | **6d-1 — dizajn sistem, deo 1** | **da** | `ChesskoColors`/`DS`/`ChesskoTheme` (ista paleta kao iOS) + sedam ekrana (`MainActivity`, Zadaci, Put, `practice`/`test`/`game` koraci, Podešavanja) prebačeno sa zakucanih boja na tokene; `dynamicColor` uklonjen |
+| **6d-2 — dizajn sistem, deo 2** | **da** | preostalih pet celina prebačeno na tokene: hrom sata, blokovi i okvir lekcije, ekran učenja + tri kartice vežbi, četiri kartice u Podešavanjima (bez ivice — vidi „Poznata ograničenja"); tabla i osam tema table ostaju namerno netokenizovane, samo poravnate sa iOS vrednostima (poslednji potez 0,40, prsten uzimanja 0,65, tačka praznog polja 0,55) |
 | 5 — analiza partije | ne | — |
 
-Testovi: **43 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `PathProgressTest` 9,
-`LocTest` 5, `PuzzleRatingTest` 9, `ContrastTest` 7, `StepWindowTest` 3, `EngineTest` 9) + **46 instrumentisanih**
+Testovi: **47 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `PathProgressTest` 9,
+`LocTest` 5, `PuzzleRatingTest` 9, `ContrastTest` 11, `StepWindowTest` 3, `EngineTest` 9) + **46 instrumentisanih**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
 `ProgressStoreTest` 10, `LessonRepositoryTest` 6, `PuzzleRepositoryTest` 10, `StatsFacadeTest` 4,
 `LessonContentTest` 9).
@@ -579,26 +616,68 @@ Testovi: **43 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
 
 ## Poznata ograničenja / TODO kandidati
 
-- **Pet parova tokena je ispod WCAG AA u svetloj temi.** Prva tri su nasleđena iz spec tabele i
+- **Šest parova tokena je ispod WCAG AA u svetloj temi.** Prva tri su nasleđena iz spec tabele i
   identična na obe platforme: `inkMuted`/`ground` 4,36; `inkMuted`/`fill` 4,01;
-  `warning`/`surface` 3,61. Poslednja dva — `success`/`fill` 4,18 i `warning`/`fill` 3,00 —
+  `warning`/`surface` 3,61. Četvrti i peti — `success`/`fill` 4,18 i `warning`/`fill` 3,00 —
   **danas nemaju nijedno pozivno mesto**, ali su pinovana da ih budući pozivalac ne može tiho
-  pogoršati. (Pune vrednosti, ne zaokružene: `ContrastTest.knownSubAAPairsDoNotGetWorse` na
-  Androidu proverava tačno 4.359965479387139 / 4.014258257780754 / 3.611752903947211 /
-  4.184348841952418 / 2.9989738277199414 — čuva od pogoršanja, ne od postojanja.) Popravka
+  pogoršati. Šesti — `warning`/`ground` 3,26 — je dodat u Fazi 6d-2, Task 2: `BoxStyle.RULE`
+  kutije u lekcijama (`LessonRenderer.colorFor`) crtaju `DS.warning` tekst nad `DS.ground`, ista
+  klasa ograničenja kao `warning`/`surface`. (Pune vrednosti, ne zaokružene:
+  `ContrastTest.knownSubAAPairsDoNotGetWorse` na Androidu proverava tačno
+  4.359965479387139 / 4.014258257780754 / 3.611752903947211 / 4.184348841952418 /
+  2.9989738277199414 / 3.257244931140301 — čuva od pogoršanja, ne od postojanja.) Popravka
   vrednosti bi značila razlaz sa iOS paletom, pa se ne radi.
 - **`DS.line` nad `DS.fill` je 1,067 (svetla) / 1,071 (tamna) — ivica koja se ne vidi.** To su
   dve susedne vrednosti iste palete, pa se `DS.line` **ne sme koristiti kao granica NAD
   `DS.fill`**; jedini neutralan token koji tu prelazi WCAG prag 3:1 je `DS.inkMuted` (4,01 /
-  4,81). Kartice u Podešavanjima (`SettingsView.kt`) i dalje rade baš to (`.background(DS.fill)`
-  + `.border(1.dp, DS.line, …)`), pa im se ivica ne vidi ni u jednoj temi — zatečeno stanje
-  cele kriške, nije popravljano jer bi značilo prelazak svih kartica ekrana na `DS.surface`
-  (posao 6d-2). Par čuva `ContrastTest.nonTextPairsOverFillAreDistinguishable`, koji tvrdi oba
-  smera: da `inkMuted` prelazi prag i da `line` ne prelazi.
-- **Na Androidu sat, lekcije i tabla još ne prate temu** (`ChessClockView.kt`, `LearnView.kt`,
-  `LessonRenderer.kt`, `LessonDetailView.kt`, `BoardView.kt`, `BoardTheme.kt`) — to je Faza
-  6d-2. Do tada je aplikacija u svetloj temi vidljivo neujednačena: sedam ekrana iz 6d-1 prate
-  temu, ta tri ne.
+  4,81). Do Faze 6d-2 su četiri kartice u Podešavanjima (`SettingsView.kt`) radile baš to
+  (`.background(DS.fill)` + `.border(1.dp, DS.line, …)`), pa im se ivica nije videla ni u jednoj
+  temi — 6d-2 Task 4 ih je prebacio na `DS.surface` bez ivice (vidi bullet ispod). Par i dalje
+  čuva `ContrastTest.nonTextPairsOverFillAreDistinguishable`, koji tvrdi oba smera: da
+  `inkMuted` prelazi prag i da `line` ne prelazi — ostaje relevantan jer `DS.fill` i dalje nosi
+  redove prekidača i drugi hrom gde se ivica ili kontrola crta preko `inkMuted`.
+- **Ivice kartica u Podešavanjima (Android) ne postoje, i to je odluka Faze 6d-2 Task 4.**
+  Izmereno: `line/fill` 1,067, `line/surface` 1,285, `surface/ground` 1,109 — nijedan par u
+  paleti ne daje vidljivu ivicu (WCAG ne-tekstualni prag je 3:1). Umesto da se traži nova boja
+  samo za ivicu (razlaz sa iOS paletom), četiri kartice (jezik, statistika, težina, o aplikaciji)
+  su izgubile `.border(DS.line)` i prešle podlogu sa `DS.fill` na `DS.surface` — odvajanje od
+  `DS.ground` sada nosi isključivo razlika u boji podloge, isto što iOS dobija besplatno od
+  nativne grouped liste. Čuva ga `ContrastTest.settingsCardsSeparateFromGround` (puna
+  preciznost: 1,1088367563082842 svetla / 1,0942153907723773 tamna) — ako `surface` i `ground`
+  ikad postanu ista boja, kartice nestaju bez ijedne druge posledice, i test to hvata.
+- **Grana na dva mesta tvrdi suprotno o istom tokenu, i jedno od njih je nepopravljeno.** Task 4
+  je ivicu sa kartica u Podešavanjima uklonio zato što `line/surface` daje **1,285** — dakle
+  nevidljivo. A neizabran red u biraču vremenske kontrole (`ChessClockView.kt:507`) od te iste
+  faze stoji baš na tom paru: `DS.line` ivica nad `DS.surface`, isti 1,285. Finalni pregled je
+  to našao; **ruling je da ostaje, ali se zapisuje.** Razlog: zatečeno stanje je bilo jednako
+  nevidljivo (`White@8%` nad `#1E293B`), pa ovo **nije regresija ove grane** — a popravka bi
+  značila novu odluku o tome kako se redovi u dijalozima uopšte odvajaju (ne samo u satu), što
+  je posao za sebe, ne sitnica pred spajanje. Vidljivo na snimku
+  `screenshots/40_clock_dark_presets.png`.
+- **Šav između kontrolne trake sata i CRNE polovine iznad nje se ne vidi — 1,281 (aktivna) /
+  1,050 (mirna), u obe teme.** Nije uvela ni 6d-1 ni 6d-2: fiksna `#1E293B` traka je oduvek
+  stajala uz `#121212`/`#2C2C2E`. Šav prema BELOJ polovini ispod je 14,629 i talas ispravki 6d-2
+  ga je upravo vratio (bio pao na 1,000 — vidi „peti oblik" u „Android dizajn sistem"). Ne
+  postoji jedna boja koja istovremeno prelazi 3:1 prema `#FFFFFF` i prema `#121212` a da ostane
+  u registru sata; zatvaranje bi tražilo dve različite hairline ivice (svetlu gore, tamnu dole),
+  dakle novi vizuelni element koji iOS nema. Posledica je ista kao za belu polovinu pre
+  ispravke: traka nije `clickable`, pa igrač koji cilja donji rub crne polovine pogađa nju.
+- **Emoji u Android UI hromu (~37) i u `lessonIcon()` mapi (44) ostaju — odlukom korisnika, ne
+  propustom.** Ovo je izbor ikonografije, ne boje — van obima Faze 6d-2. Konkretan nalaz iz te
+  faze: `🔄` (dugme za resetovanje sata) je pun-kolor emoji glif, i **Skia ignoriše `color=`
+  teksta za takve glifove** — tekstualni signal stanja nikad nije radio, ni pre grane. Popravka
+  je bila `Modifier.alpha(0.38f)` (M3 standardna vrednost za onemogućeno stanje) umesto obojenog
+  teksta — alfa radi na sloju, pa deluje i na emoji. Isti obrazac važi za bilo koje buduće
+  dugme sa emoji glifom kome treba stanje omogućeno/onemogućeno.
+  **Faza je taj nalaz napravila pa ga sama pregazila:** i posle njega je u `ChessClockView.kt`
+  ostalo tri mrtva `color=` na emoji glifovima (`🔄` uz `DS.ink`/`DS.inkMuted`, `ℹ️` i
+  `▶️`/`⏸️` uz `DS.accent`/`DS.onAccent`) — kod koji izgleda kao da mehanizam radi. Talas
+  ispravki ih je uklonio. Pravilo: **na emoji glif se `color=` ne piše uopšte.**
+- **`DS.Space`/`DS.Radius`/`DS.maxBoardSide`/`Type.title/heading/body/caption` (Android) i dalje
+  nemaju nijedno pozivno mesto**, ni posle Faze 6d-2. Svi ekrani i dalje zakucavaju `12.dp`,
+  `RoundedCornerShape(16.dp)`, `fontSize = 14.sp`; jedina upotreba tipografske skale je
+  `Type.mono`. Odloženo odlukom korisnika (vidi „Android dizajn sistem" gore) — primena razmaka,
+  radijusa i tipografije kroz sve ekrane je posao veličine cele još jedne kriške.
 - **`dynamicColor` je uklonjen sa Android teme** (`ChesskoTheme` u `Theme.kt`). Zatečena verzija
   je bila Android Studio šablon sa `dynamicColor = true`, koji na Androidu 12+ vuče boje sa
   korisnikove tapete — za spec koji traži jedan fiksan akcent to nije funkcija nego greška
@@ -1793,3 +1872,156 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `.superpowers/sdd/2026-09-13-faza-6d-1-android-dizajn-sistem/final-fix-screenshots/`.
   Instrumentisani testovi (46) nisu ponovo pokretani: nijedan dirnut fajl nije u njihovom dometu
   (samo boje i jedan test fajl).
+- **2026-09-16** — Faza 6d-2 (Android: dizajn sistem, deo 2, zatvaranje). Preostalih pet celina
+  koje je 6d-1 ostavila van tokena sada prate temu: hrom sata (Task 1: dugmad, dijalog za izbor
+  vremenske kontrole, info dijalog — crna i bela polovina sata OSTAJU fiksne, jer prate stranu a
+  ne temu, isto kao iOS), blokovi i okvir lekcije (Task 2: `LessonRenderer.kt`,
+  `LessonDetailView.kt` — `RULE`/`WARNING` kutije idu na `DS.warning`/`DS.danger` jer nose
+  značenje, ne na akcent lekcije), ekran učenja i sve tri kartice vežbi (Task 3: `LearnView.kt`
+  — `PieceExplorer`, `OpeningExerciseCard`, `MateExerciseCard`, `MatePuzzleCard`), i četiri
+  kartice u Podešavanjima + tabla (Task 4: deo A uklanja mrtvu ivicu kartica, deo B poravnava
+  boje table sa iOS vrednostima — poslednji potez 0,35 → 0,40, prsten uzimanja 0,55 → 0,65,
+  tačka praznog polja 0,45 → 0,55; tabla i osam njenih tema OSTAJU netokenizovane, namerno —
+  jedini šareni element). Detalji i razlozi — vidi „Android dizajn sistem" i „Poznata
+  ograničenja" gore.
+
+  **Netačna rečenica u ovom fajlu je ispravljena, ne prećutana**: „Highlight: žuto za poslednji
+  potez, sivo za selekciju" nikad nije bilo tačno ni na jednoj platformi — obe koriste cijan
+  `#00D2FF` (`SquareView.swift:101`, `BoardView.kt:408`).
+
+  **Plan Task-a 4 je zamenio mesta dve alfa vrednosti** — tvrdio je da je prsten uzimanja na
+  0,45 a tačka praznog polja na 0,55, obrnuto od stvarnosti (`BoardView.kt:436-450`, komentari
+  `Capture ring` / `Empty-square dot`). Izvršilac Task-a 4 je razliku PRIJAVIO umesto da je
+  prećuti, plan je ispravljen na izvoru sa zapisanim razlogom, i obe oznake su popravljene (obe
+  su nosile isti pomak -0,10 od iOS vrednosti).
+
+  `ContrastTest.kt`: 7 → 10 testova na kraju faze (Task 1 dodao pa uklonio jedan duplikat —
+  `clockDialogTextMeetsAA` je proveravao tačno one parove koje `textOnBackgroundsMeetsAA` već
+  pokriva u petlji nad obe teme, pa je test koji ne može da padne a da i drugi ne padne obrisan
+  bez gubitka informacije; Task 4 dodao dva nova — `accentTextOnSurfaceAndGroundMeetsAA` i
+  `settingsCardsSeparateFromGround`).
+
+  > **Poruka commit-a `23b1bd5` tvrdi „38/38" — greška u sabiranju, nijedan test ne nedostaje.**
+  > Tačan broj JVM testova u tom trenutku (posle Task-a 4, pre komentar-only ispravke sledećeg
+  > commit-a) bio je 46; ispravljeno ovde, istorija commit-a se ne prepisuje.
+
+  **Šest parova tokena je sada ispod WCAG AA u svetloj temi**, ne pet — Task 2 je dodao
+  `warning`/`ground` (3,26) za `RULE` kutije koje sede direktno na `DS.ground` (bez `Card`/
+  `Surface` iza sebe). Vidi „Poznata ograničenja" za svih šest vrednosti pune preciznosti.
+
+  **Brojanje zakucanih boja u šest fajlova iz brief-a za Task 5 — svaki pogodak pročitan, ne
+  samo prebrojan** (ista disciplina kao u 6d-1, gde je grep tri puta pogrešno pročitan, dva puta
+  zbog pogotka unutar komentara): `ChessClockView.kt` 10 (svih 10 stvarni — crna/bela strana
+  sata, namerno fiksne), `LearnView.kt` 1 (LAŽAN pogodak — `Color.White.copy(alpha=0.18f)`
+  unutar KOMENTARA na liniji 432, koji opisuje istoimenu zamku iz 6d-1; stvaran kod na tom mestu
+  koristi `DS.accent`/`DS.fill`), `LessonDetailView.kt` 0, `LessonRenderer.kt` 0 (oba potpuno
+  migrirana Task-om 2), `BoardView.kt` 35 (svih 35 stvarni — boje table, prstenovi, konfeti
+  paleta na liniji 611, sve namerno izvan dometa), `BoardTheme.kt` 8 (svih 8 stvarni — osam tema
+  table koje bira korisnik). Naivan `grep -c` preko svih šest fajlova daje 54; stvaran broj
+  namernih izuzetaka je 53, lažnih pogodaka 1.
+
+  Provere celog stabla: `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS
+  netaknut), `git diff --stat main..HEAD -- build.gradle.kts libs.versions.toml` prazan (nijedna
+  nova Gradle zavisnost), `Purple80`/`Pink40`/`dynamicColor` šablon i dalje odsutan (dva pogotka
+  na „dynamicColor" u `Theme.kt` su komentari koji OPISUJU uklanjanje, ne upotreba). Testovi na
+  završnom stablu, oba čitana iz XML-a: **JVM 46/46** (`ExampleUnitTest` 1, `PathProgressTest` 9,
+  `LocTest` 5, `PuzzleRatingTest` 9, `ContrastTest` 10, `StepWindowTest` 3, `EngineTest` 9, sve
+  0 padova) i **instrumentisani 46/46** (`CurriculumTest` 6, `ExampleInstrumentedTest` 1,
+  `LessonContentTest` 9, `LessonRepositoryTest` 6, `ProgressStoreTest` 10, `PuzzleRepositoryTest`
+  10, `StatsFacadeTest` 4, sve 0 padova/grešaka) — brojevi identični polaznom stanju od pre
+  faze, što je i očekivano jer nijedna izmena nije dirala logiku koju instrumentisani testovi
+  pokrivaju (samo boje i poravnanje table).
+
+  **Emulator je za ovu fazu dizan DVA puta, ne jednom, i to je ovde priznato umesto prećutano.**
+  Prvi (duži) prolaz je bio vizuelna provera: obe teme, sat (izbor vremenske kontrole preko
+  kategorija Blic/Ubrzani/Klasični, info dijalog, aktivno/pauzirano stanje, i stvaran istek
+  vremena posle pravog isteka od 5 minuta — potvrđena poruka „Vreme je isteklo!" na fiksnoj
+  tamnocrvenoj/beloj podlozi u obe teme sistema), lekcija (`RULE` kutija „Uslovi za rokadu" i
+  „Promocija", citat „Kapablanka piše", tabela vrednosti figura, `info`/bullet ikonice, vežbe
+  elementarnih matova), ekran učenja (istraživač figura sa izabranim/neizabranim poljem u obe
+  teme), podešavanja (četiri kartice bez ivice, prekidači u oba stanja), tabla (poslednji potez,
+  selekcija, moguća polja — sve u obe teme sistema, dokazano da tabla ostaje identična nezavisno
+  od teme aplikacije). Potvrđeno: **crna i bela polovina sata ostaju crna i bela u obe teme** —
+  najveći rizik cele faze, obrnut ishod bi značio da je „prati stranu, ne temu" pravilo
+  prekršeno tačno tamo gde je najvidljivije.
+
+  > **ISPRAVKA (talas ispravki pred spajanje): tvrdnja iznad o satu je bila bez pokrića.** U
+  > folderu snimaka nije bilo **nijednog** snimka sata u tamnoj temi (11–15 su svi bili svetli),
+  > a `11_clock_select_light.png` i `12_clock_info_light.png` nisu prikazivali ni izbor vremenske
+  > kontrole ni info dijalog nego mirni/aktivni sat. Snimci su preimenovani u ono što stvarno
+  > prikazuju, a tamna tema je snimljena (39–43: mirno stanje, izbor vremenske kontrole, info
+  > dijalog, partija u toku, istek vremena). Tvrdnja je time postala tačna; do tog trenutka je
+  > bila samo napisana. Ironija koja vredi zapisati: baš `12_...` je najbolji dokaz **suprotnog**
+  > nalaza — na njemu je bela polovina aktivna (`#FFFFFF`) i tadašnja `DS.surface` traka se u
+  > njoj potpuno gubi (V-3).
+
+  Drugi (kratak) prolaz je bio isključivo za
+  instrumentisane testove (Korak 5) — otkriveno kasno da postojeći `androidTest-results` XML
+  potiče od pre svih pet zadataka ove faze, pa broj nije mogao da se „pročita" bez novog
+  pokretanja. Oba prolaza su odmah zatvorena (`adb emu kill` + `./gradlew --stop`, potvrđeno
+  `pgrep -f qemu-system` praznim), i oba su koristila `-gpu host`, nikad `-gpu off`.
+  Screenshot-ovi (prvi prolaz):
+  `.superpowers/sdd/2026-09-14-faza-6d-2-android-dizajn-sistem-2/screenshots/`.
+
+- **2026-09-16** — Faza 6d-2, talas ispravki posle finalnog pregleda cele grane (tri važna
+  nalaza i sedam sitnih; nijedan blokirajući). Izveštaj:
+  `.superpowers/sdd/2026-09-14-faza-6d-2-android-dizajn-sistem-2/final-fix-report.md`.
+
+  **(V-1/V-2) Raspon alfe 0,75–0,9 je bio preslikan naniže, i to je bila greška u planu.**
+  Tabela preslikavanja je pokrivala `White@0,4–0,7 → inkMuted` i `Color.White → ink`, a raspon
+  između je preskočila; izvršilac je morao da pogađa. Posledica: telo lekcije je u svetloj temi
+  palo na `inkMuted`. Sada je `DS.ink` na tri mesta u `LearnView.kt` — `LPara` (nosi 30 blokova
+  isporučenog sadržaja, 4,36 → **15,72** nad `DS.ground`), telo `LBox`-a (24 kutije, 3,72–3,94 →
+  **13,40–14,19** nad sopstvenim tintom, mereno kao stvaran kompozit) i `infoText` istraživača
+  figura. iOS je za sva tri otvoren i proveren, ne pretpostavljen: `L_Para`
+  (`LessonRenderer.swift:395`) i `L_Box` (`:447`) daju `.primary.opacity(0.85)`.
+  **Tri mesta u istom rasponu NISU promenjena, i to je odluka a ne previd** — status „u toku" u
+  `OpeningExerciseCard` i `MateExerciseCard` i količina u `LPieceRow`: sva tri iOS eksplicitno
+  drži na `.secondary` (`LessonRenderer.swift:685`, `:809`, `:474`). Razlog je i sadržinski: to
+  su mirni članovi pored obojenih, i `ink` bi ih učinio glasnijim od „rešeno". Izuzeci su
+  upisani kao komentari na mestu, da ih sledeći prolaz ne „popravi".
+  Uzgredna dobit koja je i sama bila nalaz: u istraživaču figura su dva različita zatečena nivoa
+  (0,8 i 0,4) završila na istoj boji, pa je hijerarhija nestala — „Najjača figura…" i „27
+  mogućih poteza" su se čitali kao isti red. Sada su tri nivoa, tri boje (`accent`/`ink`/
+  `inkMuted`), snimak `47_explorer_hijerarhija_light.png`.
+
+  **(V-3) Peti oblik načela „ne mešaj fiksno i tokenizovano" — vidi „Android dizajn sistem".**
+  Kontrolna traka sata je prešla na `DS.surface` dok su polovine ostale fiksne; u svetloj temi je
+  šav prema aktivnoj beloj polovini pao sa **14,63 na 1,000**. Popravka nije samo podloga:
+  vraćanje podloge na fiksnu a ostavljanje `DS.ink`/`DS.accent` sadržaja NA njoj napravilo bi
+  istu grešku u drugom smeru (`DS.ink` svetle teme na `#1E293B` = **1,19**). Zato traka sada ima
+  tri fiksne konstante (`ClockBarBackground`/`ClockBarWell`/`ClockBarAccent`) i sav sadržaj čita
+  `DarkColors` — fiksna površina, fiksni članovi. Čip vremenske kontrole je uz to spušten sa
+  `@15%` na `@12%` tinta (4,339 → **4,583**, i to je iOS vrednost). Dijalozi sata ostaju na
+  `DS.*`: oni lebde nad scrim-om i legitimno prate temu.
+  **Šav prema CRNOJ polovini iznad trake ostaje nevidljiv (1,281/1,050) i to NIJE popravljeno** —
+  bilo je tako i pre grane, i nijedna boja ne prelazi 3:1 istovremeno prema `#FFFFFF` i `#121212`;
+  upisano u „Poznata ograničenja" umesto prećutano.
+
+  **Sitni nalazi — svi su bili netačne tvrdnje, i zato su svi popravljeni:** KDoc u
+  `ContrastTest.kt` je još pisao da ivice kartica u Podešavanjima „čekaju 6d-2" (ova grana JESTE
+  6d-2 i Task 4 ih je uklonio); komentar u `PuzzleView.kt` je obećavao emoji migraciju „u 6d-2 za
+  sve fajlove odjednom" (izričito van obima, odlukom korisnika — nije zakazana ni za jednu fazu);
+  komentar u `LearnView.kt` je tvrdio „isti par kao birač teme/**težine**" — za temu tačno
+  (`SettingsView.kt:506-507`), za težinu netačno (`DifficultyOptionRow`, `:690-721`, nosi izbor
+  akcent TEKSTOM i kvačicom, bez ispune i bez `onAccent`). Ista klasa greške kao „isti obrazac
+  kao kartica u `PathView`" iz Task-a 2 — tvrdnja o paraleli napisana bez otvaranja fajla.
+  Uklonjena i tri mrtva `color=` sa emoji glifova (`🔄`, `ℹ️`, `▶️`/`⏸️`) — nalaz koji je ova
+  faza sama napravila pa ga u istom fajlu pregazila.
+
+  `ContrastTest.kt` 10 → 11 testova. Nov je samo jedan par —
+  `clockControlBarIsReadableOverFixedHalves`, sa negativnom polovinom po uzoru na
+  `plainWhiteWouldFailOnTheDarkAccent` (svetli akcent na traci daje 1,716, dokaz da `DarkColors`
+  ovde nije stvar ukusa). Telo kutije je dodato kao tvrdnja u POSTOJEĆI `lessonBoxStylesMeetAA`,
+  ne kao nov test: on je do sada merio samo naslov, a telo nosi ceo tekst. Test je za to dobio
+  `private fun over(...)` — meri **stvaran kompozit** providnog tinta, ne približenje nad golom
+  podlogom. Nijedan prag nije spušten i nijedan nov par nije upisan u
+  `knownSubAAPairsDoNotGetWorse` (i dalje šest).
+
+  Provere: `testDebugUnitTest` **47/47, 0 padova** (čitano iz XML-a: `ContrastTest` 11,
+  `EngineTest` 9, `ExampleUnitTest` 1, `LocTest` 5, `PathProgressTest` 9, `PuzzleRatingTest` 9,
+  `StepWindowTest` 3), `assembleDebug` uspešan, `BoardView.kt`/`BoardTheme.kt` i dalje 0 pogodaka
+  na `DS.`. Jedan prolaz emulatora (`-gpu host`), zatvoren odmah po završetku (`adb emu kill` +
+  `./gradlew --stop`, `pgrep -f qemu-system` prazan). Deset novih snimaka (39–48) i dva
+  preimenovana (11, 12) u
+  `.superpowers/sdd/2026-09-14-faza-6d-2-android-dizajn-sistem-2/screenshots/`.

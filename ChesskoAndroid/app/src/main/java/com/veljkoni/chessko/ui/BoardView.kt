@@ -396,7 +396,7 @@ fun SquareView(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Yellow.copy(alpha = 0.35f))
+                    .background(Color.Yellow.copy(alpha = 0.40f))
             )
         }
 
@@ -437,17 +437,21 @@ fun SquareView(
                     Canvas(modifier = Modifier.fillMaxSize().padding(1.dp)) {
                         val strokeWidth = size.width * 0.08f
                         drawRect(
-                            color = Color(0xFF00D2FF).copy(alpha = 0.55f),
+                            color = Color(0xFF00D2FF).copy(alpha = 0.65f),
                             style = Stroke(width = strokeWidth)
                         )
                     }
                 } else {
                     // Empty-square dot
+                    // 0,55 je iOS vrednost (`SquareView.swift:182`). Android je nosio 0,45 —
+                    // isti pomak od -0,10 koji je imao i prsten iznad. Plan faze 6d-2 je oba
+                    // broja zamenio mestima i zato je trazio popravku samo jednog; drugi je
+                    // ispravljen posto je izvrsilac razliku prijavio umesto da je precuti.
                     Box(
                         modifier = Modifier
                             .fillMaxSize(0.28f)
                             .clip(CircleShape)
-                            .background(Color(0xFF00D2FF).copy(alpha = 0.45f))
+                            .background(Color(0xFF00D2FF).copy(alpha = 0.55f))
                             .align(Alignment.Center)
                     )
                 }

@@ -1,6 +1,8 @@
 package com.veljkoni.chessko
 
 import androidx.compose.ui.graphics.Color
+import com.veljkoni.chessko.ui.ClockBarAccent
+import com.veljkoni.chessko.ui.ClockBarBackground
 import com.veljkoni.chessko.ui.theme.ChesskoColors
 import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.LightColors
@@ -39,8 +41,43 @@ class ContrastTest {
         assertTrue("$name: %.2f, a trazi se >= %.2f".format(r, min), r >= min)
     }
 
+    /** Isto sto radi Compose kad crta `top.copy(alpha = a)` preko `bottom`. */
+    private fun over(top: Color, alpha: Float, bottom: Color): Color = Color(
+        red = alpha * top.red + (1f - alpha) * bottom.red,
+        green = alpha * top.green + (1f - alpha) * bottom.green,
+        blue = alpha * top.blue + (1f - alpha) * bottom.blue
+    )
+
+    /** Par bez palete iza sebe — za fiksne boje sata, koje nisu ni u jednoj temi. */
+    private fun checkPair(name: String, fg: Color, bg: Color, min: Double) {
+        val r = contrast(fg, bg)
+        assertTrue("$name: %.3f, a trazi se >= %.3f".format(r, min), r >= min)
+    }
+
     @Test
     fun textOnBackgroundsMeetsAA() {
+        // `ink`/`inkMuted` nad `surface` nose i dijaloge sata (izbor vremenske kontrole,
+        // info), koje je Faza 6d-2 prevela na tokene. Zaseban test za njih je bio napisan
+        // pa uklonjen: ponavljao je bas ove cetiri tvrdnje, pa nije mogao da padne a da i
+        // ovaj ne padne. Test koji ne moze da doda informaciju nije dokaz nego sum.
+        //
+        // `ink/ground` (Task 2) nosi i tekst blokova lekcije koji sede direktno na
+        // ekranskoj podlozi bez Card/Surface iza sebe -- citat (`LQuote`), naziv
+        // figure u `LPieceValueTable`, poznat simbol u `LessonPieceGlyph`, naslov
+        // lekcije u `LessonDetailView`.
+        //
+        // Task 3 (`LearnView.kt`) dodaje STVARNE potrosace za sva cetiri para u ovoj
+        // petlji odjednom: `OpeningExerciseCard`/`MateExerciseCard`/`MatePuzzleCard`
+        // i `PieceExplorer`-ov grid + info panel sede na `DS.surface` (birano bas
+        // zato sto ovde, za razliku od `DS.fill`, ni `success` ni `inkMuted` nisu
+        // sub-AA ni u jednoj temi -- vidi `knownSubAAPairsDoNotGetWorse`, gde su oba
+        // sub-AA SAMO nad `fill`/`ground`). `ink/surface` nosi naslove kartica i
+        // odabranu/neodabranu figuru u pikeru; `inkMuted/surface` nosi hint tekst i
+        // status „u toku"; `success/surface` i `danger/surface` nose status
+        // „reseno"/„pogresan potez" u sve tri kartice -- boja koja NOSI ZNACENJE.
+        // Ove kartice nemaju ni Card ni Surface izmedju sebe i `DS.ground` (isto
+        // stablo kao lekcijski blokovi iznad), pa je `DS.surface` bas ono sto stoji
+        // ISPOD teksta, ne priblizna procena.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/ground", p, { it.ink }, { it.ground }, 4.5)
             check("$label ink/surface", p, { it.ink }, { it.surface }, 4.5)
@@ -56,6 +93,10 @@ class ContrastTest {
      */
     @Test
     fun onAccentMeetsAAInBothThemes() {
+        // Task 3 dodaje odabranu figuru u `PieceExplorer`-ovom pikeru i aktivno
+        // dugme scenarija (`LearnView.kt`) kao stvarne potrosace -- isti par
+        // (`DS.accent`/`DS.onAccent`) kao birac teme u `SettingsView.kt` i kategorije
+        // u `ChessClockView.kt`.
         check("svetla onAccent/accent", LightColors, { it.onAccent }, { it.accent }, 4.5)
         check("tamna onAccent/accent", DarkColors, { it.onAccent }, { it.accent }, 4.5)
     }
@@ -73,15 +114,23 @@ class ContrastTest {
     }
 
     /**
-     * PET PAROVA JE ISPOD AA U SVETLOJ TEMI. Prva tri su NASLEDJENA iz spec
-     * tabele (iOS ima iste vrednosti); poslednja dva su dodata u talasu ispravki
-     * pred spajanje i danas nemaju pozivno mesto (vidi komentar uz njih).
+     * SEST PAROVA JE ISPOD AA U SVETLOJ TEMI. Prva tri su NASLEDJENA iz spec
+     * tabele (iOS ima iste vrednosti); cetvrti i peti su dodata u talasu ispravki
+     * pred spajanje i danas nemaju pozivno mesto (vidi komentar uz njih); sesti je
+     * dodat u Fazi 6d-2, Task 2 (vidi komentar ispod tabele).
      *
      *   inkMuted / ground : 4,359965479387139   (svetla)   5,94 (tamna)
      *   inkMuted / fill   : 4,014258257780754   (svetla)   4,81 (tamna)
      *   warning  / surface: 3,611752903947211   (svetla)   8,48 (tamna)
      *   success  / fill   : 4,184348841952418   (svetla)   7,78 (tamna)
      *   warning  / fill   : 2,9989738277199414  (svetla)   7,51 (tamna)
+     *   warning  / ground : 3,257244931140301   (svetla)   9,27 (tamna)
+     *
+     * Sesti par je dodat u Fazi 6d-2, Task 2: `BoxStyle.RULE` kutije u
+     * lekcijama (`LessonRenderer.colorFor`) crtaju `DS.warning` tekst nad
+     * `DS.ground`. Ista klasa kao `warning/surface` iznad — ne popravlja se
+     * ovde jer bi znacilo razlaz sa iOS paletom; tamna varijanta (9,27) ide u
+     * `lessonBoxStylesMeetAA` jer prolazi.
      *
      * Pragovi ispod nose PUNU preciznost stvarno izmerenu OVIM testom na JVM-u
      * (ne zaokruzeno „4,36", i ne double-precision racun izveden nezavisno u
@@ -98,6 +147,11 @@ class ContrastTest {
      */
     @Test
     fun knownSubAAPairsDoNotGetWorse() {
+        // Task 2 dodaje jos potrosaca za `inkMuted/ground`: "Lekcija nije dostupna."
+        // (`LessonDetailView`), potpis citata i sitni tekstovi ispod table
+        // (`LQuote`, `LPieceRow` kolicina, `LStaticBoard` natpis i poruka o
+        // interaktivnoj tabli u `LessonRenderer`). Isti vec-poznat granicni slucaj,
+        // ne nov par.
         check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.359965479387139)
         check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.014258257780754)
         check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.611752903947211)
@@ -108,6 +162,7 @@ class ContrastTest {
         // koji ipak stavi semanticku boju nad `fill` ne moze to da pogorsa u tisini.
         check("svetla success/fill", LightColors, { it.success }, { it.fill }, 4.184348841952418)
         check("svetla warning/fill", LightColors, { it.warning }, { it.fill }, 2.9989738277199414)
+        check("svetla warning/ground", LightColors, { it.warning }, { it.ground }, 3.257244931140301)
     }
 
     /**
@@ -126,6 +181,9 @@ class ContrastTest {
      */
     @Test
     fun textOnFillMeetsAA() {
+        // `ink/fill` (Task 3) nosi i „Reset"/„Ponovo" dugme u sve tri kartice vezbi
+        // i neodabranu figuru u `PieceExplorer`-ovom pikeru (`LearnView.kt`) -- isti
+        // par kao dugme "Nazad" u `LessonDetailView.kt` (vidi komentar tamo).
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/fill", p, { it.ink }, { it.fill }, 4.5)
             check("$label accent/fill", p, { it.accent }, { it.fill }, 4.5)
@@ -143,8 +201,10 @@ class ContrastTest {
      *  - `line` nad `fill` NE prelazi prag i nikad nece, jer su to dve susedne
      *    vrednosti iste palete (`#DFE3EC` / `#E7EAF1`, odnosno `#232C46` /
      *    `#1E2740`). Zato se `DS.line` ne sme koristiti kao granica NAD `DS.fill`
-     *    — ivica kartica u Podesavanjima to i dalje radi i zato se ne vidi
-     *    (upisano u „Poznata ogranicenja", ceka 6d-2).
+     *    — zbog toga je Task 4 ove faze uklonio ivicu sa cetiri kartice u
+     *    Podesavanjima (odvajanje sada nosi `surface`/`ground` razlika, vidi
+     *    `settingsCardsSeparateFromGround`). Raniji oblik ovog komentara je jos pisao
+     *    da to „ceka 6d-2"; ovo JESTE 6d-2 i vise ne ceka.
      *
      * Negativna polovina je namerno tvrdnja o STANJU, ne prag koji se popravlja:
      * popravka bi znacila promenu vrednosti `line` ili `fill`, dakle razlaz sa
@@ -161,6 +221,113 @@ class ContrastTest {
                 r < 3.0
             )
         }
+    }
+
+
+    /**
+     * `BoxStyle.RULE` (zlatno pravilo) i `BoxStyle.WARNING` (upozorenje) u
+     * lekcijama nose znacenje (CLAUDE.md, Faza 6d-2 brief: „Dve stvari koje
+     * nose znacenje i ne idu na akcent") — idu na `DS.warning`/`DS.danger`,
+     * ne na akcent lekcije. Test ispod meri protiv `DS.ground`, ali stvarna
+     * podloga NA EKRANU je jedan stepen gora: kutija (`LBox`/`LBullet` u
+     * `LearnView.kt`) crta sopstvenu providnu tintu (`color.copy(alpha =
+     * 0.1f)`) preko `DS.ground` (`LessonDetailView`-ov skrol nema Card ni
+     * Surface iza sebe — sedi direktno na `DS.ground` iz `MainActivity`-jevog
+     * Box-a, linija ~641), i TAJ kompozit je stvarni piksel iza teksta.
+     *
+     * IZMERENO (ne procenjeno), isti float32-preko-Double put racuna kao
+     * `luminance()`/`contrast()` iznad, kompozit = `boja @10%` preko `ground`:
+     *
+     *   warning na warning@10% tintu: 2,941624 (svetla)   7,848961 (tamna)
+     *   danger  na danger@10% tintu : 5,026419 (svetla)   6,371957 (tamna)
+     *
+     * Sve cetiri su 10-15% GORE od merenja protiv golog `ground`-a ispod
+     * (svetla warning 3,26 -> 2,94, svetla danger 5,89 -> 5,03, tamna warning
+     * 9,27 -> 7,85, tamna danger 7,32 -> 6,37) — providnost dosledno pomera
+     * kompozit KA semantickoj boji, nikad od nje. Test ispod je zato DONJA
+     * GRANICA merenja, ne tacna vrednost stvarnog piksela; gde tacna vrednost
+     * i dalje prelazi 4,5 (sve osim svetle `warning`, vec poznat slucaj ispod)
+     * marza je dovoljna da razlika ne menja ishod.
+     *
+     * `danger/surface` (oba testa u `textOnBackgroundsMeetsAA`) NIJE isti par
+     * kao `danger/ground` ovde — ne preklapa se, samo je slucajno vec
+     * pokriven drugom podlogom pre ovog taska.
+     *
+     * `warning/ground` u SVETLOJ temi pada ispod 4,5 (3,26 protiv golog
+     * `ground`-a, 2,94 protiv stvarnog kompozita) — ista klasa ogranicenja kao
+     * `warning/surface` (vec u `knownSubAAPairsDoNotGetWorse` ispod), pa ide
+     * tamo umesto ovde. Prag se ne pomera; vidi „Poznata ogranicenja" u
+     * CLAUDE.md.
+     */
+    @Test
+    fun lessonBoxStylesMeetAA() {
+        check("tamna warning/ground", DarkColors, { it.warning }, { it.ground }, 4.5)
+        check("svetla danger/ground", LightColors, { it.danger }, { it.ground }, 4.5)
+        check("tamna danger/ground", DarkColors, { it.danger }, { it.ground }, 4.5)
+
+        // TELO kutije, dodato u talasu ispravki pred spajanje. Tvrdnje iznad mere samo
+        // NASLOV (obojen bojom stila); telo nosi ceo tekst i nijedan test ga do sada
+        // nije merio — a bas ono je bilo pogresno: prvi prelaz je zateceni `White@0,85`
+        // preslikao na `inkMuted`, pa je u svetloj temi palo na 3,72–3,94 nad sopstvenim
+        // tintom, ispod AA. Sada je `DS.ink` (`LearnView.LBox`), sto nad sva tri tinta
+        // daje 13,40–14,19 u svetloj i 13,67–14,06 u tamnoj temi.
+        //
+        // Ovde se meri STVARAN kompozit (`boja@10%` preko `ground`), ne priblizenje nad
+        // golim `ground`-om — kutija svoju podlogu sama crta.
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            for ((styleName, styleColor) in listOf(
+                "INFO/null" to p.accent, "RULE" to p.warning, "WARNING" to p.danger
+            )) {
+                checkPair("$label telo kutije ($styleName): ink na ${styleName}@10%% tintu",
+                    p.ink, over(styleColor, 0.1f, p.ground), 4.5)
+            }
+        }
+    }
+
+    /**
+     * Kontrolna traka sata, popravka regresije nadjene u finalnom pregledu Faze 6d-2.
+     *
+     * Traka stoji IZMEDJU dve polovine sata koje su namerno fiksne (prate stranu u igri,
+     * ne sistemsku temu). Prvi prelaz ove faze poslao je njenu podlogu na `DS.surface` a
+     * polovine ostavio kakve jesu — svaki clan para „uredno" obradjen, par nikad
+     * izmeren. U svetloj temi je `DS.surface` bukvalno `#FFFFFF`, ista boja kao bela
+     * polovina ispod: sav je pao sa **14,63 na 1,000**. To nije kozmetika — traka nije
+     * `clickable`, pa korisnik koji cilja vrh svoje polovine pogadja inertnu traku.
+     *
+     * Zato je podloga vracena na fiksnu (`ClockBarBackground`), a CEO sadrzaj trake cita
+     * `DarkColors`, ne `DS.*`: fiksna povrsina dobija fiksne clanove, pa je par merljiv i
+     * isti u obe teme.
+     *
+     * Sav prema CRNOJ polovini iznad trake ostaje nevidljiv (1,281 aktivna / 1,050 mirna)
+     * i to je tvrdnja o STANJU, ne prag: bilo je tako i pre ove grane, i nijedna boja ne
+     * prelazi 3:1 istovremeno prema `#FFFFFF` i prema `#121212` a da ostane u registru
+     * sata. Upisano u „Poznata ogranicenja" u `CLAUDE.md`.
+     */
+    @Test
+    fun clockControlBarIsReadableOverFixedHalves() {
+        val bar = ClockBarBackground
+        // Sav prema beloj polovini: WCAG ne-tekstualni prag 3:1. Izmereno 14,629
+        // (aktivna), 11,652 (mirna, `#E5E5EA`), 11,205 (istek, `#FADAD8`).
+        checkPair("sav traka/bela aktivna polovina", bar, Color(0xFFFFFFFF), 3.0)
+        checkPair("sav traka/bela mirna polovina", bar, Color(0xFFE5E5EA), 3.0)
+        checkPair("sav traka/bela polovina u isteku", bar, Color(0xFFFADAD8), 3.0)
+
+        // Sadrzaj NA traci. `DS.ink` bi ovde u svetloj temi dao 1,19 — zato `DarkColors`.
+        checkPair("DarkColors.ink na traci", DarkColors.ink, bar, 4.5)
+        checkPair("akcent trake na traci", ClockBarAccent, bar, 4.5)
+        // Cip vremenske kontrole crta akcent na SOPSTVENOM tintu preko trake. Na @15%
+        // je to 4,339 — ispod AA; na @12% (iOS vrednost) 4,583.
+        checkPair("akcent trake na sopstvenom @12%% cipu",
+            ClockBarAccent, over(ClockBarAccent, 0.12f, bar), 4.5)
+
+        // Negativna polovina, kao `plainWhiteWouldFailOnTheDarkAccent`: dokaz da
+        // `DarkColors` ovde NIJE stvar ukusa nego jedina vrednost koja radi.
+        val svetliAkcentNaTraci = contrast(LightColors.accent, bar)
+        assertTrue(
+            "svetli akcent na traci daje %.3f — da je >= 4.5, traka bi smela `DS.accent`"
+                .format(svetliAkcentNaTraci),
+            svetliAkcentNaTraci < 4.5
+        )
     }
 
     @Test
@@ -180,5 +347,45 @@ class ContrastTest {
         assertTrue("scrim mora biti isti", LightColors.scrim == DarkColors.scrim)
         assertTrue("onScrim mora biti isti", LightColors.onScrim == DarkColors.onScrim)
         assertTrue("inkFixed mora biti isti", LightColors.inkFixed == DarkColors.inkFixed)
+    }
+
+    /**
+     * Faza 6d-2, Task 4, Deo A. Cetiri kartice u Podesavanjima (jezik, statistika,
+     * tezina, o aplikaciji) su izgubile `.border(1.dp, DS.line, ...)` — nijedan par u
+     * paleti ne daje vidljivu ivicu (`line/fill` 1,067, `line/surface` 1,285, oba
+     * daleko ispod WCAG-ovog ne-tekstualnog praga 3:1). Odvajanje od `DS.ground`
+     * sada nosi ISKLJUCIVO `surface`/`ground` razlika u boji — isto sto iOS dobija
+     * besplatno od nativne grouped liste.
+     *
+     * Prag je namerno nizak (dekorativno odvajanje, ne granica kontrole nad kojom
+     * korisnik mora da vidi ivicu da bi bio funkcionalan) — donja granica je puna
+     * preciznost stvarno izmerene vrednosti (isti float32-preko-Double put racuna
+     * kao ostatak ove datoteke), ne WCAG prag. Ako `surface` i `ground` ikad postanu
+     * ista boja, kartice nestaju bez ijedne druge posledice, i ovaj test to hvata.
+     */
+    @Test
+    fun settingsCardsSeparateFromGround() {
+        check("svetla surface/ground", LightColors, { it.surface }, { it.ground }, 1.1088367563082842)
+        check("tamna surface/ground", DarkColors, { it.surface }, { it.ground }, 1.0942153907723773)
+    }
+
+    /**
+     * Dopuna otkrivena u pregledu Task-a 3: `DS.accent` kao TEKST nad `DS.surface` i
+     * nad `DS.ground` nije imao nijednu tvrdnju, iako pozivnih mesta ima cetiri —
+     * `LessonDetailView.kt:154` (broj lekcije, direktno na `DS.ground`, skrol bez
+     * Card/Surface iza sebe), `LessonRenderer.kt:150`/`:175` (`LPieceRow`/
+     * `LPieceValueTable`, isto direktno na `DS.ground`) i `LearnView.kt:482`
+     * (naslov info panela u `PieceExplorer`-u, na `DS.surface`).
+     *
+     * Bezbedno je izmereno pre ove tvrdnje (nije popravka): 8,53/6,43 (surface),
+     * 7,69/7,03 (ground) — sve daleko iznad AA praga 4,5. Test svejedno postoji da
+     * moze da PADNE ako se `accent` ikad promeni.
+     */
+    @Test
+    fun accentTextOnSurfaceAndGroundMeetsAA() {
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            check("$label accent/surface", p, { it.accent }, { it.surface }, 4.5)
+            check("$label accent/ground", p, { it.accent }, { it.ground }, 4.5)
+        }
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -30,7 +31,37 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.veljkoni.chessko.logic.HapticManager
 import com.veljkoni.chessko.logic.SoundManager
+import com.veljkoni.chessko.ui.theme.DarkColors
+import com.veljkoni.chessko.ui.theme.DS
 import kotlinx.coroutines.delay
+
+// MARK: - Fiksne boje kontrolne trake
+//
+// Sat je u `CLAUDE.md` naveden kao izuzet od tokena U CELOSTI, i traka izmedju dve
+// njegove polovine je deo tog izuzetka, ne hrom: ona dodiruje crnu polovinu odozgo i
+// belu odozdo, pa je njena podloga vezana za STRANU U IGRI, ne za sistemsku temu.
+// `DS.surface` je tu u svetloj temi bio bukvalno ista boja kao bela polovina (1,000:1).
+//
+// Sadrzaj trake zato cita `DarkColors` — fiksnu paletu, ne `DS.*`. To NIJE mesanje:
+// vrednost je konstanta kao i podloga, pa je par merljiv i isti u obe teme. Dijalozi
+// sata (`PresetChooserDialog`, `InfoDialog`) su druga prica — oni lebde nad scrim-om
+// i legitimno prate temu, pa i dalje koriste `DS.*`.
+//
+// Cuva ih `ContrastTest.clockControlBarIsReadableOverFixedHalves`.
+
+/** Podloga trake. Zatecena vrednost, vracena posle regresije opisane u `ControlBar`. */
+val ClockBarBackground = Color(0xFF1E293B)
+
+/**
+ * Udubljenje ispod „zatvori" i „resetuj" dugmadi. Cisto dekorativno — nosilac radnje je
+ * emoji glif, ne krug. Zatecenih `White@6%` daje 1,198 prema traci; `12%` daje 1,458.
+ * Nijedna vrednost u ovom registru ne stize do 3:1 a da krug ne pocne da vice glasnije
+ * od glifa, pa je uzeta veca od dve izmerene.
+ */
+val ClockBarWell = Color.White.copy(alpha = 0.12f)
+
+/** Akcent NA fiksno tamnoj traci: 5,629 prema podlozi (svetla varijanta bi dala 1,716). */
+val ClockBarAccent = DarkColors.accent
 
 data class TimeControlPreset(
     val name: String,
@@ -347,10 +378,27 @@ fun ControlBar(
     onInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // TRAKA IZMEDJU DVE NAMERNO FIKSNE POLOVINE JE I SAMA FIKSNA.
+    //
+    // Prvi prelaz ove faze poslao je podlogu trake na `DS.surface` a polovine ostavio
+    // fiksnim — ispravno svako za sebe, ali par se nikad nije izmerio. U svetloj temi
+    // `DS.surface` je `#FFFFFF`, bas boja bele polovine ispod: sav je pao sa **14,63
+    // na 1,000**. Traka NIJE `clickable`, pa korisnik koji cilja vrh „svoje" bele
+    // polovine pogadja inertnu traku i sat se ne prebacuje — bez vidljivog sava ne zna
+    // gde polovina pocinje.
+    //
+    // Zato se ovde vraca zatecena fiksna `#1E293B` i CEO sadrzaj trake cita `DarkColors`
+    // (fiksna paleta, jer je ovo trajno tamna povrsina — ne `DS.*`, koji bi u svetloj
+    // temi dao `DS.ink` `#161A22` na `#1E293B`, tj. 1,19:1). Mereno, ista formula kao
+    // `ContrastTest`, isto u obe teme:
+    //   traka prema beloj polovini: 14,629 (aktivna) / 11,652 (mirna) / 11,205 (istek)
+    //   `DarkColors.ink` na traci 12,929; `DarkColors.accent` 5,629
+    // Sav prema CRNOJ polovini iznad ostaje nevidljiv (1,281 / 1,050) — to nije uveo
+    // ovaj prelaz, isto je bilo i pre grane; upisano u „Poznata ogranicenja".
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF1E293B))
+            .background(ClockBarBackground)
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -360,7 +408,7 @@ fun ControlBar(
             onClick = onClose,
             modifier = Modifier
                 .size(44.dp)
-                .background(Color.White.copy(alpha = 0.06f), CircleShape)
+                .background(ClockBarWell, CircleShape)
         ) {
             Text(text = "❌", fontSize = 14.sp)
         }
@@ -374,7 +422,10 @@ fun ControlBar(
                 Row(
                     modifier = Modifier
                         .clip(CapsuleShape)
-                        .background(Color(0xFF00D2FF).copy(alpha = 0.15f))
+                        // 0,12 a ne 0,15: nad fiksnom trakom akcent na sopstvenom
+                        // @15% tintu daje 4,339 (ispod AA), na @12% daje 4,583.
+                        // 0,12 je uz to i iOS vrednost (`ChessClockView.swift:278`).
+                        .background(ClockBarAccent.copy(alpha = 0.12f))
                         .clickable { onPresetClick() }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -383,14 +434,17 @@ fun ControlBar(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = selectedPresetName,
-                        color = Color(0xFF00D2FF),
+                        color = ClockBarAccent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
                 IconButton(onClick = onInfoClick) {
-                    Text(text = "ℹ️", color = Color(0xFF00D2FF), fontSize = 18.sp)
+                    // Bez `color=`: `ℹ️` je pun-kolor emoji glif i Skia za
+                    // takve glifove IGNORISE boju teksta. Zatecen `color = DS.accent`
+                    // je izgledao kao da mehanizam radi — nije radio nikad.
+                    Text(text = "ℹ️", fontSize = 18.sp)
                 }
             }
         } else {
@@ -398,32 +452,39 @@ fun ControlBar(
                 onClick = onPlayPauseClick,
                 modifier = Modifier
                     .size(52.dp)
-                    .background(Color(0xFF00D2FF), CircleShape)
+                    .background(ClockBarAccent, CircleShape)
             ) {
+                // Isto kao `ℹ️` iznad: `▶️`/`⏸️` su pun-kolor
+                // emoji glifovi, pa je zatecen `color = DS.onAccent` bio mrtav.
                 Text(
                     text = if (isPaused) "▶️" else "⏸️",
-                    fontSize = 18.sp,
-                    color = Color.Black
+                    fontSize = 18.sp
                 )
             }
         }
 
         // Reset Button
         val canReset = hasStarted || p1Time != baseSeconds
+        // Onemoguceno stanje se NE sme oslanjati na `color=` teksta: `\uD83D\uDD04` je
+        // pun-kolor emoji glif, a Skia za takve glifove ignorise boju teksta — zatecen kod
+        // je zato razlikovao stanja samo podlogom (`White 6%` / `White 2%`), sto je nad crnom
+        // pozadinom sata 1,063:1, dakle takodje nevidljivo. Merenjem utvrdjeno: dugme se ni
+        // pre ove faze nije videlo kao onemoguceno. `Modifier.alpha` radi na slojevima, pa
+        // deluje i na emoji — to je jedini signal ovde koji stvarno radi. Zato ovde vise
+        // NEMA `color=`: prethodni prelaz ga je preveo na `DS.ink`/`DS.inkMuted` i time
+        // ostavio kod koji izgleda kao da mehanizam radi, iako ta boja nikad ne stigne
+        // do glifa.
         IconButton(
             onClick = onResetClick,
             enabled = canReset,
             modifier = Modifier
                 .size(44.dp)
-                .background(
-                    if (canReset) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.02f),
-                    CircleShape
-                )
+                .alpha(if (canReset) 1f else 0.38f)
+                .background(ClockBarWell, CircleShape)
         ) {
             Text(
                 text = "🔄",
-                fontSize = 14.sp,
-                color = if (canReset) Color.White else Color.White.copy(alpha = 0.25f)
+                fontSize = 14.sp
             )
         }
     }
@@ -441,7 +502,7 @@ fun PresetChooserDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF1E293B),
+            color = DS.surface,
             modifier = Modifier.padding(16.dp)
         ) {
             Column(
@@ -452,7 +513,7 @@ fun PresetChooserDialog(
             ) {
                 Text(
                     text = loc("Vremenska kontrola"),
-                    color = Color.White,
+                    color = DS.ink,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
@@ -470,14 +531,14 @@ fun PresetChooserDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.05f))
+                                .background(if (isSelected) DS.accent else DS.fill)
                                 .clickable { selectedCategory = category }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = category,
-                                color = if (isSelected) Color.Black else Color.White,
+                                color = if (isSelected) DS.onAccent else DS.ink,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -495,10 +556,10 @@ fun PresetChooserDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent)
+                                .background(if (isSelected) DS.fill else Color.Transparent)
                                 .border(
                                     1.dp,
-                                    if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.08f),
+                                    if (isSelected) DS.accent else DS.line,
                                     RoundedCornerShape(10.dp)
                                 )
                                 .clickable { onPresetSelected(preset) }
@@ -510,7 +571,7 @@ fun PresetChooserDialog(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = preset.name,
-                                        color = Color.White,
+                                        color = DS.ink,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -522,13 +583,13 @@ fun PresetChooserDialog(
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = preset.subtitle,
-                                    color = Color.White.copy(alpha = 0.5f),
+                                    color = DS.inkMuted,
                                     fontSize = 11.sp
                                 )
                             }
                             Text(
                                 text = loc("Izaberi"),
-                                color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.3f),
+                                color = if (isSelected) DS.accent else DS.inkMuted,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -540,7 +601,7 @@ fun PresetChooserDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = loc("Zatvori"), color = Color(0xFF00D2FF))
+                    Text(text = loc("Zatvori"), color = DS.accent)
                 }
             }
         }
@@ -554,7 +615,7 @@ fun InfoDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF1E293B),
+            color = DS.surface,
             modifier = Modifier.padding(16.dp)
         ) {
             Column(
@@ -565,7 +626,7 @@ fun InfoDialog(onDismiss: () -> Unit) {
             ) {
                 Text(
                     text = loc("Objašnjenje vremenskih kontrola"),
-                    color = Color.White,
+                    color = DS.ink,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
@@ -608,10 +669,10 @@ fun InfoDialog(onDismiss: () -> Unit) {
 
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D2FF)),
+                    colors = ButtonDefaults.buttonColors(containerColor = DS.accent),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = loc("Zatvori"), color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(text = loc("Zatvori"), color = DS.onAccent, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -626,7 +687,7 @@ fun InfoCategorySection(
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
             text = title,
-            color = Color(0xFF00D2FF),
+            color = DS.accent,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold
         )
@@ -637,14 +698,14 @@ fun InfoCategorySection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.03f))
+                        .background(DS.fill)
                         .padding(10.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.Top
                 ) {
                     Text(
                         text = name,
-                        color = Color.White,
+                        color = DS.ink,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.width(80.dp)
@@ -652,7 +713,7 @@ fun InfoCategorySection(
 
                     Text(
                         text = description,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = DS.inkMuted,
                         fontSize = 12.sp,
                         lineHeight = 16.sp
                     )
