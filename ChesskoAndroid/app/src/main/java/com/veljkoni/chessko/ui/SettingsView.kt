@@ -106,8 +106,11 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(DS.fill)
-                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                        // Nijedan par u paleti ne daje vidljivu ivicu (`line/fill` 1,067,
+                        // `line/surface` 1,285 — vidi `ContrastTest.nonTextPairsOverFillAreDistinguishable`).
+                        // Kartica se od `DS.ground` odvaja SAMO bojom podloge, kao iOS-ova
+                        // nativna grouped lista (vidi `settingsCardsSeparateFromGround`).
+                        .background(DS.surface)
                 ) {
                     val languages = listOf(
                         "sr" to "Srpski",
@@ -198,8 +201,9 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
+                        // Ivica uklonjena — `line/surface` daje 1,285, nevidljivo (vidi
+                        // komentar uz karticu jezika iznad).
                         .background(DS.surface)
-                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -260,8 +264,8 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(DS.fill)
-                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                        // Ivica uklonjena — vidi komentar uz karticu jezika iznad.
+                        .background(DS.surface)
                 ) {
                     val difficulties = listOf(
                         GameDifficulty.BEGINNER,
@@ -537,8 +541,8 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(DS.fill)
-                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                        // Ivica uklonjena — vidi komentar uz karticu jezika iznad.
+                        .background(DS.surface)
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

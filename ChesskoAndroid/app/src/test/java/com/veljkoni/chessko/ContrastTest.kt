@@ -267,4 +267,44 @@ class ContrastTest {
         assertTrue("onScrim mora biti isti", LightColors.onScrim == DarkColors.onScrim)
         assertTrue("inkFixed mora biti isti", LightColors.inkFixed == DarkColors.inkFixed)
     }
+
+    /**
+     * Faza 6d-2, Task 4, Deo A. Cetiri kartice u Podesavanjima (jezik, statistika,
+     * tezina, o aplikaciji) su izgubile `.border(1.dp, DS.line, ...)` — nijedan par u
+     * paleti ne daje vidljivu ivicu (`line/fill` 1,067, `line/surface` 1,285, oba
+     * daleko ispod WCAG-ovog ne-tekstualnog praga 3:1). Odvajanje od `DS.ground`
+     * sada nosi ISKLJUCIVO `surface`/`ground` razlika u boji — isto sto iOS dobija
+     * besplatno od nativne grouped liste.
+     *
+     * Prag je namerno nizak (dekorativno odvajanje, ne granica kontrole nad kojom
+     * korisnik mora da vidi ivicu da bi bio funkcionalan) — donja granica je puna
+     * preciznost stvarno izmerene vrednosti (isti float32-preko-Double put racuna
+     * kao ostatak ove datoteke), ne WCAG prag. Ako `surface` i `ground` ikad postanu
+     * ista boja, kartice nestaju bez ijedne druge posledice, i ovaj test to hvata.
+     */
+    @Test
+    fun settingsCardsSeparateFromGround() {
+        check("svetla surface/ground", LightColors, { it.surface }, { it.ground }, 1.1088367563082842)
+        check("tamna surface/ground", DarkColors, { it.surface }, { it.ground }, 1.0942153907723773)
+    }
+
+    /**
+     * Dopuna otkrivena u pregledu Task-a 3: `DS.accent` kao TEKST nad `DS.surface` i
+     * nad `DS.ground` nije imao nijednu tvrdnju, iako pozivnih mesta ima cetiri —
+     * `LessonDetailView.kt:154` (broj lekcije, direktno na `DS.ground`, skrol bez
+     * Card/Surface iza sebe), `LessonRenderer.kt:150`/`:175` (`LPieceRow`/
+     * `LPieceValueTable`, isto direktno na `DS.ground`) i `LearnView.kt:482`
+     * (naslov info panela u `PieceExplorer`-u, na `DS.surface`).
+     *
+     * Bezbedno je izmereno pre ove tvrdnje (nije popravka): 8,53/6,43 (surface),
+     * 7,69/7,03 (ground) — sve daleko iznad AA praga 4,5. Test svejedno postoji da
+     * moze da PADNE ako se `accent` ikad promeni.
+     */
+    @Test
+    fun accentTextOnSurfaceAndGroundMeetsAA() {
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            check("$label accent/surface", p, { it.accent }, { it.surface }, 4.5)
+            check("$label accent/ground", p, { it.accent }, { it.ground }, 4.5)
+        }
+    }
 }

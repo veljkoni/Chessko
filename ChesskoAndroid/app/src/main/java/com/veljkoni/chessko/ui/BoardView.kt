@@ -396,7 +396,7 @@ fun SquareView(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Yellow.copy(alpha = 0.35f))
+                    .background(Color.Yellow.copy(alpha = 0.40f))
             )
         }
 
@@ -437,7 +437,7 @@ fun SquareView(
                     Canvas(modifier = Modifier.fillMaxSize().padding(1.dp)) {
                         val strokeWidth = size.width * 0.08f
                         drawRect(
-                            color = Color(0xFF00D2FF).copy(alpha = 0.55f),
+                            color = Color(0xFF00D2FF).copy(alpha = 0.65f),
                             style = Stroke(width = strokeWidth)
                         )
                     }
