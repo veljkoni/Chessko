@@ -30,6 +30,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.veljkoni.chessko.logic.HapticManager
 import com.veljkoni.chessko.logic.SoundManager
+import com.veljkoni.chessko.ui.theme.DS
 import kotlinx.coroutines.delay
 
 data class TimeControlPreset(
@@ -350,7 +351,7 @@ fun ControlBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF1E293B))
+            .background(DS.surface)
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -360,7 +361,7 @@ fun ControlBar(
             onClick = onClose,
             modifier = Modifier
                 .size(44.dp)
-                .background(Color.White.copy(alpha = 0.06f), CircleShape)
+                .background(DS.fill, CircleShape)
         ) {
             Text(text = "❌", fontSize = 14.sp)
         }
@@ -374,7 +375,7 @@ fun ControlBar(
                 Row(
                     modifier = Modifier
                         .clip(CapsuleShape)
-                        .background(Color(0xFF00D2FF).copy(alpha = 0.15f))
+                        .background(DS.accent.copy(alpha = 0.15f))
                         .clickable { onPresetClick() }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -383,14 +384,14 @@ fun ControlBar(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = selectedPresetName,
-                        color = Color(0xFF00D2FF),
+                        color = DS.accent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
                 IconButton(onClick = onInfoClick) {
-                    Text(text = "ℹ️", color = Color(0xFF00D2FF), fontSize = 18.sp)
+                    Text(text = "ℹ️", color = DS.accent, fontSize = 18.sp)
                 }
             }
         } else {
@@ -398,12 +399,12 @@ fun ControlBar(
                 onClick = onPlayPauseClick,
                 modifier = Modifier
                     .size(52.dp)
-                    .background(Color(0xFF00D2FF), CircleShape)
+                    .background(DS.accent, CircleShape)
             ) {
                 Text(
                     text = if (isPaused) "▶️" else "⏸️",
                     fontSize = 18.sp,
-                    color = Color.Black
+                    color = DS.onAccent
                 )
             }
         }
@@ -415,15 +416,12 @@ fun ControlBar(
             enabled = canReset,
             modifier = Modifier
                 .size(44.dp)
-                .background(
-                    if (canReset) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.02f),
-                    CircleShape
-                )
+                .background(DS.fill, CircleShape)
         ) {
             Text(
                 text = "🔄",
                 fontSize = 14.sp,
-                color = if (canReset) Color.White else Color.White.copy(alpha = 0.25f)
+                color = if (canReset) DS.ink else DS.inkMuted
             )
         }
     }
@@ -441,7 +439,7 @@ fun PresetChooserDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF1E293B),
+            color = DS.surface,
             modifier = Modifier.padding(16.dp)
         ) {
             Column(
@@ -452,7 +450,7 @@ fun PresetChooserDialog(
             ) {
                 Text(
                     text = loc("Vremenska kontrola"),
-                    color = Color.White,
+                    color = DS.ink,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
@@ -470,14 +468,14 @@ fun PresetChooserDialog(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.05f))
+                                .background(if (isSelected) DS.accent else DS.fill)
                                 .clickable { selectedCategory = category }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = category,
-                                color = if (isSelected) Color.Black else Color.White,
+                                color = if (isSelected) DS.onAccent else DS.ink,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -495,10 +493,10 @@ fun PresetChooserDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent)
+                                .background(if (isSelected) DS.fill else Color.Transparent)
                                 .border(
                                     1.dp,
-                                    if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.08f),
+                                    if (isSelected) DS.accent else DS.line,
                                     RoundedCornerShape(10.dp)
                                 )
                                 .clickable { onPresetSelected(preset) }
@@ -510,7 +508,7 @@ fun PresetChooserDialog(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = preset.name,
-                                        color = Color.White,
+                                        color = DS.ink,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -522,13 +520,13 @@ fun PresetChooserDialog(
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = preset.subtitle,
-                                    color = Color.White.copy(alpha = 0.5f),
+                                    color = DS.inkMuted,
                                     fontSize = 11.sp
                                 )
                             }
                             Text(
                                 text = loc("Izaberi"),
-                                color = if (isSelected) Color(0xFF00D2FF) else Color.White.copy(alpha = 0.3f),
+                                color = if (isSelected) DS.accent else DS.inkMuted,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -540,7 +538,7 @@ fun PresetChooserDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = loc("Zatvori"), color = Color(0xFF00D2FF))
+                    Text(text = loc("Zatvori"), color = DS.accent)
                 }
             }
         }
@@ -554,7 +552,7 @@ fun InfoDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFF1E293B),
+            color = DS.surface,
             modifier = Modifier.padding(16.dp)
         ) {
             Column(
@@ -565,7 +563,7 @@ fun InfoDialog(onDismiss: () -> Unit) {
             ) {
                 Text(
                     text = loc("Objašnjenje vremenskih kontrola"),
-                    color = Color.White,
+                    color = DS.ink,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
@@ -608,10 +606,10 @@ fun InfoDialog(onDismiss: () -> Unit) {
 
                 Button(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00D2FF)),
+                    colors = ButtonDefaults.buttonColors(containerColor = DS.accent),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = loc("Zatvori"), color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(text = loc("Zatvori"), color = DS.onAccent, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -626,7 +624,7 @@ fun InfoCategorySection(
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
             text = title,
-            color = Color(0xFF00D2FF),
+            color = DS.accent,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold
         )
@@ -637,14 +635,14 @@ fun InfoCategorySection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.03f))
+                        .background(DS.fill)
                         .padding(10.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.Top
                 ) {
                     Text(
                         text = name,
-                        color = Color.White,
+                        color = DS.ink,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.width(80.dp)
@@ -652,7 +650,7 @@ fun InfoCategorySection(
 
                     Text(
                         text = description,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = DS.inkMuted,
                         fontSize = 12.sp,
                         lineHeight = 16.sp
                     )
