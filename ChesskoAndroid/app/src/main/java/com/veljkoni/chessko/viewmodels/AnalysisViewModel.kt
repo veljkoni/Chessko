@@ -36,6 +36,14 @@ enum class AnalysisError {
     /** `StockfishEngine.engineStarted == false` — motor jos nije pokrenut. */
     ENGINE_UNAVAILABLE,
 
+    /**
+     * Motor je pokrenut ali nije potvrdio spremnost (`waitUntilReady()` je
+     * istekla). Zasebno od [ENGINE_UNAVAILABLE] zato sto su to razlicite stvari
+     * i za korisnika: „nema motora" se ne popravlja cekanjem, „jos nije spreman"
+     * se popravlja.
+     */
+    ENGINE_NOT_READY,
+
     /** Bar jedna pretraga nije dala ocenu (timeout ili neuspeh motora). */
     SEARCH_FAILED
 }
@@ -109,9 +117,39 @@ class AnalysisViewModel : ViewModel() {
         val total = positions.size
 
         job = viewModelScope.launch(Dispatchers.Default) {
-            val evals = ArrayList<PositionEval?>(total)
+            // `engineStarted` gore NIJE dokaz spremnosti -- postaje `true`
+            // sinhrono u `StockfishEngine.start()`, pre kopiranja ~140 MB NNUE
+            // mreza i pre `uci`/`setoption`/`isready`. Pretraga poslata pre toga
+            // ne degradira tiho nego GASI CEO PROCES: `engine.cpp:153-155`
+            // (`Engine::go` -> `verify_networks()`) -> `nnue/network.cpp:267`
+            // (`exit(EXIT_FAILURE)`), bez dijaloga o padu, ista vrsta nestanka
+            // kao iOS-ov SIGPIPE. Analiza su nova vrata ka motoru, a u rezimu
+            // „Igra sa prijateljem" i JEDINA: prvo pokretanje -> partija u
+            // dvoje -> mat u 4 poluteza -> „Analiziraj partiju", bez ijednog
+            // ranijeg poziva motoru. Zato se spremnost ovde stvarno ceka.
+            if (!StockfishEngine.waitUntilReady()) {
+                withContext(Dispatchers.Main) {
+                    isRunning = false
+                    error = AnalysisError.ENGINE_NOT_READY
+                }
+                return@launch
+            }
+
+            val evals = ArrayList<PositionEval>(total)
             for (i in 0 until total) {
+                // Izlaz na PRVOJ neuspeloj poziciji, isto kao iOS
+                // (`StockfishBridge.analyze`: `guard let eval else { return nil }`).
+                // Ranije se cekalo svih N+1 pretraga pa se tek onda gledalo ima
+                // li `null`-a -- korisnik bi odstajao celu analizu da bi mu se
+                // reklo da nije uspela.
                 val eval = StockfishEngine.evaluate(positions[i].fen, depth)
+                if (eval == null) {
+                    withContext(Dispatchers.Main) {
+                        isRunning = false
+                        error = AnalysisError.SEARCH_FAILED
+                    }
+                    return@launch
+                }
                 evals.add(eval)
                 val done = i + 1
                 withContext(Dispatchers.Main) {
@@ -119,22 +157,14 @@ class AnalysisViewModel : ViewModel() {
                 }
             }
 
-            if (evals.any { it == null }) {
-                withContext(Dispatchers.Main) {
-                    isRunning = false
-                    error = AnalysisError.SEARCH_FAILED
-                }
-                return@launch
-            }
-
-            val scores = evals.map { it!!.score }
+            val scores = evals.map { it.score }
 
             // Potez motora (UCI string) iz pozicije `i` prema stvarno odigranom
             // potezu. `ChessMove.fromUCI` treba poziciju PRE poteza da razresi
             // string u konkretan potez (from/to/flag); `ChessMove` je `data class`,
             // pa `==` poredi sve troje — tacno i za promociju i za rokadu.
             val matched = playedMoves.mapIndexed { i, played ->
-                val bestUci = evals[i]?.bestMove
+                val bestUci = evals[i].bestMove
                 val best = bestUci?.let { ChessMove.fromUCI(it, positions[i]) }
                 played != null && best != null && played == best
             }

@@ -216,6 +216,7 @@ private fun ErrorMessage(error: AnalysisError) {
 private fun errorText(error: AnalysisError): String = when (error) {
     AnalysisError.NOT_ENOUGH_MOVES -> loc("Nema dovoljno poteza za analizu.")
     AnalysisError.ENGINE_UNAVAILABLE -> loc("Analiza nije dostupna — motor nije pronađen.")
+    AnalysisError.ENGINE_NOT_READY -> loc("Motor se još priprema. Pokušaj ponovo za koji trenutak.")
     AnalysisError.SEARCH_FAILED -> loc("Analiza nije uspela.")
 }
 
@@ -252,7 +253,12 @@ private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modif
     ) {
         Text(text = title, color = DS.inkMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         Text(
-            text = String.format("%.1f%%", value),
+            // `Locale.US` NIJE kozmetika: `String.format` bez njega uzima
+            // SISTEMSKI jezik, pa bi na nemackom ili ruskom uredjaju pisalo
+            // „41,9%" iako je jezik aplikacije biran u njenim podesavanjima
+            // (`Loc`, ne sistem). iOS uvek daje tacku. Isti obrazac vec koristi
+            // traka ocene (`UiComponents.kt:131`).
+            text = String.format(java.util.Locale.US, "%.1f%%", value),
             color = DS.ink,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
