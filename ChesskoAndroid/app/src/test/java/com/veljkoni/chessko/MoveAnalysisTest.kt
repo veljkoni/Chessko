@@ -275,4 +275,55 @@ class MoveAnalysisTest {
         assertEquals(1, white.moveNumber)
         assertEquals(1, black.moveNumber)
     }
+
+    // --- Granice pragova koje korisnik vidi ---------------------------------
+    // Dodato posle pregleda Task-a 1. Pragovi `turningPointMinLoss` i clamp mata
+    // prikazuju se korisniku kao ocena njegove igre, a bili su testirani samo
+    // daleko od granice (5 i 400, odnosno n=150). Prag koji se ne testira TACNO
+    // na granici prelazi tiho kad ga neko pomeri za jedan.
+
+    @Test
+    fun turningPointIgnoresALossOfExactlyNinetyNine() {
+        val analysis = GameAnalysis.build(
+            notations = listOf("Lc4"),
+            scores = listOf(EngineScore.Cp(0), EngineScore.Cp(99)),
+            engineBestMatched = listOf(false)
+        )
+        assertEquals(99, analysis.moves[0].cpLoss)
+        assertNull(analysis.turningPoint)
+    }
+
+    @Test
+    fun turningPointTakesALossOfExactlyOneHundred() {
+        val analysis = GameAnalysis.build(
+            notations = listOf("Lc4"),
+            scores = listOf(EngineScore.Cp(0), EngineScore.Cp(100)),
+            engineBestMatched = listOf(false)
+        )
+        assertEquals(100, analysis.moves[0].cpLoss)
+        assertEquals("Lc4", analysis.turningPoint?.notation)
+    }
+
+    @Test
+    fun mateDistanceIsClampedExactlyAtNinetyNine() {
+        // 99 je poslednja nesecena vrednost, 100 je prva secena — obe daju isti
+        // broj, i to je namerno: dalji mat od 99 poteza se ne razlikuje.
+        assertEquals(10_000 - 99, EngineScore.Mate(99).centipawns)
+        assertEquals(10_000 - 99, EngineScore.Mate(100).centipawns)
+        assertEquals(-10_000 + 99, EngineScore.Mate(-99).centipawns)
+        assertEquals(-10_000 + 99, EngineScore.Mate(-100).centipawns)
+    }
+
+    @Test
+    fun buildRejectsEngineBestMatchedOfTheWrongLength() {
+        // Do sada se testiralo samo neslaganje `scores` i `notations`. Treci niz
+        // ima sopstvenu duzinu i sopstvenu priliku da se razidje.
+        val analysis = GameAnalysis.build(
+            notations = listOf("e4", "e5"),
+            scores = listOf(EngineScore.Cp(0), EngineScore.Cp(10), EngineScore.Cp(-10)),
+            engineBestMatched = listOf(false)
+        )
+        assertTrue(analysis.moves.isEmpty())
+        assertEquals(100.0, analysis.whiteAccuracy, 0.0)
+    }
 }
