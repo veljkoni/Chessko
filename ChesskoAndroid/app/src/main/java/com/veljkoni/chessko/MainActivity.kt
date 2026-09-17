@@ -107,6 +107,7 @@ class MainActivity : ComponentActivity() {
                 var showResetConfirm by remember { mutableStateOf(false) }
                 var showResignConfirm by remember { mutableStateOf(false) }
                 var dismissGameOverOverlay by remember { mutableStateOf(false) }
+                var showAnalysis by remember { mutableStateOf(false) }
 
                 LaunchedEffect(gameViewModel.gameState.status) {
                     if (gameViewModel.gameState.status is GameStatus.Playing) {
@@ -414,6 +415,15 @@ class MainActivity : ComponentActivity() {
                         properties = DialogProperties(usePlatformDefaultWidth = false)
                     ) {
                         ChessClockView(onDismiss = { showChessClock = false })
+                    }
+                }
+
+                if (showAnalysis) {
+                    Dialog(
+                        onDismissRequest = { showAnalysis = false },
+                        properties = DialogProperties(usePlatformDefaultWidth = false)
+                    ) {
+                        AnalysisView(viewModel = gameViewModel, onClose = { showAnalysis = false })
                     }
                 }
 
@@ -809,6 +819,13 @@ class MainActivity : ComponentActivity() {
                                                 )
                                             }
 
+                                            // Dugme "Analiziraj partiju" -- vidljivo samo na gotovoj
+                                            // partiji sa bar jednim potezom (vidi AnalysisButton ispod).
+                                            AnalysisButton(
+                                                viewModel = gameViewModel,
+                                                onClick = { showAnalysis = true }
+                                            )
+
                                             // Move History
                                             if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
                                                 Text(
@@ -1013,6 +1030,18 @@ class MainActivity : ComponentActivity() {
                                             Column(
                                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
                                             ) {
+                                                // Dugme "Analiziraj partiju" -- vidljivo samo na gotovoj
+                                                // partiji sa bar jednim potezom. Ova Column (za razliku od
+                                                // pejzazne) nema `spacedBy`, pa razmak ide rucno, isto kao
+                                                // za Review Controls iznad.
+                                                if (canAnalyzeGame(gameViewModel)) {
+                                                    AnalysisButton(
+                                                        viewModel = gameViewModel,
+                                                        onClick = { showAnalysis = true }
+                                                    )
+                                                    Spacer(modifier = Modifier.height(12.dp))
+                                                }
+
                                                 if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
                                                     Text(
                                                         text = loc("Potezi"),

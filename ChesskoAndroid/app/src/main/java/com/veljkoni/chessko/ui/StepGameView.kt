@@ -25,6 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.veljkoni.chessko.logic.GameDifficulty
 import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.SettingsManager
@@ -86,6 +88,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
     var pendingStepId by remember(stepId) { mutableStateOf<String?>(stepId) }
 
     var showResignConfirm by remember { mutableStateOf(false) }
+    var showAnalysis by remember { mutableStateOf(false) }
 
     LaunchedEffect(stepId) {
         viewModel.startStepGame(gameDifficulty, startFEN)
@@ -200,11 +203,29 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
             )
         }
 
-        StepGameFooter(isGameOver = viewModel.isGameOver, onClose = onClose)
+        StepGameFooter(
+            viewModel = viewModel,
+            isGameOver = viewModel.isGameOver,
+            onClose = onClose,
+            onAnalyze = { showAnalysis = true }
+        )
     }
 
     if (viewModel.showPromotion) {
         PromotionOverlay(viewModel)
+    }
+
+    // Korak se upisuje kao zavrsen PRE ovoga (vidi LaunchedEffect-e iznad,
+    // oba gejtovana na `isGameOver && pendingStepId == stepId`), pa analiza
+    // NIKAD ne stoji na putu zavrsetka koraka -- ako motor nije dostupan,
+    // korak je vec zavrsen, samo dugme ostaje bez efekta.
+    if (showAnalysis) {
+        Dialog(
+            onDismissRequest = { showAnalysis = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            AnalysisView(viewModel = viewModel, onClose = { showAnalysis = false })
+        }
     }
 
     if (showResignConfirm) {
@@ -271,7 +292,12 @@ private fun StatusCard(message: String) {
 }
 
 @Composable
-private fun StepGameFooter(isGameOver: Boolean, onClose: () -> Unit) {
+private fun StepGameFooter(
+    viewModel: GameViewModel,
+    isGameOver: Boolean,
+    onClose: () -> Unit,
+    onAnalyze: () -> Unit
+) {
     if (isGameOver) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -282,6 +308,9 @@ private fun StepGameFooter(isGameOver: Boolean, onClose: () -> Unit) {
                 Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(DS.success))
                 Text(text = loc("Korak je završen"), color = DS.ink, fontWeight = FontWeight.SemiBold)
             }
+            // Korak je vec upisan kao zavrsen (vidi komentar na mestu poziva) --
+            // ovo dugme je cisto dodatna informacija, ne uslov za nastavak Puta.
+            AnalysisButton(viewModel = viewModel, onClick = onAnalyze)
             Button(
                 onClick = onClose,
                 modifier = Modifier.fillMaxWidth(),

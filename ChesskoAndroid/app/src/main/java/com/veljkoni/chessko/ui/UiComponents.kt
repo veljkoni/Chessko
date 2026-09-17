@@ -9,6 +9,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -289,6 +291,55 @@ fun getMaterialAdvantage(gameState: GameState, color: PieceColor): Int {
         max(0, whiteVal - blackVal)
     } else {
         max(0, blackVal - whiteVal)
+    }
+}
+
+// Faza 6e, Task 5: dugme "Analiziraj partiju".
+//
+// Ovde (ne u `MainActivity.kt`) zato sto ga koriste OBA mesta koja pokrecu
+// partiju protiv racunara -- slobodna partija na tabu Igra (`MainActivity.kt`,
+// paket `com.veljkoni.chessko`) i korak `game` Puta (`StepGameView.kt`, ISTI
+// paket `com.veljkoni.chessko.ui` kao ovaj fajl) -- isti obrazac kao
+// `getStatusMessage`/`getMaterialAdvantage` iznad.
+//
+// Vidi se samo na GOTOVOJ partiji koja ima bar jedan potez -- analiza
+// pretrazuje pozicije redom, pa nad partijom koja jos traje ne bi ni imala
+// sta da kaze. Uslov je isti kao iOS (`GameView.swift`, `analysisButton`):
+// `viewModel.isGameOver && !moveNotations.isEmpty`.
+//
+// Na tabu Igra mora stajati u OBE grane rasporeda (pejzazna i portretna,
+// `MainActivity.kt`) -- grane ne dele telo, pa bi dodavanje na jedno mesto
+// ostavilo dugme nevidljivim u drugoj orijentaciji (iOS je tu gresku vec
+// jednom napravio, vidi CLAUDE.md).
+fun canAnalyzeGame(viewModel: GameViewModel): Boolean =
+    viewModel.isGameOver && viewModel.gameState.moveNotations.isNotEmpty()
+
+@Composable
+fun AnalysisButton(viewModel: GameViewModel, onClick: () -> Unit) {
+    if (!canAnalyzeGame(viewModel)) return
+
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = DS.accent,
+            contentColor = DS.onAccent
+        )
+    ) {
+        Icon(
+            imageVector = Icons.Default.Assessment,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = loc("Analiziraj partiju"),
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

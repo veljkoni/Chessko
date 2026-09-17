@@ -560,7 +560,26 @@ object Loc {
         "Korak se završava kad partija dođe do kraja." to mapOf("sr" to "Korak se završava kad partija dođe do kraja.", "en" to "The step is completed once the game reaches its end.", "fr" to "L'étape se termine lorsque la partie arrive à son terme.", "de" to "Der Schritt gilt als abgeschlossen, sobald die Partie zu Ende ist.", "it" to "Il passo si completa quando la partita arriva alla fine.", "ru" to "Шаг завершается, когда партия доходит до конца.", "zh-Hans" to "对局下到结束时，此步即完成。", "hi" to "बाज़ी के अंत तक पहुँचने पर यह चरण पूरा हो जाता है।"),
         // Nije u brief-ovom spisku kljuceva, ali je uslov „gotovo" (tacka 2)
         // trazi bas ovaj tekst za korak bez rute (routeFor(step) == null).
-        "Uskoro" to mapOf("sr" to "Uskoro", "en" to "Coming soon", "fr" to "Bientôt", "de" to "Demnächst", "it" to "Prossimamente", "ru" to "Скоро", "zh-Hans" to "即将推出", "hi" to "जल्द आ रहा है")
+        "Uskoro" to mapOf("sr" to "Uskoro", "en" to "Coming soon", "fr" to "Bientôt", "de" to "Demnächst", "it" to "Prossimamente", "ru" to "Скоро", "zh-Hans" to "即将推出", "hi" to "जल्द आ रहा है"),
+
+        // Faza 6e, Task 5: ekran analize partije (`AnalysisView.kt`). Prevodi
+        // preuzeti doslovno iz `Chessko/Localizable.xcstrings` (iOS katalog),
+        // ne prevedeni nanovo.
+        "Analiza partije" to mapOf("sr" to "Analiza partije", "en" to "Game analysis", "fr" to "Analyse de la partie", "de" to "Partieanalyse", "it" to "Analisi della partita", "ru" to "Анализ партии", "zh-Hans" to "对局分析", "hi" to "गेम विश्लेषण"),
+        "Analiziraj partiju" to mapOf("sr" to "Analiziraj partiju", "en" to "Analyse game", "fr" to "Analyser la partie", "de" to "Partie analysieren", "it" to "Analizza la partita", "ru" to "Анализировать партию", "zh-Hans" to "分析对局", "hi" to "गेम का विश्लेषण करें"),
+        "Analiziram…" to mapOf("sr" to "Analiziram…", "en" to "Analysing…", "fr" to "Analyse en cours…", "de" to "Analysiere…", "it" to "Analisi in corso…", "ru" to "Анализирую…", "zh-Hans" to "分析中…", "hi" to "विश्लेषण जारी…"),
+        "Tačnost" to mapOf("sr" to "Tačnost", "en" to "Accuracy", "fr" to "Précision", "de" to "Genauigkeit", "it" to "Precisione", "ru" to "Точность", "zh-Hans" to "准确率", "hi" to "सटीकता"),
+        "Prelomni potez" to mapOf("sr" to "Prelomni potez", "en" to "Turning point", "fr" to "Coup décisif", "de" to "Wendepunkt", "it" to "Mossa decisiva", "ru" to "Переломный ход", "zh-Hans" to "转折点", "hi" to "निर्णायक चाल"),
+        "najbolji" to mapOf("sr" to "najbolji", "en" to "best", "fr" to "meilleur", "de" to "bester", "it" to "migliore", "ru" to "лучший", "zh-Hans" to "最佳", "hi" to "सर्वोत्तम"),
+        "odličan" to mapOf("sr" to "odličan", "en" to "excellent", "fr" to "excellent", "de" to "ausgezeichnet", "it" to "eccellente", "ru" to "отличный", "zh-Hans" to "优秀", "hi" to "उत्कृष्ट"),
+        "dobar" to mapOf("sr" to "dobar", "en" to "good", "fr" to "bon", "de" to "gut", "it" to "buono", "ru" to "хороший", "zh-Hans" to "良好", "hi" to "अच्छा"),
+        "netačnost" to mapOf("sr" to "netačnost", "en" to "inaccuracy", "fr" to "imprécision", "de" to "Ungenauigkeit", "it" to "imprecisione", "ru" to "неточность", "zh-Hans" to "不精确", "hi" to "अशुद्धि"),
+        "greška" to mapOf("sr" to "greška", "en" to "mistake", "fr" to "erreur", "de" to "Fehler", "it" to "errore", "ru" to "ошибка", "zh-Hans" to "失误", "hi" to "गलती"),
+        "promašaj" to mapOf("sr" to "promašaj", "en" to "blunder", "fr" to "gaffe", "de" to "Patzer", "it" to "errore grave", "ru" to "грубая ошибка", "zh-Hans" to "严重失误", "hi" to "भारी भूल"),
+        "Nema dovoljno poteza za analizu." to mapOf("sr" to "Nema dovoljno poteza za analizu.", "en" to "Not enough moves to analyse.", "fr" to "Pas assez de coups à analyser.", "de" to "Nicht genug Züge für die Analyse.", "it" to "Non ci sono abbastanza mosse da analizzare.", "ru" to "Недостаточно ходов для анализа.", "zh-Hans" to "棋步不足，无法分析。", "hi" to "विश्लेषण के लिए पर्याप्त चालें नहीं।"),
+        "Analiza nije dostupna — motor nije pronađen." to mapOf("sr" to "Analiza nije dostupna — motor nije pronađen.", "en" to "Analysis unavailable — engine not found.", "fr" to "Analyse indisponible — moteur introuvable.", "de" to "Analyse nicht verfügbar — Engine nicht gefunden.", "it" to "Analisi non disponibile — motore non trovato.", "ru" to "Анализ недоступен — движок не найден.", "zh-Hans" to "无法分析 — 未找到引擎。", "hi" to "विश्लेषण उपलब्ध नहीं — इंजन नहीं मिला।"),
+        "Analiza nije uspela." to mapOf("sr" to "Analiza nije uspela.", "en" to "Analysis failed.", "fr" to "L’analyse a échoué.", "de" to "Analyse fehlgeschlagen.", "it" to "Analisi non riuscita.", "ru" to "Анализ не удался.", "zh-Hans" to "分析失败。", "hi" to "विश्लेषण विफल रहा।"),
+        "Motor se još priprema. Pokušaj ponovo za koji trenutak." to mapOf("sr" to "Motor se još priprema. Pokušaj ponovo za koji trenutak.", "en" to "The engine is still starting up. Try again in a moment.", "fr" to "Le moteur démarre encore. Réessaie dans un instant.", "de" to "Die Engine startet noch. Versuche es gleich noch einmal.", "it" to "Il motore si sta ancora avviando. Riprova tra un istante.", "ru" to "Движок ещё запускается. Попробуй через мгновение.", "zh-Hans" to "引擎仍在启动。请稍后再试。", "hi" to "इंजन अभी शुरू हो रहा है। थोड़ी देर बाद फिर कोशिश करें।")
     )
 }
 

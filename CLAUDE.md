@@ -427,6 +427,116 @@ prelomnim potezom. Dostupno je i iz `game` koraka Puta.
 - **~2 od 14 brzih ponovnih pokretanja analize** završi na „Analiza nije uspela" — izlaz
   starog motora upadne u pipe novog. Uzrok je u `StockfishBridge`/`ChessKitEngine`.
 
+### Android (Faza 6e) — šta je drugačije
+
+Android nema `ChessKitEngine` — `Logic/StockfishEngine.kt` je tanak JNI most na PRAVI
+Stockfish, kompajliran direktno u APK (`app/src/main/cpp/stockfish/`). Izlaz je zato čist
+UCI tekst bez ijedne zagrade i bez decimale (`info depth 1 … score cp 445 … pv d5c4`) — iOS-ov
+tagovan oblik (`<score> <cp> 34.0`) ovde ne važi uopšte, i pretpostavka po tom obrascu bi
+oborila fazu identično onome što je već jednom oborilo iOS (vidi `UCIScoreParser.kt`, koji je
+pisan po **uhvaćenom** izlazu, ne po pretpostavci).
+
+**Najveća arhitektonska razlika: `StockfishEngine` je `object` singleton sa JEDNIM
+`searchMutex`-om**, ne zaseban `Engine` primerak po analizi kao na iOS-u. Dok analiza drži taj
+mutex kroz N+1 uzastopnih `evaluate()` poziva, NIJEDNA druga pretraga ne prolazi —
+uključujući AI potez u živoj partiji. Posledice na otkazivanje, sve otkrivene tokom ove faze:
+
+- `AnalysisViewModel.cancel()` mora biti pozvan **eksplicitno** iz `DisposableEffect`-a ekrana
+  analize (Task 5) — `onCleared()` sam po sebi nije garantovan da se izvrši na vreme; bez
+  eksplicitnog poziva bi korisnik koji zatvori ekran i odmah započne novu partiju čekao da se
+  ceo preostali niz `evaluate()` poziva završi pre nego što AI uopšte odigra prvi potez.
+- Otkazivanje mora poslati i `"stop"` motoru, ne samo otkazati korutinu i osloboditi mutex
+  (Task 4 nalaz, popravljeno u `a988fec`): `Mutex.withLock` oslobađa bravu u `finally` čak i
+  kad je korutina otkazana dok čeka unutar nje, ali BEZ `"stop"` motor nastavlja da računa
+  staru poziciju u pozadini — zakasneli `bestmove` stare pretrage bi upao u kanal SLEDEĆE i bio
+  pročitan kao odgovor na sasvim drugu poziciju. Ista klasa greške koju iOS ima zapisanu za
+  analizu ("izlaz starog motora upadne u pipe novog"), ali ovde bi posledica bila pogrešan
+  potez u ŽIVOJ partiji, ne samo neuspela analiza. Popravka ide kroz `NonCancellable`, jer
+  običan `suspend` poziv u `finally` već otkazane korutine sam baca `CancellationException`.
+- **`"stop"` sam po sebi NIJE dovoljan — on uklanja uzrok i proizvodi posledicu.** Zaustavljena
+  pretraga obavezno ispiše `bestmove` (`search.cpp:266-267`, na kraju `start_searching`), i taj
+  red sleti u isti `outputChannel`; sledeći pozivalac prazni kanal na ULASKU, pre nego što red
+  stigne, pa ga onda pročita kao svoj. Ranija verzija ovog unosa (i komentara u kodu) tvrdila je
+  da je lanac zatvoren — bio je **sužen**, ne zatvoren: koraci 1–3 lanca žive u motoru, 4–5 u
+  kanalu. Zato `StockfishEngine.drainUntilBestMove()` posle svakog našeg `"stop"`-a pojede taj
+  red, **još unutar `searchMutex`-a**. **Izmereno, ne pretpostavljeno:** put otkazivanje →
+  `"stop"` → pročitan `bestmove` nad `go depth 30` koji traje već 1,5 s trajao je **1 ms**
+  (motor je u NAŠEM procesu, bez pipe-a i IPC-a), a stari `bestmove` je u logcat-u stigao
+  **2 ms pre** prve komande sledeće pretrage — tačno u prozor koji pražnjenje ne pokriva. Čuva
+  ga instrumentisani test `cancelledDeepSearchDoesNotPoisonTheNextEvaluation`, **dokazan
+  mutacijom**: sa uklonjena oba poziva `drainUntilBestMove()` pada na „evaluate posle otkazane
+  pretrage je vratio null", sa njima prolazi. `STOP_DRAIN_TIMEOUT_MS = 2000` je tri reda
+  veličine iznad izmerenog.
+- Svaka pretraga (i `getBestMove`, i `evaluate` koji je ova faza dodala) ima TIMEOUT
+  (`EVALUATE_TIMEOUT_MS = 30_000`, `BEST_MOVE_TIMEOUT_MS = 120_000`) — bez njega bi zaglavljena
+  pretraga (motor umro, `"go"` progutan) trajno blokirala jedini mutex i time ugasila AI za
+  **ceo ostatak života procesa**, ne samo pokvarila jednu analizu, jer restart procesa je jedini
+  izlaz iz `object` singletona. Vrednosti su izvedene iz merenja Task-a 2 na ovom istom
+  emulatoru (`depth 20` → 29,3 s, `depth 22` → 43,8 s, `depth 12` → 1,0 s) uz procenjenu
+  marginu (4×/25×) — sama margina nije merena, samo je Task 6 (ovaj zadatak) prvi put pustio
+  test da se stvarno izvrši na uređaju umesto da samo dokaže kompajliranje.
+- **`waitUntilReady()` je bio upotrebljiv tačno jednom po životu procesa — pravi bug u
+  `StockfishEngine.kt`, ne u testu.** Funkcija namerno ne šalje sopstveni `"isready"` (razlog
+  ostaje: poslat pre `start()`-ovog `setoption` niza bi stigao prerano i učinio funkciju
+  bezvrednom, isto kao `engineStarted`), nego čeka JEDINI `"readyok"` koji `start()` pošalje.
+  Bez pamćenja da je taj `"readyok"` već viđen, DRUGI poziv u istom procesu čeka liniju koja
+  nikad više neće stići i visi do **sopstvenog** `timeoutMs = 30_000L` — zaseban literal koji se
+  slučajno poklapa sa `EVALUATE_TIMEOUT_MS`, pa je raniji tekst ovog unosa (i komentara u kodu)
+  pogrešno pripisivao istek toj konstanti — **držeći `searchMutex` sve to vreme**, ista klasa
+  greške (zaglavljeno unutar jedinog mutexa) koju timeout iznad ublažava za
+  `getBestMove`/`evaluate`. Otkriveno kad je Task 6 prvi put pustio `StockfishEvaluateTest` da se
+  stvarno izvrši (`mateInOneGivesPositiveMate`, `time="30.019"` u XML-u, drugi test klase koji
+  zove `waitForEngineReady()`) — prvobitno pogrešno dijagnostikovano kao defekt test-poretka.
+- **Ista funkcija je posle toga popravljena DRUGI put, i to je poučniji deo.** Prva popravka
+  (`f61d26b`) je zastavicu postavljala u samoj `waitUntilReady()` — što rešava drugi poziv, ali
+  ne i prvi poziv POSLE već obavljene pretrage: svaki `getBestMove`/`evaluate` prazni kanal na
+  ulasku (`tryReceive` petlja), pa prva pretraga u aplikaciji POJEDE `"readyok"` i baci ga.
+  Gejt uveden u analizi (vidi ispod) bi tako u najčešćem toku — korisnik odigra partiju pa je
+  analizira — čekao 30 s i javio „motor nije spreman" za motor koji radi. Zato zastavicu sada
+  postavlja `listenOutput()`, jedino mesto kroz koje prolazi svaka linija motora pre nego što je
+  iko može pojesti, a `waitUntilReady()` je samo poll te zastavice i **više ne uzima
+  `searchMutex`** (nema šta da čita iz kanala). **Provereno na uređaju, ne izvedeno:** u procesu
+  koji je imao tačno jedan `"readyok"` (18:13:22) i pretragu posle njega (18:15:12, čije je
+  pražnjenje taj red pojelo), analiza pokrenuta odmah zatim je prošla normalno umesto da
+  istekne.
+- **Pretraga poslata motoru koji još nije učitao mrežu GASI CEO PROCES, ne degradira tiho.**
+  `Engine::go` zove `verify_networks()` (`engine.cpp:153-155`), a ta provera na neučitanu mrežu
+  radi `exit(EXIT_FAILURE)` (`nnue/network.cpp:267`) — bez dijaloga o padu i bez izveštaja, ista
+  vrsta nestanka kao iOS-ov SIGPIPE. `engineStarted` NIJE zaštita od toga (postaje `true` pre
+  kopiranja NNUE mreža i pre handshake-a), pa `AnalysisViewModel` i obe funkcije motora čekaju
+  `waitUntilReady()` pre prve pretrage. Analiza je za to i najizloženija: u režimu „Igra sa
+  prijateljem" ona je JEDINA vrata ka motoru (prvo pokretanje → partija u dvoje → mat u 4
+  poluteza → „Analiziraj partiju", bez ijednog ranijeg poziva motoru). **Izmereno na emulatoru**
+  koliko taj prozor traje: hladan start (NNUE se stvarno prepisuje iz asseta) 18:13:16,862 →
+  `readyok` 18:13:22,114 = **5,25 s**; topao start (mreže već na disku) **3,70 s**. Na sporijem
+  telefonu je duži, jer je kopiranje ~140 MB.
+- **Terminalna grana (`terminalEval`) ostaje, ali NE iz iOS-ovog razloga.** Gore piše da za
+  poziciju bez legalnih poteza Stockfish „ne pošalje nijednu `score` liniju" — to važi za
+  `ChessKitEngine`, a native Stockfish koji se kompajlira u ovaj APK radi suprotno: prazan
+  `rootMoves` ide na `onUpdateNoMoves` (`search.cpp:212-216`), što ispisuje
+  `info depth 0 score mate 0` (odnosno `cp 0` za pat; `uci.cpp:620-621` + `format_score` na
+  `:541`/`:548`), dakle **tačno onu vrednost koju terminalna grana i vraća**. Grana je ovde
+  optimizacija i nezavisnost od motora (nijedna UCI komanda, nijedan red u `searchMutex`-u, isti
+  rezultat i kad je motor nespreman), ne uslov da analiza uopšte radi. Raniji komentar u kodu je
+  iOS-ovo obrazloženje prepisao kao da važi i ovde — ista klasa greške kao „vežbe iz baze" iz
+  Faze 4b.
+
+**Izmereno u ovom zadatku (Task 6), prvi stvaran N+1 niz uživo:** partija od 10 poteza (11
+pozicija) na emulatoru je analizirana za **~1,3 s** (17:01:02.931–17:01:04.256 u logcat-u),
+prosek ~0,12 s po poziciji — primetno brže od baznog merenja Task-a 2 (~1,0 s na `depth 12`).
+Motor se između poziva NE resetuje (`ucinewgame` se nikad ne šalje), pa transpoziciona tabela
+ostaje deljena kroz sve `evaluate()` pozive iste partije; to je verovatan uzrok razlike, ali
+NIJE dokazano — samo zabeleženo da je merenje sa ovog uređaja, ne generalna tvrdnja o brzini
+motora. **Ovo je emulatorski broj, ne uređajski.**
+
+Otkazivanje usred prave pretrage nije uhvaćeno na delu: na ovoj brzini ceo niz od 11 pozicija
+završi za ~1,3 s, brže od ručne reakcije preko `adb`, pa tap na „Zatvori" 1 s nakon starta
+verovatno stiže POSLE što se analiza već završila, ne usred nje. Provereno je zato ono što se
+proveriti moglo — otkazivanje odmah nakon "Analiziraj partiju" pa trenutno pokretanje nove
+partije nije ostavilo zaglavljen ili tuđ potez: AI je odigrao svoj, ispravan potez odmah.
+Popravka iz Task-a 4 (`NonCancellable` `"stop"`) je zato potvrđena izvorom i logikom, ne i
+snimljenim trenutkom prave trke.
+
 ## Sadržaj lekcija
 
 Od Faze 3 tekst lekcija **nije u Swift-u**. Živi u
@@ -553,13 +663,15 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **6c — Put** | **da** | isti `curriculum.json` kao iOS, bajt-identičan (dokaz `diff`); `ProgressStore` (JSON u `filesDir`, migracija iz `SharedPreferences`); `PathView` sa sva četiri tipa koraka (`lesson`/`practice`/`test`/`game`) |
 | **6d-1 — dizajn sistem, deo 1** | **da** | `ChesskoColors`/`DS`/`ChesskoTheme` (ista paleta kao iOS) + sedam ekrana (`MainActivity`, Zadaci, Put, `practice`/`test`/`game` koraci, Podešavanja) prebačeno sa zakucanih boja na tokene; `dynamicColor` uklonjen |
 | **6d-2 — dizajn sistem, deo 2** | **da** | preostalih pet celina prebačeno na tokene: hrom sata, blokovi i okvir lekcije, ekran učenja + tri kartice vežbi, četiri kartice u Podešavanjima (bez ivice — vidi „Poznata ograničenja"); tabla i osam tema table ostaju namerno netokenizovane, samo poravnate sa iOS vrednostima (poslednji potez 0,40, prsten uzimanja 0,65, tačka praznog polja 0,55) |
-| 5 — analiza partije | ne | — |
+| 5 — analiza partije | **da** | ista stavka pod dva broja kao 2/6a i 4/6c — isporučeno kao **6e** |
+| **6e — analiza partije** | **da** | native Stockfish preko JNI (ne `ChessKitEngine`), isti N+1 ugovor i pragovi klasifikacije kao iOS; ekran analize + dugme u obe grane `MainActivity` (portret/pejzaž) i u `game` koraku Puta; vidi „Android (Faza 6e) — šta je drugačije" |
 
-Testovi: **47 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `PathProgressTest` 9,
-`LocTest` 5, `PuzzleRatingTest` 9, `ContrastTest` 11, `StepWindowTest` 3, `EngineTest` 9) + **46 instrumentisanih**
+Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `EngineTest` 9,
+`ExampleUnitTest` 1, `LocTest` 5, `MoveAnalysisTest` 27, `PathProgressTest` 9, `PuzzleRatingTest` 9,
+`StepWindowTest` 3, `UCIScoreParserTest` 9) + **50 instrumentisanih**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
-`ProgressStoreTest` 10, `LessonRepositoryTest` 6, `PuzzleRepositoryTest` 10, `StatsFacadeTest` 4,
-`LessonContentTest` 9).
+`LessonContentTest` 9, `LessonRepositoryTest` 6, `ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
+`StatsFacadeTest` 4, `StockfishEvaluateTest` 4). Oba broja su iz XML-a, ne iz izlaznog koda.
 
 > **`connectedDebugAndroidTest` ume da kaže `BUILD SUCCESSFUL` a da ne pokrene nijedan test**
 > (npr. `INSTALL_FAILED_INSUFFICIENT_STORAGE`). Rezultat se čita iz
@@ -803,6 +915,11 @@ Testovi: **47 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
   vežbe jedna ispod druge u istoj lekciji). Zatečeno pre Faze 6c, nije ga ova faza uvela
   — zapisano jer ga je Put prvi put učinio vidljivim (koraci `practice`/`test`/`game` su
   nove table u novim kontekstima skrolovanja).
+- **Dijalog analize (Android) ne pokriva sistemsku navigacionu traku.** Ispod zatamnjenja se na
+  svakom snimku vide presečeni natpisi `Igra / Zadaci / Put`. iOS isti ekran prikazuje kao punu
+  `sheet`, pa tamo tab bar nestane. Nije popravljeno jer bi tražilo menjanje tipa dijaloga
+  (Compose `Dialog` → `ModalBottomSheet` ili zaseban ekran), što je promena rasporeda pred
+  spajanje, ne ispravka. Kozmetika: dijalog je i dalje modalan, dodir po traci ispod ne prolazi.
 - **`StatsFacadeTest` (Android) koristi prave singletone nad stvarnim `filesDir`**, za
   razliku od `ProgressStoreTest`, koji izoluje po jedan fajl po testu. Ponovljen prolaz
   istog dana bez `pm clear` (ili deinstalacije) može da pretvori neki test u tautologiju
@@ -845,6 +962,33 @@ Testovi: **47 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
   jer je van obima te faze. Popravka je ista i jeftina: `DisposableEffect` u `MainActivity`,
   po uzoru na `ChessClockView.kt:129-133` koji to već radi. Uticaj je uzak: promena jezika
   je redak događaj, a curenje je ograničeno na po jedan `SoundPool` za Igru i Zadatke.
+- **Analiza (Android) nasleđuje oba zapisana iOS ograničenja analize, doslovno.** `byWhite = i
+  % 2 == 0` u `models/MoveAnalysis.kt` je isti izraz kao iOS `GameAnalysis.build` — ista
+  pretpostavka da je prvi potez beli, isti razlog (nijedan `game` korak Puta danas nema
+  `startFEN`, pa je nedostižno), ista jeftina a neurađena popravka. `ui/AnalysisView.kt`
+  preslikava isti skup od šest klasa poteza u četiri boje (`BEST` na `DS.accent`,
+  `EXCELLENT`/`GOOD` dele `DS.success`, `INACCURACY`/`MISTAKE` dele `DS.warning`, `BLUNDER` sam
+  na `DS.danger`) — nazivi klasa i dalje tačni u `contentDescription`, samo ne u boji.
+- **`on_update_full` (`cpp/stockfish/uci.cpp:624-637`) ubacuje ` wdl X Y Z` IZMEĐU ocene i
+  `lowerbound`/`upperbound` kad je `UCI_ShowWDL` uključen.** `UCIScoreParser.parse` gleda TAČNO
+  `tokens[scoreIdx + 3]` za `"lowerbound"`/`"upperbound"`; sa WDL-om uključenim taj token bi bio
+  `"wdl"`, provera bi promašila, i nekonačna ocena (fail-high/fail-low usred iterative
+  deepening-a) bi tiho prošla kao konačna. `UCI_ShowWDL` je podrazumevano `false` i
+  `StockfishEngine.kt` ga nigde ne postavlja, pa je danas nedostižno — ali vredi znati ako se
+  ta opcija ikad uključi (npr. radi prikaza % pobede/remija/poraza u UI-ju).
+- **Završena partija (mat, predaja, remi) ne preživi rekreaciju `Activity`-ja na Androidu**
+  (rotacija ekrana, promena sistemske svetla/tamna teme, ili proces vraćen iz pozadine).
+  `MainActivity` pravi `GameViewModel` kroz `remember { GameViewModel(...) }`, ne
+  `rememberSaveable`/`ViewModelStore`, pa svaka rekreacija napravi NOV primerak čiji `init`
+  učita sačuvanu partiju sa diska (`GameViewModel.load()`). Sačuvani JSON (`save()`/`load()`,
+  `GameViewModel.kt`) ne nosi `status` polje uopšte — pozicija se rekonstruiše kroz
+  `GameState.fromFEN(savedFen)`, koji (isti uzrok koji `CLAUDE.md` već beleži za
+  `terminalEval` u analizi) UVEK vraća `GameStatus.Playing`. Partija završena predajom se
+  posle rekreacije vrati u stanje „u toku" — istorija poteza ostaje netaknuta, ali traka
+  „Predaja! Izgubio si." i dugme „Analiziraj partiju" (koje zahteva `isGameOver`) nestanu dok
+  se partija ponovo ne završi. Potvrđeno direktno, dvaput zaredom: predaja pa promena sistemske
+  teme je oba puta vratila ekran na „Tvoj potez". Zatečen defekt (nije uveden ovom fazom), ali
+  ga Faza 6e čini vidljivijim jer krije baš dugme koje je ova faza dodala.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
@@ -2025,3 +2169,144 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `./gradlew --stop`, `pgrep -f qemu-system` prazan). Deset novih snimaka (39–48) i dva
   preimenovana (11, 12) u
   `.superpowers/sdd/2026-09-14-faza-6d-2-android-dizajn-sistem-2/screenshots/`.
+- **2026-09-17** — Faza 6e (Android: analiza partije). Peta stavka spec Faze 6 je preneta —
+  posle svake partije (i iz `game` koraka Puta) Android sada prikazuje isti ekran analize kao
+  iOS: tačnost oba igrača, kartica prelomnog poteza, traka poteza u boji, dodir na potez vodi
+  u review. Novi fajlovi: `models/MoveAnalysis.kt` (matematika, Foundation/JVM-only, 27
+  testova), `logic/UCIScoreParser.kt` (parser UCI ocene, pisan po **uhvaćenom** izlazu native
+  Stockfish-a, ne po pretpostavci — iOS-ov tagovan format ovde ne važi), `StockfishEngine.evaluate()`,
+  `viewmodels/AnalysisViewModel.kt`, `ui/AnalysisView.kt` + dugme u obe grane `MainActivity.kt`
+  i u `StepGameView.kt`. Detalji arhitekture (singleton motor sa jednim mutexom, timeout na
+  svaku pretragu, `NonCancellable` „stop" pri otkazivanju) — vidi „Analiza partije — Android,
+  šta je drugačije". Testova: JVM 47 → **83** (`MoveAnalysisTest` 27, `UCIScoreParserTest` 9);
+  instrumentisanih 46 → **49** (nov `StockfishEvaluateTest`, 3 testa).
+
+  **Task 6 (zatvaranje) je prvi put stvarno pokrenuo `StockfishEvaluateTest` na uređaju** —
+  Taskovi 3/4 su ga samo kompajlirali. Prvi prolaz (drugo dizanje emulatora u fazi), čitan iz
+  XML-a, reprodukovan dvaput identično: **48/49**, jedan pad (`mateInOneGivesPositiveMate`,
+  30,0 s, „motor nije javio readyok na vreme"). Prva dijagnoza je bila POGREŠNA — pripisana
+  test-poretku (prvi test klase troši jedinu `"readyok"` liniju, drugi visi). **Kontrolor je
+  ispravio**: uzrok je u proizvodnom kodu, `StockfishEngine.waitUntilReady()` — funkcija je bila
+  upotrebljiva TAČNO JEDNOM po životu procesa i to nigde nije govorila. Ispravna popravka:
+  `@Volatile private var readyObserved` — drugi i svaki naredni poziv se vrati odmah `true` čim
+  je spremnost jednom viđena, bez slanja novog `"isready"` (razlog zašto se to ne sme i dalje
+  važi, vidi „Android (Faza 6e) — šta je drugačije"). Bez zastavice bi svaki DRUGI poziv
+  ove funkcije u istom procesu — ne samo drugi test — visio 30 s **držeći `searchMutex`**, isto
+  onako kako Taskovi 3/4 već štite `getBestMove`/`evaluate`. Popravka je zahtevala **treće
+  dizanje emulatora u fazi** (plan je predvideo dva; treće je platilo ovu popravku, koju je
+  drugo dizanje otkrilo — upisano iskreno, tvrdnja o dva dizanja iz ranijih task-ova nije
+  prepravljena). Posle popravke: **49/49, 0 padova**, čitano iz XML-a;
+  `mateInOneGivesPositiveMate` sada prolazi za 0,004 s (ranije 30,0 s).
+
+  **Vizuelno provereno na emulatoru, obe teme** (drugo dizanje u fazi — treće je zasebno, samo
+  za popravku `waitUntilReady()` iznad): ekran
+  analize posle partije protiv računara (uključujući stvaran promašaj — hangovana dama, `2.Dg4`
+  klasifikovana `BLUNDER`, kartica prelomnog poteza `−779`/`−756` u dva odvojena pokretanja —
+  vidi napomenu ispod), četiri boje trake (`BEST` plavo/`DS.accent`, vidljivo odvojeno od
+  zelenog `DS.success` za `EXCELLENT`/`GOOD`), dodir na potez → review mod (potvrđeno: klik na
+  `2.Dg4` otvara tablu na „Potez 3 od 4"), i ekran analize iz `game` koraka Puta (otključan
+  ručnim upisom u `progress.json` preko `run-as`, ne kroz UI — bez toga bi trebalo odigrati/
+  otključati čitavo prvo poglavlje) — potvrđeno da „Korak je završen" (zelena kvačica) stoji
+  PRE nego što je „Analiziraj partiju" uopšte dotaknuto, tačno ugovor koji spec traži. Snimci u
+  `.superpowers/sdd/2026-09-16-faza-6e-android-analiza-partije/screenshots/`.
+
+  **Izmereno, ne procenjeno:** partija od 10 poteza (11 pozicija) na `depth 12` završena za
+  **~1,3 s** (17:01:02.931–17:01:04.256, iz `logcat`-a), prosek ~0,12 s/poziciju — primetno brže
+  od baznog merenja Task-a 2 (~1,0 s/poziciju). Motor se između poziva ne resetuje
+  (`ucinewgame` se ne šalje), pa deljena transpoziciona tabela unutar iste partije je verovatan
+  ali nepotvrđen uzrok. **Broj je sa ovog emulatora, ne sa uređaja.**
+
+  **Otkazivanje usred prave pretrage NIJE snimljeno na delu** — na izmerenoj brzini (~1,3 s za
+  ceo niz) ručna reakcija preko `adb` (tap na „Zatvori" ~1 s posle starta) po svemu sudeći
+  stiže POSLE što je analiza već završena, ne usred nje. Provereno je ono što se proveriti
+  moglo: otkazivanje pa trenutačno pokretanje nove partije nije ostavilo zaglavljen ili tuđ
+  potez — AI je odigrao svoj, ispravan potez odmah (1.e4 → 1…Sf6, isti odgovor kao u ranijoj,
+  nesmetanoj partiji). Popravka Task-a 4 (`NonCancellable` „stop" pri otkazivanju,
+  `a988fec`) ostaje potvrđena izvorom (`uci.cpp:105-106`, `engine.cpp:159` — `stop` je
+  idempotentan) i logikom, ne i uhvaćenim trenutkom prave trke. Pokušano jeftino produžavanje
+  partije (ponavljano premeštanje skakača) radi šireg prozora za otkazivanje — zaustavljeno na
+  14 poteza kad je skakač nehotice izgubljen (dalji tapovi u istoj petlji su gađali prazna
+  polja i partija se zamrzla na istom potezu), što nije dovoljno duže od postojećih 10 poteza da
+  promeni zaključak. Ostaje zapisano kao nedokazano, ne kao provereno.
+
+  **Uzgredan nalaz, van obima ovog zadatka (nije popravljen, samo zapisan):** završena partija
+  (predaja) ne preživi rekreaciju `Activity`-ja (npr. promenu sistemske teme) — `load()`
+  rekonstruiše poziciju kroz `GameState.fromFEN`, koji uvek vraća `GameStatus.Playing` (isti
+  uzrok koji `terminalEval` u analizi već zaobilazi). Potvrđeno dvaput; upisano u „Poznata
+  ograničenja".
+
+  Provera celog stabla: `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS
+  netaknut); `ChesskoAndroid/app/build.gradle.kts` i `ChesskoAndroid/gradle/libs.versions.toml`
+  bez izmena (nijedna nova Gradle zavisnost). `Chessko/Localizable.xcstrings` ostaje izmenjen u
+  radnom stablu (Xcode-ova regeneracija) i namerno nije ušao u commit.
+
+- **2026-09-17** — Faza 6e, talas ispravki posle finalnog pregleda cele grane (pet važnih
+  nalaza i osam sitnih, bez ijednog blokirajućeg). Detalji svakog nalaza — vidi
+  „Android (Faza 6e) — šta je drugačije" i „Poznata ograničenja".
+
+  **Peta greška iste porodice, i najpoučnija: popravka koja je rešila uzrok a ostavila
+  posledicu.** Task 4 je na otkazivanje dodao `"stop"` motoru i lanac od pet koraka proglasio
+  zatvorenim — i u komentaru i u ovom fajlu. Zatvoreni su bili koraci 1–3 (motor prestaje da
+  računa); koraci 4–5 žive u kanalu, ne u motoru: zaustavljena pretraga OBAVEZNO ispiše
+  `bestmove`, a sledeći pozivalac prazni kanal na ulasku, pre nego što taj red stigne. Novi
+  `StockfishEngine.drainUntilBestMove()` pojede red još pod istim `searchMutex`-om. **Izmereno:**
+  put otkazivanje → `"stop"` → pročitan `bestmove` = **1 ms**, a stari `bestmove` je stizao
+  **2 ms pre** prve komande sledeće pretrage — prozor je stvaran i uzak. Nov instrumentisani test
+  `cancelledDeepSearchDoesNotPoisonTheNextEvaluation` (49 → **50**), **dokazan mutacijom**: bez
+  oba poziva `drainUntilBestMove()` pada, sa njima prolazi.
+
+  **`waitUntilReady()` je popravljena drugi put, jer je prva popravka bila preplitka.**
+  `f61d26b` je zastavicu postavljala u samoj funkciji — rešava DRUGI poziv, ali ne i prvi poziv
+  posle već obavljene pretrage, jer pražnjenje kanala na ulasku u svaku pretragu pojede jedini
+  `"readyok"` u životu procesa. Da je gejt spremnosti uveden nad tom verzijom, najčešći tok
+  (odigraj partiju → analiziraj) bi čekao 30 s i javio „motor nije spreman" za motor koji radi —
+  peta greška bi se ponovila u samoj svojoj popravci. Zastavicu sada postavlja `listenOutput()`,
+  jedino mesto kroz koje prolazi svaka linija motora, a funkcija je poll te zastavice i **više ne
+  uzima `searchMutex`**. Provereno na uređaju: proces sa tačno jednim `"readyok"` (18:13:22) i
+  pretragom posle njega (18:15:12) analizu odmah zatim odradi normalno.
+
+  **Gejt spremnosti (V-5) je ušao i u `getBestMove`, ne samo u analizu** — obrazloženo, ne
+  usput: posledica pretrage pre učitane mreže nije tiha degradacija nego `exit(EXIT_FAILURE)`
+  (`engine.cpp:153-155` → `nnue/network.cpp:267`), dakle nestanak celog procesa, a cena gejta je
+  posle gornje popravke jedno čitanje `@Volatile` polja. Prozor je izmeren: **5,25 s** na hladnom
+  startu, **3,70 s** na toplom. Provereno da živa partija nije pogođena — partija na težini
+  „Stockfish Majstor" odigrana na emulatoru posle izmene, AI odgovara normalno (`bestmove c7c5`).
+  Nova greška `AnalysisError.ENGINE_NOT_READY` sa sopstvenim ključem na svih 8 jezika (ne
+  pozajmljuje „motor nije pronađen", jer to je druga tvrdnja: nema motora se ne popravlja
+  čekanjem). Uz to: analiza sada izlazi na PRVOJ neuspeloj poziciji, kao iOS
+  (`StockfishBridge.analyze`), umesto da korisnik odstoji svih N+1 pretraga da bi mu se reklo da
+  nije uspela; `String.format` za procenat tačnosti dobio je `Locale.US` (bez njega „41,9%" na
+  nemačkom uređaju, iako se jezik bira u aplikaciji — isti obrazac koji traka ocene već koristi).
+
+  **Ispravljene tvrdnje, ne prećutane:** komentar je za terminalnu poziciju prepisao iOS-ovo
+  obrazloženje („Stockfish ne pošalje nijednu `score` liniju") koje za native Stockfish **nije
+  tačno** — on ispiše `info depth 0 score mate 0` (`search.cpp:212-216` → `uci.cpp:620-621`);
+  grana ostaje, ali iz pravog razloga. Istek `waitUntilReady()` nije pripadao
+  `EVALUATE_TIMEOUT_MS` nego sopstvenom literalu koji se s njim slučajno poklapa.
+  `StockfishLevel.MAXIMUM` nije „jedini nivo koji `getBestMove` dobija" nego najviši od šest.
+  Paragraf „Testovi:" u „Stanju Android porta" je i dalje govorio **47/46** dok je changelog
+  govorio 83/49 — sada **83 JVM / 50 instrumentisanih**, razbijeno po fajlovima. Jedna sekcija se
+  zvala tri različita imena na tri mesta — ujednačeno.
+
+  **Snimak označen `-dark` bio je svetao.** Piksel (20,300) u
+  `03-put-step-analysis-dark.png` je bio `#F2F3F7` (`DS.ground` SVETLE teme), identičan onom u
+  `04-…-light.png` — dva ista snimka, jedan pogrešno imenovan, i **nijedan snimak ekrana analize
+  u tamnoj temi nije postojao** iako je ovaj fajl tvrdio „provereno u obe teme". Zato je emulator
+  dizan **četvrti put** u fazi (plan je predvideo dva, Task 6 je zapisao tri — ovo je dopuna te
+  tvrdnje, ne njena prepravka): snimljena je analiza u tamnoj temi i za slobodnu partiju
+  (`05-analysis-dark.png`) i za `game` korak Puta (`03-put-step-analysis-dark.png`, koji je
+  zamenio pogrešno označeni duplikat — stari fajl se od `04-…-light.png` razlikovao samo u
+  statusnoj traci, dakle ništa nije izgubljeno). Pri tom je još jednom potvrđeno da „Korak je
+  završen" stoji PRE nego što je „Analiziraj partiju" dotaknuto. Emulator ugašen odmah
+  (`adb emu kill`, `./gradlew --stop`, `pgrep -f qemu-system` prazan).
+
+  Uz to arhivirana dva `logcat` dump-a (`uhvaceno/full-dump-3.txt`, `-4.txt`) zbog kojih su dve
+  od pet testnih UCI linija imale trag samo kroz izveštaj, ne kroz `uhvaceno/`; sada se svih pet
+  linija iz `UCIScoreParserTest` nalazi doslovno u arhiviranom dump-u. Zapisano i jedno
+  ograničenje koje se NE popravlja (dijalog analize ne pokriva sistemsku navigacionu traku).
+
+  Provere: `testDebugUnitTest` **83/83** i `connectedDebugAndroidTest` **50/50**, 0 padova, oba
+  broja čitana iz XML-a. `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` i dalje prazan
+  (iOS netaknut), `build.gradle.kts`/`libs.versions.toml` bez izmena (nijedna nova Gradle
+  zavisnost), `Chessko/Localizable.xcstrings` ostaje izmenjen u radnom stablu i **nije** ušao u
+  commit.
