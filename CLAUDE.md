@@ -666,12 +666,23 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | 5 — analiza partije | **da** | ista stavka pod dva broja kao 2/6a i 4/6c — isporučeno kao **6e** |
 | **6e — analiza partije** | **da** | native Stockfish preko JNI (ne `ChessKitEngine`), isti N+1 ugovor i pragovi klasifikacije kao iOS; ekran analize + dugme u obe grane `MainActivity` (portret/pejzaž) i u `game` koraku Puta; vidi „Android (Faza 6e) — šta je drugačije" |
 
-Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `EngineTest` 9,
-`ExampleUnitTest` 1, `LocTest` 5, `MoveAnalysisTest` 27, `PathProgressTest` 9, `PuzzleRatingTest` 9,
-`StepWindowTest` 3, `UCIScoreParserTest` 9) + **50 instrumentisanih**
+Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `EngineTest` 9,
+`ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5, `LocTest` 5,
+`MoveAnalysisTest` 27, `PathProgressTest` 9, `PuzzleDateFormatTest` 8, `PuzzleRatingTest` 9,
+`StepWindowTest` 3, `UCIScoreParserTest` 9) + **52 instrumentisana**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
-`LessonContentTest` 9, `LessonRepositoryTest` 6, `ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
+`GameViewModelActivityRecreationTest` 1, `LessonContentTest` 9, `LessonRepositoryTest` 6,
+`MainActivitySoundLifecycleTest` 1, `ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
 `StatsFacadeTest` 4, `StockfishEvaluateTest` 4). Oba broja su iz XML-a, ne iz izlaznog koda.
+
+> **`espresso-core` je od Faze 7 na `3.7.0`, i to nije kozmetika.** `MainActivitySoundLifecycleTest`
+> je prvi test u projektu koji uopšte koristi Compose UI test (`createComposeRule`), pa je prvi
+> naleteo na to da `espresso-core` **3.5.1 i 3.6.1** na **API 36** bacaju
+> `NoSuchMethodException: android.hardware.input.InputManager.getInstance` iz `Espresso.onIdle`,
+> kroz koji Compose sinhronizuje. Izmereno, ne pretpostavljeno: 3.5.1 → pada, **3.6.1 → i dalje
+> pada**, 3.7.0 → 52/52 prolazi. Verzija je test-only (`androidTestImplementation`) i nije nova
+> zavisnost — samo podignut pin koji je stajao iz Android Studio šablona; isporučeni APK je
+> netaknut.
 
 > **`connectedDebugAndroidTest` ume da kaže `BUILD SUCCESSFUL` a da ne pokrene nijedan test**
 > (npr. `INSTALL_FAILED_INSUFFICIENT_STORAGE`). Rezultat se čita iz
@@ -838,7 +849,15 @@ Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engin
   Android je to rešio razdvajanjem: `refreshPersistedProgress()` osvežava samo keš, a
   `LaunchedEffect` ga zove pri ponovnom prikazu — zadatak se ne dira, jer je bezuslovno
   ponovno učitavanje već jednom restartovalo napola rešen zadatak.
-- **Traka datuma na Androidu prikazuje engleski naziv meseca i u srpskom UI-ju.**
+- ~~**Traka datuma na Androidu prikazuje engleski naziv meseca i u srpskom UI-ju.**~~ —
+  **ZATVORENO u Fazi 7 (Task 3).** Uzrok: `PuzzleView.kt` je datum formatirao bez ijednog
+  `Locale`, pa je `DateTimeFormatter` uzimao **sistemski** jezik uređaja, ne onaj koji je
+  korisnik izabrao u aplikaciji. Rešeno novom funkcijom `localeForDateFormatting(languageCode:)`
+  u istom fajlu, koja jezik uzima iz `Loc.getLanguage()`. **Zamka koja se ne bi videla iz koda:**
+  `Locale.forLanguageTag("sr")` daje **ćirilicu** („17. септембар 2026.") jer CLDR za goli kod
+  `sr` podrazumeva `sr-Cyrl`, a ceo srpski sadržaj aplikacije je latinica — mesec bi bio jedini
+  ćirilični tekst na ekranu, gore nego engleski. Zato `sr` ide na `sr-Latn`, ostali kodovi
+  direktno. Potvrđeno na emulatoru u obe teme: „17. septembar 2026.".
 - **Git LFS: odlučeno da se NE koristi** (2026-09-09). Repo nosi 4 `.nnue` mreže, ~145 MB
   ukupno; najveća je 71,4 MB, ispod GitHub-ovog tvrdog limita od 100 MB, pa push prolazi uz
   upozorenje. Razlozi protiv LFS-a: mreže se nikad ne menjaju, pa glavna korist LFS-a
@@ -904,17 +923,33 @@ Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engin
   koraku Puta nego i u slobodnoj partiji na tabu Igra, jer je `autoPromoteToQueen`
   podrazumevano `false`. Faza 6c je dodala `PromotionOverlay.kt` (4 figure, poziva
   `confirmPromotion`/`cancelPromotion`) i okačila ga na oba mesta.
-- **`locF("Niz: %d dana", 1)` daje pogrešnu množinu na bar 3 od 8 jezika, ne samo na
-  srpskom** — izmereno na uređaju, ne pretpostavljeno: srpski „Niz: 1 dana" (traži „1
-  dan"), engleski **„Streak: 1 days"**, ruski **„Серия: 1 дней"**. `Loc`/`locF` na
-  Androidu nemaju NIKAKVU podršku za množinske oblike (nema ni `stringsdict`-a ni
-  Android `<plurals>` resursa), pa ovo nije ispravka jednog stringa nego odluka o
-  mehanizmu — van obima Faze 6c, zapisano da se ne zaboravi.
-- **`BoardView.detectDragGestures` (Android) proguta ceo pokret prsta**, pa vertikalni
-  skrol prestaje da radi kad su dve interaktivne table blizu u vidnom polju (npr. dve
-  vežbe jedna ispod druge u istoj lekciji). Zatečeno pre Faze 6c, nije ga ova faza uvela
-  — zapisano jer ga je Put prvi put učinio vidljivim (koraci `practice`/`test`/`game` su
-  nove table u novim kontekstima skrolovanja).
+- ~~**`locF("Niz: %d dana", 1)` daje pogrešnu množinu na bar 3 od 8 jezika**~~ — **ZATVORENO
+  u Fazi 7 (Task 1).** Uzrok: jedan string je nosio i broj i imenicu („Niz: 1 dana", „Streak:
+  1 days", „Серия: 1 дней"), a `Loc`/`locF` na Androidu i dalje nemaju nikakvu podršku za
+  množinske oblike. Rešeno **zaobilaženjem problema, ne dodavanjem mehanizma**: broj i oznaka
+  su razdvojeni u dva `Text`-a u `Row`-u sa `alignByBaseline()` (Compose ekvivalent iOS-ovog
+  `alignment: .firstTextBaseline`), tačno kao `Chessko/Views/PathView.swift` (`streakCard`) —
+  otvoreno i pročitano pre izmene. Ključ `"Niz: %d dana"` obrisan, nov ključ `"Dana zaredom"`
+  je **oznaka bez broja**, pa nijedan jezik nema šta da sklanja. Potvrđeno na emulatoru baš
+  pri streak-u **1** (tu je bug bio vidljiv), u obe teme: „**1** Dana zaredom".
+  **Sam mehanizam množine i dalje ne postoji** — ako neki budući string mora da nosi broj
+  uz imenicu, odluka o `<plurals>`/`stringsdict` ekvivalentu tek predstoji.
+- ~~**`BoardView.detectDragGestures` (Android) proguta ceo pokret prsta**~~ — **ZATVORENO u
+  Fazi 7 (Task 5).** Uzrok: `detectDragGestures` **troši pokazivač čim se pređe touch slop**,
+  bez obzira na to da li gest ima šta da radi. Provera „ima li figure na polju" je postojala,
+  ali je stizala prekasno — u `onDragStart`, kad je pokazivač već bio potrošen. Rešeno
+  prelaskom na `awaitEachGesture`: polje se ispituje na samom `down`-u, i **ako na njemu nema
+  figure ne troši se nijedan `change`**, pa gest propada roditeljskom `scroll`-u. Prečica
+  prevlačenjem (tema table / stil figura) se i dalje prati, ali se odustaje čim pokret potroši
+  neko drugi — tj. čim skrol preuzme. Izmereno na emulatoru, isti gest na oba build-a
+  (`DOWN` na praznom polju table pa 12 × `MOVE` nagore): **pre popravke lekcija se ne pomeri
+  ni za piksel** (razlika pre/posle gesta van trake stanja: prazna), **posle popravke se
+  skroluje**; prevlačenje figure i dalje radi (dama d4 → d6 prevlačenjem).
+  - **Zamka u samoj popravci, uhvaćena tek na uređaju:** `PointerInputChange.positionChange()`
+    vraća `Offset.Zero` za **već potrošen** `change`, pa se pomeraj mora pročitati **pre**
+    `consume()`. Obrnuto (prvi pokušaj) figura ostane zalepljena za polazno polje, potez se
+    nikad ne odigra, a ništa ne pukne i nijedan test ne padne. `detectDragGestures` je
+    interno radio isti redosled — što se vidi tek kad se otvori njegov izvor.
 - **Dijalog analize (Android) ne pokriva sistemsku navigacionu traku.** Ispod zatamnjenja se na
   svakom snimku vide presečeni natpisi `Igra / Zadaci / Put`. iOS isti ekran prikazuje kao punu
   `sheet`, pa tamo tab bar nestane. Nije popravljeno jer bi tražilo menjanje tipa dijaloga
@@ -947,9 +982,21 @@ Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engin
   nedostižno — `curriculum.json` nosi naslove samo za `sr` i `en` — ali je istog oblika kao
   bug koji `CLAUDE.md` već opisuje za lekcije (`Loc.fileLanguageCode()` vs. `getLanguage()`);
   ako kurikulum ikad dobije kineski naslov, ovo mesto će ga tiho promašiti.
-- **`SoundManager` se ne oslobadja kad promena jezika remontira glavni ekran.**
+- ~~**`SoundManager` se ne oslobadja kad promena jezika remontira glavni ekran.**~~ —
+  **ZATVORENO u Fazi 7 (Task 2).** Rešeno `DisposableEffect(languageKey)` unutar **istog**
+  `key(languageKey) { ... }` opsega koji pravi oba modela (`MainActivity.kt`), koji na
+  `onDispose` zove `releaseSounds()` na oba — isti obrazac koji `StepPracticeView`/
+  `StepGameView` nose od Faze 6c. Opseg je ono što je bilo lako promašiti: `DisposableEffect`
+  izvan `key`-a oslobodio bi `SoundPool` koji ekran **još koristi**. Zato test
+  (`MainActivitySoundLifecycleTest`, instrumentisan) tvrdi **obe** strane — stari modeli
+  oslobođeni **i** novi nisu. Izmereno na emulatoru preko `dumpsys audio`, ne odokativno: u
+  trenutku promene jezika prvo se stvore **dva nova** `SoundPool` player-a, pa se **dva stara
+  oslobode**, a potez odigran posle toga daje `event:started` na novom player-u — zvuk radi,
+  bez ijedne `SoundPool` greške u `logcat`-u. Opis zatečenog stanja (zašto je do toga došlo)
+  ostaje ispod, jer obrazac `remember { ViewModel(...) }` u `setContent`-u i dalje stoji:
   `MainActivity.kt:100-101` pravi `gameViewModel` i `puzzleViewModel` kroz `remember { ... }`,
-  unutar `key(languageKey) { ... }` bloka, bez ijednog `DisposableEffect`. Svaki od tih
+  unutar `key(languageKey) { ... }` bloka — a do Faze 7 tu nije bilo nijednog
+  `DisposableEffect`-a. Svaki od tih
   modela pravi **sopstveni** `SoundManager` (`PuzzleViewModel.kt:54`, `GameViewModel.kt:87`)
   — `SoundManager` nije singleton. Posto se ne prave kroz `ViewModelStore`, `onCleared()` im
   se nikad ne izvrši, pa `soundManager.release()` ne radi. Kad korisnik promeni jezik,
@@ -959,9 +1006,10 @@ Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engin
   obrazac, a `git diff 17dd16e..HEAD -- .../MainActivity.kt` ne pokazuje nijednu izmenu tog
   obrasca. Ekrani koraka (`StepPracticeView`, `StepGameView`) su u Fazi 6c dobili
   `DisposableEffect` + `releaseSounds()` baš zbog ovog obrasca; **`MainActivity` nije**,
-  jer je van obima te faze. Popravka je ista i jeftina: `DisposableEffect` u `MainActivity`,
-  po uzoru na `ChessClockView.kt:129-133` koji to već radi. Uticaj je uzak: promena jezika
-  je redak događaj, a curenje je ograničeno na po jedan `SoundPool` za Igru i Zadatke.
+  jer je van obima te faze — i tako je ostalo do Faze 7, koja je primenila istu, jeftinu
+  popravku (po uzoru na `ChessClockView.kt:129-133`, koji to radi od ranije). Uticaj je bio
+  uzak: promena jezika je redak događaj, a curenje je bilo ograničeno na po jedan `SoundPool`
+  za Igru i Zadatke.
 - **Analiza (Android) nasleđuje oba zapisana iOS ograničenja analize, doslovno.** `byWhite = i
   % 2 == 0` u `models/MoveAnalysis.kt` je isti izraz kao iOS `GameAnalysis.build` — ista
   pretpostavka da je prvi potez beli, isti razlog (nijedan `game` korak Puta danas nema
@@ -976,12 +1024,23 @@ Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engin
   deepening-a) bi tiho prošla kao konačna. `UCI_ShowWDL` je podrazumevano `false` i
   `StockfishEngine.kt` ga nigde ne postavlja, pa je danas nedostižno — ali vredi znati ako se
   ta opcija ikad uključi (npr. radi prikaza % pobede/remija/poraza u UI-ju).
-- **Završena partija (mat, predaja, remi) ne preživi rekreaciju `Activity`-ja na Androidu**
-  (rotacija ekrana, promena sistemske svetla/tamna teme, ili proces vraćen iz pozadine).
+- ~~**Završena partija (mat, predaja, remi) ne preživi rekreaciju `Activity`-ja na Androidu**~~
+  — **ZATVORENO u Fazi 7 (Task 4).** Uzrok je opisan ispod i nije se promenio: sačuvani zapis
+  nije nosio `status`, a `GameState.fromFEN` uvek vraća `GameStatus.Playing`. Rešeno tako što
+  se `status` od sada serijalizuje **odvojeno od FEN-a** (`statusToJson`/`statusFromJson` u
+  `GameViewModel.kt`), sa svim podacima (boja za šah/mat/predaju, tačan `DrawReason`). Za
+  zapise sačuvane PRE te izmene `load()` pada na novu `GameState.statusFromPosition` — javnu,
+  `android.*`-free funkciju koja mat/pat/šah preračunava iz pravila; ona namerno **ne**
+  prepoznaje remi po 50 poteza/ponavljanju/nedovoljnom materijalu ni predaju, jer se ta stanja
+  ne vide iz gole pozicije. **Izvođenje statusa iz FEN-a je odbijeno, ne zaboravljeno** — FEN
+  za to nema polje, a iOS ekvivalenta nema jer tamo ceo `GameState` ide kroz `Codable`.
+  Potvrđeno na emulatoru: predaja pa promena sistemske teme — traka i dalje kaže „Predaja!
+  Izgubio si.", dugme „Analiziraj partiju" **ostaje** (provereno u obe teme).
+  Opis zatečenog stanja:
   `MainActivity` pravi `GameViewModel` kroz `remember { GameViewModel(...) }`, ne
   `rememberSaveable`/`ViewModelStore`, pa svaka rekreacija napravi NOV primerak čiji `init`
   učita sačuvanu partiju sa diska (`GameViewModel.load()`). Sačuvani JSON (`save()`/`load()`,
-  `GameViewModel.kt`) ne nosi `status` polje uopšte — pozicija se rekonstruiše kroz
+  `GameViewModel.kt`) do Faze 7 **nije nosio `status` polje uopšte** — pozicija se rekonstruiše kroz
   `GameState.fromFEN(savedFen)`, koji (isti uzrok koji `CLAUDE.md` već beleži za
   `terminalEval` u analizi) UVEK vraća `GameStatus.Playing`. Partija završena predajom se
   posle rekreacije vrati u stanje „u toku" — istorija poteza ostaje netaknuta, ali traka
@@ -989,6 +1048,21 @@ Testovi: **83 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engin
   se partija ponovo ne završi. Potvrđeno direktno, dvaput zaredom: predaja pa promena sistemske
   teme je oba puta vratila ekran na „Tvoj potez". Zatečen defekt (nije uveden ovom fazom), ali
   ga Faza 6e čini vidljivijim jer krije baš dugme koje je ova faza dodala.
+- ~~**Polutez u Android FEN-u bio je zakucan na `0`**~~ — **ZATVORENO u Fazi 7 (Task 5), van
+  prvobitnog obima faze.** `GameState.fen` (Kotlin) je peto polje FEN-a uvek pisao kao `"0"`,
+  dok iOS šalje pravi `halfmoveClock` **od Faze 0** (`Chessko/Models/GameState+FEN.swift`).
+  Nije bila kozmetika, jer taj FEN nije samo zapis — ide (1) Stockfish-u na **svaki AI potez**
+  (`GameViewModel`), (2) Stockfish-u na **svaku poziciju u analizi** (`AnalysisViewModel`), i
+  (3) u sačuvanu partiju (`GameViewModel.save()`), odakle ga `fromFEN` čita nazad. Posledice:
+  motor nikad nije znao koliko je pozicija blizu pravila 50 poteza, a **brojač se tiho
+  resetovao pri svakom ponovnom otvaranju aplikacije** — partija na 99 poluteza posle restarta
+  je kretala od nule. `fromFEN` je polje čitao ispravno sve vreme (`parts[4]`); pisanje je bilo
+  to što laže. Popravka je jedna linija; čuva je `GameStateFenHalfmoveTest` (5 JVM testova,
+  dokazano mutacijom — sa vraćenom nulom pada 4 od 5). Šesto polje (broj poteza) ostaje `"1"`
+  na **obe** platforme; ne vodi se nigde.
+  - Veza sa stavkom iznad: za **stare** zapise (bez `status` polja) `statusFromPosition` i
+    dalje ne prepoznaje `Draw(FiftyMoves)` — status se ne izvodi iz brojača nego iz
+    eksplicitnog polja. Ali učitana partija sada bar **nastavlja da broji tamo gde je stala**.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
@@ -2310,3 +2384,47 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   (iOS netaknut), `build.gradle.kts`/`libs.versions.toml` bez izmena (nijedna nova Gradle
   zavisnost), `Chessko/Localizable.xcstrings` ostaje izmenjen u radnom stablu i **nije** ušao u
   commit.
+
+- **2026-09-17** — Faza 7 (sitnice koje korisnik vidi). Pet stavki iz „Poznatih ograničenja"
+  zatvoreno; svaka je gore **prepisana kao zatvorena, ne obrisana** — uz uzrok i način rešenja.
+  Task 1: streak broj i oznaka razdvojeni (nema više „Niz: 1 dana"/„Streak: 1 days"). Task 2:
+  `DisposableEffect(languageKey)` u `MainActivity` oslobađa `SoundPool` pri promeni jezika.
+  Task 3: naziv meseca prati izabran jezik, uz `sr → sr-Latn` izuzetak (CLDR za goli `sr` daje
+  ćirilicu). Task 4: `status` partije se serijalizuje odvojeno od FEN-a, pa završena partija
+  preživi rekreaciju `Activity`-ja. Task 5: tabla više ne guta vertikalni skrol.
+  **Šesta stavka je dodata, ne zatvorena zatečena:** polutez u Android FEN-u bio je zakucan na
+  `0` (iOS to ima tačno od Faze 0) — detalji u „Poznatim ograničenjima".
+
+  **Izmereni brojevi:** JVM **83 → 101** (+5 `GameStateStatusFromPositionTest`, +5
+  `GameStateFenHalfmoveTest`, +8 `PuzzleDateFormatTest`), instrumentisani **50 → 52**
+  (+`MainActivitySoundLifecycleTest`, +`GameViewModelActivityRecreationTest`). Oba iz XML-a,
+  0 padova. Jedan prolaz emulatora u celoj fazi; `adb emu kill` + `./gradlew --stop` odmah po
+  prolazu, `pgrep -f qemu-system` prazan.
+
+  **Tri stvari koje je uhvatio tek emulator, i nijedna se ne vidi iz koda:**
+  - **Dva od tri instrumentisana testa Taskova 2 i 4 nikad nisu bila izvršena** (samo
+    kompajlirana), i prvo izvršavanje je otkrilo da `MainActivitySoundLifecycleTest` uopšte ne
+    može da se pokrene na API 36 sa `espresso-core` 3.5.1. Nije bug u testu ni u aplikaciji nego
+    u test-biblioteci; **3.6.1 takođe pada**, tek 3.7.0 prolazi (vidi „Stanje Android porta").
+    Da nije bilo ovog prolaza, faza bi se zatvorila sa testom koji nikad nije ništa dokazao.
+  - **Prva verzija popravke gesta bila je pokvarena, a ništa nije puklo.** `change.consume()`
+    pre `change.positionChange()` čini da pomeraj uvek bude nula — skrol je radio, figura se
+    dizala, ali se potez nikad nije odigrao. Nijedan test to ne pokriva (gest nema JVM test),
+    pa je jedini dokaz bio pokušaj prevlačenja na uređaju.
+  - **Poređenje „pre/posle" na istom uređaju, sa istim sintetičkim gestom**, bilo je jedino što
+    je dokazalo da popravka gesta uopšte nešto menja: sa zatečenim `detectDragGestures` lekcija
+    se ne pomeri ni za piksel, sa `awaitEachGesture` se skroluje.
+
+  **Dokaz da je zvuk posle promene jezika živ nije bio screenshot** (emulator radi sa
+  `-no-audio`) nego `dumpsys audio`: u trenutku promene jezika **prvo** se stvore dva nova
+  `SoundPool` player-a pa se **onda** dva stara oslobode, a potez odigran posle toga daje
+  `event:started` na novom player-u. Taj redosled je tačno ono što popravka Task-a 2 mora da
+  garantuje — obrnut bi oslobodio pool koji je još u upotrebi.
+
+  Snimci (22, uključujući i one koji dokumentuju pokvarenu prvu verziju popravke gesta —
+  `06a`/`06b` — i stanje PRE popravke, `09a`/`09b`) u
+  `.superpowers/sdd/2026-09-17-faza-7-sitnice-koje-korisnik-vidi/screenshots/`,
+  ne u sesijskom `/tmp` — u ranijoj fazi su odatle nestali pre finalnog pregleda.
+  `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS netaknut);
+  `Chessko/Localizable.xcstrings` ostaje izmenjen u radnom stablu i **nije** ušao ni u jedan
+  commit. Jedina izmena build fajlova u celoj fazi je pin `espressoCore` (test-only).

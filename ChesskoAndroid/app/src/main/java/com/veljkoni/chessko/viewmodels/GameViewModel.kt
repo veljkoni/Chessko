@@ -814,10 +814,14 @@ class GameViewModel(
             
             // Fallback SAMO za zapise sacuvane PRE ove izmene, koji nemaju
             // polje "status". `GameState.statusFromPosition` prepoznaje mat i
-            // pat, ali NE i `Draw(FiftyMoves)`/`Draw(Repetition)` (fen getter
-            // uvek pise polutez "0", `GameState.kt:109`, zateceno -- van
-            // obima ove izmene -- a fromFEN/load() ionako ne cuvaju punu
-            // istoriju pozicija), ni `Draw(InsufficientMaterial)` (pozicija
+            // pat, ali NE i `Draw(FiftyMoves)`/`Draw(Repetition)` -- ta dva
+            // stanja se ne vide iz gole pozicije nego iz brojaca, koje
+            // `statusFromPosition` namerno ne gleda (a `fromFEN` ionako ne
+            // vraca punu `positionHistory`). Polutez SE od Faze 7 nosi kroz
+            // FEN (`GameState.kt`, polje 5), pa ucitana partija bar nastavlja
+            // da broji ka 50 poteza tamo gde je stala; samo prepoznavanje
+            // vec ZAVRSENOG remija po tom pravilu ostaje na eksplicitnom
+            // polju "status". Ni `Draw(InsufficientMaterial)` (pozicija
             // MOZE imati legalne poteze, npr. kralj+kralj, pa
             // `legalMoves.isEmpty()` ne pogadja) ni `Resigned` (predaja nema
             // trag na tabli). Takav stari zapis ostaje na tim ishodima

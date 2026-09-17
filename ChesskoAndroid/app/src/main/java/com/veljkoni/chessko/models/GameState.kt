@@ -106,7 +106,16 @@ data class GameState(
 
             val ep = enPassantTarget?.algebraic ?: "-"
 
-            return "${rows.joinToString("/")} $active $castlingStr $ep 0 1"
+            // 5. Polutez (vodi se) — NE sme biti zakucan na "0". Ovaj FEN nije
+            // samo zapis: ide Stockfish-u na svaki AI potez
+            // (`GameViewModel.getBestMove`) i na svaku poziciju u analizi
+            // (`AnalysisViewModel`), pa bi motor bio slep za pravilo 50 poteza;
+            // a pošto ide i u sačuvanu partiju (`GameViewModel.save()`, odakle
+            // ga `fromFEN` čita nazad), brojač bi se tiho resetovao pri svakom
+            // ponovnom otvaranju aplikacije. iOS ovo ima od Faze 0
+            // (`Chessko/Models/GameState+FEN.swift`).
+            // 6. Broj poteza se ne vodi ni na jednoj platformi — "1", isto kao iOS.
+            return "${rows.joinToString("/")} $active $castlingStr $ep $halfmoveClock 1"
         }
 
     fun applying(move: ChessMove): GameState {

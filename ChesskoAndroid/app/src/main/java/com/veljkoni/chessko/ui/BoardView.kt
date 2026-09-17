@@ -16,8 +16,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.logic.HapticManager
 import androidx.compose.ui.Alignment
@@ -65,8 +70,6 @@ fun BoardView(
 ) {
     val context = LocalContext.current
     val hapticManager = remember { HapticManager(context.applicationContext) }
-    var dragAmountX by remember { mutableStateOf(0f) }
-    var dragAmountY by remember { mutableStateOf(0f) }
 
     // Identify king in check position
     val checkKingPosition = remember(gameStatus, board) {
@@ -106,58 +109,56 @@ fun BoardView(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                // NE koristi `detectDragGestures`. Taj detektor troši pokazivač
+                // ČIM se pređe touch slop, bez obzira na to da li gest uopšte
+                // ima šta da radi — pa tabla proguta vertikalni skrol roditelja
+                // i lekcija sa dve table prestane da se skroluje (zatečeno pre
+                // Faze 6c; ta faza ga je samo učinila vidljivim).
+                //
+                // Ovde se pokazivač troši SAMO kad gest počinje na polju sa
+                // figurom (jedini slučaj koji stvarno vuče figuru). Kad figure
+                // nema, nijedan `change` se ne troši, pa gest propada
+                // roditeljskom `scroll`-u; prečica prevlačenjem (tema table /
+                // stil figura) se i dalje prati, ali se odustaje čim pokret
+                // potroši neko drugi — tj. čim skrol preuzme.
                 .pointerInput(board, isFlipped, squareSizePx) {
-                    detectDragGestures(
-                        onDragStart = { offset ->
-                            dragAmountX = 0f
-                            dragAmountY = 0f
-                            dragTouchOffset = offset
+                    awaitEachGesture {
+                        // `requireUnconsumed = false`: `clickable` na samom polju
+                        // troši `down` (tako Compose radi tap), a taj tap i dalje
+                        // mora da radi — isto kao sa `detectDragGestures`.
+                        val down = awaitFirstDown(requireUnconsumed = false)
 
-                        val displayCol = (offset.x / squareSizePx).toInt().coerceIn(0, 7)
-                        val displayRow = (offset.y / squareSizePx).toInt().coerceIn(0, 7)
-                        val startRow = if (isFlipped) 7 - displayRow else displayRow
-                        val startCol = if (isFlipped) 7 - displayCol else displayCol
-                        val pos = Position(startRow, startCol)
+                        val startDisplayCol = (down.position.x / squareSizePx).toInt().coerceIn(0, 7)
+                        val startDisplayRow = (down.position.y / squareSizePx).toInt().coerceIn(0, 7)
+                        val startRow = if (isFlipped) 7 - startDisplayRow else startDisplayRow
+                        val startCol = if (isFlipped) 7 - startDisplayCol else startDisplayCol
+                        val startPos = Position(startRow, startCol)
                         val pieceOnSquare = board[startRow][startCol]
 
-                        if (pieceOnSquare != null) {
-                            draggedPiece = pieceOnSquare
-                            dragStartPos = pos
-                            onTap(pos)
-                        } else {
-                            draggedPiece = null
-                            dragStartPos = null
-                        }
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        if (draggedPiece != null) {
-                            dragTouchOffset += dragAmount
-                        } else {
-                            dragAmountX += dragAmount.x
-                            dragAmountY += dragAmount.y
-                        }
-                    },
-                    onDragEnd = {
-                        if (draggedPiece != null && dragStartPos != null) {
-                            val displayCol = (dragTouchOffset.x / squareSizePx).toInt().coerceIn(0, 7)
-                            val displayRow = (dragTouchOffset.y / squareSizePx).toInt().coerceIn(0, 7)
-                            val endRow = if (isFlipped) 7 - displayRow else displayRow
-                            val endCol = if (isFlipped) 7 - displayCol else displayCol
-                            val targetPos = Position(endRow, endCol)
-
-                            if (targetPos != dragStartPos) {
-                                onTap(targetPos)
+                        if (pieceOnSquare == null) {
+                            // --- Nema figure: ne troši ništa. ---
+                            var swipeX = 0f
+                            var swipeY = 0f
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val change = event.changes.firstOrNull { it.id == down.id }
+                                    ?: return@awaitEachGesture
+                                // Prst podignut — proveri PRE `isConsumed`, jer
+                                // `clickable` troši baš taj `up` kad je gest bio tap.
+                                if (!change.pressed) break
+                                // Neko drugi (skrol roditelja) je preuzeo pokret.
+                                if (change.isConsumed) return@awaitEachGesture
+                                val delta = change.positionChange()
+                                swipeX += delta.x
+                                swipeY += delta.y
                             }
-                            draggedPiece = null
-                            dragStartPos = null
-                        } else {
+
                             val settings = SettingsManager.getInstance(context)
-                            if (kotlin.math.abs(dragAmountX) > kotlin.math.abs(dragAmountY)) {
-                                if (settings.swipeToChangeBoardTheme && kotlin.math.abs(dragAmountX) > 100f) {
+                            if (kotlin.math.abs(swipeX) > kotlin.math.abs(swipeY)) {
+                                if (settings.swipeToChangeBoardTheme && kotlin.math.abs(swipeX) > 100f) {
                                     val themes = BoardTheme.values()
                                     val currentIdx = themes.indexOfFirst { it.rawValue == settings.boardTheme }
-                                    val nextIdx = if (dragAmountX < 0) {
+                                    val nextIdx = if (swipeX < 0) {
                                         (currentIdx + 1) % themes.size
                                     } else {
                                         (currentIdx - 1 + themes.size) % themes.size
@@ -166,10 +167,10 @@ fun BoardView(
                                     hapticManager.mediumImpact()
                                 }
                             } else {
-                                if (settings.swipeToChangePieceStyle && kotlin.math.abs(dragAmountY) > 100f) {
+                                if (settings.swipeToChangePieceStyle && kotlin.math.abs(swipeY) > 100f) {
                                     val styles = PieceStyle.values()
                                     val currentIdx = styles.indexOfFirst { it.rawValue == settings.pieceStyle }
-                                    val nextIdx = if (dragAmountY < 0) {
+                                    val nextIdx = if (swipeY < 0) {
                                         (currentIdx + 1) % styles.size
                                     } else {
                                         (currentIdx - 1 + styles.size) % styles.size
@@ -178,14 +179,55 @@ fun BoardView(
                                     hapticManager.mediumImpact()
                                 }
                             }
+                            return@awaitEachGesture
                         }
-                    },
-                    onDragCancel = {
+
+                        // --- Figura postoji: ponašanje kao i pre. ---
+                        // Slop se čeka da običan TAP ne bi startovao prevlačenje
+                        // (tap obrađuje `clickable` na polju; bez ovoga bi se
+                        // `onTap` okinuo dvaput i figura bi se odmah odselektovala).
+                        var overSlop = Offset.Zero
+                        var drag: PointerInputChange?
+                        do {
+                            drag = awaitTouchSlopOrCancellation(down.id) { change, over ->
+                                change.consume()
+                                overSlop = over
+                            }
+                        } while (drag != null && !drag.isConsumed)
+                        if (drag == null) return@awaitEachGesture
+
+                        draggedPiece = pieceOnSquare
+                        dragStartPos = startPos
+                        dragTouchOffset = down.position + overSlop
+                        onTap(startPos)
+
+                        val completed = drag(drag.id) { change ->
+                            // REDOSLED JE BITAN: `positionChange()` vraca
+                            // `Offset.Zero` za vec potrosen `change`, pa se
+                            // pomeraj mora procitati PRE `consume()`. Obrnuto
+                            // figura ostaje zalepljena za polazno polje i potez
+                            // se nikad ne odigra (izmereno na emulatoru).
+                            // `detectDragGestures` je interno radio isti
+                            // redosled.
+                            val delta = change.positionChange()
+                            change.consume()
+                            dragTouchOffset += delta
+                        }
+
+                        if (completed) {
+                            val endDisplayCol = (dragTouchOffset.x / squareSizePx).toInt().coerceIn(0, 7)
+                            val endDisplayRow = (dragTouchOffset.y / squareSizePx).toInt().coerceIn(0, 7)
+                            val endRow = if (isFlipped) 7 - endDisplayRow else endDisplayRow
+                            val endCol = if (isFlipped) 7 - endDisplayCol else endDisplayCol
+                            val targetPos = Position(endRow, endCol)
+                            if (targetPos != startPos) {
+                                onTap(targetPos)
+                            }
+                        }
                         draggedPiece = null
                         dragStartPos = null
                     }
-                )
-            }
+                }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             for (displayRow in 0..7) {
