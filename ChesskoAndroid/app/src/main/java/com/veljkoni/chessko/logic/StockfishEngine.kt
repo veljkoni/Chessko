@@ -163,9 +163,50 @@ object StockfishEngine {
      * ima protiv toga je restart procesa. U normalnom toku (depth <= 20,
      * `StockfishLevel.MAXIMUM`) ovo se nikad ne aktivira -- vidi komentar uz
      * konstantu za merenje na kom je zasnovana.
+     *
+     * **Otkazivanje korutine koja poziva ovu funkciju MORA takodje da posalje
+     * "stop", ne samo istek [BEST_MOVE_TIMEOUT_MS].** Bez toga se dogodi
+     * ovaj lanac (nadjeno u pregledu Faze 6e, Task 4 -- otkazivanje analize
+     * partije je prvi stvaran pozivalac koji otkazuje ovu funkciju usred
+     * pretrage, ali isti rizik postoji i za zivu partiju ako korisnik napusti
+     * ekran igre dok AI razmislja):
+     *   1. Korisnik napusti ekran (npr. analize) usred pretrage --
+     *      pozivajuca korutina se otkaze.
+     *   2. `Mutex.withLock` je `finally`-zasticen, pa se `searchMutex`
+     *      OSLOBODI ODMAH -- ali BEZ da je "stop" ikad poslat, jer je otkazana
+     *      korutina preskocila obican `suspend` kod (`inputChannel.send`
+     *      unutar `if (move == null)` ispod se NIKAD ne izvrsi kad se
+     *      otkazivanje desi za vreme cekanja na `bestmove`).
+     *   3. Native motor NASTAVLJA da racuna staru poziciju u pozadini --
+     *      niko ga nije zaustavio.
+     *   4. Sledeci pozivalac (novi `getBestMove` za AI potez, ili nova
+     *      `evaluate` pretraga) uzme SLOBODAN mutex, isprazni kanal
+     *      (`tryReceive` petlja) -- ali ta petlja brise SAMO ono sto je VEC
+     *      u baferu u tom trenutku, ne ono sto tek stize -- i posalje
+     *      sopstveni "position"/"go".
+     *   5. Zakasneli "bestmove" STARE pretrage stigne POSLE praznjenja a PRE
+     *      novog "bestmove"-a i bude procitan kao odgovor na NOVU poziciju --
+     *      `ChessMove.fromUCI` ili vrati `null` (AI ne odigra nista) ili,
+     *      gore, potez slucajno bude legalan u novoj poziciji pa **AI odigra
+     *      potez izracunat za sasvim drugu poziciju**, tiho, bez ijedne
+     *      poruke. Ista klasa greske koju iOS ima zapisanu za analizu
+     *      partije ("izlaz starog motora upadne u pipe novog"), samo je
+     *      ovde posledica pogresan potez u zivoj partiji, ne neuspela analiza.
+     *
+     * Zato `finally` ispod salje "stop" i kad je korutina otkazana, u
+     * `NonCancellable` kontekstu (obican `suspend` poziv unutar `finally`
+     * otkazane korutine bi sam odmah bacio `CancellationException`, pre nego
+     * sto bi "stop" uopste stigao u `inputChannel`). Moguce je da se "stop"
+     * ovim posalje DVAPUT (jednom iz `if (move == null)`, jednom iz
+     * `finally`) ako otkazivanje stigne bas izmedju to dvoje -- bezopasno,
+     * provereno u `cpp/stockfish/uci.cpp:105-106`
+     * (`if (token == "quit" || token == "stop") engine.stop();`) i
+     * `engine.cpp:159` (`void Engine::stop() { threads.stop = true; }`):
+     * `stop` samo postavlja `std::atomic_bool` zastavicu, bez provere da li
+     * je pretraga uopste u toku -- ponovljen ili "prazan" poziv je no-op.
      */
     suspend fun getBestMove(fen: String, depth: Int): String? = searchMutex.withLock {
-        if (!engineStarted) return null
+        if (!engineStarted) return@withLock null
 
         // Drain output channel to remove old stale messages
         while (true) {
@@ -177,36 +218,50 @@ object StockfishEngine {
         inputChannel.send("position fen $fen")
         inputChannel.send("go depth $depth")
 
-        // Wait for the bestmove output
-        val move = withTimeoutOrNull(BEST_MOVE_TIMEOUT_MS) {
-            withContext(Dispatchers.IO) {
-                for (line in outputChannel) {
-                    val parts = line.split(" ")
-                    if (parts.isNotEmpty() && parts[0] == "bestmove") {
-                        if (parts.size >= 2) {
-                            val candidate = parts[1]
-                            if (candidate != "(none)") {
-                                return@withContext candidate
+        var completedNormally = false
+        try {
+            // Wait for the bestmove output
+            val move = withTimeoutOrNull(BEST_MOVE_TIMEOUT_MS) {
+                withContext(Dispatchers.IO) {
+                    for (line in outputChannel) {
+                        val parts = line.split(" ")
+                        if (parts.isNotEmpty() && parts[0] == "bestmove") {
+                            if (parts.size >= 2) {
+                                val candidate = parts[1]
+                                if (candidate != "(none)") {
+                                    return@withContext candidate
+                                }
                             }
+                            break
                         }
-                        break
                     }
+                    null
                 }
-                null
+            }
+            if (move == null) {
+                // Ili je istekao TIMEOUT (motor zaglavljen), ili je pretraga
+                // legitimno zavrsila bez poteza ("(none)", ili je kanal
+                // zatvoren). U oba slucaja je bezbedno poslati "stop": motor
+                // koji vec nije u pretrazi ga ignorise, a motor koji jos
+                // pretrazuje ce prestati da trosi procesor umesto da svoj
+                // zakasneli izlaz ubaci u kanal SLEDECE pretrage (ista klasa
+                // greske koju iOS ima zapisanu za analizu partije -- "izlaz
+                // starog motora upadne u pipe novog").
+                inputChannel.send("stop")
+            }
+            completedNormally = true
+            move
+        } finally {
+            if (!completedNormally) {
+                // Otkazivanje -- vidi dugi komentar iznad funkcije. Mora ici
+                // kroz NonCancellable, jer je korutina vec otkazana i obican
+                // `suspend` poziv bi ovde odmah bacio CancellationException
+                // umesto da posalje "stop".
+                withContext(NonCancellable) {
+                    inputChannel.send("stop")
+                }
             }
         }
-        if (move == null) {
-            // Ili je istekao TIMEOUT (motor zaglavljen), ili je pretraga
-            // legitimno zavrsila bez poteza ("(none)", ili je kanal
-            // zatvoren). U oba slucaja je bezbedno poslati "stop": motor
-            // koji vec nije u pretrazi ga ignorise, a motor koji jos
-            // pretrazuje ce prestati da trosi procesor umesto da svoj
-            // zakasneli izlaz ubaci u kanal SLEDECE pretrage (ista klasa
-            // greske koju iOS ima zapisanu za analizu partije -- "izlaz
-            // starog motora upadne u pipe novog").
-            inputChannel.send("stop")
-        }
-        return move
     }
 
     /**
@@ -233,6 +288,21 @@ object StockfishEngine {
      * (Task 4) zove ovo do ~81 puta zaredom kroz ISTI `searchMutex`, pa bi
      * jedna zaglavljena pozicija bez timeout-a trajno blokirala i analizu i
      * svaku sledecu partiju protiv racunara u istom procesu.
+     *
+     * **Otkazivanje ove funkcije usred pretrage takodje mora da posalje
+     * "stop"** -- isti petostepeni lanac kao kod [getBestMove] (vidi njegov
+     * doc-komentar za pun tekst), primenjen ovde na `AnalysisViewModel`, koji
+     * je STVARAN pozivalac koji ovo otkazuje: korisnik napusti ekran analize
+     * usred jedne od ~81 pretrage -> `Mutex.withLock` oslobodi `searchMutex`
+     * ODMAH, ali bez da je "stop" ikad poslat -> native motor nastavi da
+     * racuna staru poziciju u pozadini -> SLEDECI pozivalac (nov `evaluate`
+     * u kasnijoj analizi, ili `getBestMove` za AI potez u partiji koju
+     * korisnik odmah zatim zapocne) isprazni SAMO ono sto je vec u baferu i
+     * posalje sopstveni "position"/"go" -> zakasneli izlaz stare pretrage
+     * stigne izmedju praznjenja i novog "bestmove"-a i bude procitan kao
+     * ocena/potez ZA NOVU poziciju. Kod `evaluate` je to jos podmuklije nego
+     * kod `getBestMove`: nema pada, nema "null"-a koji bi nesto upozorio --
+     * `GameAnalysis` samo dobije pogresan `cpLoss`/klasu za taj potez, tiho.
      */
     suspend fun evaluate(fen: String, depth: Int = 12): PositionEval? {
         // Terminalna pozicija se prepoznaje PRE bilo kakvog dodira sa motorom --
@@ -264,37 +334,52 @@ object StockfishEngine {
             inputChannel.send("position fen $fen")
             inputChannel.send("go depth $depth")
 
-            // Wait for the bestmove output, tracking the last seen score along the way.
-            val eval = withTimeoutOrNull(EVALUATE_TIMEOUT_MS) {
-                withContext(Dispatchers.IO) {
-                    var lastScore: EngineScore? = null
-                    for (line in outputChannel) {
-                        val parts = line.split(" ")
-                        if (parts.isNotEmpty() && parts[0] == "info") {
-                            UCIScoreParser.parse(line)?.let { lastScore = it }
-                            continue
+            var completedNormally = false
+            try {
+                // Wait for the bestmove output, tracking the last seen score along the way.
+                val eval = withTimeoutOrNull(EVALUATE_TIMEOUT_MS) {
+                    withContext(Dispatchers.IO) {
+                        var lastScore: EngineScore? = null
+                        for (line in outputChannel) {
+                            val parts = line.split(" ")
+                            if (parts.isNotEmpty() && parts[0] == "info") {
+                                UCIScoreParser.parse(line)?.let { lastScore = it }
+                                continue
+                            }
+                            if (parts.isNotEmpty() && parts[0] == "bestmove") {
+                                val move = if (parts.size >= 2 && parts[1] != "(none)") parts[1] else null
+                                // Bez ijedne ocene nema sta da se vrati -- pozicija bez
+                                // ocene bi u racunici prosla kao cp(0), sto je tvrdnja
+                                // da je izjednaceno.
+                                val score = lastScore ?: return@withContext null
+                                return@withContext PositionEval(score, move)
+                            }
                         }
-                        if (parts.isNotEmpty() && parts[0] == "bestmove") {
-                            val move = if (parts.size >= 2 && parts[1] != "(none)") parts[1] else null
-                            // Bez ijedne ocene nema sta da se vrati -- pozicija bez
-                            // ocene bi u racunici prosla kao cp(0), sto je tvrdnja
-                            // da je izjednaceno.
-                            val score = lastScore ?: return@withContext null
-                            return@withContext PositionEval(score, move)
-                        }
+                        null
                     }
-                    null
+                }
+                if (eval == null) {
+                    // Isto obrazlozenje kao u `getBestMove`: bezbedno i kad
+                    // pretraga nije stvarno istekla (samo legitimno zavrsila bez
+                    // ocene), obavezno kad JESTE istekla -- motor koji nastavlja
+                    // da pretrazuje u pozadini bi svoj zakasneli izlaz ubacio u
+                    // kanal SLEDECE `evaluate`/`getBestMove` pretrage.
+                    inputChannel.send("stop")
+                }
+                completedNormally = true
+                eval
+            } finally {
+                if (!completedNormally) {
+                    // Otkazivanje -- vidi dugi komentar iznad funkcije. Mora
+                    // ici kroz NonCancellable, isti razlog kao u `getBestMove`:
+                    // korutina je vec otkazana, pa bi obican `suspend` poziv
+                    // ovde odmah bacio CancellationException umesto da posalje
+                    // "stop".
+                    withContext(NonCancellable) {
+                        inputChannel.send("stop")
+                    }
                 }
             }
-            if (eval == null) {
-                // Isto obrazlozenje kao u `getBestMove`: bezbedno i kad
-                // pretraga nije stvarno istekla (samo legitimno zavrsila bez
-                // ocene), obavezno kad JESTE istekla -- motor koji nastavlja
-                // da pretrazuje u pozadini bi svoj zakasneli izlaz ubacio u
-                // kanal SLEDECE `evaluate`/`getBestMove` pretrage.
-                inputChannel.send("stop")
-            }
-            eval
         }
     }
 }
