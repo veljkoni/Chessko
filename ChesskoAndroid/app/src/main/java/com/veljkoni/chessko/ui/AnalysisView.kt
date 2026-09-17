@@ -58,27 +58,36 @@ import kotlin.math.max
 // cekao da se svih ~N pretraga zavrsi pre nego sto AI odigra prvi potez —
 // `StockfishEngine` je `object` sa JEDNIM `searchMutex`-om.
 //
-// **Preslikavanje klase u boju — TRI boje, ne cetiri kao iOS.** iOS ima
-// `best -> DS.accent` odvojeno od `excellent/good -> DS.success` (setovi
-// (accent, success, warning, danger) = 4 boje za 6 klasa). Ovaj ekran, po
-// eksplicitnom uputstvu za ovaj task, spaja `BEST` u `DS.success` zajedno sa
-// `EXCELLENT`/`GOOD` — (success, warning, danger) = 3 boje za 6 klasa.
-// Ovo JESTE razlika od iOS izvora (provereno citanjem `AnalysisView.swift`,
-// ne pretpostavljeno) i zabelezena je kao takva u izvestaju ovog taska, ne
-// prokrijumcarena. Naziv klase ostaje u `contentDescription` na svakom
-// potezu i u prelomnoj kartici, pa VoiceOver/TalkBack ekvivalent i dalje
-// razlikuje svih 6 — samo boja ne.
+// **Preslikavanje klase u boju — sest klasa u CETIRI boje, isto kao iOS**
+// (`Chessko/Views/AnalysisView.swift:153-160`; CLAUDE.md, „Analiza partije":
+// „Sest klasa poteza preslikava se u cetiri boje"). `BEST` dobija sopstveni
+// `DS.accent`, ODVOJENO od `EXCELLENT`/`GOOD` (`DS.success`); `INACCURACY` i
+// `MISTAKE` dele `DS.warning`; `BLUNDER` je sam na `DS.danger`. Samo DVA para
+// klasa deli boju (excellent+good, inaccuracy+mistake) — to je zapisano
+// ogranicenje iOS-a, ne previd, i ovaj ekran ga prenosi doslovno, ne
+// pojednostavljuje ga dalje. `BEST` znaci „odigran je potez motora" i mora
+// ostati vizuelno razlicit od „solidno" (`good`): to je jedina klasa koja
+// nosi drugaciju vrstu dobre vesti, i jedina zbog koje igrac uopste gleda
+// traku dvaput. `DS.accent` je vec boja `turningPoint` kartice — ali
+// `turningPoint` ISKLJUCUJE `BEST` (vidi `GameAnalysis.turningPoint`), pa se
+// akcent u praksi nikad ne pojavljuje na obe stvari istovremeno; sudara nema.
+// Naziv klase ostaje i u `contentDescription` na svakom potezu i u prelomnoj
+// kartici, pa VoiceOver/TalkBack ekvivalent razlikuje svih 6 i kad se boja
+// od dve deli.
 //
 // **Kontrast — nijedan nov par.** Svi parovi koje ovaj ekran crta su vec
 // pokriveni postojecim `ContrastTest`-om: `ink/ground` i `ink/surface`
 // (naslovi, vrednosti tacnosti), `inkMuted/ground` i `inkMuted/surface`
 // (natpisi), `success/surface` i `danger/surface` (tacke klasa i ikonica
 // prelomnog poteza, `textOnBackgroundsMeetsAA`), `accent/ground` i
-// `accent/surface` (dugme „Zatvori", `accentTextOnSurfaceAndGroundMeetsAA`),
-// `accent/fill` (traka napretka, `textOnFillMeetsAA`). `warning/surface`
-// (tacka klasa NETACNOST/GRESKA) NIJE nov potrosac — isti par vec crta
-// `StatItem` u `SettingsView.kt` (kartica statistike, `DS.warning` tekst na
-// `DS.surface`) i vec je upisan u `ContrastTest.knownSubAAPairsDoNotGetWorse`
+// `accent/surface` (dugme „Zatvori" I tacka klase `BEST`, koja sedi na
+// `DS.surface` u `MoveChip` — isti par, `accentTextOnSurfaceAndGroundMeetsAA`,
+// izmereno 8,53 svetla / 6,43 tamna, daleko iznad AA praga 4,5 u obe teme —
+// ne samo iznad laksem ne-tekstualnom pragu 3:1 koji bi tacki od 8dp i onako
+// bio dovoljan), `accent/fill` (traka napretka, `textOnFillMeetsAA`).
+// `warning/surface` (tacka klasa NETACNOST/GRESKA) NIJE nov potrosac — isti
+// par vec crta `StatItem` u `SettingsView.kt` (kartica statistike, `DS.warning`
+// tekst na `DS.surface`) i vec je upisan u `ContrastTest.knownSubAAPairsDoNotGetWorse`
 // (3,61 u svetloj temi, ispod AA za TEKST — ovde je upotreba jos blaza,
 // obojena tacka od 8dp, ne tekst, pa vazi laksi ne-tekstualni prag 3:1 koji
 // prolazi u obe teme).
@@ -349,12 +358,14 @@ private fun MoveChip(move: AnalyzedMove, modifier: Modifier = Modifier, onClick:
 // MARK: - Klase
 
 /**
- * Sest klasa u tri boje (vidi doc-komentar fajla za razliku u odnosu na
- * iOS-ovih cetiri boje — namerna odluka ovog taska, ne previd).
+ * Sest klasa u cetiri boje, isto kao iOS (vidi doc-komentar fajla). `BEST`
+ * je ODVOJEN od `EXCELLENT`/`GOOD` — jedini spoj je excellent+good i
+ * inaccuracy+mistake.
  */
 @Composable
 private fun colorFor(c: MoveClass): Color = when (c) {
-    MoveClass.BEST, MoveClass.EXCELLENT, MoveClass.GOOD -> DS.success
+    MoveClass.BEST -> DS.accent
+    MoveClass.EXCELLENT, MoveClass.GOOD -> DS.success
     MoveClass.INACCURACY, MoveClass.MISTAKE -> DS.warning
     MoveClass.BLUNDER -> DS.danger
 }
