@@ -668,14 +668,16 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 
 Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `EngineTest` 9,
 `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5, `LocTest` 5,
-`MoveAnalysisTest` 27, `PathProgressTest` 9, `PuzzleDateFormatTest` 8, `PuzzleRatingTest` 9,
+`MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 27, `PathProgressTest` 9,
+`PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9,
 `StepWindowTest` 3, `UCIScoreParserTest` 9) + **52 instrumentisana**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
 `GameViewModelActivityRecreationTest` 1, `LessonContentTest` 9, `LessonRepositoryTest` 6,
-`MainActivitySoundLifecycleTest` 1, `ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
+`ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
+`SoundReleaseOnLanguageKeyChangeTest` 1,
 `StatsFacadeTest` 4, `StockfishEvaluateTest` 4). Oba broja su iz XML-a, ne iz izlaznog koda.
 
-> **`espresso-core` je od Faze 7 na `3.7.0`, i to nije kozmetika.** `MainActivitySoundLifecycleTest`
+> **`espresso-core` je od Faze 7 na `3.7.0`, i to nije kozmetika.** `SoundReleaseOnLanguageKeyChangeTest`
 > je prvi test u projektu koji uopšte koristi Compose UI test (`createComposeRule`), pa je prvi
 > naleteo na to da `espresso-core` **3.5.1 i 3.6.1** na **API 36** bacaju
 > `NoSuchMethodException: android.hardware.input.InputManager.getInstance` iz `Espresso.onIdle`,
@@ -939,9 +941,7 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
   bez obzira na to da li gest ima šta da radi. Provera „ima li figure na polju" je postojala,
   ali je stizala prekasno — u `onDragStart`, kad je pokazivač već bio potrošen. Rešeno
   prelaskom na `awaitEachGesture`: polje se ispituje na samom `down`-u, i **ako na njemu nema
-  figure ne troši se nijedan `change`**, pa gest propada roditeljskom `scroll`-u. Prečica
-  prevlačenjem (tema table / stil figura) se i dalje prati, ali se odustaje čim pokret potroši
-  neko drugi — tj. čim skrol preuzme. Izmereno na emulatoru, isti gest na oba build-a
+  figure ne troši se nijedan `change`**, pa gest propada roditeljskom `scroll`-u. Izmereno na emulatoru, isti gest na oba build-a
   (`DOWN` na praznom polju table pa 12 × `MOVE` nagore): **pre popravke lekcija se ne pomeri
   ni za piksel** (razlika pre/posle gesta van trake stanja: prazna), **posle popravke se
   skroluje**; prevlačenje figure i dalje radi (dama d4 → d6 prevlačenjem).
@@ -950,6 +950,43 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
     `consume()`. Obrnuto (prvi pokušaj) figura ostane zalepljena za polazno polje, potez se
     nikad ne odigra, a ništa ne pukne i nijedan test ne padne. `detectDragGestures` je
     interno radio isti redosled — što se vidi tek kad se otvori njegov izvor.
+  - **Druga zamka u istoj popravci, nađena u završnom talasu:** provera „neko drugi je
+    preuzeo pokret" (`if (change.isConsumed) return`) stajala je na **`Main` prolazu, gde je
+    beskorisna** — na tom prolazu dete uvek ide PRE roditelja, pa roditeljski `verticalScroll`
+    još nije ni stigao da potroši. Guard je bio mrtav kod, a rečenica koja je ovde ranije
+    stajala („odustaje se čim skrol preuzme") **netačna**. Posledica je bila obrnuta od
+    očekivane: jedan isti pokret je i skrolovao ekran **i** menjao stil figura. Izmereno na
+    zatečenom `4092070` (`pieceStyle` čitan iz `chessko_settings.xml` preko `run-as`, ne
+    odokativno): lekcija „Tabla, figure i kretanje", prevlačenje po praznom polju — `metal →
+    flat` uz istovremeni skrol; ekran Igra sa prelivom — `neon → wood` uz skrol. I obično
+    skrolovanje lekcije (`input swipe`) je usput prevrtalo stil. Popravka: isti događaj se
+    čita **još jednom na `PointerEventPass.Final`**, koji ide obrnutim redom (roditelj pa
+    dete), pa je potrošnja skrola tu vidljiva. Cena je zapisana kao ograničenje ispod.
+- **Prečica „prevlačenje menja temu table / stil figura" je od Faze 7 živa samo tamo gde tabla
+  NIJE u vertikalnom skrolu.** Izmereno, obe strane, na emulatoru (vrednosti čitane iz
+  `chessko_settings.xml`, ne sa slike):
+
+  | gde | vodoravno (tema table) | uspravno (stil figura) |
+  |---|---|---|
+  | Igra, portret (tabla u `verticalScroll`) | **radi** | **ne radi** |
+  | Igra, pejzaž (tabla van skrolujuće kolone) | **radi** | **radi** |
+  | lekcija / koraci Puta | **radi** | **ne radi** |
+
+  Uzrok: `verticalScroll` potroši pokret **čim pređe touch slop, i onda kad nema šta da
+  skroluje** — provereno na svežoj partiji koja cela staje na ekran, gde prečica takođe ne
+  okine. Vodoravna prečica preživljava jer nijedan roditelj ne traži vodoravni pokret.
+  **Ovo je svesna zamena, ne propust:** pre popravke je prečica radila svuda, ali je isti
+  pokret kojim korisnik skroluje **nečujno menjao njegovo podešavanje** (izmereno, vidi gore).
+  Tiha izmena tuđeg podešavanja je gora od prečice koja radi na pola ekrana. Ako se ikad
+  preispita, izbor nije „vrati staro" (to vraća i gutanje skrola) nego: isključiti
+  `swipeToChangePieceStyle` podrazumevano, ili prečicu vezati za pokret koji se ne sudara sa
+  skrolom (dva prsta, ili dug pritisak pa prevlačenje).
+- **Gest koji počne NA FIGURI i dalje guta skrol** (`BoardView.kt`). Popravka iz Faze 7 je
+  oslobodila samo prazna polja; polje sa figurom se i dalje troši na `down`-u, jer je to jedini
+  put do prevlačenja figure. Na vežbi iz otvaranja polovina polja nosi figuru, pa korisnik koji
+  prstom krene baš sa figure ne može da skroluje — mora da pomeri prst na prazno polje ili van
+  table. **Nije regresija** (staro ponašanje je bilo identično, samo je gutalo i prazna polja),
+  ali naslov „ZATVORENO" iznad se odnosi na prazna polja, ne na celu tablu.
 - **Dijalog analize (Android) ne pokriva sistemsku navigacionu traku.** Ispod zatamnjenja se na
   svakom snimku vide presečeni natpisi `Igra / Zadaci / Put`. iOS isti ekran prikazuje kao punu
   `sheet`, pa tamo tab bar nestane. Nije popravljeno jer bi tražilo menjanje tipa dijaloga
@@ -988,8 +1025,16 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
   `onDispose` zove `releaseSounds()` na oba — isti obrazac koji `StepPracticeView`/
   `StepGameView` nose od Faze 6c. Opseg je ono što je bilo lako promašiti: `DisposableEffect`
   izvan `key`-a oslobodio bi `SoundPool` koji ekran **još koristi**. Zato test
-  (`MainActivitySoundLifecycleTest`, instrumentisan) tvrdi **obe** strane — stari modeli
-  oslobođeni **i** novi nisu. Izmereno na emulatoru preko `dumpsys audio`, ne odokativno: u
+  (`SoundReleaseOnLanguageKeyChangeTest`, instrumentisan) tvrdi **obe** strane — stari modeli
+  oslobođeni **i** novi nisu. **Taj test ne dodiruje `MainActivity`** (preimenovan je baš zato:
+  staro ime `MainActivitySoundLifecycleTest` je obećavalo više nego što pruža) — on
+  rekonstruiše obrazac u sopstvenom `setContent`-u i prošao bi i da neko obriše
+  `DisposableEffect` iz `MainActivity.kt`. Da veza i dalje stoji u samom ekranu čuva
+  `MainActivitySoundWiringTest` (JVM, čita izvor — isti obrazac kao
+  `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary`); **dokazan mutacijom**: sa obrisanim
+  `DisposableEffect` blokom pada, sa vraćenim prolazi. Do modela se iz testa ne može doći ni
+  refleksijom ni test tagom jer se prave kroz `remember { … }` u kompoziciji, ne kroz
+  `ViewModelStore` — zato provera izvora, a ne ponašanja. Izmereno na emulatoru preko `dumpsys audio`, ne odokativno: u
   trenutku promene jezika prvo se stvore **dva nova** `SoundPool` player-a, pa se **dva stara
   oslobode**, a potez odigran posle toga daje `event:started` na novom player-u — zvuk radi,
   bez ijedne `SoundPool` greške u `logcat`-u. Opis zatečenog stanja (zašto je do toga došlo)
@@ -1036,6 +1081,14 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
   za to nema polje, a iOS ekvivalenta nema jer tamo ceo `GameState` ide kroz `Codable`.
   Potvrđeno na emulatoru: predaja pa promena sistemske teme — traka i dalje kaže „Predaja!
   Izgubio si.", dugme „Analiziraj partiju" **ostaje** (provereno u obe teme).
+  **Asimetrija koju je baš ta popravka učinila vidljivom:** `status` se sada vraća tačno samo za
+  **tekuće** stanje. Unosi u `history` se i dalje rekonstruišu golim `GameState.fromFEN`
+  (`GameViewModel.kt:780-782`), koji vraća `status = Playing` i **prazne** `moveNotations` — pa
+  prvi „Vrati potez" posle ponovnog otvaranja aplikacije da poziciju bez oznake šaha i sa
+  **praznim** panelom „Potezi". Unosi istorije nikad nisu nosili ni status ni notacije, dakle
+  nije uvedeno Fazom 7; do nje su i tekuće stanje i istorija bili podjednako krnji, pa se
+  razlika nije videla. Nije popravljeno: značilo bi serijalizovati `status` i `moveNotations`
+  po svakom unosu istorije, što je promena formata zapisa pred spajanje.
   Opis zatečenog stanja:
   `MainActivity` pravi `GameViewModel` kroz `remember { GameViewModel(...) }`, ne
   `rememberSaveable`/`ViewModelStore`, pa svaka rekreacija napravi NOV primerak čiji `init`
@@ -2428,3 +2481,73 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS netaknut);
   `Chessko/Localizable.xcstrings` ostaje izmenjen u radnom stablu i **nije** ušao ni u jedan
   commit. Jedina izmena build fajlova u celoj fazi je pin `espressoCore` (test-only).
+
+- **2026-09-17** — Faza 7, talas ispravki posle finalnog pregleda cele grane (jedan važan nalaz
+  i četiri sitna, nijedan blokirajući). Izveštaj:
+  `.superpowers/sdd/2026-09-17-faza-7-sitnice-koje-korisnik-vidi/final-fix-report.md`.
+
+  **V-1 je izmeren, i ispao je obrnut od nalaza.** Recenzent je iz koda izveo da je prečica
+  „prevlačenje gore-dole menja stil figura" verovatno mrtva na ekranu Igra (roditeljski
+  `verticalScroll` potroši pokret pre praga od 100f) i **pošteno označio da nije izmerio**.
+  Izmereno je oba stanja koja rezonovanje ne razrešava — ekran koji staje bez skrolovanja i
+  ekran sa prelivom — sa `pieceStyle`/`boardTheme` čitanim iz `chessko_settings.xml` preko
+  `run-as`, ne sa slike. Na zatečenom `4092070` prečica radi u **oba** stanja, i u pejzažu, i
+  vodoravno. Nalaz je time oboren — ali je isto merenje otkrilo **gori defekt koji niko nije
+  tražio**: jedan isti pokret **i skroluje ekran i menja stil figura**. Lekcija „Tabla, figure i
+  kretanje": prevlačenje po praznom polju dalo je `metal → flat` uz skrol; ekran Igra sa
+  prelivom: `neon → wood` uz skrol; i obično skrolovanje lekcije je usput prevrtalo stil.
+  Uzrok: `if (change.isConsumed) return` stajao je na **`Main` prolazu, gde dete uvek ide PRE
+  roditelja**, pa potrošnja skrola tu nikad nije vidljiva — guard je bio mrtav kod, a rečenica u
+  ovom fajlu („odustaje se čim skrol preuzme") **netačna**. Popravljeno čitanjem istog događaja
+  još jednom na `PointerEventPass.Final`, koji ide obrnutim redom.
+
+  **Cena popravke je zapisana kao ograničenje, ne prećutana:** `verticalScroll` troši pokret i
+  kad nema šta da skroluje (provereno na svežoj partiji koja cela staje na ekran), pa je
+  uspravna prečica sada mrtva svuda gde je tabla u vertikalnom skrolu — Igra u portretu,
+  lekcije, koraci Puta. Preživljava u pejzažu (tabla je van skrolujuće kolone) i vodoravno
+  (nijedan roditelj ne traži vodoravni pokret); tabela sa sve četiri kombinacije je u „Poznatim
+  ograničenjima". **To je zamena, i svesna:** tiho menjanje korisnikovog podešavanja pri
+  običnom skrolu je gore od prečice koja radi na pola ekrana. Odluka šta dalje (ugasiti
+  `swipeToChangePieceStyle` podrazumevano, ili prečicu vezati za gest koji se ne sudara sa
+  skrolom) je ostavljena korisniku, nije doneta ovde. Provereno i da popravka nije vratila
+  staru zamku: prevlačenje figure i dalje odigrava potez (d2→d4, brojač poteza 6 → 8).
+
+  **S-1** dopisan kao rezidual, gest nije diran: prevlačenje koje počne **na figuri** i dalje
+  guta skrol, pa na vežbi iz otvaranja korisnik koji krene prstom sa figure ne može da skroluje.
+  Nije regresija (staro ponašanje je gutalo i prazna polja), ali „ZATVORENO" se odnosi na prazna
+  polja, ne na celu tablu.
+
+  **S-2:** `MainActivitySoundLifecycleTest` je **preimenovan** u
+  `SoundReleaseOnLanguageKeyChangeTest`, jer ne dodiruje `MainActivity` — rekonstruiše obrazac u
+  sopstvenom `setContent`-u i prošao bi i da neko obriše `DisposableEffect` iz ekrana. Zaštitu
+  koju je staro ime obećavalo sada stvarno pruža nov JVM test `MainActivitySoundWiringTest`
+  (čita izvor, isti obrazac kao `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary`),
+  **dokazan mutacijom**: sa obrisanim `DisposableEffect` blokom pada, sa vraćenim prolazi. Do
+  modela se iz testa ne može doći ni refleksijom ni test tagom (`remember { … }` u kompoziciji,
+  ne `ViewModelStore`), pa je provera izvora jedino što postoji — i tako je i nazvana.
+
+  **S-3:** `PuzzleDateFormatTest` više ne tvrdi doslovne nazive meseci za 8 jezika (ruski
+  genitiv „сентября" i ostali su podatak CLDR baze u JDK-u, ne ponašanje aplikacije — nadogradnja
+  JDK-a je mogla da obori build bez ikakve veze sa Chessko-om). Suštinske tvrdnje su zadržane
+  ali izražene kroz **pismo** umesto kroz slova: srpski ne sme biti ćirilica (uz kontrolni test
+  da ruski **jeste** — inače tvrdnja ne vredi ništa), `zh` i `hi` ne padaju na engleski.
+  Dodato i mapiranje svih 8 kodova u sopstveni `Locale` i provera da obrazac `d. MMMM yyyy.`
+  ostaje ceo. 8 → 7 testova, pokrivenost veća a ne manja.
+
+  **S-4** zapisan, nije popravljan: `status` se od Task-a 4 vraća tačno samo za **tekuće**
+  stanje; unosi u `history` se i dalje čitaju golim `fromFEN`, pa prvi „Vrati potez" posle
+  ponovnog otvaranja aplikacije da poziciju bez oznake šaha i sa **praznim** panelom „Potezi".
+  Asimetrija je nastala tek sada (ranije su i tekuće stanje i istorija bili podjednako krnji),
+  ali nije uvedena — popravka bi tražila promenu formata zapisa pred spajanje.
+
+  **Emulator je u ovoj fazi dizan peti put** (plan je predvideo dva; Task 6 je zapisao tri,
+  finalna provera Faze 6e četiri — ovo je dopuna tog niza, ne njegova prepravka). Peto dizanje
+  je platilo tačno jednu stvar: merenje nalaza koji je prethodno dizanje proizvelo. `-gpu host`,
+  gašenje odmah po prolazu. Snimci `23`–`32` u
+  `.superpowers/sdd/2026-09-17-faza-7-sitnice-koje-korisnik-vidi/screenshots/`.
+
+  Provere: `testDebugUnitTest` **101/101** i `connectedDebugAndroidTest` **52/52**, 0 padova,
+  oba broja iz XML-a. Nijedna nova Gradle zavisnost; `BoardView.kt` i dalje bez ijednog `DS.`;
+  `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS netaknut), a
+  `Chessko/Localizable.xcstrings` ostaje izmenjen u radnom stablu i **nije** ušao ni u jedan
+  commit.

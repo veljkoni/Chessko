@@ -21,14 +21,21 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Faza 7, Task 2: dokaz da `MainActivity`-jev `DisposableEffect(languageKey)` STVARNO
- * oslobadja `SoundManager` oba modela (Igra, Zadaci) kad korisnik promeni jezik.
+ * Faza 7, Task 2: dokaz da OBRAZAC `key(languageKey) { remember{…}; DisposableEffect{…} }`
+ * stvarno oslobadja `SoundManager` oba modela (Igra, Zadaci) kad se kljuc promeni.
  *
- * Zasto ne mount-uje celu `MainActivity`: hamburger meni i `SettingsView` nemaju stabilne
- * test tagove za navigaciju kroz Compose UI test API, a ovaj test treba da dokaze TACNO
- * jedan mehanizam -- da promena kljuca zaista oslobadja stare modele -- ne da uveze celu
- * navigacionu putanju. Zato reprodukuje BUKVALNO isti obrazac koji `MainActivity.kt`
- * koristi (uporedi sa `MainActivity.kt:99-115`):
+ * **Sta ovaj test NE dokazuje (S-2, talas ispravki):** on ne dodiruje `MainActivity`.
+ * Obrazac je rekonstruisan u sopstvenom `setContent`-u, pa bi test prosao i da neko
+ * obrise `DisposableEffect` iz `MainActivity.kt`. Zato je preimenovan iz
+ * `MainActivitySoundLifecycleTest` — staro ime je obecavalo zastitu koju ne pruza.
+ * Da `MainActivity` i dalje nosi tu vezu cuva `MainActivitySoundWiringTest`
+ * (JVM, provera izvora); tek to dvoje zajedno pokrivaju i mehanizam i njegovu upotrebu.
+ *
+ * Zasto ne mount-uje celu `MainActivity`: modeli se tamo prave kroz `remember { … }`
+ * unutar kompozicije, ne kroz `ViewModelStore`, pa do njih iz testa nema puta — ni
+ * refleksijom ni test tagom; uz to hamburger meni i `SettingsView` nemaju stabilne test
+ * tagove za navigaciju do promene jezika. Zato reprodukuje BUKVALNO isti obrazac koji
+ * `MainActivity.kt` koristi (uporedi sa `MainActivity.kt:99-115`):
  *
  *   key(languageKey) {
  *       val gameViewModel = remember { GameViewModel(...) }
@@ -45,7 +52,7 @@ import org.junit.runner.RunWith
  * ista provera koju `SoundManager.release()` sam postavlja.
  */
 @RunWith(AndroidJUnit4::class)
-class MainActivitySoundLifecycleTest {
+class SoundReleaseOnLanguageKeyChangeTest {
 
     @get:Rule
     val composeRule = createComposeRule()

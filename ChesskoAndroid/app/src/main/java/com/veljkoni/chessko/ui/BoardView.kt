@@ -20,6 +20,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -119,8 +120,9 @@ fun BoardView(
                 // figurom (jedini slučaj koji stvarno vuče figuru). Kad figure
                 // nema, nijedan `change` se ne troši, pa gest propada
                 // roditeljskom `scroll`-u; prečica prevlačenjem (tema table /
-                // stil figura) se i dalje prati, ali se odustaje čim pokret
-                // potroši neko drugi — tj. čim skrol preuzme.
+                // stil figura) se i dalje prati, ali se odustaje čim skrol
+                // preuzme pokret — vidi `PointerEventPass.Final` u petlji ispod
+                // za to ZAŠTO se odustajanje mora čitati na drugom prolazu.
                 .pointerInput(board, isFlipped, squareSizePx) {
                     awaitEachGesture {
                         // `requireUnconsumed = false`: `clickable` na samom polju
@@ -146,11 +148,27 @@ fun BoardView(
                                 // Prst podignut — proveri PRE `isConsumed`, jer
                                 // `clickable` troši baš taj `up` kad je gest bio tap.
                                 if (!change.pressed) break
-                                // Neko drugi (skrol roditelja) je preuzeo pokret.
+                                // Neko je potrošio još na `Initial` prolazu.
                                 if (change.isConsumed) return@awaitEachGesture
                                 val delta = change.positionChange()
                                 swipeX += delta.x
                                 swipeY += delta.y
+
+                                // ISTI dogadjaj jos jednom, na `Final` prolazu.
+                                // Na `Main` prolazu dete UVEK ide PRE roditelja, pa
+                                // roditeljski `verticalScroll` jos nije ni stigao da
+                                // potrosi — provera `isConsumed` gore ga zato nikad ne
+                                // vidi. Bez ovog drugog citanja jedan isti pokret i
+                                // skroluje ekran I menja stil figura: izmereno na
+                                // emulatoru (lekcija „Tabla, figure i kretanje",
+                                // prevlacenje po praznom polju: `pieceStyle` metal →
+                                // flat, a lekcija se u istom potezu odskrolovala).
+                                // `Final` prolaz ide OBRNUTIM redom (roditelj pa dete),
+                                // pa je tu potrosnja skrola vidljiva.
+                                val finalChange = awaitPointerEvent(PointerEventPass.Final)
+                                    .changes.firstOrNull { it.id == down.id }
+                                    ?: return@awaitEachGesture
+                                if (finalChange.isConsumed) return@awaitEachGesture
                             }
 
                             val settings = SettingsManager.getInstance(context)
