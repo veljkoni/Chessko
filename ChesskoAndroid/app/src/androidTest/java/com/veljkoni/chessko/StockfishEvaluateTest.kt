@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.veljkoni.chessko.logic.StockfishEngine
 import com.veljkoni.chessko.models.EngineScore
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -37,21 +36,20 @@ class StockfishEvaluateTest {
     }
 
     /**
-     * `StockfishEngine.start` kopira dve NNUE mreze (do ~140MB ukupno) na
-     * disk PA TEK ONDA salje `uci`/`setoption`/`isready` -- sve to na
-     * pozadinskim korutinama, bez ijedne sinhrone tacke koju testu moze da
-     * saceka. Fiksna pauza je jedini alat koji `StockfishEngine` danas nudi;
-     * 5s je pet puta duze od bilo kog merenja u izvestajima Task-a 1/2 na
-     * istom emulatoru.
+     * Ceka STVARNU spremnost motora preko `StockfishEngine.waitUntilReady()`
+     * ("readyok" iz `outputChannel`-a), ne `engineStarted`.
+     *
+     * `engineStarted` postaje `true` SINHRONO u `start()`, pre nego sto
+     * kopiranje NNUE fajlova (do ~140MB) i UCI handshake uopste pocnu (idu u
+     * pozadinskoj korutini) -- poll petlja nad `engineStarted` je zato u
+     * praksi bez efekta (zavrsi se za ~0ms), sto je i bio nalaz pregleda nad
+     * prvom verzijom ovog fajla: komentar je tvrdio da "ceka", a stvarno
+     * cekanje je bila samo gola pauza posle petlje. Popravka nije duza pauza
+     * nego stvarna provera.
      */
     private suspend fun waitForEngineReady() {
-        var waited = 0
-        while (!StockfishEngine.engineStarted && waited < 5000) {
-            delay(100)
-            waited += 100
-        }
-        assertTrue("motor se nije pokrenuo", StockfishEngine.engineStarted)
-        delay(5000)
+        val ready = StockfishEngine.waitUntilReady()
+        assertTrue("motor nije javio readyok na vreme", ready)
     }
 
     @Test
