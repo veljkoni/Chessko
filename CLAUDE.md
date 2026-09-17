@@ -461,6 +461,22 @@ uključujući AI potez u živoj partiji. Posledice na otkazivanje, sve otkrivene
   emulatoru (`depth 20` → 29,3 s, `depth 22` → 43,8 s, `depth 12` → 1,0 s) uz procenjenu
   marginu (4×/25×) — sama margina nije merena, samo je Task 6 (ovaj zadatak) prvi put pustio
   test da se stvarno izvrši na uređaju umesto da samo dokaže kompajliranje.
+- **`waitUntilReady()` je bio upotrebljiv tačno jednom po životu procesa — pravi bug u
+  `StockfishEngine.kt`, ne u testu.** Funkcija namerno ne šalje sopstveni `"isready"` (razlog
+  ostaje: poslat pre `start()`-ovog `setoption` niza bi stigao prerano i učinio funkciju
+  bezvrednom, isto kao `engineStarted`), nego čeka JEDINI `"readyok"` koji `start()` pošalje.
+  Bez pamćenja da je taj `"readyok"` već viđen, DRUGI poziv u istom procesu čeka liniju koja
+  nikad više neće stići i visi do isteka `EVALUATE_TIMEOUT_MS` (30 s) — **držeći `searchMutex`
+  sve to vreme**, ista klasa greške (zaglavljeno unutar jedinog mutexa) koju timeout iznad
+  ublažava za `getBestMove`/`evaluate`. Otkriveno kad je Task 6 prvi put pustio
+  `StockfishEvaluateTest` da se stvarno izvrši (`mateInOneGivesPositiveMate`, `time="30.019"` u
+  XML-u, drugi test klase koji zove `waitForEngineReady()`) — prvobitno pogrešno dijagnostikovano
+  kao defekt test-poretka; ispravna dijagnoza i popravka (`@Volatile private var
+  readyObserved`, vraća `true` odmah čim je spremnost jednom viđena) su u istom commit-u kao ovaj
+  unos. Posle popravke isti test prolazi za 0,004 s. `waitUntilReady()` nema pozivaoca u
+  proizvodnom kodu (samo u ovom test-u), pa bug nikad nije pogodio pravu partiju — ali je
+  dokaz da mutex-štićena funkcija bez zaštite protiv višestrukog poziva nosi rizik i kad je
+  „samo test" jedini pozivalac danas.
 
 **Izmereno u ovom zadatku (Task 6), prvi stvaran N+1 niz uživo:** partija od 10 poteza (11
 pozicija) na emulatoru je analizirana za **~1,3 s** (17:01:02.931–17:01:04.256 u logcat-u),
@@ -904,19 +920,6 @@ Testovi: **47 JVM** (`./gradlew testDebugUnitTest` — `ExampleUnitTest` 1, `Pat
   preslikava isti skup od šest klasa poteza u četiri boje (`BEST` na `DS.accent`,
   `EXCELLENT`/`GOOD` dele `DS.success`, `INACCURACY`/`MISTAKE` dele `DS.warning`, `BLUNDER` sam
   na `DS.danger`) — nazivi klasa i dalje tačni u `contentDescription`, samo ne u boji.
-- **`StockfishEvaluateTest` (Android) drugi test u istoj klasi trajno visi ako se pokrene POSLE
-  prvog.** `waitForEngineReady()` čita `StockfishEngine.waitUntilReady()`, koja čeka JEDNU
-  `"readyok"` liniju iz deljenog `outputChannel`-a — ali motor šalje `"readyok"` tačno jednom
-  po `start()` (odgovor na `isready` iz sopstvenog handshake-a), a `Channel` je red, ne
-  keširana vrednost: prvi test koji je pročita je troši. Test #2 u istom pokretanju
-  (`@BeforeClass` pokreće motor jednom za celu klasu) čeka `"readyok"` koji nikad više ne
-  stiže i pada tek na `EVALUATE_TIMEOUT_MS` (30 s) sa `"motor nije javio readyok na vreme"`.
-  Potvrđeno izolovanim ponovnim pokretanjem samo tog testa: prolazi za 1,3 s. Ovo je bilo
-  **nedostižno pre Faze 6e, Task 6** — fajl je do sada bio samo kompajliran, nikad izvršen na
-  uređaju (vidi „Analiza partije — šta je na Androidu drugačije"), pa ga nijedan raniji prolaz
-  nije mogao uhvatiti. Popravka je u test-u (svaki test treba svoj `isready`/`readyok`
-  ciklus, ne oslanjanje na `start()`-ov jednokratni), ne u `StockfishEngine`-u — production
-  kod `waitUntilReady()` nikad ne koristi (grep potvrđuje jedino pozivno mesto je ovaj test).
 - **`on_update_full` (`cpp/stockfish/uci.cpp:624-637`) ubacuje ` wdl X Y Z` IZMEĐU ocene i
   `lowerbound`/`upperbound` kad je `UCI_ShowWDL` uključen.** `UCIScoreParser.parse` gleda TAČNO
   `tokens[scoreIdx + 3]` za `"lowerbound"`/`"upperbound"`; sa WDL-om uključenim taj token bi bio
@@ -2130,17 +2133,24 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   instrumentisanih 46 → **49** (nov `StockfishEvaluateTest`, 3 testa).
 
   **Task 6 (zatvaranje) je prvi put stvarno pokrenuo `StockfishEvaluateTest` na uređaju** —
-  Taskovi 3/4 su ga samo kompajlirali, jer je emulator u ovoj fazi namerno dizan samo dvaput.
-  Rezultat, čitan iz XML-a, reprodukovan dvaput identično: **48/49**, jedan pad
-  (`mateInOneGivesPositiveMate`, 30,0 s, „motor nije javio readyok na vreme"). Dijagnoza je u
-  test-u, ne u proizvodnom kodu (`waitUntilReady()` nema nijedno drugo pozivno mesto): motor
-  šalje `"readyok"` TAČNO JEDNOM po `@BeforeClass start()`, a `waitForEngineReady()` ga čita iz
-  deljenog `Channel`-a — prvi test u klasi ga potroši, drugi test koji ga isto čeka visi do
-  timeout-a. Potvrđeno izolovanim ponovnim pokretanjem samog tog testa: prolazi za 1,3 s.
-  Upisano u „Poznata ograničenja"; test-fajl nije menjan (van obima ovog task-a — vidi
-  ograničenja plana).
+  Taskovi 3/4 su ga samo kompajlirali. Prvi prolaz (drugo dizanje emulatora u fazi), čitan iz
+  XML-a, reprodukovan dvaput identično: **48/49**, jedan pad (`mateInOneGivesPositiveMate`,
+  30,0 s, „motor nije javio readyok na vreme"). Prva dijagnoza je bila POGREŠNA — pripisana
+  test-poretku (prvi test klase troši jedinu `"readyok"` liniju, drugi visi). **Kontrolor je
+  ispravio**: uzrok je u proizvodnom kodu, `StockfishEngine.waitUntilReady()` — funkcija je bila
+  upotrebljiva TAČNO JEDNOM po životu procesa i to nigde nije govorila. Ispravna popravka:
+  `@Volatile private var readyObserved` — drugi i svaki naredni poziv se vrati odmah `true` čim
+  je spremnost jednom viđena, bez slanja novog `"isready"` (razlog zašto se to ne sme i dalje
+  važi, vidi „Analiza partije — Android, šta je drugačije"). Bez zastavice bi svaki DRUGI poziv
+  ove funkcije u istom procesu — ne samo drugi test — visio 30 s **držeći `searchMutex`**, isto
+  onako kako Taskovi 3/4 već štite `getBestMove`/`evaluate`. Popravka je zahtevala **treće
+  dizanje emulatora u fazi** (plan je predvideo dva; treće je platilo ovu popravku, koju je
+  drugo dizanje otkrilo — upisano iskreno, tvrdnja o dva dizanja iz ranijih task-ova nije
+  prepravljena). Posle popravke: **49/49, 0 padova**, čitano iz XML-a;
+  `mateInOneGivesPositiveMate` sada prolazi za 0,004 s (ranije 30,0 s).
 
-  **Vizuelno provereno na emulatoru, obe teme** (drugo i poslednje dizanje u fazi): ekran
+  **Vizuelno provereno na emulatoru, obe teme** (drugo dizanje u fazi — treće je zasebno, samo
+  za popravku `waitUntilReady()` iznad): ekran
   analize posle partije protiv računara (uključujući stvaran promašaj — hangovana dama, `2.Dg4`
   klasifikovana `BLUNDER`, kartica prelomnog poteza `−779`/`−756` u dva odvojena pokretanja —
   vidi napomenu ispod), četiri boje trake (`BEST` plavo/`DS.accent`, vidljivo odvojeno od
@@ -2164,7 +2174,11 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   potez — AI je odigrao svoj, ispravan potez odmah (1.e4 → 1…Sf6, isti odgovor kao u ranijoj,
   nesmetanoj partiji). Popravka Task-a 4 (`NonCancellable` „stop" pri otkazivanju,
   `a988fec`) ostaje potvrđena izvorom (`uci.cpp:105-106`, `engine.cpp:159` — `stop` je
-  idempotentan) i logikom, ne i uhvaćenim trenutkom prave trke.
+  idempotentan) i logikom, ne i uhvaćenim trenutkom prave trke. Pokušano jeftino produžavanje
+  partije (ponavljano premeštanje skakača) radi šireg prozora za otkazivanje — zaustavljeno na
+  14 poteza kad je skakač nehotice izgubljen (dalji tapovi u istoj petlji su gađali prazna
+  polja i partija se zamrzla na istom potezu), što nije dovoljno duže od postojećih 10 poteza da
+  promeni zaključak. Ostaje zapisano kao nedokazano, ne kao provereno.
 
   **Uzgredan nalaz, van obima ovog zadatka (nije popravljen, samo zapisan):** završena partija
   (predaja) ne preživi rekreaciju `Activity`-ja (npr. promenu sistemske teme) — `load()`

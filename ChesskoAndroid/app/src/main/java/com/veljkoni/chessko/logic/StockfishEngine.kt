@@ -25,6 +25,9 @@ object StockfishEngine {
 
     private val searchMutex = Mutex()
 
+    /** Vidi doc-komentar [waitUntilReady] -- "readyok" stize tacno jednom u zivotu procesa. */
+    @Volatile private var readyObserved = false
+
     // Gornje granice za `for (line in outputChannel)` petlje ispod. Bez njih,
     // ako native motor umre ili "go"/"position" bude progutana, petlja visi
     // ZAUVEK -- unutar `searchMutex.withLock`. `StockfishEngine` je `object`
@@ -141,10 +144,27 @@ object StockfishEngine {
      * `StockfishEvaluateTest`). Normalan tok igre je ne zove -- `getBestMove`
      * salje sopstveni "position"/"go" i ceka "bestmove", sto implicitno ceka
      * da motor obradi sve pred njim, ukljucujuci i handshake ako jos traje.
+     *
+     * **Bezbedna za VISESTRUKI poziv preko [readyObserved], ne samo za prvi.**
+     * "readyok" koji ova funkcija ceka se pojavi TACNO JEDNOM u zivotu procesa
+     * (jedini "isready" salje `start()`, iz razloga objasnjenog iznad -- ova
+     * funkcija namerno NE salje sopstveni). Bez zastavice, DRUGI poziv (npr.
+     * drugi test u istoj `StockfishEvaluateTest` klasi, koja motor pokrece
+     * jednom za sve testove) ceka liniju koja vise nikad nece stici i visi do
+     * [timeoutMs] -- **drzeci `searchMutex` sve to vreme**, ista klasa greske
+     * (zaglavljeno unutar jedinog mutexa) protiv koje Taskovi 3 i 4 uvode
+     * timeout i `stop` u [getBestMove]/[evaluate]. Nadjeno u Fazi 6e, Task 6:
+     * `StockfishEvaluateTest` je prvi stvaran drugi pozivalac ove funkcije u
+     * istom procesu, i pao je tacno na [EVALUATE_TIMEOUT_MS] (30s) sa "motor
+     * nije javio readyok na vreme". Zastavica cuva i razlog zasto se ne salje
+     * nov "isready" (i dalje se ceka JEDINI pravi "readyok") i ispravnost pri
+     * ponovljenom pozivu -- drugi i svaki naredni poziv se vrati ODMAH,
+     * `true`, cim je prvi jednom video "readyok".
      */
     suspend fun waitUntilReady(timeoutMs: Long = 30_000L): Boolean = searchMutex.withLock {
         if (!engineStarted) return@withLock false
-        withTimeoutOrNull(timeoutMs) {
+        if (readyObserved) return@withLock true
+        val ready = withTimeoutOrNull(timeoutMs) {
             withContext(Dispatchers.IO) {
                 for (line in outputChannel) {
                     if (line.trim() == "readyok") return@withContext true
@@ -152,6 +172,8 @@ object StockfishEngine {
                 false
             }
         } ?: false
+        if (ready) readyObserved = true
+        ready
     }
 
     /**
