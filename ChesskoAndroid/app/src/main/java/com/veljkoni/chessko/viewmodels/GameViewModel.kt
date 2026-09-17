@@ -645,13 +645,82 @@ class GameViewModel(
         }
     }
 
+    /**
+     * `fen` NEMA polje za status (mat/pat/remi/predaja) -- `GameState.fromFEN`
+     * uvek vraca `GameStatus.Playing`, cak i za zavrsenu partiju. Bez ovoga
+     * dugme "Analiziraj partiju" (`canAnalyzeGame`, `UiComponents.kt`) posle
+     * rekreacije `Activity`-ja (rotacija, promena sistemske teme) nestaje --
+     * `isGameOver` cita bas ovo polje. Status se zato serijalizuje ODVOJENO
+     * od FEN-a, ne izvodi iz njega.
+     */
+    private fun statusToJson(status: GameStatus): JSONObject {
+        val json = JSONObject()
+        when (status) {
+            is GameStatus.Playing -> json.put("type", "PLAYING")
+            is GameStatus.Check -> {
+                json.put("type", "CHECK")
+                json.put("color", status.color.name)
+            }
+            is GameStatus.Checkmate -> {
+                json.put("type", "CHECKMATE")
+                json.put("color", status.color.name)
+            }
+            is GameStatus.Draw -> {
+                json.put("type", "DRAW")
+                json.put("reason", drawReasonToName(status.reason))
+            }
+            is GameStatus.Resigned -> {
+                json.put("type", "RESIGNED")
+                json.put("color", status.color.name)
+            }
+        }
+        return json
+    }
+
+    private fun drawReasonToName(reason: DrawReason): String = when (reason) {
+        is DrawReason.Stalemate -> "STALEMATE"
+        is DrawReason.FiftyMoves -> "FIFTY_MOVES"
+        is DrawReason.Repetition -> "REPETITION"
+        is DrawReason.InsufficientMaterial -> "INSUFFICIENT_MATERIAL"
+    }
+
+    private fun drawReasonFromName(name: String): DrawReason? = when (name) {
+        "STALEMATE" -> DrawReason.Stalemate
+        "FIFTY_MOVES" -> DrawReason.FiftyMoves
+        "REPETITION" -> DrawReason.Repetition
+        "INSUFFICIENT_MATERIAL" -> DrawReason.InsufficientMaterial
+        else -> null
+    }
+
+    /**
+     * `null` kad polje `status` u zapisu ne postoji (save napravljen PRE ove
+     * izmene) ili je oblik neocekivan -- pozivalac (`load()`) tada pada na
+     * `GameState.statusFromPosition`.
+     */
+    private fun statusFromJson(json: JSONObject?): GameStatus? {
+        if (json == null) return null
+        return try {
+            when (json.getString("type")) {
+                "PLAYING" -> GameStatus.Playing
+                "CHECK" -> GameStatus.Check(PieceColor.valueOf(json.getString("color")))
+                "CHECKMATE" -> GameStatus.Checkmate(PieceColor.valueOf(json.getString("color")))
+                "DRAW" -> drawReasonFromName(json.getString("reason"))?.let { GameStatus.Draw(it) }
+                "RESIGNED" -> GameStatus.Resigned(PieceColor.valueOf(json.getString("color")))
+                else -> null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     private fun save() {
         try {
             val json = JSONObject()
             json.put("fen", gameState.fen)
+            json.put("status", statusToJson(gameState.status))
             json.put("gameMode", gameMode.name)
             json.put("playerColor", playerColor.name)
-            
+
             lastMove?.let {
                 val moveJson = JSONObject()
                 moveJson.put("fromRow", it.from.row)
@@ -743,7 +812,23 @@ class GameViewModel(
                 }
             }
             
-            gameState = savedState.copy(moveNotations = savedMoveNotations)
+            // Fallback SAMO za zapise sacuvane PRE ove izmene, koji nemaju
+            // polje "status". `GameState.statusFromPosition` prepoznaje mat i
+            // pat, ali NE i `Draw(FiftyMoves)`/`Draw(Repetition)` (fen getter
+            // uvek pise polutez "0", `GameState.kt:109`, zateceno -- van
+            // obima ove izmene -- a fromFEN/load() ionako ne cuvaju punu
+            // istoriju pozicija), ni `Draw(InsufficientMaterial)` (pozicija
+            // MOZE imati legalne poteze, npr. kralj+kralj, pa
+            // `legalMoves.isEmpty()` ne pogadja) ni `Resigned` (predaja nema
+            // trag na tabli). Takav stari zapis ostaje na tim ishodima
+            // neprepoznat -- isto ponasanje kao PRE ove izmene, nije
+            // regresija. Nov zapis uvek nosi eksplicitan "status", pa ovaj
+            // fallback pogadja iskljucivo partije sacuvane starijom verzijom
+            // aplikacije -- opadajuci skup.
+            val savedStatus = statusFromJson(json.optJSONObject("status"))
+                ?: GameState.statusFromPosition(savedState)
+
+            gameState = savedState.copy(status = savedStatus, moveNotations = savedMoveNotations)
             gameMode = savedMode
             playerColor = savedColor
             lastMove = savedLastMove

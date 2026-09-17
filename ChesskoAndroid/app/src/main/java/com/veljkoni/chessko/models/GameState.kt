@@ -137,17 +137,7 @@ data class GameState(
             )
         }
 
-        val opponentMoves = MoveGenerator.legalMoves(s.currentTurn, s)
-        var newStatus: GameStatus = GameStatus.Playing
-        if (opponentMoves.isEmpty()) {
-            if (MoveGenerator.isInCheck(s.currentTurn, s)) {
-                newStatus = GameStatus.Checkmate(s.currentTurn)
-            } else {
-                newStatus = GameStatus.Draw(DrawReason.Stalemate)
-            }
-        } else if (MoveGenerator.isInCheck(s.currentTurn, s)) {
-            newStatus = GameStatus.Check(s.currentTurn)
-        }
+        val newStatus = statusFromPosition(s)
 
         var notation = baseNotation
         when (newStatus) {
@@ -468,6 +458,37 @@ data class GameState(
             }
 
             return false
+        }
+
+        /**
+         * Preracunava `GameStatus` iz PRAVILA za datu poziciju, bez ikakvog
+         * znanja o tome kako se do nje doslo (istorija, brojaci) -- mat, pat i
+         * sah preko `MoveGenerator.legalMoves` + `isInCheck`, isti obrazac kao
+         * `StockfishEngine.kt` (`terminalEval`, oko linije 430). Koristi je i
+         * [applying] gore u fajlu, koji je ranije istu proveru drzao inline
+         * i duplirano.
+         *
+         * NAMERNO ne prepoznaje `Draw(FiftyMoves)`, `Draw(Repetition)`,
+         * `Draw(InsufficientMaterial)` ni `Resigned` -- ta stanja zavise od
+         * istorije partije ili od odluke igraca, ne od gole pozicije na tabli,
+         * pa im ovde nema traga. Pozivalac kome ta stanja trebaju (npr.
+         * ucitavanje starog sacuvanog zapisa bez eksplicitnog `status` polja,
+         * `GameViewModel.load()`) mora da ih proveri odvojeno ili da prihvati
+         * da ostanu neprepoznata.
+         */
+        fun statusFromPosition(state: GameState): GameStatus {
+            val legalMoves = MoveGenerator.legalMoves(state.currentTurn, state)
+            return if (legalMoves.isEmpty()) {
+                if (MoveGenerator.isInCheck(state.currentTurn, state)) {
+                    GameStatus.Checkmate(state.currentTurn)
+                } else {
+                    GameStatus.Draw(DrawReason.Stalemate)
+                }
+            } else if (MoveGenerator.isInCheck(state.currentTurn, state)) {
+                GameStatus.Check(state.currentTurn)
+            } else {
+                GameStatus.Playing
+            }
         }
     }
 }
