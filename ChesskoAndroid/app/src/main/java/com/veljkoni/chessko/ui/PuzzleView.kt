@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.logic.Loc
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -32,6 +33,7 @@ import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.PuzzlePhase
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun PuzzleView(
@@ -274,6 +276,28 @@ fun PuzzleView(
     }
 }
 
+/// `Locale` za naziv meseca u traci datuma — MORA pratiti jezik IZABRAN u
+/// aplikaciji (`Loc.getLanguage()`), ne sistemski jezik uredjaja. `ofPattern`
+/// bez `Locale`-a uzima sistemski, pa je korisnik sa srpskim u aplikaciji i
+/// engleskim sistemom video „September" umesto „septembar".
+///
+/// `Loc.getLanguage()` (ne `Loc.fileLanguageCode()`) je namerno: potonji vraca
+/// kod FAJLA lekcija ("zh-Hans"), a ovde treba goli jezicki kod za `Locale`
+/// (vidi CLAUDE.md, „Poznata ogranicenja" — ta dva se ne smeju pomesati).
+/// `Locale.forLanguageTag(code)` je za sve jezike osim srpskog dovoljan.
+///
+/// Za "sr" NIJE dovoljan: bez skripte, i Java i Android ICU podrazumevaju
+/// CIRILICU za srpski (`sr` == `sr-Cyrl` po CLDR-u), a ceo srpski sadrzaj
+/// aplikacije je LATINICA (vidi recnik u `Loc.kt`). Bez ovog izuzetka bi naziv
+/// meseca bio jedini cirilicni tekst na celom ekranu, na srpskom UI-ju.
+/// Izmereno (JVM, `DateTimeFormatter`): `Locale.forLanguageTag("sr")` daje
+/// "септембар" (Cyrl); `Locale.forLanguageTag("sr-Latn")` daje "septembar" (Latn).
+internal fun localeForDateFormatting(languageCode: String): Locale =
+    when (languageCode) {
+        "sr" -> Locale.forLanguageTag("sr-Latn")
+        else -> Locale.forLanguageTag(languageCode)
+    }
+
 @Composable
 fun DateNavigationRow(viewModel: PuzzleViewModel) {
     Row(
@@ -302,7 +326,9 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            val dateStr = viewModel.selectedDate.format(DateTimeFormatter.ofPattern("d. MMMM yyyy."))
+            val dateStr = viewModel.selectedDate.format(
+                DateTimeFormatter.ofPattern("d. MMMM yyyy.", localeForDateFormatting(Loc.getLanguage()))
+            )
             Text(
                 text = dateStr,
                 color = DS.ink,
