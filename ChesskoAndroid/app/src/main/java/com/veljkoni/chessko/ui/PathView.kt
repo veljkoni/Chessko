@@ -164,10 +164,10 @@ private fun PathHeader(
             // 8 jezika. Mnozina se ne gradi za jedan string; oznaka koja se ne
             // menja sa brojem nema problem ni na jednom jeziku -- isto resenje
             // kao iOS (Chessko/Views/PathView.swift, streakCard).
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(DS.Space.xs),
-                verticalAlignment = Alignment.Bottom
-            ) {
+            // Poravnanje ide kroz `alignByBaseline()` na oba deteta, ne kroz
+            // `verticalAlignment` na redu -- kad su oba prisutna, bazna linija
+            // pobedjuje pa je parametar na redu mrtav.
+            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                 Text(
                     text = streak.toString(),
                     color = DS.ink,
