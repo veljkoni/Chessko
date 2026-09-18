@@ -158,12 +158,30 @@ private fun PathHeader(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = locF("Niz: %d dana", streak),
-                color = DS.ink,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Broj i oznaka su NAMERNO dva odvojena Text-a, ne jedan locF() sa
+            // "%d dana" -- na streak-u 1 to daje "Niz: 1 dana" (sr), "Streak: 1
+            // days" (en), "Серия: 1 дней" (ru), izmereno na uredjaju na bar 3 od
+            // 8 jezika. Mnozina se ne gradi za jedan string; oznaka koja se ne
+            // menja sa brojem nema problem ni na jednom jeziku -- isto resenje
+            // kao iOS (Chessko/Views/PathView.swift, streakCard).
+            // Poravnanje ide kroz `alignByBaseline()` na oba deteta, ne kroz
+            // `verticalAlignment` na redu -- kad su oba prisutna, bazna linija
+            // pobedjuje pa je parametar na redu mrtav.
+            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
+                Text(
+                    text = streak.toString(),
+                    color = DS.ink,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.alignByBaseline()
+                )
+                Text(
+                    text = loc("Dana zaredom"),
+                    color = DS.inkMuted,
+                    fontSize = 15.sp,
+                    modifier = Modifier.alignByBaseline()
+                )
+            }
             Text(
                 text = if (goalMet) loc("Cilj za danas je ispunjen") else loc("Cilj za danas nije ispunjen"),
                 color = if (goalMet) DS.success else DS.inkMuted,

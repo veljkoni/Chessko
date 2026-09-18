@@ -539,7 +539,10 @@ object Loc {
         "Zaključano" to mapOf("sr" to "Zaključano", "en" to "Locked", "fr" to "Verrouillé", "de" to "Gesperrt", "it" to "Bloccato", "ru" to "Заблокировано", "zh-Hans" to "已锁定", "hi" to "बंद"),
         "Završeno" to mapOf("sr" to "Završeno", "en" to "Completed", "fr" to "Terminé", "de" to "Abgeschlossen", "it" to "Completato", "ru" to "Завершено", "zh-Hans" to "已完成", "hi" to "पूर्ण"),
         "Dostupno" to mapOf("sr" to "Dostupno", "en" to "Available", "fr" to "Disponible", "de" to "Verfügbar", "it" to "Disponibile", "ru" to "Доступно", "zh-Hans" to "可用", "hi" to "उपलब्ध"),
-        "Niz: %d dana" to mapOf("sr" to "Niz: %d dana", "en" to "Streak: %d days", "fr" to "Série : %d jours", "de" to "Serie: %d Tage", "it" to "Serie: %d giorni", "ru" to "Серия: %d дней", "zh-Hans" to "连续 %d 天", "hi" to "लगातार %d दिन"),
+        // Faza 7, Task 1: zamenio "Niz: %d dana" (mnozina se lomila na sr/en/ru
+        // za streak 1). Broj i oznaka su sada dva odvojena Text-a u
+        // PathHeader() -- prevodi prepisani doslovno iz Chessko/Localizable.xcstrings.
+        "Dana zaredom" to mapOf("sr" to "Dana zaredom", "en" to "Day streak", "fr" to "Jours d'affilée", "de" to "Tage in Folge", "it" to "Giorni di fila", "ru" to "Дней подряд", "zh-Hans" to "连续天数", "hi" to "लगातार दिन"),
         "Cilj za danas je ispunjen" to mapOf("sr" to "Cilj za danas je ispunjen", "en" to "Today's goal met", "fr" to "Objectif du jour atteint", "de" to "Tagesziel erreicht", "it" to "Obiettivo di oggi raggiunto", "ru" to "Цель на сегодня выполнена", "zh-Hans" to "今日目标已完成", "hi" to "आज का लक्ष्य पूरा"),
         "Cilj za danas nije ispunjen" to mapOf("sr" to "Cilj za danas nije ispunjen", "en" to "Today's goal not met yet", "fr" to "Objectif du jour non atteint", "de" to "Tagesziel noch nicht erreicht", "it" to "Obiettivo di oggi non ancora raggiunto", "ru" to "Цель на сегодня ещё не выполнена", "zh-Hans" to "今日目标尚未完成", "hi" to "आज का लक्ष्य अभी पूरा नहीं हुआ"),
         "Završi korak" to mapOf("sr" to "Završi korak", "en" to "Finish step", "fr" to "Terminer l'étape", "de" to "Schritt abschließen", "it" to "Completa il passo", "ru" to "Завершить шаг", "zh-Hans" to "完成此步", "hi" to "चरण पूरा करें"),

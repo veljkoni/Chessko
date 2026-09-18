@@ -54,4 +54,13 @@ class SoundManager(private val context: Context) {
         soundPool?.release()
         soundPool = null
     }
+
+    /**
+     * Da li je [release] vec pozvan. Cisto posmatracko svojstvo (ne menja
+     * ponasanje) -- postoji da bi test mogao da dokaze da se `SoundPool`
+     * stvarno oslobodio, bez pretpostavke da poziv metode znaci i stvaran
+     * efekat (vidi `MainActivitySoundLifecycleTest`).
+     */
+    val isReleased: Boolean
+        get() = soundPool == null
 }

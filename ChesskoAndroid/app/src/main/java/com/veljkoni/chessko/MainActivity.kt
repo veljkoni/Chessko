@@ -100,6 +100,21 @@ class MainActivity : ComponentActivity() {
                     val gameViewModel = remember { GameViewModel(context.applicationContext as Application) }
                     val puzzleViewModel = remember { PuzzleViewModel(context.applicationContext as Application) }
 
+                    // `gameViewModel`/`puzzleViewModel` su `remember`-ovani ovde, NE kroz
+                    // `ViewModelStore` -- `onCleared()` im se zato nikad ne izvrsi. Svaki
+                    // pravi sopstveni `SoundManager` (nije singleton), pa promena jezika
+                    // (`key(languageKey)` odbacuje ceo blok i pravi NOVE modele) bez ovoga
+                    // ostavlja stare `SoundPool`-ove procurele do gasenja procesa. Isti
+                    // obrazac kao `ChessClockView.kt`/`StepPracticeView.kt`/`StepGameView.kt`
+                    // -- vezano za TACNO onaj opseg (`languageKey`) koji te modele pravi, da
+                    // se ne oslobodi primerak koji je ekran jos koristi.
+                    DisposableEffect(languageKey) {
+                        onDispose {
+                            gameViewModel.releaseSounds()
+                            puzzleViewModel.releaseSounds()
+                        }
+                    }
+
                 var showSettings by remember { mutableStateOf(false) }
                 var showNewGameMenu by remember { mutableStateOf(false) }
                 var showColorPicker by remember { mutableStateOf(false) }

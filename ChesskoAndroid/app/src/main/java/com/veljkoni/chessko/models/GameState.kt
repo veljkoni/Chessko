@@ -106,7 +106,16 @@ data class GameState(
 
             val ep = enPassantTarget?.algebraic ?: "-"
 
-            return "${rows.joinToString("/")} $active $castlingStr $ep 0 1"
+            // 5. Polutez (vodi se) — NE sme biti zakucan na "0". Ovaj FEN nije
+            // samo zapis: ide Stockfish-u na svaki AI potez
+            // (`GameViewModel.getBestMove`) i na svaku poziciju u analizi
+            // (`AnalysisViewModel`), pa bi motor bio slep za pravilo 50 poteza;
+            // a pošto ide i u sačuvanu partiju (`GameViewModel.save()`, odakle
+            // ga `fromFEN` čita nazad), brojač bi se tiho resetovao pri svakom
+            // ponovnom otvaranju aplikacije. iOS ovo ima od Faze 0
+            // (`Chessko/Models/GameState+FEN.swift`).
+            // 6. Broj poteza se ne vodi ni na jednoj platformi — "1", isto kao iOS.
+            return "${rows.joinToString("/")} $active $castlingStr $ep $halfmoveClock 1"
         }
 
     fun applying(move: ChessMove): GameState {
@@ -137,17 +146,7 @@ data class GameState(
             )
         }
 
-        val opponentMoves = MoveGenerator.legalMoves(s.currentTurn, s)
-        var newStatus: GameStatus = GameStatus.Playing
-        if (opponentMoves.isEmpty()) {
-            if (MoveGenerator.isInCheck(s.currentTurn, s)) {
-                newStatus = GameStatus.Checkmate(s.currentTurn)
-            } else {
-                newStatus = GameStatus.Draw(DrawReason.Stalemate)
-            }
-        } else if (MoveGenerator.isInCheck(s.currentTurn, s)) {
-            newStatus = GameStatus.Check(s.currentTurn)
-        }
+        val newStatus = statusFromPosition(s)
 
         var notation = baseNotation
         when (newStatus) {
@@ -468,6 +467,37 @@ data class GameState(
             }
 
             return false
+        }
+
+        /**
+         * Preracunava `GameStatus` iz PRAVILA za datu poziciju, bez ikakvog
+         * znanja o tome kako se do nje doslo (istorija, brojaci) -- mat, pat i
+         * sah preko `MoveGenerator.legalMoves` + `isInCheck`, isti obrazac kao
+         * `StockfishEngine.kt` (`terminalEval`, oko linije 430). Koristi je i
+         * [applying] gore u fajlu, koji je ranije istu proveru drzao inline
+         * i duplirano.
+         *
+         * NAMERNO ne prepoznaje `Draw(FiftyMoves)`, `Draw(Repetition)`,
+         * `Draw(InsufficientMaterial)` ni `Resigned` -- ta stanja zavise od
+         * istorije partije ili od odluke igraca, ne od gole pozicije na tabli,
+         * pa im ovde nema traga. Pozivalac kome ta stanja trebaju (npr.
+         * ucitavanje starog sacuvanog zapisa bez eksplicitnog `status` polja,
+         * `GameViewModel.load()`) mora da ih proveri odvojeno ili da prihvati
+         * da ostanu neprepoznata.
+         */
+        fun statusFromPosition(state: GameState): GameStatus {
+            val legalMoves = MoveGenerator.legalMoves(state.currentTurn, state)
+            return if (legalMoves.isEmpty()) {
+                if (MoveGenerator.isInCheck(state.currentTurn, state)) {
+                    GameStatus.Checkmate(state.currentTurn)
+                } else {
+                    GameStatus.Draw(DrawReason.Stalemate)
+                }
+            } else if (MoveGenerator.isInCheck(state.currentTurn, state)) {
+                GameStatus.Check(state.currentTurn)
+            } else {
+                GameStatus.Playing
+            }
         }
     }
 }
