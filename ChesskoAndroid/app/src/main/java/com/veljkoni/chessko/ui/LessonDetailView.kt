@@ -165,7 +165,7 @@ fun LessonDetailView(
                             .background(accent.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = lessonIcon(doc.icon), fontSize = 24.sp)
+                        LessonGlyphView(lessonGlyph(doc.icon), fontSize = 24.sp)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {

@@ -69,7 +69,7 @@ data class OpeningLine(
     val name: String,
     val uciMoves: List<String>,
     val hint: String,
-    val icon: String,
+    val icon: LessonGlyph,
     val accentColor: Color,
     val solvedMessage: String = loc("Bravo! Otvaranje savladano! ✓"),
     val wrongMessage: String = loc("Pogrešan potez — pokušaj ponovo."),
@@ -316,7 +316,7 @@ class MateExerciseState(
 }
 
 @Composable
-fun LBox(icon: String, title: String, text: String, color: Color) {
+fun LBox(icon: LessonGlyph, title: String, text: String, color: Color) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -329,7 +329,7 @@ fun LBox(icon: String, title: String, text: String, color: Color) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text(text = icon, fontSize = 14.sp)
+            LessonGlyphView(icon, fontSize = 14.sp)
             Text(text = title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -359,7 +359,7 @@ fun LPara(text: String) {
 }
 
 @Composable
-fun LBullet(icon: String, title: String, text: String, color: Color) {
+fun LBullet(icon: LessonGlyph, title: String, text: String, color: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -367,7 +367,7 @@ fun LBullet(icon: String, title: String, text: String, color: Color) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Top
     ) {
-        Text(text = icon, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
+        LessonGlyphView(icon, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
@@ -376,13 +376,13 @@ fun LBullet(icon: String, title: String, text: String, color: Color) {
 }
 
 @Composable
-fun LSectionHeader(icon: String, title: String, color: Color) {
+fun LSectionHeader(icon: LessonGlyph, title: String, color: Color) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(vertical = 4.dp)
     ) {
-        Text(text = icon, fontSize = 18.sp)
+        LessonGlyphView(icon, fontSize = 18.sp)
         Text(text = title, color = color, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
@@ -577,7 +577,7 @@ fun OpeningExerciseCard(line: OpeningLine) {
                         .background(line.accentColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = line.icon, fontSize = 14.sp)
+                    LessonGlyphView(line.icon, fontSize = 14.sp)
                 }
                 Column {
                     Text(text = line.name, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -673,7 +673,7 @@ fun MateExerciseCard(
     fen: String,
     title: String,
     hint: String,
-    icon: String,
+    icon: LessonGlyph,
     color: Color
 ) {
     val context = LocalContext.current
@@ -707,7 +707,7 @@ fun MateExerciseCard(
                         .background(color.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = icon, fontSize = 14.sp)
+                    LessonGlyphView(icon, fontSize = 14.sp)
                 }
                 Column {
                     Text(text = title, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -789,7 +789,7 @@ fun MatePuzzleCard(
     moves: List<String>,
     title: String,
     hint: String,
-    icon: String,
+    icon: LessonGlyph,
     accentColor: Color,
     mateIn: Int,
     // Poruke iz JSON-a. `null` = koristi podrazumevanu.
@@ -866,7 +866,7 @@ fun MatePuzzleCard(
                         .background(accentColor.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = icon, fontSize = 14.sp)
+                    LessonGlyphView(icon, fontSize = 14.sp)
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Row(

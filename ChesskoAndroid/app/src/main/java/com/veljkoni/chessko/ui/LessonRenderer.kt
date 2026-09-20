@@ -1,7 +1,10 @@
 package com.veljkoni.chessko.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -9,11 +12,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.logic.loc
@@ -44,12 +51,12 @@ fun LessonBlocks(
 ) {
     for (b in blocks) {
         when (b) {
-            is LessonBlock.Heading -> LSectionHeader(lessonIcon(b.icon), b.text, accent)
+            is LessonBlock.Heading -> LSectionHeader(lessonGlyph(b.icon), b.text, accent)
             is LessonBlock.Paragraph -> LPara(b.text)
             is LessonBlock.Bullets -> for (it in b.items) {
-                LBullet(lessonIcon(it.icon), it.title, it.text, colorFor(it.style, accent))
+                LBullet(lessonGlyph(it.icon), it.title, it.text, colorFor(it.style, accent))
             }
-            is LessonBlock.Box -> LBox(lessonIcon(b.icon), b.title, b.text, colorFor(b.style, accent))
+            is LessonBlock.Box -> LBox(lessonGlyph(b.icon), b.title, b.text, colorFor(b.style, accent))
             is LessonBlock.Quote -> LQuote(b.text, b.author)
             is LessonBlock.PieceRow -> LPieceRow(b.piece, b.name, b.count, accent)
             is LessonBlock.NumberedRule -> LNumberedRule(b.number, b.title, b.text, accent)
@@ -246,7 +253,7 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
                 moves = spec.uciMoves ?: emptyList(),
                 title = spec.title,
                 hint = spec.hint,
-                icon = lessonIcon(spec.icon),
+                icon = lessonGlyph(spec.icon),
                 accentColor = accent,
                 mateIn = spec.mateIn,
                 // Poruke iz JSON-a moraju da stignu i ovde, inace bi za
@@ -260,7 +267,7 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
                 name = spec.title,
                 uciMoves = spec.uciMoves ?: emptyList(),
                 hint = spec.hint,
-                icon = lessonIcon(spec.icon),
+                icon = lessonGlyph(spec.icon),
                 accentColor = accent,
                 // Podrazumevane poruke IDU kroz `loc()` — to je hrom, ne sadrzaj.
                 solvedMessage = spec.solvedMessage ?: loc("Bravo! Otvaranje savladano! ✓"),
@@ -275,7 +282,7 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
             fen = spec.startFEN ?: "",
             title = spec.title,
             hint = spec.hint,
-            icon = lessonIcon(spec.icon),
+            icon = lessonGlyph(spec.icon),
             color = accent
         )
     }
@@ -284,17 +291,67 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 // MARK: - Ikone
 //
 // JSON lekcija je prenet sa iOS-a i u polju `icon` nosi IME SF SIMBOLA
-// („crown.fill", „quote.opening"). Android nema SF simbole, a `LBox`/`LBullet`/
-// `LSectionHeader` ikonu crtaju kao obican `Text` — bez ovog prevoda bi se na
-// ekranu bukvalno ispisivalo „crown.fill" umesto ikone, na svakom naslovu i u
-// svakoj kutiji. Zato prevod stoji OVDE, na granici gde podatak iz JSON-a
-// ulazi u UI, a ne u samim komponentama (one primaju ono sto vec treba da
-// nacrtaju).
+// („crown.fill", „quote.opening"). Android nema SF simbole, pa se ime prevodi
+// OVDE, na granici gde podatak iz JSON-a ulazi u UI, a ne u samim komponentama
+// (one primaju ono sto vec treba da nacrtaju — `LessonGlyph`, ne sirov string).
+//
+// `LessonGlyph` nosi tri slucaja jer emoji i prava Material ikona ne mogu da
+// stoje u istoj `Map<String, X>`:
+//   - `Icon`   — SF simbol preveden u Material `ImageVector` (Faza 9, Task 1/2)
+//   - `Emoji`  — SF simbol koji OSTAJE emoji (Faza 9, Task 3, sedam simbola),
+//                ili sadrzaj koji vec nosi emoji direktno (rucno pisane lekcije)
+//   - `Unknown`— simbol koji NIJE nasao prevod. Zatecen fallback je bio tih
+//                (neutralna tacka ili sirov string); ovaj MORA da vikne, isto
+//                nacelo kao nepoznat naziv figure u `pieceRow` (CLAUDE.md,
+//                „Android cita isti JSON") — tiha praznina u lekciji je gora
+//                od ruznog znaka.
 //
 // Mapa pokriva svih 49 simbola koji se pojavljuju u `assets/lessons/*.json`
-// (provereno pretragom kroz sve fajlove). Nepoznat simbol daje neutralnu tacku
-// umesto sirovog imena — losa ikona je bolja od besmislenog teksta usred
-// recenice.
+// (provereno pretragom kroz sve fajlove), pa `Unknown` danas nikad ne stize na
+// ekran — ali ostaje kao zastita ako sledeca lekcija donese trideseti simbol.
+// Ne `internal`: rezultat ide u parametre javnih `@Composable` funkcija u
+// `LearnView.kt` (`LBox`, `LBullet`, `LSectionHeader`, `MateExerciseCard`,
+// `MatePuzzleCard`, `OpeningLine.icon`) — Kotlin ne dozvoljava da javna funkcija
+// izlozi `internal` tip kroz svoj potpis.
+sealed interface LessonGlyph {
+    @JvmInline value class Icon(val vector: ImageVector) : LessonGlyph
+    @JvmInline value class Emoji(val text: String) : LessonGlyph
+    /** Nepoznat SF simbol — mora da VIKNE, ne da ostavi prazninu. */
+    @JvmInline value class Unknown(val symbol: String) : LessonGlyph
+}
+
+/// Jedino mesto koje crta `LessonGlyph` — svih sest potpisa u `LearnView.kt` i
+/// `LessonDetailView.kt` prolaze kroz ovo, umesto da svaki grana na tip sam.
+@Composable
+internal fun LessonGlyphView(
+    glyph: LessonGlyph,
+    fontSize: TextUnit,
+    modifier: Modifier = Modifier
+) {
+    val iconSize: Dp = with(LocalDensity.current) { fontSize.toDp() }
+    when (glyph) {
+        is LessonGlyph.Icon -> Icon(
+            imageVector = glyph.vector,
+            contentDescription = null,
+            modifier = modifier.size(iconSize)
+        )
+        is LessonGlyph.Emoji -> Text(text = glyph.text, fontSize = fontSize, modifier = modifier)
+        is LessonGlyph.Unknown -> Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = modifier
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = DS.danger,
+                modifier = Modifier.size(iconSize)
+            )
+            Text(text = glyph.symbol, fontSize = fontSize, color = DS.danger)
+        }
+    }
+}
+
 private val SYMBOL_TO_EMOJI: Map<String, String> = mapOf(
     "arrow.clockwise" to "🔄",
     "arrow.forward.circle.fill" to "➡️",
@@ -351,11 +408,21 @@ private val SYMBOL_TO_EMOJI: Map<String, String> = mapOf(
     "xmark.shield.fill" to "❌"
 )
 
-/// Emoji za ime SF simbola iz JSON-a. Ako sadrzaj vec nosi emoji (nema tacke u
-/// imenu), prosledjuje se nepromenjen — da rucno pisana lekcija ne mora da zna
-/// za SF imena.
-internal fun lessonIcon(symbol: String): String =
-    SYMBOL_TO_EMOJI[symbol] ?: if ('.' in symbol || symbol.isEmpty()) "•" else symbol
+/// `LessonGlyph` za ime SF simbola iz JSON-a. Poznat simbol daje `Emoji` (Faza 9,
+/// Task 1-2 ce ovde vratiti `Icon` za deo njih). Ako sadrzaj vec nosi emoji
+/// direktno (nema tacke u imenu) — rucno pisana lekcija ne mora da zna za SF
+/// imena — prosledjuje se nepromenjen, i dalje kao `Emoji`. Simbol koji IZGLEDA
+/// kao SF ime (ima tacku) ili je prazan, a nije u mapi, daje `Unknown` — Task 0
+/// menja SAMO ovaj poslednji slucaj (zatecen fallback je bio tih "•"); danas
+/// nedostizno jer je mapa iscrpna za svih 49 simbola u isporucenom sadrzaju.
+internal fun lessonGlyph(symbol: String): LessonGlyph {
+    val emoji = SYMBOL_TO_EMOJI[symbol]
+    return when {
+        emoji != null -> LessonGlyph.Emoji(emoji)
+        symbol.isEmpty() || '.' in symbol -> LessonGlyph.Unknown(symbol)
+        else -> LessonGlyph.Emoji(symbol)
+    }
+}
 
 // MARK: - Markdown
 //
