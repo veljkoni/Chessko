@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Public
 import com.veljkoni.chessko.logic.GameDifficulty
 import com.veljkoni.chessko.logic.StockfishLevel
 import com.veljkoni.chessko.logic.StatsManager
@@ -577,7 +578,22 @@ fun SettingsView(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            Text(text = "🌐 " + loc("Stockfish"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            // Faza 8, Task 4: emoji -> Material ikona. Znak je bio
+                            // zalepljen na tekst dugmeta ("🌐 " + loc(...)); ikona je
+                            // dekorativna jer je "Stockfish" odmah uz nju CEO vidljiv
+                            // sadrzaj dugmeta -- opis bi citaocu ekrana rekao
+                            // "spoljni link, Stockfish" umesto samo "Stockfish".
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Public,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(text = loc("Stockfish"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
 
                         Button(
@@ -593,7 +609,19 @@ fun SettingsView(
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
-                            Text(text = "🌐 " + loc("Lichess"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            // Isti obrazac kao dugme "Stockfish" iznad -- dekorativna
+                            // ikona, tekst dugmeta nosi ceo vidljiv sadrzaj.
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Public,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(text = loc("Lichess"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

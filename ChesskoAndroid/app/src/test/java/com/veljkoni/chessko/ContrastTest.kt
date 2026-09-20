@@ -87,6 +87,14 @@ class ContrastTest {
         // (`Icons.Default.SentimentDissatisfied`, poraz matom) i zastava
         // (`Icons.Default.Flag`, poraz predajom) tint `DS.danger`; rukovanje
         // (`Icons.Default.Handshake`, remi) tint `DS.inkMuted`. Isti par, nov ekran.
+        //
+        // Faza 8, Task 4 dodaje jos tri potrosaca `success/surface`: bedz
+        // resenosti (`Icons.Default.CheckCircle`, tint `DS.success`) u header redu
+        // `OpeningExerciseCard`-a i `MateExerciseCard`-a, i trofej
+        // (`Icons.Default.EmojiEvents`, isti tint) u `MatePuzzleCard`-u
+        // (`LearnView.kt`) -- sve tri kartice i dalje sede direktno na
+        // `DS.surface`, isti par kao status tekst ispod njih, samo drugo mesto u
+        // istom stablu.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/ground", p, { it.ink }, { it.ground }, 4.5)
             check("$label ink/surface", p, { it.ink }, { it.surface }, 4.5)
@@ -250,6 +258,10 @@ class ContrastTest {
         // -- dekorativna (`contentDescription = null`, vidi kod), ali i dalje
         // STVARNO nacrtana na ekranu pa i dalje treba kontrast; eksplicitan
         // `tint = DS.ink` na `Row`-u sa `.background(DS.fill)`.
+        // `ink/fill` (Faza 8, Task 4) nosi i `Icons.Default.Public` u dugmadima
+        // "Stockfish"/"Lichess" (`SettingsView.kt`, sekcija „O aplikaciji") --
+        // dekorativna (tekst dugmeta je ceo vidljiv sadrzaj), bez eksplicitnog
+        // `tint`, isti mehanizam kao ostali primeri iznad.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/fill", p, { it.ink }, { it.fill }, 4.5)
             check("$label accent/fill", p, { it.accent }, { it.fill }, 4.5)

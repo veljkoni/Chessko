@@ -11,6 +11,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -581,8 +584,21 @@ fun OpeningExerciseCard(line: OpeningLine) {
                     Text(text = line.hint, color = DS.inkMuted, fontSize = 11.sp)
                 }
             }
+            // Faza 8, Task 4: emoji -> Material ikona. Ovaj bedz stoji SAM na
+            // desnom kraju header reda -- naslov/hint levo od njega govore o
+            // VEZBI, ne o tome da li je resena, pa ikona nosi informaciju koju
+            // sused ne ponavlja (isti obrazac kao kvacica resenosti u
+            // `PuzzleView.kt:372-384` datumske trake). Status tekst ispod
+            // ("Bravo! Otvaranje savladano! ✓") je odvojen celom tablom -- nije
+            // "neposredno uz" -- pa ovo NIJE dekorativna ikona. `success/surface`
+            // je vec pokriven `ContrastTest.textOnBackgroundsMeetsAA`.
             if (state.phase == OpeningPhase.SOLVED) {
-                Text(text = "✅", fontSize = 16.sp)
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = loc("Rešeno"),
+                    tint = DS.success,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
 
@@ -698,8 +714,17 @@ fun MateExerciseCard(
                     Text(text = hint, color = DS.inkMuted, fontSize = 11.sp)
                 }
             }
+            // Faza 8, Task 4: emoji -> Material ikona. Isti obrazac kao
+            // `OpeningExerciseCard` iznad -- bedz sam na desnom kraju header
+            // reda, naslov/hint levo ne govore o resenosti, status tekst ispod
+            // je odvojen celom tablom. Nije dekorativna.
             if (state.isSolved) {
-                Text(text = "✅", fontSize = 16.sp)
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = loc("Rešeno"),
+                    tint = DS.success,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
 
@@ -869,8 +894,19 @@ fun MatePuzzleCard(
                     Text(text = hint, color = DS.inkMuted, fontSize = 11.sp)
                 }
             }
+            // Faza 8, Task 4: emoji -> Material ikona. Isti obrazac kao dve
+            // kvacice iznad -- bedz sam na desnom kraju header reda, naziv
+            // zadatka i "Mat u N" cip levo od njega ne govore o resenosti,
+            // status traka ispod je odvojena celom tablom. Nije dekorativna;
+            // "Trofej" je nov kljuc (`EmojiEvents` u `MainActivity.kt` je
+            // dekorativan pa mu do sada nije trebao).
             if (state.phase == OpeningPhase.SOLVED) {
-                Text(text = "🏆", fontSize = 18.sp)
+                Icon(
+                    imageVector = Icons.Default.EmojiEvents,
+                    contentDescription = loc("Trofej"),
+                    tint = DS.success,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
 

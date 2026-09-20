@@ -531,6 +531,10 @@ object Loc {
         // `contentDescription` kvačice rešenosti u istoj traci — jedina ikona
         // koja NOSI informaciju koju susedni tekst (datum) ne kaze.
         "Rešeno" to mapOf("sr" to "Rešeno", "en" to "Solved", "fr" to "Résolu", "de" to "Gelöst", "it" to "Risolto", "ru" to "Решено", "zh-Hans" to "已解决", "hi" to "हल हो गया"),
+        // Faza 8, Task 4: `contentDescription` trofeja (`Icons.Default.EmojiEvents`)
+        // u `MatePuzzleCard`-u (`LearnView.kt`) — bedz sam u header redu, susedni
+        // naslov zadatka ne kaze da je resen.
+        "Trofej" to mapOf("sr" to "Trofej", "en" to "Trophy", "fr" to "Trophée", "de" to "Trophäe", "it" to "Trofeo", "ru" to "Трофей", "zh-Hans" to "奖杯", "hi" to "ट्रॉफी"),
         // Okvir poruke o gresci; razlog se interpolira posle dvotacke, pa ovaj
         // kljuc namerno nema zavrsnu tacku (postoji i "Greška pri učitavanju."
         // kao zasebna, cela recenica).
