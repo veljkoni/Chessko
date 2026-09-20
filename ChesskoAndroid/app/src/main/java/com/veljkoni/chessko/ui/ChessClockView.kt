@@ -651,7 +651,11 @@ fun PresetChooserDialog(
                                         // koji ovde stvarno vazi (ikonica je dekorativna).
                                         Icon(
                                             imageVector = Icons.Default.Star,
-                                            contentDescription = loc("Izabrana kontrola"),
+                                            // Dekorativna: zvezdica oznacava `preset.isOfficial`, a Text
+                                            // odmah ispod vec kaze „Zvanicni svetski blic" /
+                                            // „Turniri kandidata / FIDE". contentDescription bi
+                                            // citac ekrana naterao da istu stvar kaze dvaput.
+                                            contentDescription = null,
                                             tint = DS.accent,
                                             modifier = Modifier.size(12.dp)
                                         )
