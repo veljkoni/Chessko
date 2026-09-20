@@ -13,11 +13,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -54,9 +61,11 @@ val ClockBarBackground = Color(0xFF1E293B)
 
 /**
  * Udubljenje ispod „zatvori" i „resetuj" dugmadi. Cisto dekorativno — nosilac radnje je
- * emoji glif, ne krug. Zatecenih `White@6%` daje 1,198 prema traci; `12%` daje 1,458.
- * Nijedna vrednost u ovom registru ne stize do 3:1 a da krug ne pocne da vice glasnije
- * od glifa, pa je uzeta veca od dve izmerene.
+ * ikonica u sredini, ne krug (od Faze 8, Task 1 vektorska; do tada emoji glif, ali
+ * zakljucak vazi identicno za oboje — krug samo omedjuje dodirnu povrsinu).
+ * Zatecenih `White@6%` daje 1,198 prema traci; `12%` daje 1,458. Nijedna vrednost u
+ * ovom registru ne stize do 3:1 a da krug ne pocne da vice glasnije od ikonice, pa je
+ * uzeta veca od dve izmerene.
  */
 val ClockBarWell = Color.White.copy(alpha = 0.12f)
 
@@ -410,7 +419,15 @@ fun ControlBar(
                 .size(44.dp)
                 .background(ClockBarWell, CircleShape)
         ) {
-            Text(text = "❌", fontSize = 14.sp)
+            // `DarkColors.ink` na `ClockBarWell` (belo@12% preko trake), fiksan par
+            // — 8,87:1, deljen sa dugmetom za resetovanje ispod (isti krug, ista
+            // podloga). Vidi `ContrastTest.clockRoundButtonIconsAreReadable`.
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = loc("Zatvori"),
+                tint = DarkColors.ink,
+                modifier = Modifier.size(18.dp)
+            )
         }
 
         // Mid section: either preset chooser or play/pause button
@@ -430,7 +447,16 @@ fun ControlBar(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "⏱️", fontSize = 13.sp)
+                    // `ClockBarAccent` (=`DarkColors.accent`) na sopstvenom @12% cipu:
+                    // isti par kao tekst odmah desno, vec izmeren i pokriven u
+                    // `ContrastTest.clockControlBarIsReadableOverFixedHalves`
+                    // (4,583 — "akcent trake na sopstvenom @12% cipu").
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = loc("Vremenska kontrola"),
+                        tint = ClockBarAccent,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = selectedPresetName,
@@ -441,10 +467,19 @@ fun ControlBar(
                 }
 
                 IconButton(onClick = onInfoClick) {
-                    // Bez `color=`: `ℹ️` je pun-kolor emoji glif i Skia za
-                    // takve glifove IGNORISE boju teksta. Zatecen `color = DS.accent`
-                    // je izgledao kao da mehanizam radi — nije radio nikad.
-                    Text(text = "ℹ️", fontSize = 18.sp)
+                    // `DarkColors.ink` direktno na traci (`ClockBarBackground`, bez
+                    // kruga iza sebe) — isti par kao „DarkColors.ink na traci" u
+                    // `ContrastTest.clockControlBarIsReadableOverFixedHalves` (12,929).
+                    // Pre ove izmene je `ℹ️` bio pun-kolor emoji glif; Skia za takve
+                    // glifove IGNORISE `color=` teksta, pa je zatecen `color = DS.accent`
+                    // izgledao kao da mehanizam radi — nije radio nikad. Sa pravom
+                    // ikonom `tint` sad stvarno boji glif.
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = loc("Objašnjenje pravila"),
+                        tint = DarkColors.ink,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         } else {
@@ -454,37 +489,63 @@ fun ControlBar(
                     .size(52.dp)
                     .background(ClockBarAccent, CircleShape)
             ) {
-                // Isto kao `ℹ️` iznad: `▶️`/`⏸️` su pun-kolor
-                // emoji glifovi, pa je zatecen `color = DS.onAccent` bio mrtav.
-                Text(
-                    text = if (isPaused) "▶️" else "⏸️",
-                    fontSize = 18.sp
+                // `DarkColors.onAccent` (fiksno, NE `DS.onAccent` — taj prati temu
+                // preko `DS.accent`, dok je krug ovde uvek `ClockBarAccent` =
+                // `DarkColors.accent`) na `ClockBarAccent`: 6,71:1. Bela bi ovde
+                // pala na 2,60:1 — `DarkColors.accent` je svetloplav, ne taman.
+                // Isto kao `ℹ️` pre ove izmene: `▶️`/`⏸️` su bili pun-kolor emoji
+                // glifovi, pa je zatecen `color = DS.onAccent` bio mrtav — Skia
+                // ignorise `color=` za takve glifove. Nov par, vidi
+                // `ContrastTest.clockPlayPauseIconIsReadableOnItsAccentCircle`.
+                Icon(
+                    imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                    contentDescription = loc(if (isPaused) "Pusti sat" else "Pauziraj sat"),
+                    tint = DarkColors.onAccent,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
 
         // Reset Button
         val canReset = hasStarted || p1Time != baseSeconds
-        // Onemoguceno stanje se NE sme oslanjati na `color=` teksta: `\uD83D\uDD04` je
-        // pun-kolor emoji glif, a Skia za takve glifove ignorise boju teksta — zatecen kod
-        // je zato razlikovao stanja samo podlogom (`White 6%` / `White 2%`), sto je nad crnom
-        // pozadinom sata 1,063:1, dakle takodje nevidljivo. Merenjem utvrdjeno: dugme se ni
-        // pre ove faze nije videlo kao onemoguceno. `Modifier.alpha` radi na slojevima, pa
-        // deluje i na emoji — to je jedini signal ovde koji stvarno radi. Zato ovde vise
-        // NEMA `color=`: prethodni prelaz ga je preveo na `DS.ink`/`DS.inkMuted` i time
-        // ostavio kod koji izgleda kao da mehanizam radi, iako ta boja nikad ne stigne
-        // do glifa.
+        // ONEMOGUCENO STANJE: `tint`, ne `Modifier.alpha` na celom dugmetu.
+        //
+        // Pre ove izmene glif je bio pun-kolor emoji (🔄), koji Skia
+        // IGNORISE za `color=`, pa je zatecen kod razlikovao stanja jedino preko
+        // `Modifier.alpha` na celom dugmetu (jedini sloj koji deluje i na emoji) —
+        // ali je to dimovalo i krug ISPOD glifa. Sa pravim vektorom `tint` sad
+        // stvarno boji glif, pa je pitanje ponovo otvoreno: ostaje li M3-standardni
+        // `alpha(0.38f)` ili se prelazi na par tinta (`DarkColors.ink` /
+        // `DarkColors.inkMuted`), isto kao ostala dugmad na grani (`DS.ink`/
+        // `DS.inkMuted`, npr. traka pregleda partije u `MainActivity.kt`)?
+        //
+        // IZMERENO (formula identicna `ContrastTest`-u), oba para nad STVARNOM
+        // podlogom (`ClockBarWell` — belo@12% preko `ClockBarBackground`):
+        //   `alpha(0.38f)` na celom dugmetu: krug se sam utopi u traku (1,15:1 —
+        //     nevidljiv kao krug), a glif nad TIM utopljenim krugom pada na 2,75:1 —
+        //     ispod WCAG-ovog ne-tekstualnog praga od 3:1 (onemoguceno dugme je
+        //     tehnicki izuzeto od tog praga, ali cilj je da SE VIDI da dugme postoji).
+        //   `tint = DarkColors.inkMuted`, krug NETAKNUT (i dalje pun `ClockBarWell`):
+        //     3,26:1 — iznad praga, i krug ostaje jasno ocrtan umesto da nestane.
+        // Odabran je `tint`: jedini od ova dva koji stvarno prelazi 3:1, i jedini
+        // koji ne gasi i sam krug — dugme se vidi kao POSTOJECE ali neaktivno,
+        // ne kao da je nestalo. `Modifier.alpha` je uklonjen u celosti (import
+        // `androidx.compose.ui.draw.alpha` vise nije potreban nigde u fajlu).
+        // Vidi `ContrastTest.clockRoundButtonIconsAreReadable` (omoguceno,
+        // deljeno sa dugmetom „Zatvori") i `clockResetIconDisabledStateIsReadable`
+        // (onemoguceno, nov par).
         IconButton(
             onClick = onResetClick,
             enabled = canReset,
             modifier = Modifier
                 .size(44.dp)
-                .alpha(if (canReset) 1f else 0.38f)
                 .background(ClockBarWell, CircleShape)
         ) {
-            Text(
-                text = "🔄",
-                fontSize = 14.sp
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = loc("Resetuj sat"),
+                tint = if (canReset) DarkColors.ink else DarkColors.inkMuted,
+                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -577,7 +638,23 @@ fun PresetChooserDialog(
                                     )
                                     if (preset.isOfficial) {
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        Text(text = "⭐", fontSize = 10.sp)
+                                        // `DS.accent` — dijalog lebdi nad scrim-om i
+                                        // prati temu (vidi komentar iznad `ControlBar`),
+                                        // pa ovde, za razliku od trake, ide token, ne
+                                        // fiksna boja. Par je vec pokriven: `accent/fill`
+                                        // (`ContrastTest.textOnFillMeetsAA`) i
+                                        // `accent/surface`
+                                        // (`accentTextOnSurfaceAndGroundMeetsAA`) — ovaj
+                                        // red sedi na `DS.fill` kad je izabran, inace na
+                                        // providnoj podlozi nad `DS.surface`. Oba >= 4.5,
+                                        // iznad i WCAG-ovog ne-tekstualnog praga od 3:1
+                                        // koji ovde stvarno vazi (ikonica je dekorativna).
+                                        Icon(
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = loc("Izabrana kontrola"),
+                                            tint = DS.accent,
+                                            modifier = Modifier.size(12.dp)
+                                        )
                                     }
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))

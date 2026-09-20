@@ -3,6 +3,7 @@ package com.veljkoni.chessko
 import androidx.compose.ui.graphics.Color
 import com.veljkoni.chessko.ui.ClockBarAccent
 import com.veljkoni.chessko.ui.ClockBarBackground
+import com.veljkoni.chessko.ui.ClockBarWell
 import com.veljkoni.chessko.ui.theme.ChesskoColors
 import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.LightColors
@@ -184,6 +185,9 @@ class ContrastTest {
         // `ink/fill` (Task 3) nosi i „Reset"/„Ponovo" dugme u sve tri kartice vezbi
         // i neodabranu figuru u `PieceExplorer`-ovom pikeru (`LearnView.kt`) -- isti
         // par kao dugme "Nazad" u `LessonDetailView.kt` (vidi komentar tamo).
+        // `accent/fill` (Faza 8, Task 1) nosi i zvezdicu (`⭐` -> `Icons.Default.Star`)
+        // uz naziv izabranog preseta u `ChessClockView.kt` kad je red preseta obelezen
+        // kao izabran (`.background(if (isSelected) DS.fill else Color.Transparent)`).
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/fill", p, { it.ink }, { it.fill }, 4.5)
             check("$label accent/fill", p, { it.accent }, { it.fill }, 4.5)
@@ -313,10 +317,14 @@ class ContrastTest {
         checkPair("sav traka/bela polovina u isteku", bar, Color(0xFFFADAD8), 3.0)
 
         // Sadrzaj NA traci. `DS.ink` bi ovde u svetloj temi dao 1,19 — zato `DarkColors`.
+        // Faza 8, Task 1: ovaj par (`DarkColors.ink`/`bar`) je i tint `ℹ️` ->
+        // `Icons.Default.Info` dugmeta (sedi direktno na traci, bez kruga iza sebe).
         checkPair("DarkColors.ink na traci", DarkColors.ink, bar, 4.5)
         checkPair("akcent trake na traci", ClockBarAccent, bar, 4.5)
         // Cip vremenske kontrole crta akcent na SOPSTVENOM tintu preko trake. Na @15%
         // je to 4,339 — ispod AA; na @12% (iOS vrednost) 4,583.
+        // Faza 8, Task 1: isti par je i tint `⏱️` -> `Icons.Default.Timer` ikone u
+        // istom cipu (crta se u istoj boji kao tekst do sebe).
         checkPair("akcent trake na sopstvenom @12%% cipu",
             ClockBarAccent, over(ClockBarAccent, 0.12f, bar), 4.5)
 
@@ -327,6 +335,61 @@ class ContrastTest {
             "svetli akcent na traci daje %.3f — da je >= 4.5, traka bi smela `DS.accent`"
                 .format(svetliAkcentNaTraci),
             svetliAkcentNaTraci < 4.5
+        )
+    }
+
+    /**
+     * Faza 8, Task 1: emoji -> Material ikone na sahovskom satu. Dva dugmeta dele
+     * ISTI krug (`ClockBarWell` — belo@12% preko `ClockBarBackground`) i ISTI
+     * omoguceni tint (`DarkColors.ink`): dugme „Zatvori" (uvek omoguceno) i dugme
+     * za resetovanje sata u omogucenom stanju. Fiksan par, isti u obe teme jer ni
+     * jedan clan nije adaptivan token.
+     *
+     * Info dugme (`ℹ️` -> `Icons.Default.Info`) sedi direktno na traci, bez kruga
+     * iza sebe — ISTI par kao „DarkColors.ink na traci" u
+     * `clockControlBarIsReadableOverFixedHalves` iznad (12,929), pa ne dobija
+     * sopstvenu tvrdnju ovde; ovaj komentar ga imenuje kao drugog potrosaca.
+     */
+    @Test
+    fun clockRoundButtonIconsAreReadable() {
+        val well = over(Color.White, 0.12f, ClockBarBackground)
+        checkPair("DarkColors.ink na dugmetu (Zatvori / Resetuj, omoguceno)",
+            DarkColors.ink, well, 4.5)
+    }
+
+    /**
+     * Faza 8, Task 1: onemoguceno stanje dugmeta za resetovanje sata. Vidi
+     * obrazlozenje `tint` naspram `Modifier.alpha` u komentaru uz samo dugme
+     * (`ChessClockView.kt`, `ControlBar`). Prag je WCAG-ov ne-tekstualni 3:1 —
+     * onemoguceni kontroli tehnicki nije potreban, ali je ovde ipak dostignut, za
+     * razliku od odbacene `alpha(0.38f)` alternative (izmereno 2,75:1).
+     */
+    @Test
+    fun clockResetIconDisabledStateIsReadable() {
+        val well = over(Color.White, 0.12f, ClockBarBackground)
+        checkPair("DarkColors.inkMuted na dugmetu (Resetuj, onemoguceno)",
+            DarkColors.inkMuted, well, 3.0)
+    }
+
+    /**
+     * Faza 8, Task 1: dugme pusti/pauziraj (`▶️`/`⏸️` -> `Icons.Default.PlayArrow`/
+     * `Pause`). Krug je `ClockBarAccent` (= `DarkColors.accent`, FIKSNO — ne
+     * `DS.accent`, koji bi ovde bio pogresan jer krug ne prati temu). Tint je zato
+     * `DarkColors.onAccent`, ne adaptivni `DS.onAccent`: ta dva se ovde slucajno
+     * poklapaju brojcano (oba `#161A22`), ali `DS.onAccent` bi bio POGRESAN IZBOR —
+     * prati `DS.accent`, koji se menja sa temom, dok se krug ovde NE menja.
+     */
+    @Test
+    fun clockPlayPauseIconIsReadableOnItsAccentCircle() {
+        checkPair("DarkColors.onAccent na ClockBarAccent (pusti/pauziraj)",
+            DarkColors.onAccent, ClockBarAccent, 4.5)
+        // Negativna polovina, isti obrazac kao `plainWhiteWouldFailOnTheDarkAccent`:
+        // dokaz da `DarkColors.onAccent` ovde NIJE proizvoljan izbor.
+        val bela = contrast(Color.White, ClockBarAccent)
+        assertTrue(
+            "bela na ClockBarAccent daje %.2f — da je >= 4.5, DarkColors.onAccent ne bi bio potreban"
+                .format(bela),
+            bela < 4.5
         )
     }
 
@@ -383,6 +446,9 @@ class ContrastTest {
      */
     @Test
     fun accentTextOnSurfaceAndGroundMeetsAA() {
+        // `accent/surface` (Faza 8, Task 1) nosi i istu zvezdicu iz `textOnFillMeetsAA`
+        // iznad kad red preseta NIJE izabran (`Color.Transparent` nad dijaloga
+        // `Surface`-om koji je `DS.surface`).
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label accent/surface", p, { it.accent }, { it.surface }, 4.5)
             check("$label accent/ground", p, { it.accent }, { it.ground }, 4.5)
