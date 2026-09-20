@@ -1268,10 +1268,9 @@ fun ActionsRow(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(
                     imageVector = if (isVsComputer) Icons.Default.Computer else Icons.Default.People,
-                    // "Protivnik računar" opisuje SAMO racunarsko stanje (obavezujuci kljuc,
                     // vidi progress.md); za "Prijatelj" nema dodeljenog kljuca u tabeli, a
                     // vidljivi Text odmah desno vec nosi znacenje -- ikona je tu dekorativna.
-                    contentDescription = if (isVsComputer) loc("Protivnik računar") else null,
+                    contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(text = if (isVsComputer) loc("Računar") else loc("Prijatelj"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)

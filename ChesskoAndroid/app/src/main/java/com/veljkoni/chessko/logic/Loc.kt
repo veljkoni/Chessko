@@ -58,7 +58,6 @@ object Loc {
         // Faza 8, Task 2: `contentDescription` za ikone na ekranu Igra (emoji -> Material ikone).
         "Vrati potez" to mapOf("sr" to "Vrati potez", "en" to "Undo move", "fr" to "Annuler le coup", "de" to "Zug zurücknehmen", "it" to "Annulla mossa", "ru" to "Отменить ход", "zh-Hans" to "撤销一步", "hi" to "चाल पूर्ववत करें"),
         "Predaj partiju" to mapOf("sr" to "Predaj partiju", "en" to "Resign the game", "fr" to "Abandonner la partie", "de" to "Partie aufgeben", "it" to "Abbandona la partita", "ru" to "Сдать партию", "zh-Hans" to "认输", "hi" to "खेल में हार मानें"),
-        "Protivnik računar" to mapOf("sr" to "Protivnik računar", "en" to "Computer opponent", "fr" to "Adversaire ordinateur", "de" to "Computergegner", "it" to "Avversario computer", "ru" to "Соперник компьютер", "zh-Hans" to "电脑对手", "hi" to "कंप्यूटर प्रतिद्वंद्वी"),
         "Blic" to mapOf("sr" to "Blic", "en" to "Blitz", "fr" to "Blitz", "de" to "Blitz", "it" to "Blitz", "ru" to "Блиц", "zh-Hans" to "快棋", "hi" to "ब्लिट्ज़"),
         "Ubrzani šah" to mapOf("sr" to "Ubrzani šah", "en" to "Rapid", "fr" to "Rapide", "de" to "Schnellschach", "it" to "Rapid", "ru" to "Рапид", "zh-Hans" to "快速棋", "hi" to "रैपिड"),
         "Klasični šah" to mapOf("sr" to "Klasični šah", "en" to "Classical", "fr" to "Classique", "de" to "Klassisch", "it" to "Classico", "ru" to "Классика", "zh-Hans" to "慢棋", "hi" to "क्लासिकल"),
