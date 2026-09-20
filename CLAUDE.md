@@ -209,12 +209,24 @@ zvučao kao da je iscrpan:**
 - pločica promocije (`PromotionOverlay.kt:47`)
 - gradijenti figura (`CapturedPiecesView.kt:54-68`)
 - birač boje igrača (`MainActivity.kt:328-393`)
-- emoji u UI hromu i u `lessonIcon()` mapi (izbor ikonografije, odložen odlukom korisnika)
+- **emoji u hromu — DELIMIČNO ZATVORENO Fazom 8.** 34 mesta (sat, ekran Igra, Zadaci i koraci
+  Puta, Učenje i Podešavanja) su zamenjena `Icons.*` + `tint = DS.*`; vidi „Faza 8" u
+  Changelog-u. Dve stvari NAMERNO ostaju, obe odlukom korisnika, ne propustom:
+  `lessonIcon()` mapa u `LessonRenderer.kt` (49 SF-simbol → emoji parova, sadržaj lekcije, ne
+  hrom) i **emoji u prevedenim porukama** (`Loc.kt`: `🎉`/`🏆`/`🔥`/`🧩` u porukama pobede/mata/
+  statistike). Ovo drugo NIJE odstupanje Androida — iOS katalog nosi **iste ključeve sa istim
+  emoji-jem**, a `Chessko/Views/SettingsSheet.swift:121,123` ima doslovno `🔥`/`🧩`; uklanjanje
+  bi pokvarilo paritet dve platforme.
 
 > **Emoji glif ne prima `color=`.** Skia za pun-kolor emoji glifove IGNORIŠE boju teksta, pa
-> `Text("🔄", color = DS.ink)` izgleda kao da mehanizam radi a ne radi nikad. Talas ispravki je
-> uklonio tri takva mrtva `color=` iz `ChessClockView.kt` (`🔄`, `ℹ️`, `▶️`/`⏸️`). Jedini signal
-> koji na emojiju stvarno radi je `Modifier.alpha` — on dejstvuje na sloj.
+> `Text("🔄", color = DS.ink)` izgleda kao da mehanizam radi a ne radi nikad — činjenica o Skia
+> ostaje tačna, ali od Faze 8 **više ne opisuje naš kod**: dugmad koja su ovo pogađala
+> (`🔄` na resetu sata i drugde) sada crtaju `Icon(imageVector = ..., tint = DS.*)`, gde `tint`
+> radi normalno. Zatečena zaobilaznica `Modifier.alpha(0.38f)` na dugmetu za reset sata (uvedena
+> baš zato što `color=` ne radi na emoji glifu) davala je **2,75:1** na glifu — ispod WCAG praga
+> od 3:1 za ne-tekstualni sadržaj. Zamena za `Icon(tint = DS.inkMuted)` (krug netaknut) daje
+> **3,26:1** — nije kozmetika, popravila je kontrast koji je padao. Jedini preostali potrošač
+> `Modifier.alpha` na emoji glifu je `lessonIcon()` mapa, van obima ove faze.
 
 ## Arhitektura (MVVM)
 
@@ -1116,6 +1128,30 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
   - Veza sa stavkom iznad: za **stare** zapise (bez `status` polja) `statusFromPosition` i
     dalje ne prepoznaje `Draw(FiftyMoves)` — status se ne izvodi iz brojača nego iz
     eksplicitnog polja. Ali učitana partija sada bar **nastavlja da broji tamo gde je stala**.
+- **Dugme „Predaj" (Android) pada ispod WCAG AA za tekst, u svetloj temi.** `DS.danger` tekst na
+  `DS.danger@15%` podlozi (`ActionsRow` u `MainActivity.kt`) izmereno: **3,47** nad `ground`,
+  **3,81** nad `surface`, **3,22** nad `fill` — sve tri prelaze ne-tekstualni prag 3:1, ali
+  tekst je 11sp pa važi prag 4,5:1, koji **pada** u sve tri. Tamna tema je van rizika (4,3–5,4).
+  Zatečeno pre Faze 8 (nije je uvela), otkriveno u finalnom pregledu Task-a 2 te faze — nošeno
+  ovde jer ga niko dotad nije izmerio, ne zato što je Task 5 rešio.
+- **`LessonRenderer.kt:193` crta hardkodovan `⚠︎` direktno u `Text`, van `lessonIcon()` mape i
+  van `Loc.kt` rečnika.** Kad se FEN lekcijskog `board` bloka ne parsira, `LStaticBoard` prikaže
+  `"⚠︎ $fen"` — glif koji migracija Faze 8 nije ni videla (mapa/rečnik su pretraživani odvojeno
+  od doslovnih `Text(...)` literala). Bezopasno (isti fallback kao i uvek, ne ruši ekran), ali
+  je van šablona koji ostatak baze prati (`Icon` + `tint`, ili `loc()` ključ) — vredi popraviti
+  u nekoj sledećoj sitnici, ne u ovoj fazi (Task 5 sme samo `CLAUDE.md`).
+- **Pravilo dekorativno/opisno je Faza 8 platila osam puta pre nego što je postalo pravilo.**
+  Kontroler je u tri taska (1, 2, 3) unapred zadao `contentDescription` ključeve izvodeći ih iz
+  **izgleda** ikone, ne iz njene **upotrebe** — pa je pet ikona dobilo opis koji **ponavlja**
+  vidljiv tekst odmah pored (kod dva slučaja opis je bio doslovno isti string kao tekst dugmeta),
+  i tri su dobile opis iako je susedni tekst već govorio isto. Svih osam je ispravljeno na
+  `contentDescription = null`. Pravilo koje je iz toga izvedeno i koje važi ubuduće:
+  > Ikona uz vidljiv tekst istog značenja je **dekorativna** (`contentDescription = null`).
+  > Ikona koja stoji **sama** traži opis.
+  Uz nijansu koju je Task 4 dodao: „uz" znači stvarno uz. U `LearnView.kt` tri značke
+  (`CheckCircle`/`EmojiEvents` u vežbama) su **opisne** iako izgledaju kao dekorativni trofej iz
+  Task-a 2 — između značke i odgovarajućeg statusnog teksta stoji **cela šahovska tabla**
+  (`BoardView` je 12 linija posle ikone, sledeći `Text` tek 35), pa opis ne ponavlja ništa.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
@@ -2551,3 +2587,51 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS netaknut), a
   `Chessko/Localizable.xcstrings` ostaje izmenjen u radnom stablu i **nije** ušao ni u jedan
   commit.
+
+- **2026-09-20** — Faza 8 (Android: emoji → Material ikone u hromu). Četiri taska su zamenila
+  **34 emoji glifa** u interaktivnom hromu odgovarajućim `Icons.*` + `tint = DS.*` parom: sat
+  (Task 1, 6 mesta — `436915d`), ekran Igra (Task 2, 13 mesta — `f621899`), Zadaci i koraci Puta
+  (Task 3, 10 mesta — `52eb7ad`), Učenje i Podešavanja (Task 4, 5 mesta — `83b0806`). Namerno
+  ostaju: `lessonIcon()` mapa (49 SF-simbol → emoji parova, sadržaj lekcije) i emoji u
+  prevedenim porukama (`Loc.kt`) — oboje odlukom korisnika, drugo je i pariteta radi (iOS ima
+  iste ključeve, isti emoji). Detalji, obrazloženja i izmereni kontrasti — vidi „Android dizajn
+  sistem" gore.
+
+  **Kontroler je obavezujućom tabelom ključeva pravio istu grešku tri puta pre nego što je
+  postala pravilo.** Ime `contentDescription` ključa je izvodio iz izgleda ikone, ne iz njene
+  upotrebe u kodu — posledica je bila pet ikona sa opisom koji ponavlja susedni vidljivi tekst
+  (dva doslovno identična stringa), plus ikona protivnika (`Computer`/`People`) kojoj je isti
+  ključ dat u DVA konteksta gde je oba puta dekorativna. Od Task-a 3 tabela je zamenjena
+  pravilom: „ikona uz vidljiv tekst istog značenja je dekorativna, ikona koja stoji sama traži
+  opis" — vidi „Poznata ograničenja". Izvršioci su sve nesuglasice **prijavili i ipak upisali
+  zadato**, što je bilo tačno postupanje dok je tabela važila.
+
+  **Merenje je promenilo odgovor jednom, ne samo potvrdilo ga.** Zatečena `Modifier.alpha(0.38f)`
+  na dugmetu za reset sata (zaobilaznica iz Faze 6d-2, jer Skia ignoriše `color=` na emoji
+  glifu) davala je glifu **2,75:1** — ispod WCAG praga 3:1. Zamena za `Icon(tint = DS.inkMuted)`
+  (krug netaknut) daje **3,26:1** — zamena nije bila kozmetika nego popravka kontrasta koji je
+  padao ispod praga.
+
+  **Task 5 (zatvaranje):** JVM **101 → 105** (3 nova `ContrastTest` iz Task-a 1; Task-i 2–4 nisu
+  dodali nove testove — parovi koje su uveli su već bili pokriveni postojećim testovima).
+  Instrumentisanih **52** (nepromenjeno). Vizuelni prolaz: **svetla tema** je završena u toku
+  Task-ova 1–4 (29 snimaka); **tamna tema** je dovršena ovim taskom (18 dodatnih snimaka,
+  `29`–`47` u `.superpowers/sdd/2026-09-18-faza-8-emoji-u-ikone/screenshots/`) — sat u oba
+  aktivna stanja i sa onemogućenim resetom, info dijalog i birač vremenske kontrole (zvezdica
+  dekorativna, vidljiva), ekran Igra u portretu i pejzažu sa svih šest dugmadi i sa dijalogom
+  poraza, Zadaci sa kvačicom rešenosti i sa greškom u zadatku (`Nije to — traži pravi ključni
+  potez!`), Učenje sa oba tražena ikona — `CheckCircle` (rešena vežba otvaranja, Sicilijanska
+  odbrana odigrana potez-po-potez) i `EmojiEvents` (rešen mat-zadatak, Mini finalni test
+  Zadatak 1) — i Podešavanja sa oba linka u „O aplikaciji". Crna i bela polovina sata su u
+  tamnoj temi ostale crna i bela, kako i treba (prate stranu, ne temu) — najveći rizik faze je
+  potvrđen bez nalaza.
+
+  Prijavljena, nepopravljena (Task 5 sme samo `CLAUDE.md`): `LessonRenderer.kt:193` crta
+  hardkodovan `⚠︎` mimo `lessonIcon()`/`Loc.kt` šablona (vidi „Poznata ograničenja"); dugme
+  „Predaj" pada ispod WCAG AA za tekst u svetloj temi (zatečeno, ne uvedeno ovom fazom).
+
+  **Emulator:** sesija koja je radila Task-ove 1–4 je pukla na limitu i ostavila emulator
+  aktivan **3 sata 59 minuta** — nijedan zadatak ga tada nije koristio, samo je zaboravljen
+  upaljen. Ova sesija ga je zatekla i ugasila pre sopstvenog dizanja. Sopstveno dizanje (za
+  tamnu temu) je bilo jedno, `-gpu host`, i ugašeno odmah po snimanju — `adb emu kill` +
+  `./gradlew --stop` + `pgrep -f qemu-system` prazan, potvrđeno.
