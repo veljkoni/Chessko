@@ -540,7 +540,6 @@ object Loc {
         // `StepPracticeView.kt`). Ne postoji vec kao odvojen kljuc — "greška"
         // (malim slovom) je NEZAVISAN kljuc, klasa poteza u analizi partije,
         // ne ova ikona.
-        "Greška" to mapOf("sr" to "Greška", "en" to "Error", "fr" to "Erreur", "de" to "Fehler", "it" to "Errore", "ru" to "Ошибка", "zh-Hans" to "错误", "hi" to "त्रुटि"),
         // Jedina grana `MateExerciseState.statusMessage` koja je ostala bez
         // `loc()` — igrac je u sahu u vezbi mata. Kljuc ne postoji ni u iOS
         // katalogu, pa je ovde nov.

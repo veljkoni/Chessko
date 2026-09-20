@@ -103,7 +103,7 @@ fun PuzzleView(
                             // je zadato, prijavljeno u izvestaju taska.
                             Icon(
                                 imageVector = Icons.Default.Warning,
-                                contentDescription = loc("Greška"),
+                                contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
                                 tint = DS.warning,
                                 modifier = Modifier.size(36.dp)
                             )
@@ -228,7 +228,7 @@ fun PuzzleView(
                             // (ista ikona, isti kljuc, ista podloga `DS.ground`).
                             Icon(
                                 imageVector = Icons.Default.Warning,
-                                contentDescription = loc("Greška"),
+                                contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
                                 tint = DS.warning,
                                 modifier = Modifier.size(48.dp)
                             )
@@ -548,7 +548,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(
                         imageVector = Icons.Default.Lightbulb,
-                        contentDescription = loc("Prikaži rešenje"),
+                        contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
                         modifier = Modifier.size(14.dp)
                     )
                     Text(text = loc("Prikaži rešenje"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
@@ -572,7 +572,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = loc("Pokušaj ponovo"),
+                        contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
                         modifier = Modifier.size(14.dp)
                     )
                     Text(text = loc("Pokušaj ponovo"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)

@@ -117,7 +117,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                     // ekran koraka sedi u istom `Box` iz `MainActivity.kt`).
                     Icon(
                         imageVector = Icons.Default.Warning,
-                        contentDescription = loc("Greška"),
+                        contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
                         tint = DS.warning,
                         modifier = Modifier.size(40.dp)
                     )
