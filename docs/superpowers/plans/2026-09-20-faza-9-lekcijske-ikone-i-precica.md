@@ -91,21 +91,70 @@ JVM **105**, instrumentisani **52**, oba 0 padova. Grana polazi od `main` = `a3a
 
 ---
 
-## Task 1: Mapa prelazi sa emoji na ikone — strelice i oznake (20 simbola)
+## Task 0: Tip glifa — pre ijednog prevedenog simbola
+
+**Fajlovi:** `ui/LessonRenderer.kt`, `ui/LearnView.kt`, `ui/LessonDetailView.kt`
+
+> **Ovaj task je dodat posle pre-flight provere.** Prvo izdanje plana je reklo
+> „`SYMBOL_TO_EMOJI` postaje mapa u `ImageVector`, fajl: `LessonRenderer.kt`". Oboje je bilo
+> pogrešno, i to na način koji bi se video tek pri kompajliranju.
+
+Izmereno otvaranjem koda:
+
+- **`lessonIcon()` ima 8 pozivnih mesta u 2 fajla** (`LessonRenderer.kt` ×7,
+  `LessonDetailView.kt:168`), a rezultat ulazi u **šest potpisa** u `LearnView.kt`
+  (`LBox`, `LBullet`, `LSectionHeader` i tri kartice vežbi — `:319`, `:362`, `:379`, `:676`, `:792`,
+  plus polje `icon: String` na `:72`).
+- **Povratni tip NE SME biti `ImageVector`**, jer Task 3 ostavlja sedam simbola kao emoji. Mapa u
+  `ImageVector` i emoji ne mogu da postoje u istom `Map<String, ImageVector>`.
+
+- [ ] **Korak 1: Uvedi tip koji nosi oba slučaja**
+
+```kotlin
+internal sealed interface LessonGlyph {
+    @JvmInline value class Icon(val vector: ImageVector) : LessonGlyph
+    @JvmInline value class Emoji(val text: String) : LessonGlyph
+    /** Nepoznat SF simbol — mora da VIKNE, ne da ostavi prazninu. */
+    @JvmInline value class Unknown(val symbol: String) : LessonGlyph
+}
+```
+Prilagodi oblik ako ti Kotlin ne dozvoli `value class` u `sealed interface` — **ali zadrži tri
+slučaja**; treći nije ukras (vidi Korak 3).
+
+- [ ] **Korak 2: Jedno mesto koje glif crta**
+
+Napravi `@Composable fun LessonGlyphView(glyph, tint, size)` i **provuci svih šest potpisa kroz
+njega**, umesto da svaki zna kako se glif crta. Bez toga bi svaki od šest morao da grana na tip.
+
+- [ ] **Korak 3: Fallback mora ostati jednako glasan**
+
+Zatečeni: nepoznat simbol sa tačkom u imenu daje `"•"`, inače sam simbol. Nov fallback ne sme tiho
+da se pretvori u prazninu — `Unknown` daje **crveni `Warning` + ime simbola**, isto načelo kao
+nepoznat naziv figure u `pieceRow` (`CLAUDE.md`, „Android čita isti JSON").
+
+- [ ] **Korak 4: Mapa ostaje emoji, ali kroz nov tip**
+
+U ovom tasku se **nijedan simbol ne prevodi** — svih 49 i dalje daju `Emoji`. Cilj je da ekran
+izgleda **identično** pre i posle, a da tip bude spreman. Tako Task 1 i 2 menjaju **vrednosti**, ne
+strukturu.
+
+- [ ] **Korak 5: Dokaz da se ništa nije promenilo**
+
+`assembleDebug` + JVM testovi. I reci u izveštaju kako si se uverio da se prikaz nije promenio bez
+emulatora (npr. da su sve grane i dalje `Emoji(...)` sa istim stringom).
+
+- [ ] **Korak 6: Commit**
+
+---
+
+## Task 1: Strelice i oznake (20 simbola)
 
 **Fajlovi:** `ui/LessonRenderer.kt`
 
-`SYMBOL_TO_EMOJI: Map<String, String>` postaje mapa u `ImageVector`. Potpis `lessonIcon()` se menja,
-pa **pročitaj sve njegove pozivaoce pre izmene.**
+Task 0 je već uveo tip i mesto crtanja — ti menjaš **samo vrednosti u mapi**, `Emoji(...)` →
+`Icon(...)`.
 
-- [ ] **Korak 1: Promeni tip mape i fallback**
-
-Zatečeni fallback (`LessonRenderer.kt`): nepoznat simbol sa tačkom u imenu daje `"•"`, inače sam
-simbol. **Nov fallback mora ostati jednako glasan** — nepoznat SF simbol se ne sme tiho pretvoriti
-u prazninu. Predlog: `null` iz mape → crveni `Warning` + ime simbola u tekstu, isto načelo kao
-nepoznat naziv figure u `pieceRow` (vidi `CLAUDE.md`, „Android čita isti JSON").
-
-- [ ] **Korak 2: Prevedi dvadeset strelica i oznaka**
+- [ ] **Korak 1: Prevedi dvadeset strelica i oznaka**
 
 ```
 arrow.clockwise, arrow.triangle.2.circlepath  -> Refresh
