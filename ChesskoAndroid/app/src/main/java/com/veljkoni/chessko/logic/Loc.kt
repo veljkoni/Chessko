@@ -55,6 +55,10 @@ object Loc {
         "Resetuj sat" to mapOf("sr" to "Resetuj sat", "en" to "Reset the clock", "fr" to "Réinitialiser l'horloge", "de" to "Uhr zurücksetzen", "it" to "Reimposta l'orologio", "ru" to "Сбросить часы", "zh-Hans" to "重置棋钟", "hi" to "घड़ी रीसेट करें"),
         "Pusti sat" to mapOf("sr" to "Pusti sat", "en" to "Start the clock", "fr" to "Démarrer l'horloge", "de" to "Uhr starten", "it" to "Avvia l'orologio", "ru" to "Запустить часы", "zh-Hans" to "启动棋钟", "hi" to "घड़ी शुरू करें"),
         "Pauziraj sat" to mapOf("sr" to "Pauziraj sat", "en" to "Pause the clock", "fr" to "Mettre l'horloge en pause", "de" to "Uhr pausieren", "it" to "Metti in pausa l'orologio", "ru" to "Поставить часы на паузу", "zh-Hans" to "暂停棋钟", "hi" to "घड़ी रोकें"),
+        // Faza 8, Task 2: `contentDescription` za ikone na ekranu Igra (emoji -> Material ikone).
+        "Vrati potez" to mapOf("sr" to "Vrati potez", "en" to "Undo move", "fr" to "Annuler le coup", "de" to "Zug zurücknehmen", "it" to "Annulla mossa", "ru" to "Отменить ход", "zh-Hans" to "撤销一步", "hi" to "चाल पूर्ववत करें"),
+        "Predaj partiju" to mapOf("sr" to "Predaj partiju", "en" to "Resign the game", "fr" to "Abandonner la partie", "de" to "Partie aufgeben", "it" to "Abbandona la partita", "ru" to "Сдать партию", "zh-Hans" to "认输", "hi" to "खेल में हार मानें"),
+        "Protivnik računar" to mapOf("sr" to "Protivnik računar", "en" to "Computer opponent", "fr" to "Adversaire ordinateur", "de" to "Computergegner", "it" to "Avversario computer", "ru" to "Соперник компьютер", "zh-Hans" to "电脑对手", "hi" to "कंप्यूटर प्रतिद्वंद्वी"),
         "Blic" to mapOf("sr" to "Blic", "en" to "Blitz", "fr" to "Blitz", "de" to "Blitz", "it" to "Blitz", "ru" to "Блиц", "zh-Hans" to "快棋", "hi" to "ब्लिट्ज़"),
         "Ubrzani šah" to mapOf("sr" to "Ubrzani šah", "en" to "Rapid", "fr" to "Rapide", "de" to "Schnellschach", "it" to "Rapid", "ru" to "Рапид", "zh-Hans" to "快速棋", "hi" to "रैपिड"),
         "Klasični šah" to mapOf("sr" to "Klasični šah", "en" to "Classical", "fr" to "Classique", "de" to "Klassisch", "it" to "Classico", "ru" to "Классика", "zh-Hans" to "慢棋", "hi" to "क्लासिकल"),

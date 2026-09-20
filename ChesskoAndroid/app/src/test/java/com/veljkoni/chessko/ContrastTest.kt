@@ -79,6 +79,14 @@ class ContrastTest {
         // Ove kartice nemaju ni Card ni Surface izmedju sebe i `DS.ground` (isto
         // stablo kao lekcijski blokovi iznad), pa je `DS.surface` bas ono sto stoji
         // ISPOD teksta, ne priblizna procena.
+        //
+        // Faza 8, Task 2 dodaje jos potrosaca `success/surface`, `danger/surface` i
+        // `inkMuted/surface` -- status dijalog kraja partije (`MainActivity.kt`),
+        // koji sedi na `DS.surface` (`Surface(color = DS.surface)`): trofej
+        // (`Icons.Default.EmojiEvents`, pobeda) tint `DS.success`; izraz lica
+        // (`Icons.Default.SentimentDissatisfied`, poraz matom) i zastava
+        // (`Icons.Default.Flag`, poraz predajom) tint `DS.danger`; rukovanje
+        // (`Icons.Default.Handshake`, remi) tint `DS.inkMuted`. Isti par, nov ekran.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/ground", p, { it.ink }, { it.ground }, 4.5)
             check("$label ink/surface", p, { it.ink }, { it.surface }, 4.5)
@@ -188,6 +196,12 @@ class ContrastTest {
         // `accent/fill` (Faza 8, Task 1) nosi i zvezdicu (`⭐` -> `Icons.Default.Star`)
         // uz naziv izabranog preseta u `ChessClockView.kt` kad je red preseta obelezen
         // kao izabran (`.background(if (isSelected) DS.fill else Color.Transparent)`).
+        // `ink/fill` (Faza 8, Task 2) nosi i cetiri ikone u `ActionsRow`-u
+        // (`MainActivity.kt`, ekran Igra) u omogucenom stanju: `Icons.Default.Computer`/
+        // `People` (Racunar/Prijatelj), `Icons.AutoMirrored.Filled.Undo` (Vrati),
+        // `Icons.Default.Share` (Podeli) i `Icons.Default.Refresh` (Reset) -- svi citaju
+        // `LocalContentColor` iz `ButtonDefaults.buttonColors(containerColor = DS.fill,
+        // contentColor = DS.ink)`, isti mehanizam kao Text pored njih.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/fill", p, { it.ink }, { it.fill }, 4.5)
             check("$label accent/fill", p, { it.accent }, { it.fill }, 4.5)
@@ -214,6 +228,13 @@ class ContrastTest {
      * popravka bi znacila promenu vrednosti `line` ili `fill`, dakle razlaz sa
      * iOS paletom. Ako se ta dva tokena ikad razdvoje, ovaj test pada i tera na
      * razgovor — bas kao `plainWhiteWouldFailOnTheDarkAccent` iznad.
+     *
+     * Faza 8, Task 2 dodaje stvarnog potrosaca za pozitivnu polovinu (`inkMuted`
+     * nad `fill`, 3:1): `Icons.AutoMirrored.Filled.Undo` i `Icons.Default.Share`
+     * u `ActionsRow`-u (`MainActivity.kt`) su ikone unutar dugmadi cije
+     * `disabledContentColor = DS.inkMuted` dok `disabledContainerColor` ostaje
+     * `DS.fill` -- isti par, prvi put ne-tekstualan potrosac (ikona, ne palac
+     * prekidaca ili ivica).
      */
     @Test
     fun nonTextPairsOverFillAreDistinguishable() {
