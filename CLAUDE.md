@@ -1137,9 +1137,12 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
 - **`LessonRenderer.kt:193` crta hardkodovan `⚠︎` direktno u `Text`, van `lessonIcon()` mape i
   van `Loc.kt` rečnika.** Kad se FEN lekcijskog `board` bloka ne parsira, `LStaticBoard` prikaže
   `"⚠︎ $fen"` — glif koji migracija Faze 8 nije ni videla (mapa/rečnik su pretraživani odvojeno
-  od doslovnih `Text(...)` literala). Bezopasno (isti fallback kao i uvek, ne ruši ekran), ali
-  je van šablona koji ostatak baze prati (`Icon` + `tint`, ili `loc()` ključ) — vredi popraviti
-  u nekoj sledećoj sitnici, ne u ovoj fazi (Task 5 sme samo `CLAUDE.md`).
+  od doslovnih `Text(...)` literala). **I nije pokvaren: glif je `U+26A0` + `U+FE0E`, dakle
+  VARIATION SELECTOR-15 — tekstualna, monohromatska prezentacija, koja `color=` PRIMA**, i kod mu
+  stvarno postavlja `DS.danger`. To je **izuzetak od nalaza o Skia, ne njegova potvrda**: pun-kolor
+  emoji ignoriše boju, tekstualna varijanta istog znaka ne ignoriše. Ostaje van šablona koji
+  ostatak baze prati (`Icon` + `tint`), ali je **ispravan kod, ne defekt** — ko ga bude menjao, nek
+  to radi zbog doslednosti, ne zato što misli da ne radi.
 - **Pravilo dekorativno/opisno je Faza 8 platila osam puta pre nego što je postalo pravilo.**
   Kontroler je u tri taska (1, 2, 3) unapred zadao `contentDescription` ključeve izvodeći ih iz
   **izgleda** ikone, ne iz njene **upotrebe** — pa je pet ikona dobilo opis koji **ponavlja**
