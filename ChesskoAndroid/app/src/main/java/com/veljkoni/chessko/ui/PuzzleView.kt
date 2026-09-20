@@ -95,15 +95,14 @@ fun PuzzleView(
                         ) {
                             // Faza 8, Task 3: emoji -> Icon. Podloga je `DS.ground`
                             // (isti ekran, obe orijentacije — vidi ContrastTest).
-                            // `contentDescription` = obavezujuci kljuc iz tabele
-                            // ("Greška"), iako tekst ODMAH ispod vec kaze "Greška
-                            // pri učitavanju zadatka" — po istom obrascu kao
-                            // dekorativne ikone statusnog dijaloga u
-                            // `MainActivity.kt` bi ovo bilo `null`; primenjeno kako
-                            // je zadato, prijavljeno u izvestaju taska.
+                            // DEKORATIVNA: tekst ODMAH ispod vec kaze „Greška pri
+                            // učitavanju zadatka", pa bi opis naterao citac ekrana
+                            // da istu stvar kaze dvaput. Prvi prelaz je ovde imao
+                            // kljuc "Greška" (zadat unapred, iz izgleda ikone); taj
+                            // kljuc vise ne postoji.
                             Icon(
                                 imageVector = Icons.Default.Warning,
-                                contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
+                                contentDescription = null,
                                 tint = DS.warning,
                                 modifier = Modifier.size(36.dp)
                             )
@@ -225,10 +224,11 @@ fun PuzzleView(
                             modifier = Modifier.padding(24.dp)
                         ) {
                             // Faza 8, Task 3: isti obrazac kao pejzazna grana iznad
-                            // (ista ikona, isti kljuc, ista podloga `DS.ground`).
+                            // (ista ikona, ista podloga `DS.ground`, isto
+                            // dekorativna — naslov greske stoji odmah ispod nje).
                             Icon(
                                 imageVector = Icons.Default.Warning,
-                                contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
+                                contentDescription = null,
                                 tint = DS.warning,
                                 modifier = Modifier.size(48.dp)
                             )
@@ -538,17 +538,16 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                // Faza 8, Task 3: emoji -> Icon. Tekst pored ikone je RECJU ZA
-                // REC ista fraza kao `contentDescription` (obavezujuci kljuc iz
-                // tabele) — po pravilu ove faze ("ikona uz tekst istog znacenja
-                // je dekorativna") ovo bi trebalo da bude `null`; primenjeno
-                // kako je tabela zadala, prijavljeno u izvestaju taska. Boja se
+                // Faza 8, Task 3: emoji -> Icon. DEKORATIVNA, i to najociglednije
+                // na grani: tekst pored ikone je RECJU ZA REC ista fraza koju je
+                // prvi prelaz stavio u `contentDescription` — citac ekrana bi
+                // izgovorio „Prikaži rešenje, Prikaži rešenje, dugme". Boja se
                 // nasledjuje iz `ButtonDefaults` (`DS.ink`/`DS.inkMuted`), isti
                 // par kao ostatak dugmadi ovog reda.
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(
                         imageVector = Icons.Default.Lightbulb,
-                        contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
+                        contentDescription = null,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(text = loc("Prikaži rešenje"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
@@ -566,13 +565,14 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                // Isti slucaj kao dugme iznad: tekst je identican zadatom
-                // `contentDescription` kljucu ("Pokušaj ponovo") — po pravilu
-                // ove faze dekorativna, primenjeno kako je tabela zadala.
+                // Isti slucaj kao dugme iznad: vidljiv tekst je identican frazi
+                // koju je prvi prelaz stavio u `contentDescription` („Pokušaj
+                // ponovo"), pa je ikona dekorativna. Kljuc ostaje u recniku —
+                // ovde je i dalje VIDLJIV tekst dugmeta, samo vise nije opis.
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
+                        contentDescription = null,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(text = loc("Pokušaj ponovo"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)

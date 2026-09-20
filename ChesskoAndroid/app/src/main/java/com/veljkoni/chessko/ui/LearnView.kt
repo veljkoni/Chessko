@@ -897,13 +897,21 @@ fun MatePuzzleCard(
             // Faza 8, Task 4: emoji -> Material ikona. Isti obrazac kao dve
             // kvacice iznad -- bedz sam na desnom kraju header reda, naziv
             // zadatka i "Mat u N" cip levo od njega ne govore o resenosti,
-            // status traka ispod je odvojena celom tablom. Nije dekorativna;
-            // "Trofej" je nov kljuc (`EmojiEvents` u `MainActivity.kt` je
-            // dekorativan pa mu do sada nije trebao).
+            // status traka ispod je odvojena celom tablom. Nije dekorativna.
+            //
+            // Faza 8, talas ispravki: opis je bio kljuc "Trofej" — IZGLED ikone,
+            // ne njeno znacenje. Bedz znaci „reseno", isto kao dve kvacice iznad
+            // (`:598`, `:724`), koje su odmah i pisale „Rešeno"; citac ekrana je
+            // za isto stanje imao dva imena. Bio je to poslednji kljuc na grani
+            // izveden iz izgleda; time je ostao bez pozivaoca i uklonjen je iz
+            // `Loc.kt`. (Ime kljuca se ovde NE pise kao poziv sa `loc` ispred —
+            // `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary` cita izvor
+            // kao tekst, pa bi ga i u komentaru procitao kao zivog pozivaoca;
+            // uhvatio je upravo ovaj komentar u prvoj verziji ispravke.)
             if (state.phase == OpeningPhase.SOLVED) {
                 Icon(
                     imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = loc("Trofej"),
+                    contentDescription = loc("Rešeno"),
                     tint = DS.success,
                     modifier = Modifier.size(18.dp)
                 )

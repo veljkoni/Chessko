@@ -209,8 +209,10 @@ zvučao kao da je iscrpan:**
 - pločica promocije (`PromotionOverlay.kt:47`)
 - gradijenti figura (`CapturedPiecesView.kt:54-68`)
 - birač boje igrača (`MainActivity.kt:328-393`)
-- **emoji u hromu — DELIMIČNO ZATVORENO Fazom 8.** 34 mesta (sat, ekran Igra, Zadaci i koraci
-  Puta, Učenje i Podešavanja) su zamenjena `Icons.*` + `tint = DS.*`; vidi „Faza 8" u
+- **emoji u hromu — DELIMIČNO ZATVORENO Fazom 8.** 36 mesta (sat, ekran Igra, Zadaci i koraci
+  Puta, Učenje i Podešavanja; 34 u četiri taska + 2 koja je provera obima propustila jer joj
+  je grep izostavio blokove strelica i geometrije — vidi changelog) su zamenjena
+  `Icons.*` + `tint = DS.*`; vidi „Faza 8" u
   Changelog-u. Dve stvari NAMERNO ostaju, obe odlukom korisnika, ne propustom:
   `lessonIcon()` mapa u `LessonRenderer.kt` (49 SF-simbol → emoji parova, sadržaj lekcije, ne
   hrom) i **emoji u prevedenim porukama** (`Loc.kt`: `🎉`/`🏆`/`🔥`/`🧩` u porukama pobede/mata/
@@ -225,8 +227,10 @@ zvučao kao da je iscrpan:**
 > radi normalno. Zatečena zaobilaznica `Modifier.alpha(0.38f)` na dugmetu za reset sata (uvedena
 > baš zato što `color=` ne radi na emoji glifu) davala je **2,75:1** na glifu — ispod WCAG praga
 > od 3:1 za ne-tekstualni sadržaj. Zamena za `Icon(tint = DS.inkMuted)` (krug netaknut) daje
-> **3,26:1** — nije kozmetika, popravila je kontrast koji je padao. Jedini preostali potrošač
-> `Modifier.alpha` na emoji glifu je `lessonIcon()` mapa, van obima ove faze.
+> **3,26:1** — nije kozmetika, popravila je kontrast koji je padao. (Raniji oblik ovog pasusa
+> je tvrdio da `lessonIcon()` mapa ostaje „poslednji potrošač `Modifier.alpha` na emoji glifu" —
+> netačno: `grep -rn "\.alpha(" ChesskoAndroid/app/src` daje **0** pogodaka u celom modulu.
+> Rečenica je slala čitaoca da traži potrošača koji ne postoji, pa je uklonjena.)
 
 ## Arhitektura (MVVM)
 
@@ -678,7 +682,7 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | 5 — analiza partije | **da** | ista stavka pod dva broja kao 2/6a i 4/6c — isporučeno kao **6e** |
 | **6e — analiza partije** | **da** | native Stockfish preko JNI (ne `ChessKitEngine`), isti N+1 ugovor i pragovi klasifikacije kao iOS; ekran analize + dugme u obe grane `MainActivity` (portret/pejzaž) i u `game` koraku Puta; vidi „Android (Faza 6e) — šta je drugačije" |
 
-Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `EngineTest` 9,
+Testovi: **105 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 15, `EngineTest` 9,
 `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5, `LocTest` 5,
 `MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 27, `PathProgressTest` 9,
 `PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9,
@@ -1128,12 +1132,6 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
   - Veza sa stavkom iznad: za **stare** zapise (bez `status` polja) `statusFromPosition` i
     dalje ne prepoznaje `Draw(FiftyMoves)` — status se ne izvodi iz brojača nego iz
     eksplicitnog polja. Ali učitana partija sada bar **nastavlja da broji tamo gde je stala**.
-- **Dugme „Predaj" (Android) pada ispod WCAG AA za tekst, u svetloj temi.** `DS.danger` tekst na
-  `DS.danger@15%` podlozi (`ActionsRow` u `MainActivity.kt`) izmereno: **3,47** nad `ground`,
-  **3,81** nad `surface`, **3,22** nad `fill` — sve tri prelaze ne-tekstualni prag 3:1, ali
-  tekst je 11sp pa važi prag 4,5:1, koji **pada** u sve tri. Tamna tema je van rizika (4,3–5,4).
-  Zatečeno pre Faze 8 (nije je uvela), otkriveno u finalnom pregledu Task-a 2 te faze — nošeno
-  ovde jer ga niko dotad nije izmerio, ne zato što je Task 5 rešio.
 - **`LessonRenderer.kt:193` crta hardkodovan `⚠︎` direktno u `Text`, van `lessonIcon()` mape i
   van `Loc.kt` rečnika.** Kad se FEN lekcijskog `board` bloka ne parsira, `LStaticBoard` prikaže
   `"⚠︎ $fen"` — glif koji migracija Faze 8 nije ni videla (mapa/rečnik su pretraživani odvojeno
@@ -1143,7 +1141,7 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
   emoji ignoriše boju, tekstualna varijanta istog znaka ne ignoriše. Ostaje van šablona koji
   ostatak baze prati (`Icon` + `tint`), ali je **ispravan kod, ne defekt** — ko ga bude menjao, nek
   to radi zbog doslednosti, ne zato što misli da ne radi.
-- **Pravilo dekorativno/opisno je Faza 8 platila osam puta pre nego što je postalo pravilo.**
+- **Pravilo dekorativno/opisno je Faza 8 platila trinaest puta pre nego što je stvarno primenjeno.**
   Kontroler je u tri taska (1, 2, 3) unapred zadao `contentDescription` ključeve izvodeći ih iz
   **izgleda** ikone, ne iz njene **upotrebe** — pa je pet ikona dobilo opis koji **ponavlja**
   vidljiv tekst odmah pored (kod dva slučaja opis je bio doslovno isti string kao tekst dugmeta),
@@ -1155,6 +1153,18 @@ Testovi: **101 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 11, `Engi
   (`CheckCircle`/`EmojiEvents` u vežbama) su **opisne** iako izgledaju kao dekorativni trofej iz
   Task-a 2 — između značke i odgovarajućeg statusnog teksta stoji **cela šahovska tabla**
   (`BoardView` je 12 linija posle ikone, sledeći `Text` tek 35), pa opis ne ponavlja ništa.
+
+  **Preostalih pet je našao tek finalni pregled**, i to je deo pouke: pravilo je uvedeno u
+  Task-u 3, a **Task 2 se niko nije vratio da pomete**, pa su četiri ikone u `ActionsRow`
+  (`MainActivity.kt`) ostale sa opisom koji ponavlja tekst pored sebe — jedna od njih i sa
+  pogrešnim imenom radnje („Pokušaj ponovo" na dugmetu „Reset"). Peta je `loc("Trofej")`, opis
+  izveden iz izgleda značke umesto iz stanja koje ona saopštava. Pouka nije o pravilu nego o
+  njegovoj primeni: **kad se pravilo promeni usred faze, pometu se svi fajlovi koje je stari
+  spisak dodirnuo, ne samo prijavljena instanca.**
+
+  I jedna cena koju pravilo nosi: `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary` čita
+  izvor **kao tekst**, pa ime uklonjenog ključa napisano u komentaru kao poziv (`loc` +
+  zagrada) obara build. Zato se u komentarima ime ključa piše bez `loc` ispred.
 
 ## Next Steps / Roadmap (ideje za unapređenje)
 
@@ -2618,8 +2628,8 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   **Task 5 (zatvaranje):** JVM **101 → 105** (3 nova `ContrastTest` iz Task-a 1; Task-i 2–4 nisu
   dodali nove testove — parovi koje su uveli su već bili pokriveni postojećim testovima).
   Instrumentisanih **52** (nepromenjeno). Vizuelni prolaz: **svetla tema** je završena u toku
-  Task-ova 1–4 (29 snimaka); **tamna tema** je dovršena ovim taskom (18 dodatnih snimaka,
-  `29`–`47` u `.superpowers/sdd/2026-09-18-faza-8-emoji-u-ikone/screenshots/`) — sat u oba
+  Task-ova 1–4 (29 snimaka); **tamna tema** je dovršena ovim taskom (19 dodatnih snimaka,
+  `29`–`47` u `.superpowers/sdd/2026-09-18-faza-8-emoji-u-ikone/screenshots/`, ukupno 48) — sat u oba
   aktivna stanja i sa onemogućenim resetom, info dijalog i birač vremenske kontrole (zvezdica
   dekorativna, vidljiva), ekran Igra u portretu i pejzažu sa svih šest dugmadi i sa dijalogom
   poraza, Zadaci sa kvačicom rešenosti i sa greškom u zadatku (`Nije to — traži pravi ključni
@@ -2630,8 +2640,68 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   potvrđen bez nalaza.
 
   Prijavljena, nepopravljena (Task 5 sme samo `CLAUDE.md`): `LessonRenderer.kt:193` crta
-  hardkodovan `⚠︎` mimo `lessonIcon()`/`Loc.kt` šablona (vidi „Poznata ograničenja"); dugme
-  „Predaj" pada ispod WCAG AA za tekst u svetloj temi (zatečeno, ne uvedeno ovom fazom).
+  hardkodovan `⚠︎` mimo `lessonIcon()`/`Loc.kt` šablona (vidi „Poznata ograničenja").
+
+  **Dugme „Predaj" je bilo prijavljeno kao pad ispod AA, pa izmereno i oboreno.** `DS.danger`
+  tekst na `DS.danger@15%` podlozi daje **4,623** nad `ground` (gde dugme stvarno i stoji —
+  `ActionsRow` sedi u `Box(DS.ground)`, `MainActivity.kt:691`), **5,086** nad `surface`, i
+  **5,842 / 5,233** u tamnoj temi: **prelazi prag 4,5:1**, nema šta da se popravlja. Raniji
+  brojevi (3,47 / 3,81 / 3,22) poticali su od **pretpostavljene** vrednosti tokena `#DC2626`
+  umesto pročitane `#B3261E` (`DesignSystem.kt:61`); potvrđeno i uzorkovanjem piksela sa
+  snimka `02_game_light_portrait_actions.png` (tekst `#B3261E` na `#E9D5D6` = **4,654**, uz
+  okolinu `#F2F3F7` = `DS.ground`). Unos je zato **uklonjen** iz „Poznatih ograničenja":
+  lažno ograničenje je gore od nezapisanog, jer šalje nekoga da „popravlja" dugme koje radi.
+
+  **Talas ispravki pred spajanje** (isti dan). Pet važnih nalaza i pet sitnih, nijedan
+  blokirajući; sve izmereno, JVM **105/105**, `assembleDebug` uspešan.
+  - **Ista greška koju faza tvrdi da je zatvorila preživela je u `MainActivity`.** Četiri
+    ikone u `ActionsRow` (`Undo`/`Flag`/`Share`/`Refresh`) nosile su opis koji ponavlja tekst
+    odmah pored — `Button` spaja semantiku potomaka, pa bi TalkBack rekao „Vrati potez, Vrati,
+    dugme". Četvrta je uz to i **pogrešno imenovala radnju**: opis „Pokušaj ponovo" (fraza sa
+    ekrana Zadataka) na dugmetu koje se zove „Reset" i zove `onReset()` — jedna kontrola, dva
+    imena. Sve četiri su sada `null`. Popravka pre ovog talasa je dirala **prijavljenu
+    instancu** (`Computer`/`People`) a nije pomela fajl; pouka je da se pravilo primenjuje na
+    fajl, ne na red iz izveštaja. Ni jedan `loc()` ključ nije ostao bez pozivaoca (sva četiri
+    imaju druge potrošače — „Vrati potez"/„Predaj partiju" u `StepGameView`, „Podeli partiju"
+    kao naslov `Intent.createChooser`-a, „Pokušaj ponovo" kao vidljiv tekst u `PuzzleView`).
+  - **Provera obima je bila slepa za dva Unicode bloka, i dva glifa su je preživela.** Grep
+    Task-a 5 pokrivao je `1F300–1FAFF`, `2600–27BF`, `2B00–2BFF` — van toga su **strelice
+    `2190–21FF` i geometrijski oblici `25xx`**, pa provera **nije mogla** da potvrdi ono što
+    tvrdi. Preživeli su `StepGameView.kt` (`Text("↩︎")`, `U+21A9`, ceo sadržaj dugmeta za
+    vraćanje poteza u `game` koraku — bez opisa i bez auto-mirroring-a, dok je identična
+    radnja na ekranu Igra u istoj fazi dobila `AutoMirrored.Filled.Undo`) i
+    `LessonDetailView.kt` (`"◀ " + loc("Put")`, `U+25C0` — tačno obrazac „glif zalepljen na
+    tekst" koji faza imenuje). Oba su prevedena: prvi u `Undo` **sa** opisom jer stoji sam,
+    drugi u `Row { Icon; Text }` sa **dekorativnom** `AutoMirrored.Filled.ArrowBack`.
+    **Ispravan opseg za sledeću proveru je `2190–27BF`, `2B00–2BFF`, `25xx`, `1F300–1FAFF`.**
+    Pokrenut nad njim, modul danas daje pogotke samo u četiri namerno izuzeta segmenta:
+    `lessonIcon()` mapa, prevedene poruke, `🔥`/`🧩` deljeni sa iOS-om, i `ChessPiece.kt`
+    (plus `LessonRenderer.kt:193`, koji je ispravan kod — vidi „Poznata ograničenja").
+  - **`loc("Trofej")` je bio poslednji ključ izveden iz izgleda ikone**, na značku rešenosti u
+    `MatePuzzleCard`-u; dve identične značke 180 linija iznad su pisale „Rešeno". Usklađeno,
+    ključ „Trofej" uklonjen iz `Loc.kt` kao mrtav.
+  - **Pet blokova komentara tvrdilo je suprotno od koda dva reda ispod** — ranija ispravka je
+    promenila kod i dopisala inline napomenu, ali ostavila originalni blok („primenjeno kako je
+    tabela zadala" iznad `contentDescription = null`; „isti ključ" za ključ koji više ne
+    postoji), plus komentar-siroče u `Loc.kt` koji je visio nad nepovezanim unosom. Sledeći
+    čitalac iz toga nije mogao da zna da li je `null` odluka ili previd. Svih pet prepisano.
+  - **Testovi sata su merili kopiju jednog člana para, ne sam par.** Oba nova testa iz Task-a 1
+    su podlogu izvodila ručno (`over(Color.White, 0.12f, ClockBarBackground)`) dok je
+    `ClockBarWell` stajao **uvezen a neupotrebljen** — a njegov doc-komentar otvoreno bira
+    između 6% i 12%, pa bi promena te alfe promenila ekran a testovi ostali zeleni nad starom
+    vrednošću. Sada čitaju konstantu (`over(ClockBarWell, ClockBarBackground)`); **dokazano
+    mutacijom**: sa alfom 0,90 oba pada (1,064 i 2,554), sa 0,12 oba prolaze.
+  - **`Icons.Outlined.Info` umesto `Icons.Default.Info` na traci sata** — jedina namerna zamena
+    varijante na grani, i zato zapisana. `Filled` je pun disk: na 20dp u `DarkColors.ink` bio je
+    najsvetlija puna površina na traci, teži i od primarnog čipa vremenske kontrole pored sebe,
+    dok su `Close` i `Refresh` konturni glifovi u prigušenim krugovima — pomoć je najmanje važna
+    kontrola u redu pa ne sme da bude najglasnija. Par boja je nepromenjen (12,929), pa ga i
+    dalje pokriva `clockControlBarIsReadableOverFixedHalves`.
+  - **`LocTest` je uhvatio komentar ove ispravke.**
+    `everyLocCallInTheSourceHasAKeyInTheDictionary` čita izvor **kao tekst**, pa je ime
+    uklonjenog ključa napisano u komentaru kao poziv (`loc` + zagrada) pročitao kao živog
+    pozivaoca i oborio build. Nije bag testa nego njegova cena: zato se u komentarima ime
+    ključa piše **bez** `loc` ispred.
 
   **Emulator:** sesija koja je radila Task-ove 1–4 je pukla na limitu i ostavila emulator
   aktivan **3 sata 59 minuta** — nijedan zadatak ga tada nije koristio, samo je zaboravljen

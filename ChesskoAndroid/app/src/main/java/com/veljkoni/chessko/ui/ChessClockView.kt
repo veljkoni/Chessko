@@ -15,12 +15,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -474,8 +474,20 @@ fun ControlBar(
                     // glifove IGNORISE `color=` teksta, pa je zatecen `color = DS.accent`
                     // izgledao kao da mehanizam radi — nije radio nikad. Sa pravom
                     // ikonom `tint` sad stvarno boji glif.
+                    //
+                    // `Outlined`, NE `Default` (= `Filled`), i to je jedina namerna
+                    // zamena varijante na celoj grani. `Icons.Default.Info` je pun
+                    // disk sa izrezanim „i": na 20dp u `DarkColors.ink` (`#EEF1F7`)
+                    // to je najsvetlija puna povrsina na celoj traci — teza i od
+                    // primarnog cipa vremenske kontrole odmah levo, dok su × i ↻
+                    // konturni glifovi u prigusenim krugovima. Pomoc je najmanje
+                    // vazna kontrola u redu, pa ne sme da bude najglasnija.
+                    // `Outlined` daje isti siluet i isti gabarit uz tezinu poteza
+                    // koja se poklapa sa susedima; par boja je NEPROMENJEN
+                    // (`DarkColors.ink` na `ClockBarBackground` = 12,929), pa ga i
+                    // dalje pokriva `clockControlBarIsReadableOverFixedHalves`.
                     Icon(
-                        imageVector = Icons.Default.Info,
+                        imageVector = Icons.Outlined.Info,
                         contentDescription = loc("Objašnjenje pravila"),
                         tint = DarkColors.ink,
                         modifier = Modifier.size(20.dp)

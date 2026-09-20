@@ -528,22 +528,18 @@ object Loc {
         // ozivotvoreno kao vidljiv tekst) — samo je ovde dobio DRUGOG
         // potrosaca. "Prethodni dan" je nov, njegov simetrican par.
         "Prethodni dan" to mapOf("sr" to "Prethodni dan", "en" to "Previous day", "fr" to "Jour précédent", "de" to "Vorheriger Tag", "it" to "Giorno precedente", "ru" to "Предыдущий день", "zh-Hans" to "上一天", "hi" to "पिछला दिन"),
-        // `contentDescription` kvačice rešenosti u istoj traci — jedina ikona
-        // koja NOSI informaciju koju susedni tekst (datum) ne kaze.
+        // `contentDescription` svake ikone koja ZNACI „reseno", ma kako
+        // izgledala: kvacice u traci datuma (`PuzzleView`) i u dve vezbe, i
+        // trofeja u `MatePuzzleCard`-u (`LearnView`). Sve cetiri stoje same u
+        // svom redu — susedni tekst (datum, naslov zadatka) ne kaze da je
+        // reseno. Trofej je do talasa ispravki imao sopstven kljuc "Trofej";
+        // uklonjen je jer je imenovao IZGLED ikone umesto stanja koje ona
+        // saopstava, pa je citac ekrana za isto stanje imao dva imena.
         "Rešeno" to mapOf("sr" to "Rešeno", "en" to "Solved", "fr" to "Résolu", "de" to "Gelöst", "it" to "Risolto", "ru" to "Решено", "zh-Hans" to "已解决", "hi" to "हल हो गया"),
-        // Faza 8, Task 4: `contentDescription` trofeja (`Icons.Default.EmojiEvents`)
-        // u `MatePuzzleCard`-u (`LearnView.kt`) — bedz sam u header redu, susedni
-        // naslov zadatka ne kaze da je resen.
-        "Trofej" to mapOf("sr" to "Trofej", "en" to "Trophy", "fr" to "Trophée", "de" to "Trophäe", "it" to "Trofeo", "ru" to "Трофей", "zh-Hans" to "奖杯", "hi" to "ट्रॉफी"),
         // Okvir poruke o gresci; razlog se interpolira posle dvotacke, pa ovaj
         // kljuc namerno nema zavrsnu tacku (postoji i "Greška pri učitavanju."
         // kao zasebna, cela recenica).
         "Greška pri učitavanju" to mapOf("sr" to "Greška pri učitavanju", "en" to "Loading error", "fr" to "Erreur de chargement", "de" to "Ladefehler", "it" to "Errore di caricamento", "ru" to "Ошибка загрузки", "zh-Hans" to "加载出错", "hi" to "लोडिंग त्रुटि"),
-        // Faza 8, Task 3: `contentDescription` za `Icons.Default.Warning`
-        // (bivsi ⚠️) u tri NETWORK_ERROR ekrana (`PuzzleView.kt` x2,
-        // `StepPracticeView.kt`). Ne postoji vec kao odvojen kljuc — "greška"
-        // (malim slovom) je NEZAVISAN kljuc, klasa poteza u analizi partije,
-        // ne ova ikona.
         // Jedina grana `MateExerciseState.statusMessage` koja je ostala bez
         // `loc()` — igrac je u sahu u vezbi mata. Kljuc ne postoji ni u iOS
         // katalogu, pa je ovde nov.

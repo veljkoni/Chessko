@@ -1324,9 +1324,14 @@ fun ActionsRow(
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Dekorativna: `Button` spaja semantiku potomaka, pa bi opis uz
+                // vidljiv `Text` naterao citac ekrana da radnju kaze dvaput
+                // ("Vrati potez, Vrati, dugme"). Isto vazi za preostala tri
+                // dugmeta ovog reda. Kljuc "Vrati potez" ostaje u recniku —
+                // `StepGameView.kt` ga koristi na dugmetu BEZ teksta.
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Undo,
-                    contentDescription = loc("Vrati potez"),
+                    contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(text = loc("Vrati"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
@@ -1349,9 +1354,11 @@ fun ActionsRow(
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Predaj partiju"
+                    // ostaje — koristi ga `StepGameView.kt`, gde zastava stoji sama.
                     Icon(
                         imageVector = Icons.Default.Flag,
-                        contentDescription = loc("Predaj partiju"),
+                        contentDescription = null,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(text = loc("Predaj"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
@@ -1374,9 +1381,11 @@ fun ActionsRow(
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Podeli partiju"
+                // ostaje — naslov je `Intent.createChooser` dijaloga (`:908`, `:1125`).
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = loc("Podeli partiju"),
+                    contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(text = loc("Podeli"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
@@ -1395,9 +1404,13 @@ fun ActionsRow(
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Dekorativna (vidi dugme „Vrati" iznad), i to je ovde POPRAVKA a
+                // ne samo dosledost: raniji opis je bio "Pokušaj ponovo" — fraza sa
+                // ekrana Zadataka — dok se dugme zove „Reset" i zove `onReset()`.
+                // Citac ekrana je za jednu kontrolu izgovarao DVA razlicita imena.
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = loc("Pokušaj ponovo"),
+                    contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(text = loc("Reset"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)

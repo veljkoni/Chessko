@@ -49,6 +49,16 @@ class ContrastTest {
         blue = alpha * top.blue + (1f - alpha) * bottom.blue
     )
 
+    /**
+     * Kompozit koji alfu CITA sa samog tokena umesto da je ponavlja brojem.
+     *
+     * Bez ovoga su testovi sata pisali `over(Color.White, 0.12f, ClockBarBackground)` —
+     * rucnu kopiju `ClockBarWell`-a, ciji doc-komentar otvoreno bira izmedju 6% i 12%.
+     * Promena te alfe bi menjala ekran a testovi bi ostali zeleni nad starom vrednoscu:
+     * merili bi kopiju jednog clana para, ne sam par.
+     */
+    private fun over(top: Color, bottom: Color): Color = over(top, top.alpha, bottom)
+
     /** Par bez palete iza sebe — za fiksne boje sata, koje nisu ni u jednoj temi. */
     private fun checkPair(name: String, fg: Color, bg: Color, min: Double) {
         val r = contrast(fg, bg)
@@ -447,7 +457,7 @@ class ContrastTest {
      */
     @Test
     fun clockRoundButtonIconsAreReadable() {
-        val well = over(Color.White, 0.12f, ClockBarBackground)
+        val well = over(ClockBarWell, ClockBarBackground)
         checkPair("DarkColors.ink na dugmetu (Zatvori / Resetuj, omoguceno)",
             DarkColors.ink, well, 4.5)
     }
@@ -461,7 +471,7 @@ class ContrastTest {
      */
     @Test
     fun clockResetIconDisabledStateIsReadable() {
-        val well = over(Color.White, 0.12f, ClockBarBackground)
+        val well = over(ClockBarWell, ClockBarBackground)
         checkPair("DarkColors.inkMuted na dugmetu (Resetuj, onemoguceno)",
             DarkColors.inkMuted, well, 3.0)
     }

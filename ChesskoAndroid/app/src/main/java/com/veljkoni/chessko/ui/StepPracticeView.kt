@@ -112,12 +112,13 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Faza 8, Task 3: isti obrazac kao `PuzzleView.kt`
-                    // (ista ikona, isti kljuc, ista podloga `DS.ground` —
-                    // ekran koraka sedi u istom `Box` iz `MainActivity.kt`).
+                    // Faza 8, Task 3: isti obrazac kao `PuzzleView.kt` (ista
+                    // ikona, ista podloga `DS.ground` — ekran koraka sedi u
+                    // istom `Box` iz `MainActivity.kt`), i isto dekorativna:
+                    // poruka o gresci stoji odmah ispod ikone.
                     Icon(
                         imageVector = Icons.Default.Warning,
-                        contentDescription = null,   // dekorativna: tekst odmah uz nju nosi isto znacenje
+                        contentDescription = null,
                         tint = DS.warning,
                         modifier = Modifier.size(40.dp)
                     )

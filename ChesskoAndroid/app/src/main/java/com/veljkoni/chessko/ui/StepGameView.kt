@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.AlertDialog
@@ -154,7 +155,21 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                         disabledContentColor = DS.inkMuted
                     )
                 ) {
-                    Text(text = "↩︎")
+                    // Faza 8, talas ispravki: `Text("↩︎")` -> `Icon`. Glif je
+                    // prezivEO celu fazu jer je provera obima grepovala samo
+                    // emoji blokove (`1F300–1FAFF`, `2600–27BF`, `2B00–2BFF`),
+                    // a `U+21A9` je u bloku strelica. Dugme nema tekst — ikona
+                    // stoji SAMA, pa dobija opis; isti kljuc i ista radnja kao
+                    // `Undo` u `MainActivity.kt` (gde je dekorativna, jer je
+                    // tamo uz vidljiv `Text`). `AutoMirrored` je bitan: glif
+                    // se u RTL rasporedu mora okrenuti, sto goli `Text` nije
+                    // radio. Boja se nasledjuje iz `ButtonDefaults` iznad
+                    // (`DS.ink` / `DS.inkMuted`), par vec izmeren u komentaru.
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Undo,
+                        contentDescription = loc("Vrati potez"),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
                 if (viewModel.canResign) {
                     Button(
