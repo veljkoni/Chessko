@@ -237,7 +237,27 @@ figura bolja od emoji — ona je monohromatska, prima `tint`, i vizuelno pripada
 Pazi: `dot.square.fill` je **potez kralja**, ne kralj; `l.joystick.fill` je **potez skakača**.
 Za njih figura možda nije tačan prikaz.
 
-- [ ] **Korak 4: Testovi, build, commit**
+- [ ] **Korak 4: Zabetoniraj ugovor mape testom**
+
+Posle ovog taska mapa je konačna: 42 ikone + 7 emoji. Nov test u **`androidTest`** (ne `test` —
+čitanje lekcijskog JSON-a ide kroz `org.json`, čiji JVM stub baca; isti razlog zbog kog
+`LessonContentTest` živi tamo).
+
+Test tvrdi **invarijantu koja preživljava prevođenje**, ne vrednosti:
+
+1. svaki `icon` koji se stvarno javlja u `ChesskoAndroid/app/src/main/assets/lessons/*.json`
+   razrešava se u `LessonGlyph` koji **nije** `Unknown`;
+2. izmišljen simbol (npr. `"nema.me.fill"`) **jeste** `Unknown`.
+
+Tvrdnja nad konkretnim emoji stringovima bi se morala prepisivati u svakom tasku koji menja
+vrednosti — ova ne. Druga tvrdnja postoji jer bi bez nje prva prolazila i nad mapom koja sve
+proguta.
+
+**Dokaži mutacijom:** izbaci jedan par iz mape i pokaži da test pada.
+
+Test se **izvršava u jedinom prolazu emulatora**, u Task-u 4 — ne diži ga ovde.
+
+- [ ] **Korak 5: Testovi, build, commit**
 
 ---
 
@@ -283,6 +303,12 @@ na uređaju. **Proveri to izričito.**
   4. **Korak Puta** — isto što i lekcija
 
   Snimci u `.superpowers/sdd/<plan>/screenshots/`, **ne u sesijski `/tmp`**.
+
+  **U istom prolazu pokreni i `connectedDebugAndroidTest`** — Task 3 je dodao instrumentisani
+  test mape glifova koji nigde drugde nema gde da se izvrši. Broj čitaj **iz XML-a**
+  (`app/build/outputs/androidTest-results/connected/debug/*.xml`), ne iz izlaznog koda:
+  `BUILD SUCCESSFUL` ume da znači nula pokrenutih testova. Polazno: **52**.
+
   Gašenje odmah po prolazu, i **zalepi izlaz `pgrep`-a**.
 
 - [ ] **Korak 5: Testovi, build, commit**
