@@ -147,14 +147,14 @@ emulatora (npr. da su sve grane i dalje `Emoji(...)` sa istim stringom).
 
 ---
 
-## Task 1: Strelice i oznake (20 simbola)
+## Task 1: Strelice i oznake (21 simbol)
 
 **Fajlovi:** `ui/LessonRenderer.kt`
 
 Task 0 je već uveo tip i mesto crtanja — ti menjaš **samo vrednosti u mapi**, `Emoji(...)` →
 `Icon(...)`.
 
-- [ ] **Korak 1: Prevedi dvadeset strelica i oznaka**
+- [ ] **Korak 1: Prevedi dvadeset jednu strelicu i oznaku**
 
 ```
 arrow.clockwise, arrow.triangle.2.circlepath  -> Refresh
@@ -189,7 +189,7 @@ pročitaj potpis. **Nov test samo za NOV par.**
 
 ---
 
-## Task 2: Mapa — predmeti i pojmovi (22 simbola)
+## Task 2: Mapa — predmeti i pojmovi (21 simbol)
 
 **Fajlovi:** `ui/LessonRenderer.kt`
 
