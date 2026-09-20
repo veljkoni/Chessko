@@ -3,6 +3,7 @@ package com.veljkoni.chessko
 import androidx.compose.ui.graphics.Color
 import com.veljkoni.chessko.ui.ClockBarAccent
 import com.veljkoni.chessko.ui.ClockBarBackground
+import com.veljkoni.chessko.ui.ClockBarWell
 import com.veljkoni.chessko.ui.theme.ChesskoColors
 import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.LightColors
@@ -48,6 +49,16 @@ class ContrastTest {
         blue = alpha * top.blue + (1f - alpha) * bottom.blue
     )
 
+    /**
+     * Kompozit koji alfu CITA sa samog tokena umesto da je ponavlja brojem.
+     *
+     * Bez ovoga su testovi sata pisali `over(Color.White, 0.12f, ClockBarBackground)` —
+     * rucnu kopiju `ClockBarWell`-a, ciji doc-komentar otvoreno bira izmedju 6% i 12%.
+     * Promena te alfe bi menjala ekran a testovi bi ostali zeleni nad starom vrednoscu:
+     * merili bi kopiju jednog clana para, ne sam par.
+     */
+    private fun over(top: Color, bottom: Color): Color = over(top, top.alpha, bottom)
+
     /** Par bez palete iza sebe — za fiksne boje sata, koje nisu ni u jednoj temi. */
     private fun checkPair(name: String, fg: Color, bg: Color, min: Double) {
         val r = contrast(fg, bg)
@@ -78,6 +89,22 @@ class ContrastTest {
         // Ove kartice nemaju ni Card ni Surface izmedju sebe i `DS.ground` (isto
         // stablo kao lekcijski blokovi iznad), pa je `DS.surface` bas ono sto stoji
         // ISPOD teksta, ne priblizna procena.
+        //
+        // Faza 8, Task 2 dodaje jos potrosaca `success/surface`, `danger/surface` i
+        // `inkMuted/surface` -- status dijalog kraja partije (`MainActivity.kt`),
+        // koji sedi na `DS.surface` (`Surface(color = DS.surface)`): trofej
+        // (`Icons.Default.EmojiEvents`, pobeda) tint `DS.success`; izraz lica
+        // (`Icons.Default.SentimentDissatisfied`, poraz matom) i zastava
+        // (`Icons.Default.Flag`, poraz predajom) tint `DS.danger`; rukovanje
+        // (`Icons.Default.Handshake`, remi) tint `DS.inkMuted`. Isti par, nov ekran.
+        //
+        // Faza 8, Task 4 dodaje jos tri potrosaca `success/surface`: bedz
+        // resenosti (`Icons.Default.CheckCircle`, tint `DS.success`) u header redu
+        // `OpeningExerciseCard`-a i `MateExerciseCard`-a, i trofej
+        // (`Icons.Default.EmojiEvents`, isti tint) u `MatePuzzleCard`-u
+        // (`LearnView.kt`) -- sve tri kartice i dalje sede direktno na
+        // `DS.surface`, isti par kao status tekst ispod njih, samo drugo mesto u
+        // istom stablu.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/ground", p, { it.ink }, { it.ground }, 4.5)
             check("$label ink/surface", p, { it.ink }, { it.surface }, 4.5)
@@ -115,9 +142,16 @@ class ContrastTest {
 
     /**
      * SEST PAROVA JE ISPOD AA U SVETLOJ TEMI. Prva tri su NASLEDJENA iz spec
-     * tabele (iOS ima iste vrednosti); cetvrti i peti su dodata u talasu ispravki
-     * pred spajanje i danas nemaju pozivno mesto (vidi komentar uz njih); sesti je
-     * dodat u Fazi 6d-2, Task 2 (vidi komentar ispod tabele).
+     * tabele (iOS ima iste vrednosti); peti (`warning/fill`) je dodat u talasu
+     * ispravki pred spajanje i danas nema pozivno mesto (vidi komentar uz njega);
+     * sesti je dodat u Fazi 6d-2, Task 2 (vidi komentar ispod tabele). Cetvrti
+     * (`success/fill`) je TAKODJE dodat bez pozivnog mesta, ali je od Faze 8,
+     * Task 3 dobio pravog potrosaca — kvacicu resenosti u `PuzzleView.kt`
+     * (`Icons.Default.CheckCircle`). Prag ispod (4,5) je za TEKST i ta ikona ga
+     * ne dostize u svetloj temi — nebitno, ikona je graficki objekat, WCAG-ov
+     * prag za nju je 3:1 (SC 1.4.11), koji 4,18 lako prelazi; vidi
+     * `puzzleSolvedCheckmarkIsReadableOnDateRow` niže za tacnu tvrdnju i za
+     * TAMNU temu (7,78), koja ovde uopste nije bila pinovana.
      *
      *   inkMuted / ground : 4,359965479387139   (svetla)   5,94 (tamna)
      *   inkMuted / fill   : 4,014258257780754   (svetla)   4,81 (tamna)
@@ -155,14 +189,45 @@ class ContrastTest {
         check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.359965479387139)
         check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.014258257780754)
         check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.611752903947211)
-        // Dva para koja DANAS nemaju nijedno pozivno mesto: statisticka kartica u
+        // `warning/fill` DANAS nema nijedno pozivno mesto: statisticka kartica u
         // Podesavanjima je presla sa `fill` na `surface` bas zato sto je nad `fill`
         // merila `warning` 3,00 i `success` 4,18 (oba ispod AA za 17sp Bold, koji
-        // po WCAG-u NIJE „large text"). Pinovani su svejedno, da buduci pozivalac
+        // po WCAG-u NIJE „large text"). Pinovan je svejedno, da buduci pozivalac
         // koji ipak stavi semanticku boju nad `fill` ne moze to da pogorsa u tisini.
+        //
+        // `success/fill` VISE NEMA taj status — Faza 8, Task 3 mu je dala pravog
+        // potrosaca (vidi doc-komentar iznad testa i
+        // `puzzleSolvedCheckmarkIsReadableOnDateRow`), samo kao IKONU (3:1), ne
+        // kao 17sp Bold tekst (4,5) — ova pinovana vrednost je i dalje tacna i i
+        // dalje dovoljna za tu upotrebu.
         check("svetla success/fill", LightColors, { it.success }, { it.fill }, 4.184348841952418)
         check("svetla warning/fill", LightColors, { it.warning }, { it.fill }, 2.9989738277199414)
+        // Faza 8, Task 3 dodaje pravog potrosaca i za `warning/ground`: tri
+        // `Icons.Default.Warning` (bivsi ⚠️) u NETWORK_ERROR ekranima
+        // (`PuzzleView.kt` x2, `StepPracticeView.kt`) sede direktno na `DS.ground`
+        // (isti `Box` iz `MainActivity.kt` iza sva tri taba). Ikona je graficki
+        // objekat (WCAG prag 3:1), pa 3,26 ovde dostize potrebno iako ne dostize
+        // AA (4,5) za tekst — ista logika kao `success/fill` iznad.
         check("svetla warning/ground", LightColors, { it.warning }, { it.ground }, 3.257244931140301)
+    }
+
+    /**
+     * Faza 8, Task 3: kvačica rešenosti u traci datuma (`PuzzleView.kt`,
+     * `DateNavigationRow`). Emoji (✅) je zamenjen `Icons.Default.CheckCircle`,
+     * tint `DS.success`, na podlozi `DS.fill` (cela `DateNavigationRow` ima
+     * `.background(DS.fill)`).
+     *
+     * `success/fill` u SVETLOJ temi (4,18) je vec pinovan u
+     * `knownSubAAPairsDoNotGetWorse`, ali kao granica za TEKST (prag 4,5, koji
+     * ta vrednost ne dostize). Ikona je graficki objekat — WCAG-ov prag je
+     * 3:1 (SC 1.4.11) — pa 4,18 ovde vise nego dovoljno. TAMNA tema (7,78) do
+     * ovog taska nije imala NIJEDNU tvrdnju ni u jednom testu; test ispod je
+     * prvi koji je meri.
+     */
+    @Test
+    fun puzzleSolvedCheckmarkIsReadableOnDateRow() {
+        checkPair("svetla success/fill (kvačica rešenosti)", LightColors.success, LightColors.fill, 3.0)
+        checkPair("tamna success/fill (kvačica rešenosti)", DarkColors.success, DarkColors.fill, 3.0)
     }
 
     /**
@@ -184,6 +249,29 @@ class ContrastTest {
         // `ink/fill` (Task 3) nosi i „Reset"/„Ponovo" dugme u sve tri kartice vezbi
         // i neodabranu figuru u `PieceExplorer`-ovom pikeru (`LearnView.kt`) -- isti
         // par kao dugme "Nazad" u `LessonDetailView.kt` (vidi komentar tamo).
+        // `accent/fill` (Faza 8, Task 1) nosi i zvezdicu (`⭐` -> `Icons.Default.Star`)
+        // uz naziv izabranog preseta u `ChessClockView.kt` kad je red preseta obelezen
+        // kao izabran (`.background(if (isSelected) DS.fill else Color.Transparent)`).
+        // `ink/fill` (Faza 8, Task 2) nosi i cetiri ikone u `ActionsRow`-u
+        // (`MainActivity.kt`, ekran Igra) u omogucenom stanju: `Icons.Default.Computer`/
+        // `People` (Racunar/Prijatelj), `Icons.AutoMirrored.Filled.Undo` (Vrati),
+        // `Icons.Default.Share` (Podeli) i `Icons.Default.Refresh` (Reset) -- svi citaju
+        // `LocalContentColor` iz `ButtonDefaults.buttonColors(containerColor = DS.fill,
+        // contentColor = DS.ink)`, isti mehanizam kao Text pored njih.
+        // `ink/fill` (Faza 8, Task 3) nosi i `Icons.Default.Lightbulb` ("Prikaži
+        // rešenje") i `Icons.Default.Refresh` ("Pokušaj ponovo") u
+        // `PuzzleView.kt` -- isti mehanizam (bez eksplicitnog `tint`, cita
+        // `LocalContentColor` iz istog `ButtonDefaults.buttonColors`). Isti
+        // mehanizam nose i strelice `ChevronLeft`/`ChevronRight` u
+        // `DateNavigationRow` (`PuzzleView.kt`) u omogucenom stanju. Isti par
+        // nosi i `Icons.Default.Computer` u `OpponentCard`-u (`StepGameView.kt`)
+        // -- dekorativna (`contentDescription = null`, vidi kod), ali i dalje
+        // STVARNO nacrtana na ekranu pa i dalje treba kontrast; eksplicitan
+        // `tint = DS.ink` na `Row`-u sa `.background(DS.fill)`.
+        // `ink/fill` (Faza 8, Task 4) nosi i `Icons.Default.Public` u dugmadima
+        // "Stockfish"/"Lichess" (`SettingsView.kt`, sekcija „O aplikaciji") --
+        // dekorativna (tekst dugmeta je ceo vidljiv sadrzaj), bez eksplicitnog
+        // `tint`, isti mehanizam kao ostali primeri iznad.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/fill", p, { it.ink }, { it.fill }, 4.5)
             check("$label accent/fill", p, { it.accent }, { it.fill }, 4.5)
@@ -210,6 +298,18 @@ class ContrastTest {
      * popravka bi znacila promenu vrednosti `line` ili `fill`, dakle razlaz sa
      * iOS paletom. Ako se ta dva tokena ikad razdvoje, ovaj test pada i tera na
      * razgovor — bas kao `plainWhiteWouldFailOnTheDarkAccent` iznad.
+     *
+     * Faza 8, Task 2 dodaje stvarnog potrosaca za pozitivnu polovinu (`inkMuted`
+     * nad `fill`, 3:1): `Icons.AutoMirrored.Filled.Undo` i `Icons.Default.Share`
+     * u `ActionsRow`-u (`MainActivity.kt`) su ikone unutar dugmadi cije
+     * `disabledContentColor = DS.inkMuted` dok `disabledContainerColor` ostaje
+     * `DS.fill` -- isti par, prvi put ne-tekstualan potrosac (ikona, ne palac
+     * prekidaca ili ivica).
+     *
+     * Faza 8, Task 3 dodaje jos jednog: `Icons.Default.ChevronRight` ("Sledeći
+     * dan") u `DateNavigationRow` (`PuzzleView.kt`) kad `!canGoNext`
+     * (`disabledContentColor = DS.inkMuted`, `disabledContainerColor` ostaje
+     * transparentna nad `DS.fill` podlogom reda).
      */
     @Test
     fun nonTextPairsOverFillAreDistinguishable() {
@@ -261,7 +361,16 @@ class ContrastTest {
      */
     @Test
     fun lessonBoxStylesMeetAA() {
+        // Faza 8, Task 3 dodaje jos potrosaca za `tamna warning/ground`: isti
+        // tri `Icons.Default.Warning` iz `knownSubAAPairsDoNotGetWorse` (svetla
+        // varijanta) imaju istu podlogu u OBE teme — samo je tamna vrednost
+        // (9,27) vec bila iznad AA praga, pa je ovaj test (ne onaj) njeno mesto.
         check("tamna warning/ground", DarkColors, { it.warning }, { it.ground }, 4.5)
+        // `danger/ground` (svetla i tamna) dobija stvarnog potrosaca u Fazi 8,
+        // Task 3: `Icons.Default.Flag` ("Predaj partiju") u `StepGameView.kt`
+        // (`containerColor = Transparent`, `contentColor = DS.danger`, na
+        // Column-u bez sopstvene pozadine -- nasledjuje `DS.ground` iz
+        // `MainActivity.kt`-jevog Box-a).
         check("svetla danger/ground", LightColors, { it.danger }, { it.ground }, 4.5)
         check("tamna danger/ground", DarkColors, { it.danger }, { it.ground }, 4.5)
 
@@ -313,10 +422,14 @@ class ContrastTest {
         checkPair("sav traka/bela polovina u isteku", bar, Color(0xFFFADAD8), 3.0)
 
         // Sadrzaj NA traci. `DS.ink` bi ovde u svetloj temi dao 1,19 — zato `DarkColors`.
+        // Faza 8, Task 1: ovaj par (`DarkColors.ink`/`bar`) je i tint `ℹ️` ->
+        // `Icons.Default.Info` dugmeta (sedi direktno na traci, bez kruga iza sebe).
         checkPair("DarkColors.ink na traci", DarkColors.ink, bar, 4.5)
         checkPair("akcent trake na traci", ClockBarAccent, bar, 4.5)
         // Cip vremenske kontrole crta akcent na SOPSTVENOM tintu preko trake. Na @15%
         // je to 4,339 — ispod AA; na @12% (iOS vrednost) 4,583.
+        // Faza 8, Task 1: isti par je i tint `⏱️` -> `Icons.Default.Timer` ikone u
+        // istom cipu (crta se u istoj boji kao tekst do sebe).
         checkPair("akcent trake na sopstvenom @12%% cipu",
             ClockBarAccent, over(ClockBarAccent, 0.12f, bar), 4.5)
 
@@ -327,6 +440,61 @@ class ContrastTest {
             "svetli akcent na traci daje %.3f — da je >= 4.5, traka bi smela `DS.accent`"
                 .format(svetliAkcentNaTraci),
             svetliAkcentNaTraci < 4.5
+        )
+    }
+
+    /**
+     * Faza 8, Task 1: emoji -> Material ikone na sahovskom satu. Dva dugmeta dele
+     * ISTI krug (`ClockBarWell` — belo@12% preko `ClockBarBackground`) i ISTI
+     * omoguceni tint (`DarkColors.ink`): dugme „Zatvori" (uvek omoguceno) i dugme
+     * za resetovanje sata u omogucenom stanju. Fiksan par, isti u obe teme jer ni
+     * jedan clan nije adaptivan token.
+     *
+     * Info dugme (`ℹ️` -> `Icons.Default.Info`) sedi direktno na traci, bez kruga
+     * iza sebe — ISTI par kao „DarkColors.ink na traci" u
+     * `clockControlBarIsReadableOverFixedHalves` iznad (12,929), pa ne dobija
+     * sopstvenu tvrdnju ovde; ovaj komentar ga imenuje kao drugog potrosaca.
+     */
+    @Test
+    fun clockRoundButtonIconsAreReadable() {
+        val well = over(ClockBarWell, ClockBarBackground)
+        checkPair("DarkColors.ink na dugmetu (Zatvori / Resetuj, omoguceno)",
+            DarkColors.ink, well, 4.5)
+    }
+
+    /**
+     * Faza 8, Task 1: onemoguceno stanje dugmeta za resetovanje sata. Vidi
+     * obrazlozenje `tint` naspram `Modifier.alpha` u komentaru uz samo dugme
+     * (`ChessClockView.kt`, `ControlBar`). Prag je WCAG-ov ne-tekstualni 3:1 —
+     * onemoguceni kontroli tehnicki nije potreban, ali je ovde ipak dostignut, za
+     * razliku od odbacene `alpha(0.38f)` alternative (izmereno 2,75:1).
+     */
+    @Test
+    fun clockResetIconDisabledStateIsReadable() {
+        val well = over(ClockBarWell, ClockBarBackground)
+        checkPair("DarkColors.inkMuted na dugmetu (Resetuj, onemoguceno)",
+            DarkColors.inkMuted, well, 3.0)
+    }
+
+    /**
+     * Faza 8, Task 1: dugme pusti/pauziraj (`▶️`/`⏸️` -> `Icons.Default.PlayArrow`/
+     * `Pause`). Krug je `ClockBarAccent` (= `DarkColors.accent`, FIKSNO — ne
+     * `DS.accent`, koji bi ovde bio pogresan jer krug ne prati temu). Tint je zato
+     * `DarkColors.onAccent`, ne adaptivni `DS.onAccent`: ta dva se ovde slucajno
+     * poklapaju brojcano (oba `#161A22`), ali `DS.onAccent` bi bio POGRESAN IZBOR —
+     * prati `DS.accent`, koji se menja sa temom, dok se krug ovde NE menja.
+     */
+    @Test
+    fun clockPlayPauseIconIsReadableOnItsAccentCircle() {
+        checkPair("DarkColors.onAccent na ClockBarAccent (pusti/pauziraj)",
+            DarkColors.onAccent, ClockBarAccent, 4.5)
+        // Negativna polovina, isti obrazac kao `plainWhiteWouldFailOnTheDarkAccent`:
+        // dokaz da `DarkColors.onAccent` ovde NIJE proizvoljan izbor.
+        val bela = contrast(Color.White, ClockBarAccent)
+        assertTrue(
+            "bela na ClockBarAccent daje %.2f — da je >= 4.5, DarkColors.onAccent ne bi bio potreban"
+                .format(bela),
+            bela < 4.5
         )
     }
 
@@ -383,6 +551,9 @@ class ContrastTest {
      */
     @Test
     fun accentTextOnSurfaceAndGroundMeetsAA() {
+        // `accent/surface` (Faza 8, Task 1) nosi i istu zvezdicu iz `textOnFillMeetsAA`
+        // iznad kad red preseta NIJE izabran (`Color.Transparent` nad dijaloga
+        // `Surface`-om koji je `DS.surface`).
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label accent/surface", p, { it.accent }, { it.surface }, 4.5)
             check("$label accent/ground", p, { it.accent }, { it.ground }, 4.5)

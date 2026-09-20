@@ -9,6 +9,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -86,7 +93,19 @@ fun PuzzleView(
                             verticalArrangement = Arrangement.Center,
                             modifier = Modifier.padding(16.dp)
                         ) {
-                            Text(text = "⚠️", fontSize = 36.sp)
+                            // Faza 8, Task 3: emoji -> Icon. Podloga je `DS.ground`
+                            // (isti ekran, obe orijentacije — vidi ContrastTest).
+                            // DEKORATIVNA: tekst ODMAH ispod vec kaze „Greška pri
+                            // učitavanju zadatka", pa bi opis naterao citac ekrana
+                            // da istu stvar kaze dvaput. Prvi prelaz je ovde imao
+                            // kljuc "Greška" (zadat unapred, iz izgleda ikone); taj
+                            // kljuc vise ne postoji.
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = DS.warning,
+                                modifier = Modifier.size(36.dp)
+                            )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = loc("Greška pri učitavanju zadatka"),
@@ -204,9 +223,14 @@ fun PuzzleView(
                             verticalArrangement = Arrangement.Center,
                             modifier = Modifier.padding(24.dp)
                         ) {
-                            Text(
-                                text = "⚠️",
-                                fontSize = 48.sp
+                            // Faza 8, Task 3: isti obrazac kao pejzazna grana iznad
+                            // (ista ikona, ista podloga `DS.ground`, isto
+                            // dekorativna — naslov greske stoji odmah ispod nje).
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = DS.warning,
+                                modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
@@ -318,7 +342,16 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             ),
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
-            Text(text = "◀️", fontSize = 14.sp)
+            // Faza 8, Task 3: emoji -> Icon. Dugme nema tekst pored sebe —
+            // strelica STOJI SAMA, pa joj treba opis (za razliku od ikona koje
+            // stoje uz vidljiv tekst istog znacenja). Boja se nasledjuje iz
+            // `ButtonDefaults` iznad (`DS.ink`) — isti par kao ostatak dugmadi
+            // ove trake, vec pokriven `textOnFillMeetsAA`.
+            Icon(
+                imageVector = Icons.Default.ChevronLeft,
+                contentDescription = loc("Prethodni dan"),
+                modifier = Modifier.size(16.dp)
+            )
         }
 
         // Date Display
@@ -335,14 +368,23 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )
-            // Kvacica resenosti: emoji glif (✅) nosi sopstvenu boju, nema
-            // Color literal u kodu. Zamena emojija ikonama je ostavljena van obima i
-            // 6d-1 I 6d-2 (odluka korisnika u 6d-2) — nije zakazana ni za jednu fazu,
-            // pa ostaje nedirnuta dok se o njoj ne odluci posebno. Raniji oblik ovog
-            // komentara je obecavao da 6d-2 to resava „za sve fajlove odjednom";
-            // nije se desilo i nije bilo planirano.
+            // Kvacica resenosti: Faza 8, Task 3 zamenila je emoji (✅) sa
+            // `Icons.Default.CheckCircle`. Raniji oblik ovog komentara je
+            // objasnjavao da emoji glif nosi SOPSTVENU boju, pa boje nije ni
+            // bilo u kodu — to vise nije tacno: ikona treba tint i on se BIRA,
+            // `DS.success`. Ovo NIJE dekorativna ikona (za razliku od
+            // strelica koje stoje u istom redu): datum levo od nje ne kaze
+            // "resen", pa ikona nosi informaciju koju tekst ne ponavlja —
+            // otud pravi `contentDescription`. Podloga je `DS.fill` (cela
+            // `DateNavigationRow`); par `success/fill` je izmeren u
+            // `ContrastTest.puzzleSolvedCheckmarkIsReadableOnDateRow`.
             if (viewModel.isSolved(viewModel.selectedDate)) {
-                Text(text = "✅", fontSize = 14.sp)
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = loc("Rešeno"),
+                    tint = DS.success,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
 
@@ -358,7 +400,14 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             ),
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
-            Text(text = "▶️", fontSize = 14.sp)
+            // Isti obrazac kao "Prethodni dan" iznad — sama, bez teksta pored
+            // sebe. `disabledContentColor = DS.inkMuted` kad `!canGoNext`;
+            // par vec pokriven `nonTextPairsOverFillAreDistinguishable`.
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = loc("Sledeći dan"),
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }
@@ -489,7 +538,20 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                Text(text = "💡 " + loc("Prikaži rešenje"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                // Faza 8, Task 3: emoji -> Icon. DEKORATIVNA, i to najociglednije
+                // na grani: tekst pored ikone je RECJU ZA REC ista fraza koju je
+                // prvi prelaz stavio u `contentDescription` — citac ekrana bi
+                // izgovorio „Prikaži rešenje, Prikaži rešenje, dugme". Boja se
+                // nasledjuje iz `ButtonDefaults` (`DS.ink`/`DS.inkMuted`), isti
+                // par kao ostatak dugmadi ovog reda.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Lightbulb,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(text = loc("Prikaži rešenje"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
 
             // Restart / Retry Button
@@ -503,7 +565,18 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                Text(text = "🔄 " + loc("Pokušaj ponovo"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                // Isti slucaj kao dugme iznad: vidljiv tekst je identican frazi
+                // koju je prvi prelaz stavio u `contentDescription` („Pokušaj
+                // ponovo"), pa je ikona dekorativna. Kljuc ostaje u recniku —
+                // ovde je i dalje VIDLJIV tekst dugmeta, samo vise nije opis.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(text = loc("Pokušaj ponovo"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }

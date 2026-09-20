@@ -50,6 +50,14 @@ object Loc {
         "Crni" to mapOf("sr" to "Crni", "en" to "Black", "fr" to "Noirs", "de" to "Schwarz", "it" to "Nero", "ru" to "Черные", "zh-Hans" to "黑方", "hi" to "काला"),
         "Zatvori" to mapOf("sr" to "Zatvori", "en" to "Close", "fr" to "Fermer", "de" to "Schließen", "it" to "Chiudi", "ru" to "Закрыть", "zh-Hans" to "关闭", "hi" to "बंद करें"),
         "Vremenska kontrola" to mapOf("sr" to "Vremenska kontrola", "en" to "Time control", "fr" to "Contrôle du temps", "de" to "Zeitkontrolle", "it" to "Controllo del tempo", "ru" to "Контроль времени", "zh-Hans" to "时间控制", "hi" to "समय नियंत्रण"),
+        // Faza 8, Task 1: `contentDescription` za ikone sahovskog sata (emoji -> Material ikone).
+        "Objašnjenje pravila" to mapOf("sr" to "Objašnjenje pravila", "en" to "Rules explanation", "fr" to "Explication des règles", "de" to "Regelerklärung", "it" to "Spiegazione delle regole", "ru" to "Объяснение правил", "zh-Hans" to "规则说明", "hi" to "नियमों की व्याख्या"),
+        "Resetuj sat" to mapOf("sr" to "Resetuj sat", "en" to "Reset the clock", "fr" to "Réinitialiser l'horloge", "de" to "Uhr zurücksetzen", "it" to "Reimposta l'orologio", "ru" to "Сбросить часы", "zh-Hans" to "重置棋钟", "hi" to "घड़ी रीसेट करें"),
+        "Pusti sat" to mapOf("sr" to "Pusti sat", "en" to "Start the clock", "fr" to "Démarrer l'horloge", "de" to "Uhr starten", "it" to "Avvia l'orologio", "ru" to "Запустить часы", "zh-Hans" to "启动棋钟", "hi" to "घड़ी शुरू करें"),
+        "Pauziraj sat" to mapOf("sr" to "Pauziraj sat", "en" to "Pause the clock", "fr" to "Mettre l'horloge en pause", "de" to "Uhr pausieren", "it" to "Metti in pausa l'orologio", "ru" to "Поставить часы на паузу", "zh-Hans" to "暂停棋钟", "hi" to "घड़ी रोकें"),
+        // Faza 8, Task 2: `contentDescription` za ikone na ekranu Igra (emoji -> Material ikone).
+        "Vrati potez" to mapOf("sr" to "Vrati potez", "en" to "Undo move", "fr" to "Annuler le coup", "de" to "Zug zurücknehmen", "it" to "Annulla mossa", "ru" to "Отменить ход", "zh-Hans" to "撤销一步", "hi" to "चाल पूर्ववत करें"),
+        "Predaj partiju" to mapOf("sr" to "Predaj partiju", "en" to "Resign the game", "fr" to "Abandonner la partie", "de" to "Partie aufgeben", "it" to "Abbandona la partita", "ru" to "Сдать партию", "zh-Hans" to "认输", "hi" to "खेल में हार मानें"),
         "Blic" to mapOf("sr" to "Blic", "en" to "Blitz", "fr" to "Blitz", "de" to "Blitz", "it" to "Blitz", "ru" to "Блиц", "zh-Hans" to "快棋", "hi" to "ब्लिट्ज़"),
         "Ubrzani šah" to mapOf("sr" to "Ubrzani šah", "en" to "Rapid", "fr" to "Rapide", "de" to "Schnellschach", "it" to "Rapid", "ru" to "Рапид", "zh-Hans" to "快速棋", "hi" to "रैपिड"),
         "Klasični šah" to mapOf("sr" to "Klasični šah", "en" to "Classical", "fr" to "Classique", "de" to "Klassisch", "it" to "Classico", "ru" to "Классика", "zh-Hans" to "慢棋", "hi" to "क्लासिकल"),
@@ -514,6 +522,20 @@ object Loc {
         "Kraj" to mapOf("sr" to "Kraj", "en" to "End", "fr" to "Fin", "de" to "Ende", "it" to "Fine", "ru" to "Конец", "zh-Hans" to "末尾", "hi" to "अंत"),
         "Prethodni" to mapOf("sr" to "Prethodni", "en" to "Previous", "fr" to "Précédent", "de" to "Zurück", "it" to "Precedente", "ru" to "Предыдущий", "zh-Hans" to "上一步", "hi" to "पिछला"),
         "Sledeći" to mapOf("sr" to "Sledeći", "en" to "Next", "fr" to "Suivant", "de" to "Weiter", "it" to "Successivo", "ru" to "Следующий", "zh-Hans" to "下一步", "hi" to "अगला"),
+        // Faza 8, Task 3: `contentDescription` za strelice trake datuma
+        // (`PuzzleView.kt`, `DateNavigationRow`). "Sledeći dan" vec postoji
+        // (ranije dodat za iOS-parni "Next day" dugme koje Android jos nema
+        // ozivotvoreno kao vidljiv tekst) — samo je ovde dobio DRUGOG
+        // potrosaca. "Prethodni dan" je nov, njegov simetrican par.
+        "Prethodni dan" to mapOf("sr" to "Prethodni dan", "en" to "Previous day", "fr" to "Jour précédent", "de" to "Vorheriger Tag", "it" to "Giorno precedente", "ru" to "Предыдущий день", "zh-Hans" to "上一天", "hi" to "पिछला दिन"),
+        // `contentDescription` svake ikone koja ZNACI „reseno", ma kako
+        // izgledala: kvacice u traci datuma (`PuzzleView`) i u dve vezbe, i
+        // trofeja u `MatePuzzleCard`-u (`LearnView`). Sve cetiri stoje same u
+        // svom redu — susedni tekst (datum, naslov zadatka) ne kaze da je
+        // reseno. Trofej je do talasa ispravki imao sopstven kljuc "Trofej";
+        // uklonjen je jer je imenovao IZGLED ikone umesto stanja koje ona
+        // saopstava, pa je citac ekrana za isto stanje imao dva imena.
+        "Rešeno" to mapOf("sr" to "Rešeno", "en" to "Solved", "fr" to "Résolu", "de" to "Gelöst", "it" to "Risolto", "ru" to "Решено", "zh-Hans" to "已解决", "hi" to "हल हो गया"),
         // Okvir poruke o gresci; razlog se interpolira posle dvotacke, pa ovaj
         // kljuc namerno nema zavrsnu tacku (postoji i "Greška pri učitavanju."
         // kao zasebna, cela recenica).

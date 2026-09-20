@@ -61,6 +61,12 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.SentimentDissatisfied
+import androidx.compose.material.icons.filled.Handshake
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.foundation.shape.CircleShape
 import com.veljkoni.chessko.ui.theme.ChesskoTheme
 import com.veljkoni.chessko.ui.theme.DS
@@ -515,33 +521,52 @@ class MainActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
-                                val emoji = when (val s = gameViewModel.gameState.status) {
+                                // Faza 8, Task 2: emoji -> Material ikone. Samo pobeda (bivsi
+                                // "🏆") ima iOS par (`trophy.fill`); poraz/remi/u toku nemaju,
+                                // pa je izbor ikone i boje presudjen ovde:
+                                //  - poraz -> SentimentDissatisfied (izraz lica, ne zastava --
+                                //    zastava je vec zauzeta predajom)
+                                //  - remi -> Handshake (ni pobeda ni poraz -- neutralna boja)
+                                //  - "u toku" (nedostizna grana dok je dijalog uslovljen
+                                //    `isGameOver`, ali zadrzana odbrambeno) -> BEZ ikone, status
+                                //    ispod vec nosi ceo tekst
+                                // Boja i dalje nosi znacenje kao ranije (kad su ga nosili
+                                // razliciti emoji glifovi): DS.success za pobedu, DS.danger za
+                                // poraz, DS.inkMuted za remi. Ikone su ovde DEKORATIVNE
+                                // (`contentDescription = null`) -- ceo ishod je ispisan tekstom
+                                // odmah ispod (loc("Kraj partije") + getStatusMessage), isti
+                                // obrazac kao decorative ikone u meniju "Nova igra" iznad.
+                                val (statusIcon, statusIconTint) = when (val s = gameViewModel.gameState.status) {
                                     is GameStatus.Checkmate -> {
                                         if (gameViewModel.gameMode == GameMode.LOCAL_FRIEND) {
-                                            "🏆"
+                                            Icons.Default.EmojiEvents to DS.success
                                         } else if (s.color == gameViewModel.playerColor) {
-                                            "😔"
+                                            Icons.Default.SentimentDissatisfied to DS.danger
                                         } else {
-                                            "🏆"
+                                            Icons.Default.EmojiEvents to DS.success
                                         }
                                     }
                                     is GameStatus.Resigned -> {
                                         if (gameViewModel.gameMode == GameMode.LOCAL_FRIEND) {
-                                            "🏳️"
+                                            Icons.Default.Flag to DS.danger
                                         } else if (s.color == gameViewModel.playerColor) {
-                                            "🏳️"
+                                            Icons.Default.Flag to DS.danger
                                         } else {
-                                            "🏆"
+                                            Icons.Default.EmojiEvents to DS.success
                                         }
                                     }
-                                    is GameStatus.Draw -> "🤝"
-                                    else -> "♟️"
+                                    is GameStatus.Draw -> Icons.Default.Handshake to DS.inkMuted
+                                    else -> null to DS.inkMuted
                                 }
 
-                                Text(
-                                    text = emoji,
-                                    fontSize = 48.sp
-                                )
+                                if (statusIcon != null) {
+                                    Icon(
+                                        imageVector = statusIcon,
+                                        contentDescription = null,
+                                        tint = statusIconTint,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                }
 
                                 Text(
                                     text = loc("Kraj partije"),
@@ -1239,8 +1264,17 @@ fun ActionsRow(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
-            val label = if (viewModel.gameMode == GameMode.VS_COMPUTER) "🤖 " + loc("Računar") else "👥 " + loc("Prijatelj")
-            Text(text = label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            val isVsComputer = viewModel.gameMode == GameMode.VS_COMPUTER
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(
+                    imageVector = if (isVsComputer) Icons.Default.Computer else Icons.Default.People,
+                    // vidi progress.md); za "Prijatelj" nema dodeljenog kljuca u tabeli, a
+                    // vidljivi Text odmah desno vec nosi znacenje -- ikona je tu dekorativna.
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(text = if (isVsComputer) loc("Računar") else loc("Prijatelj"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         // Toggle Difficulty Button (enabled only in VS COMPUTER mode)
@@ -1289,7 +1323,19 @@ fun ActionsRow(
             modifier = Modifier.weight(0.7f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
-            Text(text = "↩️ " + loc("Vrati"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Dekorativna: `Button` spaja semantiku potomaka, pa bi opis uz
+                // vidljiv `Text` naterao citac ekrana da radnju kaze dvaput
+                // ("Vrati potez, Vrati, dugme"). Isto vazi za preostala tri
+                // dugmeta ovog reda. Kljuc "Vrati potez" ostaje u recniku —
+                // `StepGameView.kt` ga koristi na dugmetu BEZ teksta.
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Undo,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(text = loc("Vrati"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         // Resign Button
@@ -1307,7 +1353,16 @@ fun ActionsRow(
                 modifier = Modifier.weight(0.7f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                Text(text = "🏳️ " + loc("Predaj"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Predaj partiju"
+                    // ostaje — koristi ga `StepGameView.kt`, gde zastava stoji sama.
+                    Icon(
+                        imageVector = Icons.Default.Flag,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(text = loc("Predaj"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
 
@@ -1325,7 +1380,16 @@ fun ActionsRow(
             modifier = Modifier.weight(0.7f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
-            Text(text = "📤 " + loc("Podeli"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Podeli partiju"
+                // ostaje — naslov je `Intent.createChooser` dijaloga (`:908`, `:1125`).
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(text = loc("Podeli"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         // Reset Button
@@ -1339,7 +1403,18 @@ fun ActionsRow(
             modifier = Modifier.weight(0.7f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
-            Text(text = "🔄 " + loc("Reset"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Dekorativna (vidi dugme „Vrati" iznad), i to je ovde POPRAVKA a
+                // ne samo dosledost: raniji opis je bio "Pokušaj ponovo" — fraza sa
+                // ekrana Zadataka — dok se dugme zove „Reset" i zove `onReset()`.
+                // Citac ekrana je za jednu kontrolu izgovarao DVA razlicita imena.
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(text = loc("Reset"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

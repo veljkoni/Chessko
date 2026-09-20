@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -97,7 +100,25 @@ fun LessonDetailView(
                 // Dugme vodi na Put (spisak lekcija je ova grana obrisala -- vidi
                 // header komentar fajla), pa mora i da ga IMENUJE. Postojeci kljuc
                 // "Put" (vec koriscen u `PathView`/`StepPracticeView`), ne "Lekcije".
-                Text(text = "◀ " + loc("Put"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                //
+                // Faza 8, talas ispravki: `"◀ " + loc(...)` -> `Row { Icon; Text }`.
+                // Tacno obrazac „glif zalepljen na tekst" koji faza prevodi, samo u
+                // bloku (`U+25C0`) koji njena provera obima nije grepovala. Ikona je
+                // DEKORATIVNA — „Put" odmah do nje nosi celo znacenje. `AutoMirrored`
+                // jer je strelica smerna: u RTL rasporedu mora da pokazuje udesno.
+                // Boja se nasledjuje iz `ButtonDefaults` (`DS.ink` na `DS.fill`,
+                // pokriveno sa `ContrastTest.textOnFillMeetsAA`).
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(text = loc("Put"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
 
