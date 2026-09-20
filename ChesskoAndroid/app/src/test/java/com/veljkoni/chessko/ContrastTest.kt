@@ -124,9 +124,16 @@ class ContrastTest {
 
     /**
      * SEST PAROVA JE ISPOD AA U SVETLOJ TEMI. Prva tri su NASLEDJENA iz spec
-     * tabele (iOS ima iste vrednosti); cetvrti i peti su dodata u talasu ispravki
-     * pred spajanje i danas nemaju pozivno mesto (vidi komentar uz njih); sesti je
-     * dodat u Fazi 6d-2, Task 2 (vidi komentar ispod tabele).
+     * tabele (iOS ima iste vrednosti); peti (`warning/fill`) je dodat u talasu
+     * ispravki pred spajanje i danas nema pozivno mesto (vidi komentar uz njega);
+     * sesti je dodat u Fazi 6d-2, Task 2 (vidi komentar ispod tabele). Cetvrti
+     * (`success/fill`) je TAKODJE dodat bez pozivnog mesta, ali je od Faze 8,
+     * Task 3 dobio pravog potrosaca — kvacicu resenosti u `PuzzleView.kt`
+     * (`Icons.Default.CheckCircle`). Prag ispod (4,5) je za TEKST i ta ikona ga
+     * ne dostize u svetloj temi — nebitno, ikona je graficki objekat, WCAG-ov
+     * prag za nju je 3:1 (SC 1.4.11), koji 4,18 lako prelazi; vidi
+     * `puzzleSolvedCheckmarkIsReadableOnDateRow` niže za tacnu tvrdnju i za
+     * TAMNU temu (7,78), koja ovde uopste nije bila pinovana.
      *
      *   inkMuted / ground : 4,359965479387139   (svetla)   5,94 (tamna)
      *   inkMuted / fill   : 4,014258257780754   (svetla)   4,81 (tamna)
@@ -164,14 +171,45 @@ class ContrastTest {
         check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.359965479387139)
         check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.014258257780754)
         check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.611752903947211)
-        // Dva para koja DANAS nemaju nijedno pozivno mesto: statisticka kartica u
+        // `warning/fill` DANAS nema nijedno pozivno mesto: statisticka kartica u
         // Podesavanjima je presla sa `fill` na `surface` bas zato sto je nad `fill`
         // merila `warning` 3,00 i `success` 4,18 (oba ispod AA za 17sp Bold, koji
-        // po WCAG-u NIJE „large text"). Pinovani su svejedno, da buduci pozivalac
+        // po WCAG-u NIJE „large text"). Pinovan je svejedno, da buduci pozivalac
         // koji ipak stavi semanticku boju nad `fill` ne moze to da pogorsa u tisini.
+        //
+        // `success/fill` VISE NEMA taj status — Faza 8, Task 3 mu je dala pravog
+        // potrosaca (vidi doc-komentar iznad testa i
+        // `puzzleSolvedCheckmarkIsReadableOnDateRow`), samo kao IKONU (3:1), ne
+        // kao 17sp Bold tekst (4,5) — ova pinovana vrednost je i dalje tacna i i
+        // dalje dovoljna za tu upotrebu.
         check("svetla success/fill", LightColors, { it.success }, { it.fill }, 4.184348841952418)
         check("svetla warning/fill", LightColors, { it.warning }, { it.fill }, 2.9989738277199414)
+        // Faza 8, Task 3 dodaje pravog potrosaca i za `warning/ground`: tri
+        // `Icons.Default.Warning` (bivsi ⚠️) u NETWORK_ERROR ekranima
+        // (`PuzzleView.kt` x2, `StepPracticeView.kt`) sede direktno na `DS.ground`
+        // (isti `Box` iz `MainActivity.kt` iza sva tri taba). Ikona je graficki
+        // objekat (WCAG prag 3:1), pa 3,26 ovde dostize potrebno iako ne dostize
+        // AA (4,5) za tekst — ista logika kao `success/fill` iznad.
         check("svetla warning/ground", LightColors, { it.warning }, { it.ground }, 3.257244931140301)
+    }
+
+    /**
+     * Faza 8, Task 3: kvačica rešenosti u traci datuma (`PuzzleView.kt`,
+     * `DateNavigationRow`). Emoji (✅) je zamenjen `Icons.Default.CheckCircle`,
+     * tint `DS.success`, na podlozi `DS.fill` (cela `DateNavigationRow` ima
+     * `.background(DS.fill)`).
+     *
+     * `success/fill` u SVETLOJ temi (4,18) je vec pinovan u
+     * `knownSubAAPairsDoNotGetWorse`, ali kao granica za TEKST (prag 4,5, koji
+     * ta vrednost ne dostize). Ikona je graficki objekat — WCAG-ov prag je
+     * 3:1 (SC 1.4.11) — pa 4,18 ovde vise nego dovoljno. TAMNA tema (7,78) do
+     * ovog taska nije imala NIJEDNU tvrdnju ni u jednom testu; test ispod je
+     * prvi koji je meri.
+     */
+    @Test
+    fun puzzleSolvedCheckmarkIsReadableOnDateRow() {
+        checkPair("svetla success/fill (kvačica rešenosti)", LightColors.success, LightColors.fill, 3.0)
+        checkPair("tamna success/fill (kvačica rešenosti)", DarkColors.success, DarkColors.fill, 3.0)
     }
 
     /**
@@ -202,6 +240,16 @@ class ContrastTest {
         // `Icons.Default.Share` (Podeli) i `Icons.Default.Refresh` (Reset) -- svi citaju
         // `LocalContentColor` iz `ButtonDefaults.buttonColors(containerColor = DS.fill,
         // contentColor = DS.ink)`, isti mehanizam kao Text pored njih.
+        // `ink/fill` (Faza 8, Task 3) nosi i `Icons.Default.Lightbulb` ("Prikaži
+        // rešenje") i `Icons.Default.Refresh` ("Pokušaj ponovo") u
+        // `PuzzleView.kt` -- isti mehanizam (bez eksplicitnog `tint`, cita
+        // `LocalContentColor` iz istog `ButtonDefaults.buttonColors`). Isti
+        // mehanizam nose i strelice `ChevronLeft`/`ChevronRight` u
+        // `DateNavigationRow` (`PuzzleView.kt`) u omogucenom stanju. Isti par
+        // nosi i `Icons.Default.Computer` u `OpponentCard`-u (`StepGameView.kt`)
+        // -- dekorativna (`contentDescription = null`, vidi kod), ali i dalje
+        // STVARNO nacrtana na ekranu pa i dalje treba kontrast; eksplicitan
+        // `tint = DS.ink` na `Row`-u sa `.background(DS.fill)`.
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label ink/fill", p, { it.ink }, { it.fill }, 4.5)
             check("$label accent/fill", p, { it.accent }, { it.fill }, 4.5)
@@ -235,6 +283,11 @@ class ContrastTest {
      * `disabledContentColor = DS.inkMuted` dok `disabledContainerColor` ostaje
      * `DS.fill` -- isti par, prvi put ne-tekstualan potrosac (ikona, ne palac
      * prekidaca ili ivica).
+     *
+     * Faza 8, Task 3 dodaje jos jednog: `Icons.Default.ChevronRight` ("Sledeći
+     * dan") u `DateNavigationRow` (`PuzzleView.kt`) kad `!canGoNext`
+     * (`disabledContentColor = DS.inkMuted`, `disabledContainerColor` ostaje
+     * transparentna nad `DS.fill` podlogom reda).
      */
     @Test
     fun nonTextPairsOverFillAreDistinguishable() {
@@ -286,7 +339,16 @@ class ContrastTest {
      */
     @Test
     fun lessonBoxStylesMeetAA() {
+        // Faza 8, Task 3 dodaje jos potrosaca za `tamna warning/ground`: isti
+        // tri `Icons.Default.Warning` iz `knownSubAAPairsDoNotGetWorse` (svetla
+        // varijanta) imaju istu podlogu u OBE teme — samo je tamna vrednost
+        // (9,27) vec bila iznad AA praga, pa je ovaj test (ne onaj) njeno mesto.
         check("tamna warning/ground", DarkColors, { it.warning }, { it.ground }, 4.5)
+        // `danger/ground` (svetla i tamna) dobija stvarnog potrosaca u Fazi 8,
+        // Task 3: `Icons.Default.Flag` ("Predaj partiju") u `StepGameView.kt`
+        // (`containerColor = Transparent`, `contentColor = DS.danger`, na
+        // Column-u bez sopstvene pozadine -- nasledjuje `DS.ground` iz
+        // `MainActivity.kt`-jevog Box-a).
         check("svetla danger/ground", LightColors, { it.danger }, { it.ground }, 4.5)
         check("tamna danger/ground", DarkColors, { it.danger }, { it.ground }, 4.5)
 

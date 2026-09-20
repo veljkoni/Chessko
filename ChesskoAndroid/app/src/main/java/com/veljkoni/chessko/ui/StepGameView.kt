@@ -5,9 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -160,7 +164,15 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                             contentColor = DS.danger
                         )
                     ) {
-                        Text(text = "🏳")
+                        // Faza 8, Task 3: emoji -> Icon. Dugme nema tekst pored
+                        // sebe (za razliku od "Zatvori" odmah desno) — opis je
+                        // neophodan. Isti kljuc kao `Flag` u `MainActivity.kt`
+                        // (Faza 8, Task 2), ista radnja.
+                        Icon(
+                            imageVector = Icons.Default.Flag,
+                            contentDescription = loc("Predaj partiju"),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
                 Button(
@@ -267,7 +279,20 @@ private fun OpponentCard(viewModel: GameViewModel) {
             .background(DS.fill)
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Text(text = "🤖", fontSize = 16.sp)
+        // Faza 8, Task 3: emoji -> Icon. Ikona stoji NEPOSREDNO uz vidljiv
+        // `Text(loc("Računar"))` -- isti obrazac kao `Computer`/`People` u
+        // `MainActivity.kt` (Faza 8, Task 2, ispravljeno u progress.md nakon
+        // sto je prvobitni kljuc "Protivnik računar" bio dodeljen ovom istom
+        // slucaju): dekorativna, BEZ kljuca (ne samo `null` opis vec i BEZ
+        // dodatog `Loc.kt` unosa) -- ovaj korak, za razliku od slobodne
+        // partije na tabu Igra, nema prekidac Racunar/Prijatelj, pa se ikona
+        // ovde nikad ne menja u `People`.
+        Icon(
+            imageVector = Icons.Default.Computer,
+            contentDescription = null,
+            tint = DS.ink,
+            modifier = Modifier.size(16.dp)
+        )
         Text(text = loc("Računar"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         Text(text = viewModel.difficulty.label, color = DS.inkMuted, fontSize = 12.sp)
         Spacer(modifier = Modifier.weight(1f))

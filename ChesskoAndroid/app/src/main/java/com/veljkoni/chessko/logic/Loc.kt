@@ -522,10 +522,25 @@ object Loc {
         "Kraj" to mapOf("sr" to "Kraj", "en" to "End", "fr" to "Fin", "de" to "Ende", "it" to "Fine", "ru" to "Конец", "zh-Hans" to "末尾", "hi" to "अंत"),
         "Prethodni" to mapOf("sr" to "Prethodni", "en" to "Previous", "fr" to "Précédent", "de" to "Zurück", "it" to "Precedente", "ru" to "Предыдущий", "zh-Hans" to "上一步", "hi" to "पिछला"),
         "Sledeći" to mapOf("sr" to "Sledeći", "en" to "Next", "fr" to "Suivant", "de" to "Weiter", "it" to "Successivo", "ru" to "Следующий", "zh-Hans" to "下一步", "hi" to "अगला"),
+        // Faza 8, Task 3: `contentDescription` za strelice trake datuma
+        // (`PuzzleView.kt`, `DateNavigationRow`). "Sledeći dan" vec postoji
+        // (ranije dodat za iOS-parni "Next day" dugme koje Android jos nema
+        // ozivotvoreno kao vidljiv tekst) — samo je ovde dobio DRUGOG
+        // potrosaca. "Prethodni dan" je nov, njegov simetrican par.
+        "Prethodni dan" to mapOf("sr" to "Prethodni dan", "en" to "Previous day", "fr" to "Jour précédent", "de" to "Vorheriger Tag", "it" to "Giorno precedente", "ru" to "Предыдущий день", "zh-Hans" to "上一天", "hi" to "पिछला दिन"),
+        // `contentDescription` kvačice rešenosti u istoj traci — jedina ikona
+        // koja NOSI informaciju koju susedni tekst (datum) ne kaze.
+        "Rešeno" to mapOf("sr" to "Rešeno", "en" to "Solved", "fr" to "Résolu", "de" to "Gelöst", "it" to "Risolto", "ru" to "Решено", "zh-Hans" to "已解决", "hi" to "हल हो गया"),
         // Okvir poruke o gresci; razlog se interpolira posle dvotacke, pa ovaj
         // kljuc namerno nema zavrsnu tacku (postoji i "Greška pri učitavanju."
         // kao zasebna, cela recenica).
         "Greška pri učitavanju" to mapOf("sr" to "Greška pri učitavanju", "en" to "Loading error", "fr" to "Erreur de chargement", "de" to "Ladefehler", "it" to "Errore di caricamento", "ru" to "Ошибка загрузки", "zh-Hans" to "加载出错", "hi" to "लोडिंग त्रुटि"),
+        // Faza 8, Task 3: `contentDescription` za `Icons.Default.Warning`
+        // (bivsi ⚠️) u tri NETWORK_ERROR ekrana (`PuzzleView.kt` x2,
+        // `StepPracticeView.kt`). Ne postoji vec kao odvojen kljuc — "greška"
+        // (malim slovom) je NEZAVISAN kljuc, klasa poteza u analizi partije,
+        // ne ova ikona.
+        "Greška" to mapOf("sr" to "Greška", "en" to "Error", "fr" to "Erreur", "de" to "Fehler", "it" to "Errore", "ru" to "Ошибка", "zh-Hans" to "错误", "hi" to "त्रुटि"),
         // Jedina grana `MateExerciseState.statusMessage` koja je ostala bez
         // `loc()` — igrac je u sahu u vezbi mata. Kljuc ne postoji ni u iOS
         // katalogu, pa je ovde nov.

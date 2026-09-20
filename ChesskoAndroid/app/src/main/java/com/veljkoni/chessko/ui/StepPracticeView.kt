@@ -8,9 +8,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -109,7 +112,15 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "⚠️", fontSize = 40.sp)
+                    // Faza 8, Task 3: isti obrazac kao `PuzzleView.kt`
+                    // (ista ikona, isti kljuc, ista podloga `DS.ground` —
+                    // ekran koraka sedi u istom `Box` iz `MainActivity.kt`).
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = loc("Greška"),
+                        tint = DS.warning,
+                        modifier = Modifier.size(40.dp)
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = viewModel.networkErrorMessage,
