@@ -9,9 +9,13 @@ package com.veljkoni.chessko
 // Test tvrdi INVARIJANTU, ne vrednosti: ne pominje nijedan emoji, nijedno ime
 // Material ikone i nijedan broj iz mape. Zato prezivljava svaku sledecu fazu
 // koja neki par promeni — a pada tacno onda kad mapa prestane da pokriva
-// isporuceni sadrzaj. Oba ishoda tog raskoraka su pokrivena, jer ih ima dva a
-// ne jedan: glasan (`Unknown` — crveni trougao i sirovo SF ime) i TIH (ime bez
-// tacke procuri kroz granu „vec gotov glif" i iscrta se kao obicna rec).
+// isporuceni sadrzaj.
+//
+// Raskorak je do runde ispravki Task-a 3 imao DVA ishoda: glasan (`Unknown` —
+// crveni trougao i sirovo SF ime) i tih (ime bez tacke procuri kroz granu „vec
+// gotov glif" i iscrta se kao obicna rec). Mutacija ovog testa je nasla taj
+// drugi, pa ga je ista runda zatvorila u `lessonGlyph` — ASCII ime van mape sad
+// je `Unknown`. Ostao je jedan ishod, i drugi test ovde cuva bas tu popravku.
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -74,26 +78,13 @@ class LessonGlyphMapTest {
             emptyList<String>(),
             unresolved
         )
-
-        // Druga polovina iste tvrdnje, i NIJE visak — nasla ju je mutacija ovog
-        // taska. `Unknown` hvata samo imena sa tackom; tri isporucena SF imena
-        // je nemaju (`globe`, `link`, `tuningfork`), pa bi izbacivanje bas njih
-        // iz mape proslo kroz granu „vec gotov glif" i nacrtalo BUKVALNU rec
-        // „tuningfork" u lekciji — tiho, sto je tacno ono sto `Unknown` postoji
-        // da spreci. Invarijanta bez vrednosti: isporuceni `icon` koji je cist
-        // ASCII je SF IME, nikad glif, pa ga mora razresiti mapa — a prolaz kroz
-        // rezervnu granu se prepoznaje po tome sto nacrtani tekst bude jednak
-        // samom imenu. Ne-ASCII `icon` (rucno pisana lekcija koja upise emoji
-        // direktno) ovim ostaje dozvoljen; danas ga nijedan fajl ne koristi.
-        val drawnAsItsOwnName = distinct.filter { symbol ->
-            val glyph = lessonGlyph(symbol)
-            symbol.all { it.code < 128 } && glyph is LessonGlyph.Emoji && glyph.text == symbol
-        }
-        assertEquals(
-            "SF imena koja bi se iscrtala kao sopstveni tekst umesto glifa: $drawnAsItsOwnName",
-            emptyList<String>(),
-            drawnAsItsOwnName
-        )
+        // Ovde je do runde ispravki stajala jos jedna tvrdnja — da nijedan
+        // isporuceni ASCII `icon` ne sme zavrsiti iscrtan kao sopstveno ime.
+        // Uklonjena je kad je ista runda pooostrila `lessonGlyph` (ASCII ime van
+        // mape sada JESTE `Unknown`), jer je time postala nedostizna: takav
+        // simbol pada na tvrdnju iznad pre nego sto stigne dovde. Rupu sada cuva
+        // `symbolOutsideTheMapIsLoudNotSilent`, na samom mehanizmu — mesto gde
+        // je i popravljena.
     }
 
     @Test
@@ -108,9 +99,19 @@ class LessonGlyphMapTest {
         // Prazno ime je ista klasa greske (krnj JSON), i mora da vikne isto.
         assertTrue(lessonGlyph("") is LessonGlyph.Unknown)
 
-        // A niz BEZ tacke nije SF ime nego vec gotov glif iz rucno pisane
-        // lekcije — on se propusta nepromenjen i to NIJE greska. Granica izmedju
-        // ta dva slucaja je jedino sto deli „vikni" od „nacrtaj".
+        // TRECA tvrdnja, i ona cuva popravku iz runde ispravki Task-a 3: SF ime
+        // BEZ tacke koje nije u mapi mora dati `Unknown`, ne tihi prolaz. Pre
+        // popravke je `lessonGlyph("pawn")` vracao `Emoji("pawn")` i lekcija bi
+        // na tom mestu iscrtala bukvalnu rec „pawn". Isporuceni sadrzaj ima tri
+        // takva imena (`globe`, `link`, `tuningfork`), pa ovo nije teorijski
+        // slucaj — mutacija bilo kog od njih iz mape isla je tacno ovim putem.
+        val ascii = lessonGlyph("pawn")
+        assertTrue("ASCII ime van mape mora dati Unknown, dalo je $ascii", ascii is LessonGlyph.Unknown)
+        assertEquals("pawn", (ascii as LessonGlyph.Unknown).symbol)
+
+        // Druga strana iste granice, bez koje bi prethodna tvrdnja prosla i nad
+        // mehanizmom koji VIKNE na sve: vec gotov glif (ne-ASCII) iz rucno
+        // pisane lekcije se i dalje propusta nepromenjen, i to NIJE greska.
         val passthrough = lessonGlyph("🔥")
         assertTrue(passthrough is LessonGlyph.Emoji)
         assertEquals("🔥", (passthrough as LessonGlyph.Emoji).text)

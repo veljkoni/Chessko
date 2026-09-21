@@ -505,8 +505,16 @@ private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
     //
     // (1) Material nema ikonu ni za jednu sahovsku figuru ni za ijedan
     //     takticki motiv. Prosao je raspakovan sources jar
-    //     `material-icons-extended` 1.7.8 (2083 imena u `Icons.Filled`):
-    //     nijedno nije figura ni motiv. Postoji samo METAFORA — `Castle` za
+    //     `material-icons-extended` 1.7.8: nijedno ime nije figura ni motiv.
+    //     Imena u `Icons.Filled` ima **2083** — broj se reprodukuje na tri
+    //     nacina, svi daju isto (spisak fajlova, jedinstvena imena fajlova, i
+    //     brojanje deklaracija):
+    //       unzip -Z1 <sources.jar> 'commonMain/*/icons/filled/*.kt' | wc -l
+    //       unzip -p  <sources.jar> 'commonMain/*/icons/filled/*.kt' \
+    //         | grep -c 'val Icons\.Filled\.'
+    //     (2084 dobija onaj ko ne filtrira `*.kt` — tu upadne i sam
+    //     direktorijum; `material-icons-core` nosi jos 49 imena, disjunktnih.)
+    //     Postoji samo METAFORA — `Castle` za
     //     topa, `Restaurant` za viljusku — a metafora ovde gubi vise nego sto
     //     dobija: ona bi ista dva znacenja rekla generickim glifom, uz
     //     `Icons.Filled.Restaurant` u lekciji o taktici, sto sledeceg citaoca
@@ -560,25 +568,32 @@ private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
 
 /// `LessonGlyph` za ime SF simbola iz JSON-a. Poznat simbol daje ono sto mapa
 /// kaze — `Icon` za 43 od 49 (Faza 9: Task 1 21, Task 2 jos 21, Task 3 jos 1),
-/// `Emoji` za ostatak (6, Task 3). Ako sadrzaj vec nosi emoji direktno (nema tacke u imenu) —
-/// rucno pisana lekcija ne mora da zna za SF imena — prosledjuje se
-/// nepromenjen, i dalje kao `Emoji`. Simbol koji IZGLEDA kao SF ime (ima
-/// tacku) ili je prazan, a nije u mapi, daje `Unknown` — Task 0 je uveo SAMO
-/// ovaj poslednji slucaj (zatecen fallback je bio tih "•"); danas nedostizno
+/// `Emoji` za ostatak (6, Task 3). Ako sadrzaj vec nosi GLIF direktno — rucno
+/// pisana lekcija ne mora da zna za SF imena — prosledjuje se nepromenjen, i
+/// dalje kao `Emoji`. Sve ostalo daje `Unknown`, koji MORA da vikne: Task 0 je
+/// uveo samo taj slucaj (zatecen fallback je bio tih "•"). Danas je nedostizan
 /// jer je mapa iscrpna za svih 49 simbola u isporucenom sadrzaju, sto od
 /// Task-a 3 vise nije tvrdnja u komentaru nego test
 /// (`LessonGlyphMapTest.everyIconInShippedLessonsResolvesToAKnownGlyph`).
 ///
-/// Zamka koju je nasla mutacija tog testa: TRI isporucena SF imena nemaju
-/// tacku (`globe`, `link`, `tuningfork`), pa ona, ako ikad ispadnu iz mape,
-/// NE daju `Unknown` nego prolaze kroz poslednju granu i iscrtavaju se kao
-/// obicna rec usred lekcije — tiho. Zato isti test tvrdi i da nijedan
-/// isporuceni ASCII `icon` ne sme zavrsiti nacrtan kao sopstveno ime.
+/// **Granica „vikni" / „nacrtaj" je od runde ispravki Task-a 3 ASCII, ne tacka.**
+/// Do tada je `Unknown` dobijalo samo ime SA TACKOM, a mutacija testa je
+/// pokazala da tri isporucena SF imena tacku nemaju (`globe`, `link`,
+/// `tuningfork`): da ijedno ispadne iz mape, proslo bi kroz granu „vec gotov
+/// glif" i iscrtalo se kao BUKVALNA REC usred lekcije — tiho, tacno ono zbog
+/// cega `Unknown` postoji. ASCII niz nikad nije glif nego ime; glif je po
+/// definiciji izvan ASCII-ja. Provereno da popravka danas nista ne lomi: od 49
+/// `icon` vrednosti u isporucenom sadrzaju **nijedna** nije ne-ASCII, pa
+/// nijedna ne ide kroz rezervnu granu ni pre ni posle. Pravilo za tacku je
+/// zadrzano uz ASCII, ne zamenjeno njime — novo je strogo sire od starog, pa
+/// nijedan slucaj koji je ranije vikao sada ne cuti.
 internal fun lessonGlyph(symbol: String): LessonGlyph {
     val glyph = SYMBOL_TO_GLYPH[symbol]
     return when {
         glyph != null -> glyph
-        symbol.isEmpty() || '.' in symbol -> LessonGlyph.Unknown(symbol)
+        // Prazan niz upada ovde sam od sebe (`all` nad praznim je `true`) i to
+        // je tacno — krnj JSON mora da vikne isto kao nepoznato ime.
+        '.' in symbol || symbol.all { it.code < 128 } -> LessonGlyph.Unknown(symbol)
         else -> LessonGlyph.Emoji(symbol)
     }
 }
