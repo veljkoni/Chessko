@@ -331,7 +331,8 @@ na uređaju. **Proveri to izričito.**
   **U istom prolazu pokreni i `connectedDebugAndroidTest`** — Task 3 je dodao instrumentisani
   test mape glifova koji nigde drugde nema gde da se izvrši. Broj čitaj **iz XML-a**
   (`app/build/outputs/androidTest-results/connected/debug/*.xml`), ne iz izlaznog koda:
-  `BUILD SUCCESSFUL` ume da znači nula pokrenutih testova. Polazno: **52**.
+  `BUILD SUCCESSFUL` ume da znači nula pokrenutih testova. Polazno: **54** — 52 zatecenih plus **dva** koja je Task 3 dodao (test ugovora mape).
+  Ako XML pokaze 52, ta dva se nisu izvrsila i to je nalaz, ne uspeh.
 
   Gašenje odmah po prolazu, i **zalepi izlaz `pgrep`-a**.
 
