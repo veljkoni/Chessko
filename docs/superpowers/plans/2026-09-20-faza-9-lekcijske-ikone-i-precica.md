@@ -237,6 +237,30 @@ figura bolja od emoji — ona je monohromatska, prima `tint`, i vizuelno pripada
 Pazi: `dot.square.fill` je **potez kralja**, ne kralj; `l.joystick.fill` je **potez skakača**.
 Za njih figura možda nije tačan prikaz.
 
+**Jedan od sedam nije samo u telu lekcije — stoji u ZAGLAVLJU.** Izmereno nad svih 36 fajlova
+(`Chessko/Content/lessons/*.json`, zbir = 36, dakle iscrpno):
+
+```
+bolt.fill             10        flag.checkered          8
+square.grid.3x3.fill   8        flag.fill               8
+text.book.closed.fill  2
+```
+
+`square.grid.3x3.fill` je **doc-level `icon`**, naslovna ikona za **8 od 36 fajlova**
+(`LessonDetailView.kt:168`, crta se na 24sp). Posle Task-a 2 ostale četiri naslovne vrednosti su
+tintovane Material ikone — ako ovaj ostane emoji, zaglavlje osam lekcija nosi **šareni emoji među
+monohromatskim ikonama**, na najvidljivijem mestu ekrana.
+
+To je odluka koju moraš doneti izričito, ne zateći je. Tri puta, svaki sa cenom:
+**(a)** ostane emoji svuda — dosledno telu lekcije, nedosledno zaglavlju;
+**(b)** ikona svuda (gubi se pešak kao pešak);
+**(c)** različito po mestu upotrebe — traži da mapa zna kontekst, što je nov mehanizam.
+**Izmeri, presudi i zapiši šta gubiš.** Ako biraš (c), reci zašto cena novog mehanizma vredi.
+
+> Task 1 je u svom izveštaju tvrdio da je `crown.fill` doc-level ikona. **Nije** — Task 2 je to
+> proverio nezavisnom pretragom i oborio, pa je isti račun ponovljen i ovde. Ne prepisuj taj
+> spisak ni iz jednog izveštaja; gornja tabela je izmerena.
+
 - [ ] **Korak 4: Zabetoniraj ugovor mape testom**
 
 Posle ovog taska mapa je konačna: 42 ikone + 7 emoji. Nov test u **`androidTest`** (ne `test` —
