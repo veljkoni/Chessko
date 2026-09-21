@@ -632,4 +632,29 @@ class ContrastTest {
                 p.accent, over(p.accent, 0.15f, p.surface), 3.0)
         }
     }
+
+    /**
+     * Faza 9, Task 2: naslov lekcije (`LessonDetailView.kt:161-168`) crta ikonu u 50dp
+     * kvadratu sa `.background(accent.copy(alpha = 0.2f))` preko `DS.ground` (skrol nema
+     * Card/Surface iza sebe — isti razlog kao `lessonBoxIconTintOnItsOwnTintMeetsNonTextThreshold`
+     * i `openingExerciseBadgeIconMeetsNonTextThreshold`, samo TRECI kompozit u ovoj datoteci
+     * i nijedan postojeci test ga ne meri (svi ostali su @10%% na ground ili @15%% na surface).
+     * `doc.icon` je pre ovog taska UVEK bio `Emoji` (bez ikakvog `tint`-a — emoji grana
+     * `LessonGlyphView`-a ne prima boju uopste), pa par nije postojao. Sada je `Icon` za sva
+     * cetiri doc.icon-a koja se pojavljuju u isporucenom sadrzaju
+     * (`bolt.fill`/`flag.fill`/`flag.checkered`/`text.book.closed.fill` — provereno
+     * `python3` pretragom `icon` polja na vrhu svih 36 lekcijskih JSON fajlova; peti,
+     * `square.grid.3x3.fill`, ostaje `Emoji`, Task 3).
+     *
+     * IZMERENO OVIM testom (isti `over`/`contrast` put kao ostatak fajla): obe teme
+     * prolaze sa velikom marginom, pa je donja granica WCAG prag (3:1), ne pinovana
+     * vrednost.
+     */
+    @Test
+    fun lessonHeaderIconMeetsNonTextThreshold() {
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            checkPair("$label naslov lekcije ikone (accent@20%% na ground)",
+                p.accent, over(p.accent, 0.2f, p.ground), 3.0)
+        }
+    }
 }

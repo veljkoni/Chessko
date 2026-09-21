@@ -4,18 +4,38 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowCircleRight
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RemoveCircle
+import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SportsScore
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -311,10 +331,12 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 //
 // `LessonGlyph` nosi tri slucaja jer emoji i prava Material ikona ne mogu da
 // stoje u istoj `Map<String, X>`:
-//   - `Icon`   — SF simbol preveden u Material `ImageVector` (Faza 9, Task 1:
-//                21 od 49, strelice i oznake; Task 2 dodaje jos 21)
-//   - `Emoji`  — SF simbol koji OSTAJE emoji (Faza 9, Task 3, sedam simbola),
-//                ili sadrzaj koji vec nosi emoji direktno (rucno pisane lekcije)
+//   - `Icon`   — SF simbol preveden u Material `ImageVector` (Faza 9: Task 1
+//                21 od 49, strelice i oznake; Task 2 jos 21, predmeti i pojmovi
+//                — ukupno 42 od 49)
+//   - `Emoji`  — SF simbol koji OSTAJE emoji (Faza 9, Task 3, preostalih sedam
+//                simbola), ili sadrzaj koji vec nosi emoji direktno (rucno
+//                pisane lekcije)
 //   - `Unknown`— simbol koji NIJE nasao prevod. Zatecen fallback je bio tih
 //                (neutralna tacka ili sirov string); ovaj MORA da vikne, isto
 //                nacelo kao nepoznat naziv figure u `pieceRow` (CLAUDE.md,
@@ -381,11 +403,13 @@ internal fun LessonGlyphView(
 }
 
 // Faza 9, Task 1: prvih 21 od 49 simbola (strelice i oznake) prevedeno u
-// Material ikone. Preostalih 28 ostaje `Emoji` (Task 2 prevodi jos 21, Task 3
-// ostavlja sedam kao emoji, namerno). Nijedno ime iz brief-a nije trebalo
-// zamenu — svih 14 razlicitih `Icons.Filled.*` klasa je provereno da postoji
-// u `material-icons-core`/`material-icons-extended` 1.7.8 (izvorni jar,
-// `unzip -l`) pre pisanja, ne posle prve neuspele kompilacije.
+// Material ikone (14 razlicitih `Icons.Filled.*` klasa). Task 2 dodaje sledecih
+// 21 (predmeti i pojmovi, 20 razlicitih klasa — `book.fill`/`text.book.closed.fill`
+// dele `MenuBook`) — ukupno 42 od 49. Task 3 ostavlja poslednjih 7 kao emoji,
+// namerno. Nijedno ime iz oba brief-a nije trebalo zamenu — svih 34 razlicite
+// `Icons.Filled.*` klase provereno postoje u raspakovanom sources jar-u
+// `material-icons-core`/`material-icons-extended` 1.7.8 pre pisanja, ne posle
+// prve neuspele kompilacije.
 private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
     "arrow.clockwise" to LessonGlyph.Icon(Icons.Filled.Refresh),
     "arrow.forward.circle.fill" to LessonGlyph.Icon(Icons.Filled.ArrowCircleRight),
@@ -409,44 +433,46 @@ private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
     "xmark.circle.fill" to LessonGlyph.Icon(Icons.Filled.Cancel),
     "xmark.shield.fill" to LessonGlyph.Icon(Icons.Filled.Cancel),
 
-    // Preostalih 28 -- Faza 9, Task 2/3.
-    "bolt.fill" to LessonGlyph.Emoji("⚡"),
-    "book.fill" to LessonGlyph.Emoji("📖"),
-    "chart.line.uptrend.xyaxis" to LessonGlyph.Emoji("📈"),
+    // Faza 9, Task 2: sledecih 21 (predmeti i pojmovi).
+    "bolt.fill" to LessonGlyph.Icon(Icons.Filled.Bolt),
+    "book.fill" to LessonGlyph.Icon(Icons.Filled.MenuBook),
+    "chart.line.uptrend.xyaxis" to LessonGlyph.Icon(Icons.Filled.TrendingUp),
+    "eye.fill" to LessonGlyph.Icon(Icons.Filled.Visibility),
+    "flag.checkered" to LessonGlyph.Icon(Icons.Filled.SportsScore),
+    "flag.fill" to LessonGlyph.Icon(Icons.Filled.Flag),
+    "flame.fill" to LessonGlyph.Icon(Icons.Filled.LocalFireDepartment),
+    "globe" to LessonGlyph.Icon(Icons.Filled.Public),
+    "hand.point.up.left.fill" to LessonGlyph.Icon(Icons.Filled.TouchApp),
+    "heart.fill" to LessonGlyph.Icon(Icons.Filled.Favorite),
+    "link" to LessonGlyph.Icon(Icons.Filled.Link),
+    "person.fill" to LessonGlyph.Icon(Icons.Filled.Person),
+    "person.2.fill" to LessonGlyph.Icon(Icons.Filled.People),
+    "quote.opening" to LessonGlyph.Icon(Icons.Filled.FormatQuote),
+    "ruler.fill" to LessonGlyph.Icon(Icons.Filled.Straighten),
+    "scalemass.fill" to LessonGlyph.Icon(Icons.Filled.Scale),
+    "shield.fill" to LessonGlyph.Icon(Icons.Filled.Shield),
+    "square.grid.2x2.fill" to LessonGlyph.Icon(Icons.Filled.GridView),
+    "star.fill" to LessonGlyph.Icon(Icons.Filled.Star),
+    "text.book.closed.fill" to LessonGlyph.Icon(Icons.Filled.MenuBook),
+    "trophy.fill" to LessonGlyph.Icon(Icons.Filled.EmojiEvents),
+
+    // Preostalih 7 -- Faza 9, Task 3 (namerno ostaju emoji).
     "crown.fill" to LessonGlyph.Emoji("👑"),
     "dot.square.fill" to LessonGlyph.Emoji("⬛"),
-    "eye.fill" to LessonGlyph.Emoji("👁️"),
-    "flag.checkered" to LessonGlyph.Emoji("🏁"),
-    "flag.fill" to LessonGlyph.Emoji("🚩"),
-    "flame.fill" to LessonGlyph.Emoji("🔥"),
-    "globe" to LessonGlyph.Emoji("🌐"),
-    "hand.point.up.left.fill" to LessonGlyph.Emoji("👆"),
-    "heart.fill" to LessonGlyph.Emoji("❤️"),
     // Svih pet pojava je vezano za skakaca (L-putanja) — otud konj, ne dzojstik.
     "l.joystick.fill" to LessonGlyph.Emoji("🐴"),
-    "link" to LessonGlyph.Emoji("🔗"),
-    "person.2.fill" to LessonGlyph.Emoji("👥"),
-    "person.fill" to LessonGlyph.Emoji("👤"),
-    "quote.opening" to LessonGlyph.Emoji("💬"),
     // „rectangle.portrait" je na iOS-u top, „rhombus" lovac — provereno po
     // naslovima svih pojava, ne po imenu simbola.
     "rectangle.portrait.fill" to LessonGlyph.Emoji("🏰"),
     "rhombus.fill" to LessonGlyph.Emoji("📐"),
-    "ruler.fill" to LessonGlyph.Emoji("📏"),
-    "scalemass.fill" to LessonGlyph.Emoji("⚖️"),
-    "shield.fill" to LessonGlyph.Emoji("🛡️"),
-    "square.grid.2x2.fill" to LessonGlyph.Emoji("🔲"),
     "square.grid.3x3.fill" to LessonGlyph.Emoji("♟️"),
-    "star.fill" to LessonGlyph.Emoji("⭐"),
-    "text.book.closed.fill" to LessonGlyph.Emoji("📚"),
-    "trophy.fill" to LessonGlyph.Emoji("🏆"),
     // Motiv „viljuska" — iOS je za njega uzeo bas „tuningfork".
     "tuningfork" to LessonGlyph.Emoji("🍴")
 )
 
 /// `LessonGlyph` za ime SF simbola iz JSON-a. Poznat simbol daje ono sto mapa
-/// kaze — `Icon` za 21 od 49 (Faza 9, Task 1; Task 2 dodaje jos 21), `Emoji`
-/// za ostatak. Ako sadrzaj vec nosi emoji direktno (nema tacke u imenu) —
+/// kaze — `Icon` za 42 od 49 (Faza 9: Task 1 21, Task 2 jos 21), `Emoji`
+/// za ostatak (7, Task 3). Ako sadrzaj vec nosi emoji direktno (nema tacke u imenu) —
 /// rucno pisana lekcija ne mora da zna za SF imena — prosledjuje se
 /// nepromenjen, i dalje kao `Emoji`. Simbol koji IZGLEDA kao SF ime (ima
 /// tacku) ili je prazan, a nije u mapi, daje `Unknown` — Task 0 je uveo SAMO
