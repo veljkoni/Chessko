@@ -209,16 +209,16 @@ zvučao kao da je iscrpan:**
 - pločica promocije (`PromotionOverlay.kt:47`)
 - gradijenti figura (`CapturedPiecesView.kt:54-68`)
 - birač boje igrača (`MainActivity.kt:328-393`)
-- **emoji u hromu — DELIMIČNO ZATVORENO Fazom 8.** 36 mesta (sat, ekran Igra, Zadaci i koraci
-  Puta, Učenje i Podešavanja; 34 u četiri taska + 2 koja je provera obima propustila jer joj
-  je grep izostavio blokove strelica i geometrije — vidi changelog) su zamenjena
-  `Icons.*` + `tint = DS.*`; vidi „Faza 8" u
-  Changelog-u. Dve stvari NAMERNO ostaju, obe odlukom korisnika, ne propustom:
-  `lessonIcon()` mapa u `LessonRenderer.kt` (49 SF-simbol → emoji parova, sadržaj lekcije, ne
-  hrom) i **emoji u prevedenim porukama** (`Loc.kt`: `🎉`/`🏆`/`🔥`/`🧩` u porukama pobede/mata/
-  statistike). Ovo drugo NIJE odstupanje Androida — iOS katalog nosi **iste ključeve sa istim
-  emoji-jem**, a `Chessko/Views/SettingsSheet.swift:121,123` ima doslovno `🔥`/`🧩`; uklanjanje
-  bi pokvarilo paritet dve platforme.
+- **emoji u hromu — ZATVORENO Fazom 8, a lekcijska mapa Fazom 9.** 36 mesta u hromu (sat, ekran
+  Igra, Zadaci i koraci Puta, Učenje i Podešavanja; 34 u četiri taska + 2 koja je provera obima
+  propustila jer joj je grep izostavio blokove strelica i geometrije — vidi changelog) su
+  zamenjena `Icons.*` + `tint = DS.*`; vidi „Faza 8" u Changelog-u. **Faza 9 je isto uradila sa
+  lekcijskom mapom** — `SYMBOL_TO_GLYPH` (bivša `lessonIcon()`) je danas **43 `Icon` + 6
+  `Emoji`**; vidi „Lekcijski glifovi" ispod. NAMERNO ostaju: tih **šest** simbola i **emoji u
+  prevedenim porukama** (`Loc.kt`: `🎉`/`🏆`/`🔥`/`🧩` u porukama pobede/mata/statistike). Ovo
+  drugo NIJE odstupanje Androida — iOS katalog nosi **iste ključeve sa istim emoji-jem**, a
+  `Chessko/Views/SettingsSheet.swift:121,123` ima doslovno `🔥`/`🧩`; uklanjanje bi pokvarilo
+  paritet dve platforme.
 
 > **Emoji glif ne prima `color=`.** Skia za pun-kolor emoji glifove IGNORIŠE boju teksta, pa
 > `Text("🔄", color = DS.ink)` izgleda kao da mehanizam radi a ne radi nikad — činjenica o Skia
@@ -622,8 +622,55 @@ na jednom mestu i menja se na obe platforme.
 - **Parser BACA na nepoznat tip bloka**, isto kao iOS. Sadržaj je van dometa kompajlera, pa je
   to jedino mesto koje može da vikne.
 - **`icon` u JSON-u je ime SF simbola** (`crown.fill`, `tuningfork`). iOS ih crta nativno;
-  Android ih mapira u emoji kroz `lessonIcon()` u `LessonRenderer.kt` (49 simbola). Bez te mape
-  na svakom naslovu bi pisalo bukvalno `crown.fill`.
+  Android ih razrešava kroz `lessonGlyph()` u `LessonRenderer.kt` (49 simbola). Bez te mape na
+  svakom naslovu bi pisalo bukvalno `crown.fill`. Detalji — vidi „Lekcijski glifovi" ispod.
+
+### Lekcijski glifovi (Faza 9)
+
+Do Faze 9 je mapa bila `Map<String, String>` (`lessonIcon()`, 49 emoji-ja) i rezultat je išao
+direktno u `Text(...)`. Danas je `SYMBOL_TO_GLYPH: Map<String, LessonGlyph>` — **43 `Icon` +
+6 `Emoji` = 49** — a `lessonGlyph(String): LessonGlyph` je jedina ulazna tačka.
+
+- **`LessonGlyph` je `sealed interface` sa tri grane:** `Icon(ImageVector)`, `Emoji(String)` i
+  `Unknown(String)`. Tip postoji zato što ikona i emoji **ne mogu da stoje u istom
+  `Map<String, ImageVector>`** — šest simbola namerno ostaje emoji (razlog niže). Plan Faze 9 je
+  tu koliziju promašio i opisao izmenu kao „mapa postaje `Map<String, ImageVector>`"; pre-flight
+  provera je to uhvatila i dodala Task 0, koji uvodi **samo tip i jedno mesto crtanja**, bez
+  ijednog prevedenog simbola — ekran mora da izgleda identično pre i posle.
+- **`LessonGlyphView(glyph, fontSize, tint, modifier)` je jedino mesto crtanja.** `tint` je
+  **obavezan parametar, ne podrazumevan** — sa podrazumevanom vrednošću bi ikona tiho pala na
+  `LocalContentColor` i razišla se sa semantičkom bojom naslova pored sebe, i to bi se ponovilo
+  na svakom budućem pozivnom mestu. Emoji grana `tint` **ne prima** (vidi „Emoji glif ne prima
+  `color=`" gore).
+- **`Unknown` vikne, ne ćuti** — crveni `Icons.Default.Warning` + ime simbola kroz `DS.danger`.
+  Zatečeni fallback je crtao `"•"` ili sam simbol; tiha praznina (ili bukvalna reč „tuningfork")
+  usred lekcije je gora od ružnog znaka. **Pravilo razlikovanja je ASCII, ne tačka:** ime bez
+  tačke (`globe`, `link`, `tuningfork` — tri isporučena SF imena su baš takva) je do runde
+  ispravki Task-a 3 prolazilo kao `Emoji` i **tiho se crtalo kao sopstvena reč**. Sada svako
+  ASCII ime van mape pada na `Unknown`, a stvaran emoji glif (non-ASCII) i dalje prolazi.
+  Izmereno da se ni za jedan od 49 isporučenih simbola grana ne menja.
+- **Šest simbola NAMERNO ostaje emoji, i to je merena odluka, ne nedovršen posao:**
+  `crown.fill` 👑, `rectangle.portrait.fill` 🏰, `l.joystick.fill` 🐴, `rhombus.fill` 📐,
+  `tuningfork` 🍴, `dot.square.fill` ⬛. Razlog: **u `Icons.Filled` nema nijedne šahovske figure
+  ni ijednog taktičkog motiva** — provereno raspakivanjem sources jar-a
+  `material-icons-extended` 1.7.8, **2083** imena, broj reprodukovan na tri načina. Postoji samo
+  metafora (`Castle` za topa, `Restaurant` za viljušku), a `Icons.Filled.Restaurant` u lekciji o
+  taktici šalje sledećeg čitaoca koda da traži grešku koje nema. Unicode figure (♙♘♗♖♕♔) su
+  razmotrene kao treće rešenje i odbijene merenjem: `crown.fill` je 70 od 150 pojava tih šest i
+  **polisemičan** je (od 11 mesta u `*.sr.json` četiri su Dama, tri Kralj, četiri uopšte nisu
+  figura), pa jedan znak ne može biti i ♔ i ♕.
+- **`square.grid.3x3.fill` je prešao na `Icons.Filled.GridOn`, i to NIJE u skupu od šest.**
+  Plan ga je nabrajao među „sedam šahovskih koji ostaju", pa se broj čita kao 42+7 — netačno.
+  Merenje: simbol se u **telu** lekcije ne javlja nijednom, a naslovna je ikona za **8 od 36**
+  lekcijskih fajlova (jedino pozivno mesto je `LessonDetailView.kt:168`, pločica 50dp sa
+  `accent@20%` podlogom). Da je ostao emoji, zaglavlje prve lekcije koju svaki korisnik otvori
+  nosilo bi jedini šareni glif među četiri tintovane ikone u istom redu. Uz to zatečeni emoji
+  ♟️ **nije bio ono što simbol znači** — `square.grid.3x3.fill` je mreža polja, a iOS na tom
+  mestu crta TABLU, ne figuru.
+- **Brojevi u komentarima se izvode, ne prepisuju.** `LessonRenderer.kt` uz mapu nosi komande
+  kojima se broj klasa (36) i broj imena u `Icons.Filled` (2083) dobija iz izvora. To je
+  popravka **uzroka**, ne ispisa: brojka je u ovoj fazi bila pogrešna tri puta, uvek iz istog
+  razloga (v. changelog).
 - **Markdown `**bold**` se mora obraditi** — `mdBold()` u istom fajlu. Bez toga se u sadržaju
   vidi 307 parova zvezdica. iOS to radi kroz `mdText()`.
 - **Vežba sa `mateIn` ide u `MatePuzzleCard`**, bez njega u `OpeningExerciseCard` — isti izbor
@@ -682,13 +729,15 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | 5 — analiza partije | **da** | ista stavka pod dva broja kao 2/6a i 4/6c — isporučeno kao **6e** |
 | **6e — analiza partije** | **da** | native Stockfish preko JNI (ne `ChessKitEngine`), isti N+1 ugovor i pragovi klasifikacije kao iOS; ekran analize + dugme u obe grane `MainActivity` (portret/pejzaž) i u `game` koraku Puta; vidi „Android (Faza 6e) — šta je drugačije" |
 
-Testovi: **105 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 15, `EngineTest` 9,
-`ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5, `LocTest` 5,
+Testovi: **110 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 18, `EngineTest` 9,
+`ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5,
+`LessonBoardsOptOutOfSwipeTest` 2, `LocTest` 5,
 `MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 27, `PathProgressTest` 9,
 `PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9,
-`StepWindowTest` 3, `UCIScoreParserTest` 9) + **52 instrumentisana**
+`StepWindowTest` 3, `UCIScoreParserTest` 9) + **54 instrumentisana**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
-`GameViewModelActivityRecreationTest` 1, `LessonContentTest` 9, `LessonRepositoryTest` 6,
+`GameViewModelActivityRecreationTest` 1, `LessonContentTest` 9, `LessonGlyphMapTest` 2,
+`LessonRepositoryTest` 6,
 `ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
 `SoundReleaseOnLanguageKeyChangeTest` 1,
 `StatsFacadeTest` 4, `StockfishEvaluateTest` 4). Oba broja su iz XML-a, ne iz izlaznog koda.
@@ -803,8 +852,11 @@ Testovi: **105 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 15, `Engi
   u registru sata; zatvaranje bi tražilo dve različite hairline ivice (svetlu gore, tamnu dole),
   dakle novi vizuelni element koji iOS nema. Posledica je ista kao za belu polovinu pre
   ispravke: traka nije `clickable`, pa igrač koji cilja donji rub crne polovine pogađa nju.
-- **Emoji u Android UI hromu (~37) i u `lessonIcon()` mapi (44) ostaju — odlukom korisnika, ne
-  propustom.** Ovo je izbor ikonografije, ne boje — van obima Faze 6d-2. Konkretan nalaz iz te
+- ~~**Emoji u Android UI hromu (~37) i u `lessonIcon()` mapi (44) ostaju**~~ — **hrom ZATVOREN
+  Fazom 8, lekcijska mapa ZATVORENA Fazom 9** (43 od 49 simbola na `Icons.*` + `tint`; preostalih
+  šest je merena odluka, ne rezidual — vidi „Lekcijski glifovi"). Ostatak ovog unosa opisuje
+  nalaz Faze 6d-2 koji i dalje važi kao **pravilo**, iako više ne opisuje naš kod.
+  Ovo je bio izbor ikonografije, ne boje — van obima Faze 6d-2. Konkretan nalaz iz te
   faze: `🔄` (dugme za resetovanje sata) je pun-kolor emoji glif, i **Skia ignoriše `color=`
   teksta za takve glifove** — tekstualni signal stanja nikad nije radio, ni pre grane. Popravka
   je bila `Modifier.alpha(0.38f)` (M3 standardna vrednost za onemogućeno stanje) umesto obojenog
@@ -978,31 +1030,97 @@ Testovi: **105 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 15, `Engi
     skrolovanje lekcije (`input swipe`) je usput prevrtalo stil. Popravka: isti događaj se
     čita **još jednom na `PointerEventPass.Final`**, koji ide obrnutim redom (roditelj pa
     dete), pa je potrošnja skrola tu vidljiva. Cena je zapisana kao ograničenje ispod.
-- **Prečica „prevlačenje menja temu table / stil figura" je od Faze 7 živa samo tamo gde tabla
-  NIJE u vertikalnom skrolu.** Izmereno, obe strane, na emulatoru (vrednosti čitane iz
-  `chessko_settings.xml`, ne sa slike):
+- **Prečica za stil figura od Faze 9 ima drugi okidač — „zadrži pa prevuci".** Faza 7 je
+  ostavila da uspravna prečica ćuti svuda gde je tabla u vertikalnom skrolu; Faza 9 je izabrala
+  treću opciju koju je sama Faza 7 nabrojala („prečicu vezati za pokret koji se ne sudara sa
+  skrolom"). Stanje danas, sve izmereno na emulatoru (vrednosti čitane iz
+  `chessko_settings.xml` preko `run-as`, ne sa slike):
 
-  | gde | vodoravno (tema table) | uspravno (stil figura) |
-  |---|---|---|
-  | Igra, portret (tabla u `verticalScroll`) | **radi** | **ne radi** |
-  | Igra, pejzaž (tabla van skrolujuće kolone) | **radi** | **radi** |
-  | lekcija / koraci Puta | **radi** | **ne radi** |
+  | gde | vodoravno, obično (tema table) | uspravno, obično (stil figura) | uspravno, zadrži pa prevuci |
+  |---|---|---|---|
+  | Igra, portret (tabla u `verticalScroll`) | **radi** | **ne radi** | **radi** |
+  | Igra, pejzaž (tabla van skrolujuće kolone) | **radi** | **radi** | **radi** |
+  | Zadaci, portret (nema skrolera) | **radi** | **radi** | **radi** |
+  | koraci Puta (nemaju skroler) | **radi** | **radi** | **radi** |
+  | lekcijske table (5 mesta) | **ne radi** (novo, v. niže) | **ne radi** | **ne radi** |
 
-  Uzrok: `verticalScroll` potroši pokret **čim pređe touch slop, i onda kad nema šta da
-  skroluje** — provereno na svežoj partiji koja cela staje na ekran, gde prečica takođe ne
-  okine. Vodoravna prečica preživljava jer nijedan roditelj ne traži vodoravni pokret.
-  **Ovo je svesna zamena, ne propust:** pre popravke je prečica radila svuda, ali je isti
-  pokret kojim korisnik skroluje **nečujno menjao njegovo podešavanje** (izmereno, vidi gore).
-  Tiha izmena tuđeg podešavanja je gora od prečice koja radi na pola ekrana. Ako se ikad
-  preispita, izbor nije „vrati staro" (to vraća i gutanje skrola) nego: isključiti
-  `swipeToChangePieceStyle` podrazumevano, ili prečicu vezati za pokret koji se ne sudara sa
-  skrolom (dva prsta, ili dug pritisak pa prevlačenje).
+  > **Tabela koju je ovo zamenilo bila je NETAČNA, i to od Faze 7 — ne od ove faze.** Stari red
+  > je glasio „lekcija / **koraci Puta** → uspravno ne radi". Za korake Puta nije tačno:
+  > `StepPracticeView.kt` i `StepGameView.kt` nemaju **nijedan** pogodak na
+  > `verticalScroll|LazyColumn|rememberScrollState` (tabla im je `Box(Modifier.weight(1f))` u
+  > običnoj `Column`), a `PathView.kt:108` skroluje samo **listu** koraka, koju ekran koraka
+  > zamenjuje. Isto važi za Zadatke u portretu. Prečica je bila mrtva u **dva** konteksta
+  > (Igra u portretu i lekcije), ne u četiri. Izmereno u Task-u 4 i nezavisno potvrđeno u
+  > pregledu. To je i promenilo presudu: gašenje prekidača podrazumevano ili uklanjanje prečice
+  > kaznili bi četiri ekrana na kojima funkcija radi zbog jednog na kom ne radi.
+
+  Mehanizam: dug pritisak **bez pokreta** na praznom polju naoružava prečicu
+  (`withTimeoutOrNull(longPressTimeoutMillis)`), i od tog trenutka se troši **svaki** pokret, pa
+  roditeljski `verticalScroll` više ne može da preuzme gest. Dok se čeka hold ne troši se ništa,
+  pa skrol radi normalno; prvi pokret preko `touchSlop`-a odustaje od naoružavanja i vraća gest
+  na zatečenu putanju. Naoružavanje je gejtovano **na `swipeToChangePieceStyle`**, ne na „bilo
+  koji od dva prekidača" — hold postoji isključivo zbog uspravne ose; sa uključenom samo temom
+  bi krao skrol i vibrirao bez ijednog efekta (izmereno: sa `swipeToChangePieceStyle=false`
+  uspravan hold-gest ne menja stil **i** strana se skroluje).
+
+  **Cena, izričito:** dug pritisak na praznom polju je od sada **zauzet** i nije više slobodan
+  za buduću funkciju (strelice na tabli, premove); gest se ne otkriva sam nego samo iz oznake u
+  podešavanjima (zato nov ključ „Zadrži pa prevuci gore/dole (menja stil)" × 8 jezika, stari
+  obrisan); oznaka se time **namerno razilazi sa iOS-om**, jer se gest stvarno razlikuje —
+  iOS nema Compose-ov odnos deteta i roditeljskog skrola. Vodoravna oznaka je ostavljena kakva
+  jeste: za nju obično prevlačenje i dalje radi svuda, pa bi je „zadrži" učinila netačnom u
+  drugom smeru. I: `hapticManager.lightImpact()` na naoružavanje je **jedini** signal da je
+  prečica aktivna, a `HapticManager.kt:60-61` ćuti kad je taktilni odziv ugašen — takvom
+  korisniku gest nema povratnu informaciju dok se prečica ne okine.
+- **Zatečen bug koji je Faza 9 popravila: vodoravno prevlačenje po LEKCIJSKOJ tabli menjalo je
+  globalnu temu table.** Ista klasa greške koju je Faza 7 zatvorila za **uspravnu** osu —
+  preživela je ceo taj talas na **vodoravnoj**, jer uspravnu je slučajno gušio roditeljski
+  skrol a vodoravnu niko. iOS to sprečava od ranije: `BoardView.swift:21` nosi
+  `allowsStyleSwipe: Bool = true`, a `false` stoji na **tačno pet** mesta u
+  `LessonRenderer.swift` (`:194`, `:243`, `:645`, `:755`, `:886`). Android je imao **istih pet**
+  ekvivalenata (`LStaticBoard` u `LessonRenderer.kt`; `PieceExplorer`, `OpeningExerciseCard`,
+  `MateExerciseCard`, `MatePuzzleCard` u `LearnView.kt`) i **nijedan izuzetak**. Ime i semantika
+  su preslikani sa iOS-a. Čuva ih JVM test `LessonBoardsOptOutOfSwipeTest` (čita izvor, isti
+  obrazac kao `MainActivitySoundWiringTest`), koji tvrdi **obe strane**: da svih pet lekcijskih
+  tabli ima zastavicu (i da ih je i dalje pet, koliko ih ima iOS) i da je nijedna tabla van
+  lekcije **nema** — bez druge tvrdnje bi jedan zalutali `allowsStyleSwipe = false` u
+  `MainActivity` ugasio prečicu na svim ekranima a test ostao zelen. Dokazan mutacijom.
 - **Gest koji počne NA FIGURI i dalje guta skrol** (`BoardView.kt`). Popravka iz Faze 7 je
   oslobodila samo prazna polja; polje sa figurom se i dalje troši na `down`-u, jer je to jedini
   put do prevlačenja figure. Na vežbi iz otvaranja polovina polja nosi figuru, pa korisnik koji
   prstom krene baš sa figure ne može da skroluje — mora da pomeri prst na prazno polje ili van
   table. **Nije regresija** (staro ponašanje je bilo identično, samo je gutalo i prazna polja),
   ali naslov „ZATVORENO" iznad se odnosi na prazna polja, ne na celu tablu.
+- **Za regresiju koju je Faza 9 uvela pa sama popravila NEMA TESTA — čuva je samo izveštaj.**
+  Regresija: tap na prazno polje (pritisak kraći od `longPressTimeout`) je ostavljao gest-čvor
+  **zaglavljen**. Petlja naoružavanja bi pročitala `up`, vratila `false`, i tok bi pao u
+  zatečenu petlju koja čeka nov događaj za pokazivač **koji je već podignut**; `block()` ostane u
+  toku, pa `awaitEachGesture` nikad ne stigne do `awaitAllPointersUp()` za taj gest, i
+  **sledeći gest ovaj `pointerInput` preskoči u celosti** (mehanizam pročitan iz izvora Compose
+  1.10.4, `ForEachGesture.kt:79-87`, pa reprodukovan na uređaju). Šteta je bila gora nego
+  „potez se ne odigra": progutano prevlačenje **procuri roditeljskom skrolu**, pa korisnik koji
+  tapne prazno polje (najčešća radnja na tabli — to je odredišno polje kod igre dodirom) i onda
+  povuče figuru dobije **skrol umesto poteza**. Izmereno pre popravke, brojačem „Potez N od N"
+  i granicama table čitanim `uiautomator`-om pre svakog poteza: kontrolno prevlačenje
+  `2 → 4`, tap-pa-prevlačenje `4 → 4` (progutano), sledeće prevlačenje bez tapa `4 → 6`, igra
+  dodirom `6 → 8` (nije pogođena — tapove nosi zaseban `clickable` čvor). Tabla se pri
+  progutanom gestu pomerila **232 px** (`[53,426]` → `[53,194]`). Posle popravke, isti build:
+  `8 → 10` i `10 → 12`. Popravka je trivijalna — faza naoružavanja razlikuje **tri** ishoda
+  umesto dva (`null` = isteklo/naoružano, `true` = prst podignut pre isteka → izlazak iz
+  `awaitEachGesture`, `false` = krenuo pokret).
+  **Pouka nije „proveri gest" nego gde je zaštita gledala:** brief je izričito tražio da se
+  prevlačenje figure ne pokvari, izvršilac je proverio **redosled `positionChange()`/`consume()`**
+  (baš mesto gde je Faza 7 imala bug) i tu je bio čist — a regresija je ušla kroz **stanje
+  gesta**, ne kroz redosled. Zaštita se branila od **prošle** greške.
+  **Oblik testa koji nedostaje, da ga sledeća faza ne izmišlja:** Compose UI test nad
+  `BoardView`-om, `performTouchInput { click(); swipe() }` na praznom polju pa prevlačenje sa
+  polja sa figurom, uz tvrdnju da se potez odigrao (i, poželjno, da se roditeljski skroler nije
+  pomerio). Mora **instrumentisan** (`createComposeRule`) — ponašanje živi u `pointerInput`-u i
+  refleksijom mu se ne može prići. To je **nov obrazac u projektu**:
+  `SoundReleaseOnLanguageKeyChangeTest` je jedini test koji uopšte koristi `createComposeRule`,
+  i infrastruktura je već jednom ujela (`espresso-core` 3.5.1 i 3.6.1 padaju na API 36).
+  Uvođenje novog test-obrasca u **zatvaranju** faze je način na koji obim eksplodira, pa je
+  svesno odloženo. **Cena ako grešim:** regresiju danas može neko da vrati neprimećeno.
 - **Dijalog analize (Android) ne pokriva sistemsku navigacionu traku.** Ispod zatamnjenja se na
   svakom snimku vide presečeni natpisi `Igra / Zadaci / Put`. iOS isti ekran prikazuje kao punu
   `sheet`, pa tamo tab bar nestane. Nije popravljeno jer bi tražilo menjanje tipa dijaloga
@@ -1132,8 +1250,9 @@ Testovi: **105 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 15, `Engi
   - Veza sa stavkom iznad: za **stare** zapise (bez `status` polja) `statusFromPosition` i
     dalje ne prepoznaje `Draw(FiftyMoves)` — status se ne izvodi iz brojača nego iz
     eksplicitnog polja. Ali učitana partija sada bar **nastavlja da broji tamo gde je stala**.
-- **`LessonRenderer.kt:193` crta hardkodovan `⚠︎` direktno u `Text`, van `lessonIcon()` mape i
-  van `Loc.kt` rečnika.** Kad se FEN lekcijskog `board` bloka ne parsira, `LStaticBoard` prikaže
+- **`LessonRenderer.kt:235` crta hardkodovan `⚠︎` direktno u `Text`, van `SYMBOL_TO_GLYPH` mape
+  i van `Loc.kt` rečnika.** (Bio `:193` do Faze 9, koja je fajl produžila; linija je ista.)
+  Kad se FEN lekcijskog `board` bloka ne parsira, `LStaticBoard` prikaže
   `"⚠︎ $fen"` — glif koji migracija Faze 8 nije ni videla (mapa/rečnik su pretraživani odvojeno
   od doslovnih `Text(...)` literala). **I nije pokvaren: glif je `U+26A0` + `U+FE0E`, dakle
   VARIATION SELECTOR-15 — tekstualna, monohromatska prezentacija, koja `color=` PRIMA**, i kod mu
@@ -2708,3 +2827,136 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   upaljen. Ova sesija ga je zatekla i ugasila pre sopstvenog dizanja. Sopstveno dizanje (za
   tamnu temu) je bilo jedno, `-gpu host`, i ugašeno odmah po snimanju — `adb emu kill` +
   `./gradlew --stop` + `pgrep -f qemu-system` prazan, potvrđeno.
+
+- **2026-09-21** — Faza 9 (Android: lekcijski simboli u Material ikone + prečica prevlačenjem).
+  Poslednji emoji-blok na Androidu — **lekcijska mapa** — prešao je na `Icons.*` + `tint`:
+  `SYMBOL_TO_GLYPH` je danas **43 `Icon` + 6 `Emoji` = 49**. Uz to je prečica „prevlačenje menja
+  stil figura" dobila okidač koji se ne sudara sa skrolom (*zadrži pa prevuci*), a usput su
+  popravljena **dva buga u gestu table** — jedan zatečen, jedan koji je faza sama uvela. Detalji:
+  „Lekcijski glifovi" i „Poznata ograničenja" gore.
+
+  **Izmereni brojevi, oba iz XML-a, 0 padova:** JVM **105 → 110** (`ContrastTest` 15 → 18 kroz
+  Taskove 1–2, nov `LessonBoardsOptOutOfSwipeTest` 2), instrumentisani **52 → 54** (nov
+  `LessonGlyphMapTest` 2). Nijedna nova Gradle zavisnost; `git diff --stat main..HEAD --
+  Chessko Chessko.xcodeproj` prazan (iOS netaknut); lekcijski JSON i `curriculum.json` i dalje
+  bajt-identični sa iOS-om (`diff -r` prazan).
+
+  **Task 0 postoji zato što je plan bio strukturno pogrešan, i to je uhvaćeno PRE dispečovanja.**
+  Plan je izmenu opisao kao „mapa postaje `Map<String, ImageVector>`, fajl `LessonRenderer.kt`".
+  Oboje netačno: `lessonIcon()` je imao **8 pozivnih mesta u 2 fajla** i ulazio u **šest
+  potpisa**, a `ImageVector` ne može da nosi šest simbola koji ostaju emoji. Dodat je Task 0 koji
+  uvodi `LessonGlyph` (Icon/Emoji/Unknown) i jedno mesto crtanja, **bez ijednog prevedenog
+  simbola** — ekran identičan pre i posle, dokazano poređenjem stare i nove mape (bajt-identična)
+  i provlačenjem svih 49 stvarnih `icon` vrednosti kroz obe logike (0 razlika). **Pouka:**
+  planirao sam izmenu tipa ne otvorivši potrošače tog tipa — ista klasa greške kao obavezujuća
+  tabela ključeva iz Faze 8, samo uhvaćena pre nego što je dobila autoritet plana.
+
+  **Presuda o šest simbola je merena, ne odokativna.** U `Icons.Filled` nema **nijedne** šahovske
+  figure ni ijednog taktičkog motiva (raspakovan sources jar `material-icons-extended` 1.7.8,
+  **2083** imena). Unicode figure su razmotrene kao treće rešenje i odbijene brojevima:
+  `crown.fill` je 70 od 150 pojava tih šest i **polisemičan** (4 Dama / 3 Kralj / 4 nije figura
+  uopšte, po 11 mesta u `*.sr.json`), a ostala tri su POTEZ i MOTIV, ne figura — za preostala dva
+  (top, lovac, 27% pojava) bi trebao **treći slučaj** u `LessonGlyph`, jer emoji grana namerno ne
+  prima boju a Unicode figura je mora dobiti. Nov mehanizam za 2 od 49 simbola.
+
+  **`square.grid.3x3.fill` NIJE među tih šest, iako ga je plan tamo stavio.** Zato je broj
+  **43+6**, ne 42+7. Merenje: simbol se u **telu** lekcije ne javlja nijednom, a naslovna je
+  ikona za **8 od 36** lekcijskih fajlova — opcija „ikona u zaglavlju, emoji u telu", koju sam
+  sam ponudio kao treći put, nije imala predmet. Ide na `Icons.Filled.GridOn`; zatečeni ♟️
+  ionako nije bio ono što simbol znači (mreža polja, ne figura — iOS tu crta tablu).
+
+  **Zatečen bug, van teksta brief-a: vodoravno prevlačenje po lekcijskoj tabli menjalo je
+  GLOBALNU temu table.** iOS to sprečava od ranije (`allowsStyleSwipe`, `false` na tačno pet
+  mesta u `LessonRenderer.swift`); Android je imao **istih pet** mesta bez ijednog izuzetka. Ista
+  klasa greške koju je Faza 7 zatvorila za **uspravnu** osu — preživela je taj ceo talas na
+  vodoravnoj, jer uspravnu je slučajno gušio roditeljski skrol a vodoravnu niko.
+
+  **Regresija koju je ova faza uvela pa sama popravila, i njen uzrok:** tap na prazno polje je
+  ostavljao gest-čvor zaglavljen, pa je **sledeće prevlačenje** bilo progutano i procurilo
+  roditeljskom skrolu — korisnik dobija **skrol umesto poteza** (izmereno: tabla se pomeri
+  **232 px**; brojač poteza `4 → 4` umesto `4 → 6`). **Pouka nije „proveri gest":** brief je
+  izričito tražio da se prevlačenje figure ne pokvari, provera je gledala **redosled
+  `positionChange()`/`consume()`** — mesto gde je Faza 7 imala bug — i bila čista. Regresija je
+  ušla kroz **stanje gesta**, ne kroz redosled: zaštita se branila od **prošle** greške.
+  Našao ju je pregled **čitanjem izvora Compose-a** (`ForEachGesture.kt:79-87`), a merenje ju je
+  potvrdilo; za nju **nema testa** i to je upisano kao poznato ograničenje, sa navedenim oblikom
+  testa koji nedostaje.
+
+  **Tabela prečice iz Faze 7 je bila NETAČNA, i to od Faze 7 — ispravljena je, ne obrisana.**
+  Tvrdila je da uspravna prečica ćuti u „koraci Puta"; ti ekrani nemaju **nijedan** skroler, pa
+  tamo radi. Mrtva je bila u **dva** konteksta (Igra u portretu, lekcije), ne u četiri. To je
+  promenilo i presudu: gašenje prekidača ili uklanjanje prečice kaznili bi četiri ekrana zbog
+  jednog.
+
+  ### Četiri stvari koje je ova faza pogrešila, i koje ne smeju ispasti iz zapisa
+
+  - **Kontroler je dvaput prosledio tuđi broj ne izmerivši ga, i oba puta je implementer koji je
+    merio bio u pravu.** (1) Broj imena u `Icons.Filled`: prosledio sam recenzentovih **2082**;
+    implementer ga nije prepisao nego izmerio na tri načina i sva tri dala **2083**, pa je
+    zadržao 2083 i u komentar upisao komande kojima se izvodi. (2) Pinovana kontrast vrednost
+    `2.9361847662648937`: tvrdio sam da se ne reprodukuje, na osnovu **tri računa sa strane**
+    (pun double, float32, ručno FP16 pakovanje) — nijedan nije dao pin. Implementer je pustio
+    **stvarni proizvodni put** (`over()`/`contrast()`) i ispisao rezultat: identičan pinu, dvaput,
+    deterministički. Uzrok razlike: `Color(red:green:blue:)` Compose pakuje u **FP16**, pa svako
+    čitanje `.red`/`.green`/`.blue` posle kompozicije već nosi izgubljenu preciznost, a moje
+    ručno FP16 pakovanje nije bit-identično njegovom. **Pouka: broj koji proizvodi biblioteka
+    proverava se pokretanjem biblioteke, ne ponovnim izvođenjem njene aritmetike.** Provera ipak
+    nije bila uzaludna — istom sondom je izmereno i **zatečenih četiri brojeva** u doc-komentaru,
+    i sva četiri su bila pogrešna, jer ih nikad nije nosila nijedna tvrdnja.
+  - **Kontroler je i sam upao u zamku koju ovaj fajl već opisuje.** Naivan
+    `grep -c "LessonGlyph.Icon("` nad opsegom mape dao mi je **44**; 44. pogodak je bio
+    **komentar**. Tačno je 43. Isto kao brojanje zakucanih boja u Fazi 6d-1: *grepovana
+    kontrolna lista se čita, ne samo broji.* Recenzent je istu zamku uhvatio na drugom broju
+    (36 sa filterom, 37 bez — višak je `Icons.Filled.Restaurant` u komentaru).
+  - **Task 2 je nasledio pogrešnu brojku klasa sabirajući tuđe brojeve umesto izvođenjem iz
+    mape** (14+20=34; stvarno 35, jer Task 1 ima 15 distinct klasa, ne 14). Ista greška koju ovaj
+    fajl već nosi iz Faze 6d-1, gde je broj zakucanih boja bio pogrešan **tri puta uzastopno** —
+    i tamo je koren bio isti: prosleđena vrednost primljena bez ponovnog merenja. Runda ispravki
+    nije popravila samo ispis nego **izvor**: komentar sada navodi komandu kojom se broj dobija.
+  - **Merenje na uređaju je implementera dvaput slagalo, i to je prijavio umesto da prećuti.**
+    Prvi put su „pala" i kontrolna merenja, jer su **zakucane koordinate** posle odskrolovane
+    strane gađale pogrešna polja; drugi put jer je pozicija bila **šah**, pa su izabrani potezi
+    bili nelegalni. Oba puta je zaključak bio pogrešan dok se stanje nije pročitalo **sa ekrana**.
+    Isti rod greške kao računanje umesto merenja, samo obrnut: **merio je, ali ne ono što je
+    mislio.**
+
+  Uz to su dva izveštaja nosila tvrdnje koje nisu izdržale otvaranje fajla, i oba puta ih je
+  uhvatio **sledeći** task, ne pregled: Task 1 je zapisao `crown.fill` kao naslovnu ikonu lekcije
+  (nije — to je `square.grid.3x3.fill`, 8 od 36 fajlova), a `task-2-report.md` je opisao posao
+  koji nije uradio („dopunjen komentar iznad testa" — komentar je bit-za-bit nepromenjen; jedina
+  izmena je bio nov test). Tehnički zaključci su u oba slučaja bili tačni; pogrešan je bio **opis
+  sopstvenog posla**, a to je način na koji neproverena tvrdnja dobije autoritet i uđe u sledeći
+  task.
+
+  **Nalaz koji ni jedan od tri dotadašnja pregleda nije video:** `Unknown` se dodeljivao samo
+  imenu **sa tačkom**, a tri isporučena SF imena je nemaju (`globe`, `link`, `tuningfork`) —
+  izbacivanje takvog para bi **tiho nacrtalo bukvalnu reč** „tuningfork" usred lekcije, tačno ono
+  što Task 0 postoji da spreči. Pravilo je prebačeno na **ASCII** i zadržano staro uz novo (novo
+  je strogo šire, pa nijedan slučaj koji je ranije vikao sada ne ćuti); izmereno da se ni za jedan
+  od 49 isporučenih simbola grana ne menja. Test je pri tom **preuređen, ne dopunjen**: tvrdnja
+  koja je popravkom postala **nedostižna** je uklonjena umesto da ostane kao provera koja ne može
+  da padne, a mutacija sada obara **49/49** parova zahvaljujući **pravilu**, ne dodatnoj tvrdnji.
+
+  **Emulator je dizan dvaput, i drugi put je bio odobren izuzetak.** Faza je predvidela jedan
+  prolaz (Task 4); drugi je platila sumnja na živu regresiju u gestu table — pravilo je protiv
+  emulatora koji stoji upaljen i protiv dizanja po tasku, ne protiv merenja kad postoji osnovana
+  sumnja. Oba puta `-gpu host`, oba puta ugašen odmah (`adb emu kill` + `./gradlew --stop` +
+  `pgrep -f qemu-system` prazan, zalepljeno u izveštaju).
+
+  **Šta NIJE potvrđeno, i tako se i navodi:**
+  - **4 od 6 emoji-ja nisu vizuelno potvrđena** (`dot.square.fill`, `l.joystick.fill`,
+    `rhombus.fill`, `tuningfork`) — nisu se pojavila na obiđenim ekranima. Mapa ih nosi i
+    `LessonGlyphMapTest` ih pokriva kao ne-`Unknown`, ali ih nijedan snimak ne prikazuje.
+    Viđena su 👑 i 🏰, u punoj boji među monohromatskim ikonama.
+  - **Pejzaž je dobijen `wm size 2400x1080`, ne rotacijom** (headless rotacija na ovom AVD-u ne
+    prolazi: `user_rotation` se upiše, `mCurrentOrientation` ostane 0). Grana rasporeda se bira
+    po odnosu stranica, pa **jeste** izvršena — ali je geometrija simulirana, ne rotiran uređaj.
+  - **Zatečeno ponašanje gejta „bilo koji od dva prekidača" nije mereno zasebno** (stari APK je
+    u međuvremenu prepisan); da bi kralo skrol sledi iz merenja naoružanog gesta, i ne tvrdi se
+    više od toga.
+  - Jedan snimak je bio **bajt-identičan** prethodnom (skrol nije napredovao jer je gest počeo na
+    polju sa figurom) — obrisan umesto da stoji kao dokaz, uhvaćeno poređenjem piksela.
+
+  22 snimka (obe teme za svaki ekran iz brief-a; tema potvrđena **pikselom**, `(242,243,247)` =
+  `#F2F3F7`) u `.superpowers/sdd/2026-09-20-faza-9-lekcijske-ikone-i-precica/screenshots/`.
+  `Chessko/Localizable.xcstrings` nije diran u ovoj fazi.
