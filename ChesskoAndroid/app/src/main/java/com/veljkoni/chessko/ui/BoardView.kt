@@ -212,24 +212,59 @@ fun BoardView(
                             // Dok čekamo hold ne trošimo NIŠTA, pa skrol radi
                             // normalno; čim se prst pomeri preko touch slop-a
                             // odustaje se od naoružavanja i ide zatečena putanja.
+                            //
+                            // Gejtovano na `swipeToChangePieceStyle`, ne na „bilo
+                            // koji od dva prekidača": naoružavanje postoji ISKLJUČIVO
+                            // zbog uspravne ose — vodoravnu nijedan roditelj ne traži,
+                            // pa joj hold ne donosi ništa. Sa uključenom samo temom
+                            // gejt na „bilo koji" bi na uspravan pokret vibrirao,
+                            // ukrao skrol i ne bi uradio ništa.
                             val slop = viewConfiguration.touchSlop
-                            val armed = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-                                while (true) {
-                                    val ev = awaitPointerEvent()
-                                    val ch = ev.changes.firstOrNull { it.id == down.id }
-                                        ?: return@withTimeoutOrNull false
-                                    if (!ch.pressed) return@withTimeoutOrNull false
-                                    if (ch.isConsumed) return@withTimeoutOrNull false
-                                    val d = ch.positionChange()
-                                    swipeX += d.x
-                                    swipeY += d.y
-                                    if (kotlin.math.abs(swipeX) > slop ||
-                                        kotlin.math.abs(swipeY) > slop
-                                    ) {
-                                        return@withTimeoutOrNull false
+                            var armed = false
+                            if (settings.swipeToChangePieceStyle) {
+                                // `null` = isteklo (naoružano); `true` = prst podignut
+                                // pre isteka (gest je GOTOV); `false` = krenuo pokret
+                                // (nastavlja se zatečenom putanjom).
+                                val liftedBeforeHold =
+                                    withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                                        while (true) {
+                                            val ev = awaitPointerEvent()
+                                            val ch = ev.changes.firstOrNull { it.id == down.id }
+                                                ?: return@withTimeoutOrNull true
+                                            if (!ch.pressed) return@withTimeoutOrNull true
+                                            // Potrošeno na `Initial` prolazu. Roditeljski
+                                            // skrol se ovde NE vidi (na `Main` prolazu dete
+                                            // ide pre roditelja) — zato zatečena petlja
+                                            // ispod isti događaj čita još jednom na
+                                            // `Final`. Faza 1 to ne mora: odustaje na prvi
+                                            // pokret preko touch slop-a, a roditelj ne može
+                                            // da potroši pre nego što i sam pređe isti slop.
+                                            if (ch.isConsumed) return@withTimeoutOrNull false
+                                            val d = ch.positionChange()
+                                            swipeX += d.x
+                                            swipeY += d.y
+                                            if (kotlin.math.abs(swipeX) > slop ||
+                                                kotlin.math.abs(swipeY) > slop
+                                            ) {
+                                                return@withTimeoutOrNull false
+                                            }
+                                        }
                                     }
-                                }
-                            } == null
+
+                                // Prst podignut pre nego što se navršio dug pritisak:
+                                // gest je gotov i MORA se izaći iz `awaitEachGesture`.
+                                // Pad u zatečenu petlju ispod bi značio čekanje novog
+                                // događaja za pokazivač koji više ne postoji, pa bi
+                                // `block()` ostao u toku; `awaitEachGesture` posle
+                                // `block()` čeka da SVI pokazivači budu gore
+                                // (`awaitAllPointersUp`), pa bi SLEDEĆI gest ovaj čvor
+                                // preskočio u celosti. Izmereno pre popravke: tap na
+                                // prazno polje pa prevlačenje figure — potez se ne
+                                // odigra (brojač ostane isti), a prevlačenje procuri
+                                // roditeljskom skrolu i strana se pomeri.
+                                if (liftedBeforeHold == true) return@awaitEachGesture
+                                armed = liftedBeforeHold == null
+                            }
 
                             if (armed) {
                                 // Naoružano: od sada se troši SVAKI pokret, pa
