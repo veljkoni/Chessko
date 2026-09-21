@@ -335,19 +335,27 @@ class ContrastTest {
      * Surface iza sebe — sedi direktno na `DS.ground` iz `MainActivity`-jevog
      * Box-a, linija ~641), i TAJ kompozit je stvarni piksel iza teksta.
      *
-     * IZMERENO (ne procenjeno), isti float32-preko-Double put racuna kao
-     * `luminance()`/`contrast()` iznad, kompozit = `boja @10%` preko `ground`:
+     * IZMERENO (ne procenjeno), isti `over()`/`contrast()` put kao ostatak fajla,
+     * kompozit = `boja @10%` preko `ground`. Ove cetiri brojke su Faza 9, Task 1
+     * ISPRAVIO na prave — stara verzija ovog pasusa je nosila prosne vrednosti koje
+     * NIKAD nisu bile assertovane nijednim testom (`checkPair`/`check` ispod meri
+     * `ink`/naslov protiv istog kompozita, ne SAM `warning`/`danger` protiv sopstvenog
+     * kompozita), pa je razlika prosla neprimecena dok `ContrastTest.
+     * lessonBoxIconTintOnItsOwnTintMeetsNonTextThreshold` (Faza 9, Task 1) nije prvi
+     * put stvarno assertovala TAJ par i dobila drugaciji broj. Prva vrednost ispod
+     * (svetla warning) je bukvalno pinovana u tom testu; ostale tri su izmerene istom
+     * probom, ali NISU pinovane na tacnu vrednost (samo `>= 3.0`) jer prolaze sa
+     * velikom marginom:
      *
-     *   warning na warning@10%% tintu: 2,941624 (svetla)   7,848961 (tamna)
-     *   danger  na danger@10%% tintu : 5,026419 (svetla)   6,371957 (tamna)
+     *   warning na warning@10% tintu: 2,9361847662648937 (svetla)   7,836767547933033 (tamna)
+     *   danger  na danger@10% tintu : 5,045202115823989  (svetla)   6,3852190528998   (tamna)
      *
-     * Sve cetiri su 10-15% GORE od merenja protiv golog `ground`-a ispod
-     * (svetla warning 3,26 -> 2,94, svetla danger 5,89 -> 5,03, tamna warning
-     * 9,27 -> 7,85, tamna danger 7,32 -> 6,37) — providnost dosledno pomera
-     * kompozit KA semantickoj boji, nikad od nje. Test ispod je zato DONJA
-     * GRANICA merenja, ne tacna vrednost stvarnog piksela; gde tacna vrednost
-     * i dalje prelazi 4,5 (sve osim svetle `warning`, vec poznat slucaj ispod)
-     * marza je dovoljna da razlika ne menja ishod.
+     * Sve cetiri su i dalje GORE od merenja protiv golog `ground`-a ispod (svetla
+     * warning 3,26 -> 2,94, svetla danger 5,89 -> 5,05, tamna warning 9,27 -> 7,84,
+     * tamna danger 7,32 -> 6,39) — providnost dosledno pomera kompozit KA semantickoj
+     * boji, nikad od nje. Test ispod je zato DONJA GRANICA merenja, ne tacna vrednost
+     * stvarnog piksela; gde tacna vrednost i dalje prelazi 4,5 (sve osim svetle
+     * `warning`, vec poznat slucaj ispod) marza je dovoljna da razlika ne menja ishod.
      *
      * `danger/surface` (oba testa u `textOnBackgroundsMeetsAA`) NIJE isti par
      * kao `danger/ground` ovde — ne preklapa se, samo je slucajno vec
@@ -575,10 +583,13 @@ class ContrastTest {
      * IZMERENO OVIM testom (isti `over`/`contrast` put kao ostatak fajla, ne
      * procenjeno): `RULE` (warning) u SVETLOJ temi pada NA 2,9361847662648937 —
      * ispod 3:1, ista klasa granicnog slucaja kao `warning/surface` i
-     * `warning/ground` vec pinovani u `knownSubAAPairsDoNotGetWorse` (razlika
-     * u trecoj decimali od prozne vrednosti gore, jer ta nikad nije bila
-     * assertovana — samo napisana; ova JESTE, pa je merodavna). Prag se ne
-     * podize da bi test prosao — tvrdi se da se NE POGORSAVA, isti obrazac kao
+     * `warning/ground` vec pinovani u `knownSubAAPairsDoNotGetWorse`. Doc-komentar
+     * iznad `lessonBoxStylesMeetAA` je do ovog testa nosio drugaciju prozu
+     * vrednost za ISTI par ("2,941624") — nikad assertovanu nijednim testom, pa
+     * je greska prosla neprimecena. OVAJ test je prvi koji tu tvrdnju stvarno
+     * assertuje; doc-komentar iznad je ispravljen na ovu, merodavnu vrednost u
+     * istom commit-u. Prag se ne podize da bi test prosao — tvrdi se da se NE
+     * POGORSAVA, isti obrazac kao
      * `knownSubAAPairsDoNotGetWorse`. Popravka bi znacila razlaz sa iOS
      * paletom, koja ima ISTI par (`DS.warning` na `DS.warning.opacity(0.1)`).
      * Sva ostala cetiri clana (INFO/WARNING u obe teme, RULE u tamnoj) prelaze
