@@ -403,11 +403,14 @@ internal fun LessonGlyphView(
 }
 
 // Faza 9, Task 1: prvih 21 od 49 simbola (strelice i oznake) prevedeno u
-// Material ikone (14 razlicitih `Icons.Filled.*` klasa). Task 2 dodaje sledecih
+// Material ikone (15 razlicitih `Icons.Filled.*` klasa). Task 2 dodaje sledecih
 // 21 (predmeti i pojmovi, 20 razlicitih klasa — `book.fill`/`text.book.closed.fill`
 // dele `MenuBook`) — ukupno 42 od 49. Task 3 ostavlja poslednjih 7 kao emoji,
-// namerno. Nijedno ime iz oba brief-a nije trebalo zamenu — svih 34 razlicite
-// `Icons.Filled.*` klase provereno postoje u raspakovanom sources jar-u
+// namerno. Nijedno ime iz oba brief-a nije trebalo zamenu — svih 35 razlicitih
+// `Icons.Filled.*` klasa u mapi ispod (broj IZVEDEN direktno iz nje, ne
+// sabiranjem 15+20 — `sed -n '/val SYMBOL_TO_GLYPH/,/^)/p' LessonRenderer.kt |
+// grep -o 'Icons\.[A-Za-z]*\.[A-Za-z]*' | sort -u | wc -l` daje 35) provereno
+// postoji u raspakovanom sources jar-u
 // `material-icons-core`/`material-icons-extended` 1.7.8 pre pisanja, ne posle
 // prve neuspele kompilacije.
 private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
