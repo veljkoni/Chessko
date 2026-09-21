@@ -344,7 +344,9 @@ na uređaju. **Proveri to izričito.**
 
 **Fajlovi:** `CLAUDE.md`
 
-- [ ] **Korak 1: Oba skupa testova**, brojevi **iz XML-a**. Polazno 105 / 52.
+- [ ] **Korak 1: Oba skupa testova**, brojevi **iz XML-a**. Polazno 105 / 52; na kraju faze
+očekivano **110 / 54**. Instrumentisani su već pokrenuti u Task-u 4 — **ne diži emulator** samo
+da ih ponoviš; pročitaj XML koji stoji na disku, a ako ga nema, to je nalaz.
 
 > **Zamka iz Faze 7:** posle dokaza mutacijom **pokreni skup ponovo** — inače na disku ostaje crven
 > XML iz namerno pokvarenog prolaza, koji je tačan ali ne opisuje stablo.
@@ -359,9 +361,29 @@ preživela. **Svaki pogodak pročitaj**; razloži po vrsti: kod, komentari, seda
 prevedene poruke, `ChessPiece.kt` (Unicode figure — **nisu emoji**).
 
 - [ ] **Korak 3: `CLAUDE.md`**
-  - stavku o `lessonIcon()` prepiši kao **zatvorenu za 42 simbola**, uz sedam koji **namerno ostaju**
-    i razlog (Material nema šahovske figure ni taktike)
-  - stavku o prečici prepiši po presudi iz Task-a 4
+  - stavku o `lessonIcon()` prepiši kao **zatvorenu za 43 simbola**, uz **šest** koji namerno
+    ostaju i razlog (u `Icons.Filled` nema nijedne šahovske figure ni taktičkog motiva).
+    **Ne 42+7** — Task 3 je `square.grid.3x3.fill` presudio na `Icons.Filled.GridOn`, jer se u
+    telu lekcije ne javlja nijednom a naslovna je ikona za 8 od 36 fajlova.
+  - **stavku o prečici prepiši po presudi Task-a 4** — okidač je sada *zadrži pa prevuci*.
+  - **ISPRAVI TABELU FAZE 7**, koja je netačna i pre ove faze: tvrdi da prečica ćuti u „koraci
+    Puta", a ti ekrani nemaju nijedan skroler (`StepPracticeView`/`StepGameView`: nula pogodaka
+    na `verticalScroll|LazyColumn|rememberScrollState`), pa tamo radi. Mrtva je bila u **dva**
+    konteksta, ne u četiri. Recenzent je to nezavisno potvrdio.
+  - **Upiši zatečen bug koji je Task 4 popravio:** vodoravno prevlačenje po lekcijskoj tabli je
+    menjalo **globalnu** temu table. iOS to sprečava od ranije (`allowsStyleSwipe`, `false` na 5
+    mesta u `LessonRenderer.swift`); Android je imao istih 5 mesta bez ijednog izuzetka. Ista
+    klasa greške koju je Faza 7 zatvorila za uspravnu osu — preživela je na vodoravnoj.
+  - **Upiši regresiju koju je ova faza uvela pa sama popravila, sa njenim uzrokom:** tap na
+    prazno polje je ostavljao gest-čvor zaglavljen, pa je sledeće **prevlačenje** bilo progutano
+    i procurilo roditeljskom skrolu — korisnik dobije skrol umesto poteza (izmereno: tabla se
+    pomeri 232 px). Brief je tražio da se „prevlačenje figure ne pokvari", provera je gledala
+    redosled `positionChange()`/`consume()` i bila čista — **regresija je ušla kroz stanje
+    gesta, ne kroz redosled.**
+  - **Upiši rupu koja OSTAJE, kao poznato ograničenje:** za tu regresiju **nema testa**. Traži
+    Compose UI test nad `BoardView`-om (`performTouchInput { click(); swipe() }`), dakle
+    instrumentisan i **nov obrazac u projektu**; čuva je danas samo izveštaj. Navedi oblik testa
+    koji nedostaje, da sledeća faza ne mora da ga izmišlja.
   - changelog sa **izmerenim** brojevima
 
 - [ ] **Korak 4: Provere celog stabla i commit**
