@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
@@ -332,11 +333,11 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 // `LessonGlyph` nosi tri slucaja jer emoji i prava Material ikona ne mogu da
 // stoje u istoj `Map<String, X>`:
 //   - `Icon`   — SF simbol preveden u Material `ImageVector` (Faza 9: Task 1
-//                21 od 49, strelice i oznake; Task 2 jos 21, predmeti i pojmovi
-//                — ukupno 42 od 49)
-//   - `Emoji`  — SF simbol koji OSTAJE emoji (Faza 9, Task 3, preostalih sedam
-//                simbola), ili sadrzaj koji vec nosi emoji direktno (rucno
-//                pisane lekcije)
+//                21 od 49, strelice i oznake; Task 2 jos 21, predmeti i pojmovi;
+//                Task 3 jos jedan, naslovna ikona lekcije — ukupno 43 od 49)
+//   - `Emoji`  — SF simbol koji OSTAJE emoji (Faza 9, Task 3, preostalih sest
+//                simbola — sve figure i taktike), ili sadrzaj koji vec nosi
+//                emoji direktno (rucno pisane lekcije)
 //   - `Unknown`— simbol koji NIJE nasao prevod. Zatecen fallback je bio tih
 //                (neutralna tacka ili sirov string); ovaj MORA da vikne, isto
 //                nacelo kao nepoznat naziv figure u `pieceRow` (CLAUDE.md,
@@ -405,11 +406,17 @@ internal fun LessonGlyphView(
 // Faza 9, Task 1: prvih 21 od 49 simbola (strelice i oznake) prevedeno u
 // Material ikone (15 razlicitih `Icons.Filled.*` klasa). Task 2 dodaje sledecih
 // 21 (predmeti i pojmovi, 20 razlicitih klasa — `book.fill`/`text.book.closed.fill`
-// dele `MenuBook`) — ukupno 42 od 49. Task 3 ostavlja poslednjih 7 kao emoji,
-// namerno. Nijedno ime iz oba brief-a nije trebalo zamenu — svih 35 razlicitih
+// dele `MenuBook`) — ukupno 42 od 49. Task 3 prevodi jos jedan (`GridOn`,
+// naslovna ikona lekcije — obrazlozeno na mestu u mapi) i ostavlja poslednjih 6
+// kao emoji, namerno; mapa je time konacna: 43 ikone + 6 emoji, sto tvrdi i
+// `LessonGlyphMapTest` (instrumentisan, jer cita lekcijski JSON kroz `org.json`).
+// Nijedno ime iz oba brief-a nije trebalo zamenu — svih 36 razlicitih
 // `Icons.Filled.*` klasa u mapi ispod (broj IZVEDEN direktno iz nje, ne
-// sabiranjem 15+20 — `sed -n '/val SYMBOL_TO_GLYPH/,/^)/p' LessonRenderer.kt |
-// grep -o 'Icons\.[A-Za-z]*\.[A-Za-z]*' | sort -u | wc -l` daje 35) provereno
+// sabiranjem 15+20+1 — `sed -n '/val SYMBOL_TO_GLYPH/,/^)/p' LessonRenderer.kt |
+// grep 'LessonGlyph\.Icon(' | grep -o 'Icons\.[A-Za-z]*\.[A-Za-z]*' | sort -u |
+// wc -l` daje 36; filter na `LessonGlyph.Icon(` je od Task-a 3 OBAVEZAN, jer
+// bez njega isti niz pokupi i `Icons.Filled.Restaurant` iz komentara ispod —
+// ime koje je razmotreno pa odbijeno i nema nijedno pozivno mesto) provereno
 // postoji u raspakovanom sources jar-u
 // `material-icons-core`/`material-icons-extended` 1.7.8 pre pisanja, ne posle
 // prve neuspele kompilacije.
@@ -459,28 +466,114 @@ private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
     "text.book.closed.fill" to LessonGlyph.Icon(Icons.Filled.MenuBook),
     "trophy.fill" to LessonGlyph.Icon(Icons.Filled.EmojiEvents),
 
-    // Preostalih 7 -- Faza 9, Task 3 (namerno ostaju emoji).
+    // Faza 9, Task 3: 43. ikona, i jedina koju taj task prevodi.
+    //
+    // `square.grid.3x3.fill` je JEDINI od sedam koji se u isporucenom sadrzaju
+    // NIKAD ne javlja u telu lekcije: 8 pojava, svih 8 na doc-level `icon`
+    // polju (naslovna ikona lekcije „Tabla, figure i kretanje", svih 8 jezika;
+    // prebrojano obilaskom `icon` polja u svih 36 fajlova u
+    // `assets/lessons/`, ne preuzeto iz brief-a). Zato ovde nema izbora
+    // „ikona u zaglavlju, emoji u telu" — nema tela; jedino pozivno mesto je
+    // `LessonDetailView.kt:168`, plocica 50dp sa `accent@20%` podlogom, 24sp.
+    //
+    // Dve merene stvari su odlucile:
+    //  - Posle Task-a 2 su ostale cetiri doc-level vrednosti
+    //    (`bolt.fill` 10, `flag.checkered` 8, `flag.fill` 8,
+    //    `text.book.closed.fill` 2) tintovane Material ikone. Da je ova ostala
+    //    emoji, zaglavlje PRVE lekcije — one koju svaki korisnik otvara prvu —
+    //    nosilo bi jedini saren glif u tom redu, i to preko `accent` plocice
+    //    koja `tint` ocekuje.
+    //  - Zatecen emoji ♟️ (pesak) NIJE ono sto simbol znaci. SF
+    //    `square.grid.3x3.fill` je mreza 3x3 polja, a lekcija se zove „Tabla,
+    //    figure i kretanje" — iOS na tom mestu crta TABLU, ne figuru. `GridOn`
+    //    (okvir + 3x3 celija; proveren u raspakovanom sources jar-u
+    //    `material-icons-extended` 1.7.8 pre pisanja) vraca i znacenje i tint.
+    //    `Apps` je geometrijski blizi (9 odvojenih kvadratica) ali se na 24sp
+    //    cita kao fioka aplikacija, i tako bi se i zvao u kodu.
+    //
+    // Cena, izricito: u istoj lekciji sad stoje dve ikone iz iste porodice —
+    // ova u zaglavlju i `square.grid.2x2.fill` -> `GridView` na naslovu
+    // „Kako se svaka figura kreće". Razlicite su (4 krupne celije naspram
+    // ivicom uokvirene 3x3 mreze), razlicitih velicina (24sp naspram 18sp) i
+    // nisu jedna uz drugu, ali su blize jedna drugoj nego sto je ♟️ bio bilo
+    // cemu. Gubi se i jedini sahovski motiv u zaglavljima — sto je posledica
+    // toga da ga simbol nikad nije ni tvrdio.
+    "square.grid.3x3.fill" to LessonGlyph.Icon(Icons.Filled.GridOn),
+
+    // Preostalih 6 -- Faza 9, Task 3: NAMERNO ostaju emoji. Ovo NIJE nedovrsen
+    // posao nego merena odluka; ispod je cime je merena.
+    //
+    // (1) Material nema ikonu ni za jednu sahovsku figuru ni za ijedan
+    //     takticki motiv. Prosao je raspakovan sources jar
+    //     `material-icons-extended` 1.7.8 (2083 imena u `Icons.Filled`):
+    //     nijedno nije figura ni motiv. Postoji samo METAFORA — `Castle` za
+    //     topa, `Restaurant` za viljusku — a metafora ovde gubi vise nego sto
+    //     dobija: ona bi ista dva znacenja rekla generickim glifom, uz
+    //     `Icons.Filled.Restaurant` u lekciji o taktici, sto sledeceg citaoca
+    //     koda salje da trazi gresku koje nema.
+    // (2) Emoji koji ostaju NOSE ZNACENJE, i to tacno ono koje lekcija na tom
+    //     mestu izgovara (citati su doslovno iz `assets/lessons/*.sr.json`):
+    //       🐴 `l.joystick.fill` (22 pojave) — „Kretanje: Kreće se u obliku
+    //          slova \"L\": dva polja pravo pa jedno u stranu.", „Viljuška
+    //          skakačem", „Sf3: Skakač je stao na f3."
+    //       🍴 `tuningfork` (10) — naslovi „Viljuška (Rašlje)" i „Viljuška";
+    //          i u srpskom i u engleskom je motiv nazvan po PRIBORU, pa je
+    //          pribor jedini glif koji igru reci zadrzava.
+    //       👑 `crown.fill` (70, najbrojniji) — „Promocija: Ako pion stigne do
+    //          poslednjeg reda — pretvara se u bilo koju figuru, najčešće
+    //          Damu.", ali i „Kralj u završnici postaje napadačka figura" i
+    //          „#: Taraba na kraju znači **mat**." Kruna je ovde oznaka
+    //          KRUNISANE strane uopste, ne jedna figura — vidi (3).
+    //       ⬛ `dot.square.fill` (8) — „Kretanje: Kreće se samo jedno polje u
+    //          bilo kom pravcu." Kvadrat je JEDNO POLJE, ne kralj.
+    //       🏰 `rectangle.portrait.fill` (24) — „Vežba 1 — Kralj + Top",
+    //          „Zadatak 3 — Žrtva Topa!"
+    //       📐 `rhombus.fill` (16) — „Vežba 2 — Kralj + dva Lovca",
+    //          „Zadatak 4 — Lovac + Top". Najslabiji par u setu (trougaoni
+    //          lenjir za lovca je asocijacija na dijagonalu, ne na figuru);
+    //          zapisano da se zna da je viđen, ne previđen.
+    // (3) Unicode figure (`ChessPiece.symbol`, ♙♘♗♖♕♔) su razmotrene kao trece
+    //     resenje i ODBIJENE, mereno:
+    //       - `crown.fill` je 70 od 150 pojava ovih sest (47%) i POLISEMICAN je:
+    //         od 11 razlicitih mesta u `*.sr.json` cetiri su Dama, tri Kralj, a
+    //         cetiri nisu figura uopste („Slova figura", „#", „Španska
+    //         partija", „Vezani branilac"). Jedan znak ne moze biti i ♔ i ♕.
+    //       - `dot.square.fill`, `l.joystick.fill` i `tuningfork` su POTEZ i
+    //         MOTIV, ne figura (citati gore).
+    //       - Ostaju samo top i lovac — 40 od 150 pojava (27%).
+    //       - Za njih bi trebao TRECI slucaj u `LessonGlyph`: emoji grana
+    //         `LessonGlyphView`-a namerno ne prima boju (CLAUDE.md: „na emoji
+    //         glif se boja ne pise uopste"), a Unicode figura `tint` prima i
+    //         mora ga dobiti. Nov mehanizam za 2 od 49 simbola.
+    //       - I sadrzinski se sudaraju: `board-and-pieces` vec crta ♙♖♗♘♕♔
+    //         dvanaest puta (`pieceRow` 6 + `pieceValueTable` 6, kroz
+    //         `LessonPieceGlyph` na 22sp), gde znak znaci „ovaj red JE ta
+    //         figura". Isti ♖ kao oznaka vezbe „Kralj + Top" na istom ekranu
+    //         dao bi jednom znaku dva posla.
     "crown.fill" to LessonGlyph.Emoji("👑"),
     "dot.square.fill" to LessonGlyph.Emoji("⬛"),
-    // Svih pet pojava je vezano za skakaca (L-putanja) — otud konj, ne dzojstik.
     "l.joystick.fill" to LessonGlyph.Emoji("🐴"),
-    // „rectangle.portrait" je na iOS-u top, „rhombus" lovac — provereno po
-    // naslovima svih pojava, ne po imenu simbola.
     "rectangle.portrait.fill" to LessonGlyph.Emoji("🏰"),
     "rhombus.fill" to LessonGlyph.Emoji("📐"),
-    "square.grid.3x3.fill" to LessonGlyph.Emoji("♟️"),
-    // Motiv „viljuska" — iOS je za njega uzeo bas „tuningfork".
     "tuningfork" to LessonGlyph.Emoji("🍴")
 )
 
 /// `LessonGlyph` za ime SF simbola iz JSON-a. Poznat simbol daje ono sto mapa
-/// kaze — `Icon` za 42 od 49 (Faza 9: Task 1 21, Task 2 jos 21), `Emoji`
-/// za ostatak (7, Task 3). Ako sadrzaj vec nosi emoji direktno (nema tacke u imenu) —
+/// kaze — `Icon` za 43 od 49 (Faza 9: Task 1 21, Task 2 jos 21, Task 3 jos 1),
+/// `Emoji` za ostatak (6, Task 3). Ako sadrzaj vec nosi emoji direktno (nema tacke u imenu) —
 /// rucno pisana lekcija ne mora da zna za SF imena — prosledjuje se
 /// nepromenjen, i dalje kao `Emoji`. Simbol koji IZGLEDA kao SF ime (ima
 /// tacku) ili je prazan, a nije u mapi, daje `Unknown` — Task 0 je uveo SAMO
 /// ovaj poslednji slucaj (zatecen fallback je bio tih "•"); danas nedostizno
-/// jer je mapa iscrpna za svih 49 simbola u isporucenom sadrzaju.
+/// jer je mapa iscrpna za svih 49 simbola u isporucenom sadrzaju, sto od
+/// Task-a 3 vise nije tvrdnja u komentaru nego test
+/// (`LessonGlyphMapTest.everyIconInShippedLessonsResolvesToAKnownGlyph`).
+///
+/// Zamka koju je nasla mutacija tog testa: TRI isporucena SF imena nemaju
+/// tacku (`globe`, `link`, `tuningfork`), pa ona, ako ikad ispadnu iz mape,
+/// NE daju `Unknown` nego prolaze kroz poslednju granu i iscrtavaju se kao
+/// obicna rec usred lekcije — tiho. Zato isti test tvrdi i da nijedan
+/// isporuceni ASCII `icon` ne sme zavrsiti nacrtan kao sopstveno ime.
 internal fun lessonGlyph(symbol: String): LessonGlyph {
     val glyph = SYMBOL_TO_GLYPH[symbol]
     return when {

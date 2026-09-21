@@ -643,8 +643,14 @@ class ContrastTest {
      * `LessonGlyphView`-a ne prima boju uopste), pa par nije postojao. Sada je `Icon` za sva
      * cetiri doc.icon-a koja se pojavljuju u isporucenom sadrzaju
      * (`bolt.fill`/`flag.fill`/`flag.checkered`/`text.book.closed.fill` — provereno
-     * `python3` pretragom `icon` polja na vrhu svih 36 lekcijskih JSON fajlova; peti,
-     * `square.grid.3x3.fill`, ostaje `Emoji`, Task 3).
+     * `python3` pretragom `icon` polja na vrhu svih 36 lekcijskih JSON fajlova).
+     *
+     * Task 3 je zatvorio i peti, `square.grid.3x3.fill` (8 fajlova, lekcija „Tabla, figure
+     * i kretanje") — brief Task-a 2 je predvidjao da ostane `Emoji`, ali je isto prebrojavanje
+     * pokazalo da se taj simbol NIKAD ne javlja u telu lekcije, samo u zaglavlju, pa je
+     * presudjen na `Icons.Filled.GridOn` (obrazlozeno u `LessonRenderer.kt`, na mestu u mapi).
+     * Par koji ovaj test meri time nije promenjen — isti `tint` i ista podloga — nego je
+     * dobio petog potrosaca, pa svih 36 fajlova sada prolazi kroz njega.
      *
      * IZMERENO OVIM testom (isti `over`/`contrast` put kao ostatak fajla): obe teme
      * prolaze sa velikom marginom, pa je donja granica WCAG prag (3:1), ne pinovana
