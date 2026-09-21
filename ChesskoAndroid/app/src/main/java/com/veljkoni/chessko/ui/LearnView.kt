@@ -329,7 +329,7 @@ fun LBox(icon: LessonGlyph, title: String, text: String, color: Color) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            LessonGlyphView(icon, fontSize = 14.sp)
+            LessonGlyphView(icon, fontSize = 14.sp, tint = color)
             Text(text = title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -367,7 +367,7 @@ fun LBullet(icon: LessonGlyph, title: String, text: String, color: Color) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Top
     ) {
-        LessonGlyphView(icon, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
+        LessonGlyphView(icon, fontSize = 14.sp, tint = color, modifier = Modifier.padding(top = 2.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
@@ -382,7 +382,7 @@ fun LSectionHeader(icon: LessonGlyph, title: String, color: Color) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(vertical = 4.dp)
     ) {
-        LessonGlyphView(icon, fontSize = 18.sp)
+        LessonGlyphView(icon, fontSize = 18.sp, tint = color)
         Text(text = title, color = color, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
@@ -577,7 +577,7 @@ fun OpeningExerciseCard(line: OpeningLine) {
                         .background(line.accentColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    LessonGlyphView(line.icon, fontSize = 14.sp)
+                    LessonGlyphView(line.icon, fontSize = 14.sp, tint = line.accentColor)
                 }
                 Column {
                     Text(text = line.name, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -707,7 +707,7 @@ fun MateExerciseCard(
                         .background(color.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    LessonGlyphView(icon, fontSize = 14.sp)
+                    LessonGlyphView(icon, fontSize = 14.sp, tint = color)
                 }
                 Column {
                     Text(text = title, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -866,7 +866,7 @@ fun MatePuzzleCard(
                         .background(accentColor.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    LessonGlyphView(icon, fontSize = 14.sp)
+                    LessonGlyphView(icon, fontSize = 14.sp, tint = accentColor)
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Row(

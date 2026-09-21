@@ -338,8 +338,8 @@ class ContrastTest {
      * IZMERENO (ne procenjeno), isti float32-preko-Double put racuna kao
      * `luminance()`/`contrast()` iznad, kompozit = `boja @10%` preko `ground`:
      *
-     *   warning na warning@10% tintu: 2,941624 (svetla)   7,848961 (tamna)
-     *   danger  na danger@10% tintu : 5,026419 (svetla)   6,371957 (tamna)
+     *   warning na warning@10%% tintu: 2,941624 (svetla)   7,848961 (tamna)
+     *   danger  na danger@10%% tintu : 5,026419 (svetla)   6,371957 (tamna)
      *
      * Sve cetiri su 10-15% GORE od merenja protiv golog `ground`-a ispod
      * (svetla warning 3,26 -> 2,94, svetla danger 5,89 -> 5,03, tamna warning
@@ -557,6 +557,68 @@ class ContrastTest {
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
             check("$label accent/surface", p, { it.accent }, { it.surface }, 4.5)
             check("$label accent/ground", p, { it.accent }, { it.ground }, 4.5)
+        }
+    }
+
+    /**
+     * Faza 9, Task 1: `LBox` naslov je do sada bio jedini clan koji nosi
+     * stilsku boju (`accent`/`DS.warning`/`DS.danger`) i ima tvrdnju —
+     * `lessonBoxStylesMeetAA` je meri protiv GOLOG `ground`-a, kao
+     * konzervativnu aproksimaciju stvarnog kompozita, na PRAGU ZA TEKST (4,5).
+     * Od ovog taska `LessonGlyphView`-ova `Icon` grana crta IKONU istim tintom
+     * (`LearnView.LBox` sada prosledjuje `tint = color`, isto sto iOS radi —
+     * `Image(systemName:).foregroundStyle(color)`, `Chessko/Views/LessonRenderer.swift:429-451`).
+     * Ikona sedi na ISTOM kompozitu kao naslov i telo (`color.copy(alpha=0.1f)`
+     * preko `DS.ground` — `LessonDetailView`-ov skrol nema Card ni Surface iza
+     * sebe), ali je graficki objekat: WCAG prag je 3:1 (SC 1.4.11), ne 4,5.
+     *
+     * IZMERENO OVIM testom (isti `over`/`contrast` put kao ostatak fajla, ne
+     * procenjeno): `RULE` (warning) u SVETLOJ temi pada NA 2,9361847662648937 —
+     * ispod 3:1, ista klasa granicnog slucaja kao `warning/surface` i
+     * `warning/ground` vec pinovani u `knownSubAAPairsDoNotGetWorse` (razlika
+     * u trecoj decimali od prozne vrednosti gore, jer ta nikad nije bila
+     * assertovana — samo napisana; ova JESTE, pa je merodavna). Prag se ne
+     * podize da bi test prosao — tvrdi se da se NE POGORSAVA, isti obrazac kao
+     * `knownSubAAPairsDoNotGetWorse`. Popravka bi znacila razlaz sa iOS
+     * paletom, koja ima ISTI par (`DS.warning` na `DS.warning.opacity(0.1)`).
+     * Sva ostala cetiri clana (INFO/WARNING u obe teme, RULE u tamnoj) prelaze
+     * 3:1 sa velikom marginom.
+     */
+    @Test
+    fun lessonBoxIconTintOnItsOwnTintMeetsNonTextThreshold() {
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            checkPair("$label LBox ikona (INFO/null) na accent@10%% tintu",
+                p.accent, over(p.accent, 0.1f, p.ground), 3.0)
+            checkPair("$label LBox ikona (WARNING) na danger@10%% tintu",
+                p.danger, over(p.danger, 0.1f, p.ground), 3.0)
+        }
+        checkPair("tamna LBox ikona (RULE) na warning@10%% tintu",
+            DarkColors.warning, over(DarkColors.warning, 0.1f, DarkColors.ground), 3.0)
+        // Svetla RULE: PINOVANO ispod praga, vidi doc-komentar iznad.
+        checkPair("svetla LBox ikona (RULE) na warning@10%% tintu",
+            LightColors.warning, over(LightColors.warning, 0.1f, LightColors.ground),
+            2.9361847662648937)
+    }
+
+    /**
+     * Faza 9, Task 1: bedz ikone u `OpeningExerciseCard` (`LearnView.kt`) —
+     * dva stvarna potrosaca u isporucenom sadrzaju (`notation` lekcija,
+     * `arrow.up.circle.fill` i `arrow.left.arrow.right`, oba sada
+     * `Icons.Filled.ArrowUpward`/`SwapHoriz`). Bedz je `Box` sa
+     * `.background(line.accentColor.copy(alpha=0.15f))` preko `DS.surface`
+     * (cela kartica sedi na `DS.surface`), a `line.accentColor` je uvek
+     * `DS.accent` — `LessonBlocks` prosledjuje jedan fiksan akcent svim
+     * vezbama (vidi `LessonDetailView.kt` komentar „accentFor(id) OBRISANA").
+     * `MateExerciseCard` (isti `@0,15f`) i `MatePuzzleCard` (`@0,2f`) dele
+     * OVAJ tint/podlogu ali danas ne primaju nijedan od 21 simbola ove faze
+     * (provereno pretragom JSON fajlova u `assets/lessons` — nijedan `vs_engine` ni
+     * `mateIn`-zadatak ne koristi nijedan od njih), pa im par NIJE dodat ovde.
+     */
+    @Test
+    fun openingExerciseBadgeIconMeetsNonTextThreshold() {
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            checkPair("$label OpeningExerciseCard bedz ikone (accent@15%% na surface)",
+                p.accent, over(p.accent, 0.15f, p.surface), 3.0)
         }
     }
 }

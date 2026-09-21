@@ -2,6 +2,20 @@ package com.veljkoni.chessko.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowCircleRight
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.OpenInFull
+import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RemoveCircle
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -297,7 +311,8 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 //
 // `LessonGlyph` nosi tri slucaja jer emoji i prava Material ikona ne mogu da
 // stoje u istoj `Map<String, X>`:
-//   - `Icon`   — SF simbol preveden u Material `ImageVector` (Faza 9, Task 1/2)
+//   - `Icon`   — SF simbol preveden u Material `ImageVector` (Faza 9, Task 1:
+//                21 od 49, strelice i oznake; Task 2 dodaje jos 21)
 //   - `Emoji`  — SF simbol koji OSTAJE emoji (Faza 9, Task 3, sedam simbola),
 //                ili sadrzaj koji vec nosi emoji direktno (rucno pisane lekcije)
 //   - `Unknown`— simbol koji NIJE nasao prevod. Zatecen fallback je bio tih
@@ -320,12 +335,24 @@ sealed interface LessonGlyph {
     @JvmInline value class Unknown(val symbol: String) : LessonGlyph
 }
 
-/// Jedino mesto koje crta `LessonGlyph` — svih sest potpisa u `LearnView.kt` i
+/// Jedino mesto koje crta `LessonGlyph` — svih sedam potpisa u `LearnView.kt` i
 /// `LessonDetailView.kt` prolaze kroz ovo, umesto da svaki grana na tip sam.
+///
+/// `tint` je OBAVEZAN (Faza 9, Task 1) — pre ovog taska ga `Icon` grana uopste
+/// nije primala, pa bi svaka konvertovana ikona pala na ambijentalni
+/// `LocalContentColor.current` (u ovoj aplikaciji `DS.ink`, jer Scaffold nema
+/// eksplicitan `containerColor` — `contentColorFor(background) == onBackground`).
+/// To ne prati boju susednog naslova (`accent`/`DS.warning`/`DS.danger`), za
+/// razliku od emoji-ja, koji je nosio SOPSTVENU boju. iOS `L_Box`/`L_Bullet`/
+/// `L_SectionHeader` (`Chessko/Views/LessonRenderer.swift:353-451`) rade tacno
+/// ovo — `Image(systemName:).foregroundStyle(color)`, isti `color` kao naslov
+/// pored — pa je `tint` ovde parametar, ne podrazumevana vrednost, da svako
+/// pozivno mesto MORA da ga svesno izabere.
 @Composable
 internal fun LessonGlyphView(
     glyph: LessonGlyph,
     fontSize: TextUnit,
+    tint: Color,
     modifier: Modifier = Modifier
 ) {
     val iconSize: Dp = with(LocalDensity.current) { fontSize.toDp() }
@@ -333,6 +360,7 @@ internal fun LessonGlyphView(
         is LessonGlyph.Icon -> Icon(
             imageVector = glyph.vector,
             contentDescription = null,
+            tint = tint,
             modifier = modifier.size(iconSize)
         )
         is LessonGlyph.Emoji -> Text(text = glyph.text, fontSize = fontSize, modifier = modifier)
@@ -352,73 +380,82 @@ internal fun LessonGlyphView(
     }
 }
 
-private val SYMBOL_TO_EMOJI: Map<String, String> = mapOf(
-    "arrow.clockwise" to "🔄",
-    "arrow.forward.circle.fill" to "➡️",
-    "arrow.left.arrow.right" to "↔️",
-    "arrow.triangle.2.circlepath" to "🔄",
-    "arrow.up" to "⬆️",
-    "arrow.up.and.down" to "↕️",
-    "arrow.up.and.down.and.arrow.left.and.right" to "✳️",
-    "arrow.up.circle.fill" to "⬆️",
-    "arrow.up.left.and.arrow.up.right" to "↗️",
-    "arrow.up.right" to "↗️",
-    "arrow.up.right.and.arrow.up.left" to "↗️",
-    "bolt.fill" to "⚡",
-    "book.fill" to "📖",
-    "chart.line.uptrend.xyaxis" to "📈",
-    "checkmark.circle.fill" to "✅",
-    "checkmark.seal.fill" to "✅",
-    "circle.fill" to "⚫",
-    "crown.fill" to "👑",
-    "dot.square.fill" to "⬛",
-    "exclamationmark.2" to "‼️",
-    "exclamationmark.circle.fill" to "❗",
-    "exclamationmark.triangle.fill" to "⚠️",
-    "eye.fill" to "👁️",
-    "flag.checkered" to "🏁",
-    "flag.fill" to "🚩",
-    "flame.fill" to "🔥",
-    "globe" to "🌐",
-    "hand.point.up.left.fill" to "👆",
-    "heart.fill" to "❤️",
-    "info.circle.fill" to "ℹ️",
+// Faza 9, Task 1: prvih 21 od 49 simbola (strelice i oznake) prevedeno u
+// Material ikone. Preostalih 28 ostaje `Emoji` (Task 2 prevodi jos 21, Task 3
+// ostavlja sedam kao emoji, namerno). Nijedno ime iz brief-a nije trebalo
+// zamenu — svih 14 razlicitih `Icons.Filled.*` klasa je provereno da postoji
+// u `material-icons-core`/`material-icons-extended` 1.7.8 (izvorni jar,
+// `unzip -l`) pre pisanja, ne posle prve neuspele kompilacije.
+private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
+    "arrow.clockwise" to LessonGlyph.Icon(Icons.Filled.Refresh),
+    "arrow.forward.circle.fill" to LessonGlyph.Icon(Icons.Filled.ArrowCircleRight),
+    "arrow.left.arrow.right" to LessonGlyph.Icon(Icons.Filled.SwapHoriz),
+    "arrow.triangle.2.circlepath" to LessonGlyph.Icon(Icons.Filled.Refresh),
+    "arrow.up" to LessonGlyph.Icon(Icons.Filled.ArrowUpward),
+    "arrow.up.and.down" to LessonGlyph.Icon(Icons.Filled.SwapVert),
+    "arrow.up.and.down.and.arrow.left.and.right" to LessonGlyph.Icon(Icons.Filled.OpenWith),
+    "arrow.up.circle.fill" to LessonGlyph.Icon(Icons.Filled.ArrowUpward),
+    "arrow.up.left.and.arrow.up.right" to LessonGlyph.Icon(Icons.Filled.OpenInFull),
+    "arrow.up.right" to LessonGlyph.Icon(Icons.Filled.OpenInFull),
+    "arrow.up.right.and.arrow.up.left" to LessonGlyph.Icon(Icons.Filled.OpenInFull),
+    "checkmark.circle.fill" to LessonGlyph.Icon(Icons.Filled.CheckCircle),
+    "checkmark.seal.fill" to LessonGlyph.Icon(Icons.Filled.CheckCircle),
+    "circle.fill" to LessonGlyph.Icon(Icons.Filled.Circle),
+    "exclamationmark.2" to LessonGlyph.Icon(Icons.Filled.PriorityHigh),
+    "exclamationmark.circle.fill" to LessonGlyph.Icon(Icons.Filled.Error),
+    "exclamationmark.triangle.fill" to LessonGlyph.Icon(Icons.Filled.Warning),
+    "info.circle.fill" to LessonGlyph.Icon(Icons.Filled.Info),
+    "minus.circle.fill" to LessonGlyph.Icon(Icons.Filled.RemoveCircle),
+    "xmark.circle.fill" to LessonGlyph.Icon(Icons.Filled.Cancel),
+    "xmark.shield.fill" to LessonGlyph.Icon(Icons.Filled.Cancel),
+
+    // Preostalih 28 -- Faza 9, Task 2/3.
+    "bolt.fill" to LessonGlyph.Emoji("⚡"),
+    "book.fill" to LessonGlyph.Emoji("📖"),
+    "chart.line.uptrend.xyaxis" to LessonGlyph.Emoji("📈"),
+    "crown.fill" to LessonGlyph.Emoji("👑"),
+    "dot.square.fill" to LessonGlyph.Emoji("⬛"),
+    "eye.fill" to LessonGlyph.Emoji("👁️"),
+    "flag.checkered" to LessonGlyph.Emoji("🏁"),
+    "flag.fill" to LessonGlyph.Emoji("🚩"),
+    "flame.fill" to LessonGlyph.Emoji("🔥"),
+    "globe" to LessonGlyph.Emoji("🌐"),
+    "hand.point.up.left.fill" to LessonGlyph.Emoji("👆"),
+    "heart.fill" to LessonGlyph.Emoji("❤️"),
     // Svih pet pojava je vezano za skakaca (L-putanja) — otud konj, ne dzojstik.
-    "l.joystick.fill" to "🐴",
-    "link" to "🔗",
-    "minus.circle.fill" to "➖",
-    "person.2.fill" to "👥",
-    "person.fill" to "👤",
-    "quote.opening" to "💬",
+    "l.joystick.fill" to LessonGlyph.Emoji("🐴"),
+    "link" to LessonGlyph.Emoji("🔗"),
+    "person.2.fill" to LessonGlyph.Emoji("👥"),
+    "person.fill" to LessonGlyph.Emoji("👤"),
+    "quote.opening" to LessonGlyph.Emoji("💬"),
     // „rectangle.portrait" je na iOS-u top, „rhombus" lovac — provereno po
     // naslovima svih pojava, ne po imenu simbola.
-    "rectangle.portrait.fill" to "🏰",
-    "rhombus.fill" to "📐",
-    "ruler.fill" to "📏",
-    "scalemass.fill" to "⚖️",
-    "shield.fill" to "🛡️",
-    "square.grid.2x2.fill" to "🔲",
-    "square.grid.3x3.fill" to "♟️",
-    "star.fill" to "⭐",
-    "text.book.closed.fill" to "📚",
-    "trophy.fill" to "🏆",
+    "rectangle.portrait.fill" to LessonGlyph.Emoji("🏰"),
+    "rhombus.fill" to LessonGlyph.Emoji("📐"),
+    "ruler.fill" to LessonGlyph.Emoji("📏"),
+    "scalemass.fill" to LessonGlyph.Emoji("⚖️"),
+    "shield.fill" to LessonGlyph.Emoji("🛡️"),
+    "square.grid.2x2.fill" to LessonGlyph.Emoji("🔲"),
+    "square.grid.3x3.fill" to LessonGlyph.Emoji("♟️"),
+    "star.fill" to LessonGlyph.Emoji("⭐"),
+    "text.book.closed.fill" to LessonGlyph.Emoji("📚"),
+    "trophy.fill" to LessonGlyph.Emoji("🏆"),
     // Motiv „viljuska" — iOS je za njega uzeo bas „tuningfork".
-    "tuningfork" to "🍴",
-    "xmark.circle.fill" to "❌",
-    "xmark.shield.fill" to "❌"
+    "tuningfork" to LessonGlyph.Emoji("🍴")
 )
 
-/// `LessonGlyph` za ime SF simbola iz JSON-a. Poznat simbol daje `Emoji` (Faza 9,
-/// Task 1-2 ce ovde vratiti `Icon` za deo njih). Ako sadrzaj vec nosi emoji
-/// direktno (nema tacke u imenu) — rucno pisana lekcija ne mora da zna za SF
-/// imena — prosledjuje se nepromenjen, i dalje kao `Emoji`. Simbol koji IZGLEDA
-/// kao SF ime (ima tacku) ili je prazan, a nije u mapi, daje `Unknown` — Task 0
-/// menja SAMO ovaj poslednji slucaj (zatecen fallback je bio tih "•"); danas
-/// nedostizno jer je mapa iscrpna za svih 49 simbola u isporucenom sadrzaju.
+/// `LessonGlyph` za ime SF simbola iz JSON-a. Poznat simbol daje ono sto mapa
+/// kaze — `Icon` za 21 od 49 (Faza 9, Task 1; Task 2 dodaje jos 21), `Emoji`
+/// za ostatak. Ako sadrzaj vec nosi emoji direktno (nema tacke u imenu) —
+/// rucno pisana lekcija ne mora da zna za SF imena — prosledjuje se
+/// nepromenjen, i dalje kao `Emoji`. Simbol koji IZGLEDA kao SF ime (ima
+/// tacku) ili je prazan, a nije u mapi, daje `Unknown` — Task 0 je uveo SAMO
+/// ovaj poslednji slucaj (zatecen fallback je bio tih "•"); danas nedostizno
+/// jer je mapa iscrpna za svih 49 simbola u isporucenom sadrzaju.
 internal fun lessonGlyph(symbol: String): LessonGlyph {
-    val emoji = SYMBOL_TO_EMOJI[symbol]
+    val glyph = SYMBOL_TO_GLYPH[symbol]
     return when {
-        emoji != null -> LessonGlyph.Emoji(emoji)
+        glyph != null -> glyph
         symbol.isEmpty() || '.' in symbol -> LessonGlyph.Unknown(symbol)
         else -> LessonGlyph.Emoji(symbol)
     }
