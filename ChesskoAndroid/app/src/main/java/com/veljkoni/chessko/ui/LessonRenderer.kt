@@ -349,7 +349,7 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 //
 // Mapa pokriva svih 49 simbola koji se pojavljuju u `assets/lessons/*.json`
 // (provereno pretragom kroz sve fajlove), pa `Unknown` danas nikad ne stize na
-// ekran — ali ostaje kao zastita ako sledeca lekcija donese trideseti simbol.
+// ekran — ali ostaje kao zastita ako sledeca lekcija donese pedeseti simbol.
 // Ne `internal`: rezultat ide u parametre javnih `@Composable` funkcija u
 // `LearnView.kt` (`LBox`, `LBullet`, `LSectionHeader`, `MateExerciseCard`,
 // `MatePuzzleCard`, `OpeningLine.icon`) — Kotlin ne dozvoljava da javna funkcija
@@ -361,8 +361,16 @@ sealed interface LessonGlyph {
     @JvmInline value class Unknown(val symbol: String) : LessonGlyph
 }
 
-/// Jedino mesto koje crta `LessonGlyph` — svih sedam potpisa u `LearnView.kt` i
-/// `LessonDetailView.kt` prolaze kroz ovo, umesto da svaki grana na tip sam.
+/// Jedino mesto koje crta `LessonGlyph` — svih **sedam pozivnih mesta**
+/// (`LessonDetailView.kt:168` + sest u `LearnView.kt`) prolazi kroz ovo, umesto
+/// da svako grana na tip samo.
+///
+/// Pozivno mesto nije isto sto i potpis, i raniji oblik ovog komentara je to
+/// mesao: potpisa koji PRIMAJU `LessonGlyph` ima **sest**, svi u `LearnView.kt`
+/// — pet parametara (`LBox`, `LBullet`, `LSectionHeader`, `MateExerciseCard`,
+/// `MatePuzzleCard`) i jedno polje (`OpeningLine.icon`). Sedmo pozivno mesto
+/// (naslovna ikona lekcije) ne prolazi ni kroz jedan od njih nego zove
+/// `lessonGlyph(...)` na licu mesta.
 ///
 /// `tint` je OBAVEZAN (Faza 9, Task 1) — pre ovog taska ga `Icon` grana uopste
 /// nije primala, pa bi svaka konvertovana ikona pala na ambijentalni

@@ -806,7 +806,9 @@ Testovi: **110 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 18, `Engi
 
 ## Poznata ograničenja / TODO kandidati
 
-- **Šest parova tokena je ispod WCAG AA u svetloj temi.** Prva tri su nasleđena iz spec tabele i
+- **Sedam parova tokena je ispod praga u svetloj temi.** Prvih šest su ispod WCAG **AA za tekst**
+  (4,5:1); sedmi je ispod praga **3:1 za ne-tekstualni sadržaj** i ima sopstveni test.
+  Prva tri su nasleđena iz spec tabele i
   identična na obe platforme: `inkMuted`/`ground` 4,36; `inkMuted`/`fill` 4,01;
   `warning`/`surface` 3,61. Četvrti i peti — `success`/`fill` 4,18 i `warning`/`fill` 3,00 —
   **danas nemaju nijedno pozivno mesto**, ali su pinovana da ih budući pozivalac ne može tiho
@@ -817,6 +819,29 @@ Testovi: **110 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 18, `Engi
   4.359965479387139 / 4.014258257780754 / 3.611752903947211 / 4.184348841952418 /
   2.9989738277199414 / 3.257244931140301 — čuva od pogoršanja, ne od postojanja.) Popravka
   vrednosti bi značila razlaz sa iOS paletom, pa se ne radi.
+
+  **Sedmi — ikona `BoxStyle.RULE` kutije, `2,9361847662648937`, i uvela ga je Faza 9.**
+  `DS.warning` tint nad **sopstvenim** `warning@10%` kompozitom preko `DS.ground`, svetla tema —
+  ispod praga **3:1** za ne-tekstualni sadržaj. Ne stoji u
+  `knownSubAAPairsDoNotGetWorse` (to je spisak tekstualnih parova) nego ima sopstveni test,
+  `ContrastTest.lessonBoxIconTintOnItsOwnTintMeetsNonTextThreshold`. Tamna tema je
+  7,836767547933033, dakle pogađa samo svetlu.
+  **Ovo je stanje koje je ova faza uvela** — pre nje su te ikone bile pun-kolor emoji, koji
+  `tint` uopšte ne prima, pa par nije ni postojao. Izmereno koliko pogađa (prebrojano po
+  `assets/lessons/*.json`, ne procenjeno): **36 od 44** `RULE` kutije u isporučenom sadržaju
+  sada crta Material ikonu; preostalih 8 nosi `crown.fill`, koji je ostao emoji.
+  > **Podbrojevi koje je pregled uz ovaj nalaz poslao bili su netačni, i mere se ovde:** 44
+  > kutije žive u **20** lekcijskih fajlova (ne 36 — 36 je broj *svih* lekcijskih fajlova), a
+  > raspodela nije „7 po jeziku" nego **7 za `sr` i `en`, po 5 za preostalih šest** — jer
+  > `notation` i `tactics` postoje samo na ta dva jezika. Glavni broj (36 od 44) je tačan.
+  > Ista klasa greške koju ova faza već nosi zapisanu tri puta: prosleđen broj primljen bez
+  > merenja.
+
+  **Ne popravlja se, iz istog razloga kao prethodnih šest:** iOS nosi **identičnu konstrukciju**
+  — `Chessko/Views/LessonRenderer.swift` `L_Box`: `Image(systemName:)` sa
+  `.foregroundStyle(color)` na `:438-440`, nad `.background(color.opacity(0.1))` na `:452` —
+  isti token i **ista alfa**. (Provereno otvaranjem fajla; pregled je naveo `:429-440`, što je
+  početak `struct`-a, ne par.) Promena vrednosti bi značila razlaz sa iOS paletom.
 - **`DS.line` nad `DS.fill` je 1,067 (svetla) / 1,071 (tamna) — ivica koja se ne vidi.** To su
   dve susedne vrednosti iste palete, pa se `DS.line` **ne sme koristiti kao granica NAD
   `DS.fill`**; jedini neutralan token koji tu prelazi WCAG prag 3:1 je `DS.inkMuted` (4,01 /
@@ -2843,13 +2868,20 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
 
   **Task 0 postoji zato što je plan bio strukturno pogrešan, i to je uhvaćeno PRE dispečovanja.**
   Plan je izmenu opisao kao „mapa postaje `Map<String, ImageVector>`, fajl `LessonRenderer.kt`".
-  Oboje netačno: `lessonIcon()` je imao **8 pozivnih mesta u 2 fajla** i ulazio u **šest
+  Oboje netačno: `lessonIcon()` je imao **7 pozivnih mesta u 2 fajla** i ulazio u **šest
   potpisa**, a `ImageVector` ne može da nosi šest simbola koji ostaju emoji. Dodat je Task 0 koji
   uvodi `LessonGlyph` (Icon/Emoji/Unknown) i jedno mesto crtanja, **bez ijednog prevedenog
   simbola** — ekran identičan pre i posle, dokazano poređenjem stare i nove mape (bajt-identična)
   i provlačenjem svih 49 stvarnih `icon` vrednosti kroz obe logike (0 razlika). **Pouka:**
   planirao sam izmenu tipa ne otvorivši potrošače tog tipa — ista klasa greške kao obavezujuća
   tabela ključeva iz Faze 8, samo uhvaćena pre nego što je dobila autoritet plana.
+  > **Ovaj pasus je do finalnog pregleda pisao „8 pozivnih mesta", i to je bila greška u
+  > brojanju — baš ona koju sam dve alineje niže imenuje.** `git grep -n "lessonIcon(" a3a7861`
+  > daje 8 pogodaka, ali osmi je **deklaracija** (`LessonRenderer.kt:357`), ne poziv. Poziva je
+  > 7 (`LessonDetailView.kt:168` + šest u `LessonRenderer.kt`). Broj „2 fajla" i „šest potpisa"
+  > su tačni. Zaključak (plan je naveo jedan fajl, a bilo ih je dva) se ne menja — pogrešan je
+  > bio samo sabirak. **Grepovana lista se čita, ne broji**, i ovaj fajl je tu rečenicu u istoj
+  > fazi prekršio **tri puta**: 44 umesto 43 ikone, 37 umesto 36 klasa, i ovde.
 
   **Presuda o šest simbola je merena, ne odokativna.** U `Icons.Filled` nema **nijedne** šahovske
   figure ni ijednog taktičkog motiva (raspakovan sources jar `material-icons-extended` 1.7.8,

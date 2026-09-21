@@ -612,18 +612,33 @@ class ContrastTest {
     }
 
     /**
-     * Faza 9, Task 1: bedz ikone u `OpeningExerciseCard` (`LearnView.kt`) —
-     * dva stvarna potrosaca u isporucenom sadrzaju (`notation` lekcija,
-     * `arrow.up.circle.fill` i `arrow.left.arrow.right`, oba sada
-     * `Icons.Filled.ArrowUpward`/`SwapHoriz`). Bedz je `Box` sa
-     * `.background(line.accentColor.copy(alpha=0.15f))` preko `DS.surface`
+     * Faza 9: bedz ikone u `OpeningExerciseCard` (`LearnView.kt`). Bedz je `Box`
+     * sa `.background(line.accentColor.copy(alpha=0.15f))` preko `DS.surface`
      * (cela kartica sedi na `DS.surface`), a `line.accentColor` je uvek
      * `DS.accent` — `LessonBlocks` prosledjuje jedan fiksan akcent svim
      * vezbama (vidi `LessonDetailView.kt` komentar „accentFor(id) OBRISANA").
-     * `MateExerciseCard` (isti `@0,15f`) i `MatePuzzleCard` (`@0,2f`) dele
-     * OVAJ tint/podlogu ali danas ne primaju nijedan od 21 simbola ove faze
-     * (provereno pretragom JSON fajlova u `assets/lessons` — nijedan `vs_engine` ni
-     * `mateIn`-zadatak ne koristi nijedan od njih), pa im par NIJE dodat ovde.
+     *
+     * **PET stvarnih potrosaca**, ne dva. Ovaj komentar je do finalnog pregleda
+     * grane pisao „dva" — bio je tacan kad ga je Task 1 napisao (tada su na
+     * ovaj par isle samo `arrow.up.circle.fill` i `arrow.left.arrow.right` iz
+     * lekcije `notation`), ali su ga Taskovi 2 i 3 pregazili ne azuriravsi ga.
+     * Prebrojano po lekcijskim JSON fajlovima u `assets/lessons`, po tipu
+     * kartice (put se namerno NE pise sa dzokerom: Kotlin blok-komentari se
+     * ugnjezduju, pa `/` + `*` unutar KDoc-a otvara nov komentar i obara build):
+     *   flame.fill (12)  shield.fill (8)  arrow.up.circle.fill (2)
+     *   arrow.left.arrow.right (2)  eye.fill (2)
+     * Par i prag su nepromenjeni — zastarela je bila samo brojka.
+     * (Preostala dva `icon` imena koja ova kartica prima, `crown.fill` i
+     * `l.joystick.fill`, su medju sest zadrzanih emoji-ja, pa ne nose `tint`.)
+     *
+     * `MateExerciseCard` (isti `@0,15f`) i `MatePuzzleCard` (`@0,2f`) dele OVAJ
+     * tint/podlogu ali im par NIJE dodat, jer danas ne crtaju nijednu Material
+     * ikonu: sva tri `icon` imena koja primaju (`crown.fill`,
+     * `rectangle.portrait.fill`, `rhombus.fill`) su medju sest zadrzanih
+     * emoji-ja, a emoji grana `tint` ne prima.
+     * **To se drzi SLUCAJNO, ne po konstrukciji** — jedna buduca lekcija koja
+     * `vs_engine` ili `mateIn` vezbi zada bilo koje drugo ime ikone odmah uvodi
+     * par koji ovde nije izmeren. Ko to doda, neka dopise i tvrdnju.
      */
     @Test
     fun openingExerciseBadgeIconMeetsNonTextThreshold() {
