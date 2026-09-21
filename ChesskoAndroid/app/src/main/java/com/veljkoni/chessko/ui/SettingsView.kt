@@ -451,7 +451,7 @@ fun SettingsView(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     SettingsToggle(
-                        label = loc("Prevlačenje gore/dole (menja stil)"),
+                        label = loc("Zadrži pa prevuci gore/dole (menja stil)"),
                         icon = Icons.Default.SwapVert,
                         checked = settings.swipeToChangePieceStyle,
                         onCheckedChange = { settings.updateSwipeToChangePieceStyle(it) }
@@ -666,6 +666,10 @@ fun SettingsToggle(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
+            // `weight(1f)` nije kozmetika: bez njega duga oznaka (nemački
+            // „Halten, dann hoch/runter ziehen…") gura `Switch` van reda umesto
+            // da se prelomi — `SpaceBetween` ne skuplja dete koje nema tezinu.
+            modifier = Modifier.weight(1f, fill = false),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {

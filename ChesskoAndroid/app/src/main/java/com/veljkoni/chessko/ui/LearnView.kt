@@ -484,6 +484,9 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
         lastMove = null,
         boardTheme = BoardTheme.CLASSIC,
         pieceStyle = PieceStyle.CLASSIC,
+        // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+        // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+        allowsStyleSwipe = false,
         onTap = { viewModel.tap(it) }
     )
 
@@ -613,6 +616,9 @@ fun OpeningExerciseCard(line: OpeningLine) {
             lastMove = state.lastMove,
             boardTheme = BoardTheme.CLASSIC,
             pieceStyle = PieceStyle.CLASSIC,
+            // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+            // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+            allowsStyleSwipe = false,
             onTap = { state.tap(it, soundManager, hapticManager, scope) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -739,6 +745,9 @@ fun MateExerciseCard(
             lastMove = state.lastMove,
             boardTheme = BoardTheme.CLASSIC,
             pieceStyle = PieceStyle.CLASSIC,
+            // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+            // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+            allowsStyleSwipe = false,
             onTap = { state.tap(it, soundManager, hapticManager, scope) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -929,6 +938,9 @@ fun MatePuzzleCard(
             lastMove = state.lastMove,
             boardTheme = BoardTheme.CLASSIC,
             pieceStyle = PieceStyle.CLASSIC,
+            // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+            // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+            allowsStyleSwipe = false,
             onTap = { state.tap(it, soundManager, hapticManager, scope) },
             modifier = Modifier
                 .fillMaxWidth()

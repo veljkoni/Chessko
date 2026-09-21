@@ -53,6 +53,44 @@ import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.veljkoni.chessko.models.*
 
+/**
+ * Jedno mesto koje primenjuje prečicu prevlačenjem — zove se iz OBE putanje
+ * (obično prevlačenje i naoružan dug pritisak). Bez izdvajanja bi dve kopije
+ * istih pragova ćutke otišle u različitim pravcima.
+ */
+private fun applyBoardSwipe(
+    settings: SettingsManager,
+    hapticManager: HapticManager,
+    swipeX: Float,
+    swipeY: Float
+) {
+    if (kotlin.math.abs(swipeX) > kotlin.math.abs(swipeY)) {
+        if (settings.swipeToChangeBoardTheme && kotlin.math.abs(swipeX) > 100f) {
+            val themes = BoardTheme.values()
+            val currentIdx = themes.indexOfFirst { it.rawValue == settings.boardTheme }
+            val nextIdx = if (swipeX < 0) {
+                (currentIdx + 1) % themes.size
+            } else {
+                (currentIdx - 1 + themes.size) % themes.size
+            }
+            settings.updateBoardTheme(themes[nextIdx].rawValue)
+            hapticManager.mediumImpact()
+        }
+    } else {
+        if (settings.swipeToChangePieceStyle && kotlin.math.abs(swipeY) > 100f) {
+            val styles = PieceStyle.values()
+            val currentIdx = styles.indexOfFirst { it.rawValue == settings.pieceStyle }
+            val nextIdx = if (swipeY < 0) {
+                (currentIdx + 1) % styles.size
+            } else {
+                (currentIdx - 1 + styles.size) % styles.size
+            }
+            settings.updatePieceStyle(styles[nextIdx].rawValue)
+            hapticManager.mediumImpact()
+        }
+    }
+}
+
 @Composable
 fun BoardView(
     board: List<List<ChessPiece?>>,
@@ -66,6 +104,19 @@ fun BoardView(
     showCoordinates: Boolean = true,
     showLastMoveHighlight: Boolean = true,
     showLegalMoves: Boolean = true,
+    /**
+     * Precica prevlacenjem (tema table / stil figura) pripada IGRACKOJ tabli.
+     * Table ugradjene u lekciju je ne dobijaju — isto ime i isto znacenje kao
+     * iOS-ov `BoardView.allowsStyleSwipe` (`Chessko/Views/BoardView.swift:21`,
+     * komentar: „Boards embedded in a scrolling lesson must not swallow vertical
+     * drags — the page has to scroll"), i istih **pet** pozivnih mesta: staticka
+     * tabla bloka, istrazivac figura i tri kartice vezbi.
+     *
+     * Na Androidu razlog nije gutanje skrola (od Faze 7 prazno polje ne trosi
+     * nista) nego to sto lekcija ne sme da menja globalno podesavanje — iOS je
+     * tu granicu povukao ranije, Android je nije imao.
+     */
+    allowsStyleSwipe: Boolean = true,
     onTap: (Position) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -116,13 +167,14 @@ fun BoardView(
                 // i lekcija sa dve table prestane da se skroluje (zatečeno pre
                 // Faze 6c; ta faza ga je samo učinila vidljivim).
                 //
-                // Ovde se pokazivač troši SAMO kad gest počinje na polju sa
-                // figurom (jedini slučaj koji stvarno vuče figuru). Kad figure
-                // nema, nijedan `change` se ne troši, pa gest propada
-                // roditeljskom `scroll`-u; prečica prevlačenjem (tema table /
-                // stil figura) se i dalje prati, ali se odustaje čim skrol
-                // preuzme pokret — vidi `PointerEventPass.Final` u petlji ispod
-                // za to ZAŠTO se odustajanje mora čitati na drugom prolazu.
+                // Ovde se pokazivač troši u TAČNO dva slučaja: kad gest počinje
+                // na polju sa figurom (jedini koji stvarno vuče figuru), i kad
+                // je prečica naoružana dugim pritiskom (v. Fazu 1 ispod). Inače
+                // se nijedan `change` ne troši, pa gest propada roditeljskom
+                // `scroll`-u; prečica prevlačenjem (tema table / stil figura) se
+                // i dalje prati, ali se odustaje čim skrol preuzme pokret — vidi
+                // `PointerEventPass.Final` u petlji ispod za to ZAŠTO se
+                // odustajanje mora čitati na drugom prolazu.
                 .pointerInput(board, isFlipped, squareSizePx) {
                     awaitEachGesture {
                         // `requireUnconsumed = false`: `clickable` na samom polju
@@ -138,9 +190,68 @@ fun BoardView(
                         val pieceOnSquare = board[startRow][startCol]
 
                         if (pieceOnSquare == null) {
-                            // --- Nema figure: ne troši ništa. ---
+                            // --- Nema figure: ne troši ništa (dok se prečica ne naoruža). ---
+                            if (!allowsStyleSwipe) return@awaitEachGesture
+
+                            val settings = SettingsManager.getInstance(context)
+                            if (!settings.swipeToChangeBoardTheme && !settings.swipeToChangePieceStyle) {
+                                return@awaitEachGesture
+                            }
+
                             var swipeX = 0f
                             var swipeY = 0f
+
+                            // FAZA 1 — dug pritisak BEZ pokreta naoružava prečicu.
+                            //
+                            // Zašto uopšte postoji: obično prevlačenje po praznom
+                            // polju ĆUTI svuda gde je tabla u `verticalScroll`-u
+                            // (roditelj potroši pokret na svom touch slop-u ~20 px,
+                            // a prečici treba 100 px). Izmereno na emulatoru, ne
+                            // izvedeno: ekran Igra u portretu — uspravno prevlačenje
+                            // ne menja `pieceStyle`, vodoravno menja `boardTheme`.
+                            // Dok čekamo hold ne trošimo NIŠTA, pa skrol radi
+                            // normalno; čim se prst pomeri preko touch slop-a
+                            // odustaje se od naoružavanja i ide zatečena putanja.
+                            val slop = viewConfiguration.touchSlop
+                            val armed = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                                while (true) {
+                                    val ev = awaitPointerEvent()
+                                    val ch = ev.changes.firstOrNull { it.id == down.id }
+                                        ?: return@withTimeoutOrNull false
+                                    if (!ch.pressed) return@withTimeoutOrNull false
+                                    if (ch.isConsumed) return@withTimeoutOrNull false
+                                    val d = ch.positionChange()
+                                    swipeX += d.x
+                                    swipeY += d.y
+                                    if (kotlin.math.abs(swipeX) > slop ||
+                                        kotlin.math.abs(swipeY) > slop
+                                    ) {
+                                        return@withTimeoutOrNull false
+                                    }
+                                }
+                            } == null
+
+                            if (armed) {
+                                // Naoružano: od sada se troši SVAKI pokret, pa
+                                // roditeljski skrol više ne može da preuzme gest —
+                                // zato prečica radi i tamo gde obično prevlačenje ćuti.
+                                hapticManager.lightImpact()
+                                while (true) {
+                                    val ev = awaitPointerEvent()
+                                    val ch = ev.changes.firstOrNull { it.id == down.id } ?: break
+                                    if (!ch.pressed) break
+                                    // REDOSLED JE BITAN, isto kao u grani prevlačenja
+                                    // figure ispod: `positionChange()` vraća
+                                    // `Offset.Zero` za već potrošen `change`.
+                                    val d = ch.positionChange()
+                                    ch.consume()
+                                    swipeX += d.x
+                                    swipeY += d.y
+                                }
+                                applyBoardSwipe(settings, hapticManager, swipeX, swipeY)
+                                return@awaitEachGesture
+                            }
+
                             while (true) {
                                 val event = awaitPointerEvent()
                                 val change = event.changes.firstOrNull { it.id == down.id }
@@ -171,32 +282,7 @@ fun BoardView(
                                 if (finalChange.isConsumed) return@awaitEachGesture
                             }
 
-                            val settings = SettingsManager.getInstance(context)
-                            if (kotlin.math.abs(swipeX) > kotlin.math.abs(swipeY)) {
-                                if (settings.swipeToChangeBoardTheme && kotlin.math.abs(swipeX) > 100f) {
-                                    val themes = BoardTheme.values()
-                                    val currentIdx = themes.indexOfFirst { it.rawValue == settings.boardTheme }
-                                    val nextIdx = if (swipeX < 0) {
-                                        (currentIdx + 1) % themes.size
-                                    } else {
-                                        (currentIdx - 1 + themes.size) % themes.size
-                                    }
-                                    settings.updateBoardTheme(themes[nextIdx].rawValue)
-                                    hapticManager.mediumImpact()
-                                }
-                            } else {
-                                if (settings.swipeToChangePieceStyle && kotlin.math.abs(swipeY) > 100f) {
-                                    val styles = PieceStyle.values()
-                                    val currentIdx = styles.indexOfFirst { it.rawValue == settings.pieceStyle }
-                                    val nextIdx = if (swipeY < 0) {
-                                        (currentIdx + 1) % styles.size
-                                    } else {
-                                        (currentIdx - 1 + styles.size) % styles.size
-                                    }
-                                    settings.updatePieceStyle(styles[nextIdx].rawValue)
-                                    hapticManager.mediumImpact()
-                                }
-                            }
+                            applyBoardSwipe(settings, hapticManager, swipeX, swipeY)
                             return@awaitEachGesture
                         }
 

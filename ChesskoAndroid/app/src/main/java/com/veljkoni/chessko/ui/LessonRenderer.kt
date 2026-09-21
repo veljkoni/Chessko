@@ -249,6 +249,9 @@ private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
                 lastMove = null,
                 boardTheme = BoardTheme.CLASSIC,
                 pieceStyle = PieceStyle.CLASSIC,
+                // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+                // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+                allowsStyleSwipe = false,
                 onTap = {}
             )
         }
