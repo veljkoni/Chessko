@@ -57,21 +57,21 @@ fun PlayerHeaderCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(cardBackground)
             .border(
                 width = if (isActive) 1.5.dp else 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(DS.Radius.m)
             )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = DS.Space.m, vertical = DS.Space.s),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // King Avatar
         Box(
             modifier = Modifier
                 .size(38.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(DS.Radius.s))
                 .background(DS.fill),
             contentAlignment = Alignment.Center
         ) {
@@ -174,7 +174,7 @@ fun PlayerHeaderCard(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(DS.Space.s))
             }
         }
 
@@ -228,9 +228,9 @@ fun StatusBanner(message: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(DS.Radius.s))
             .background(DS.fill)
-            .padding(vertical = 10.dp, horizontal = 12.dp),
+            .padding(vertical = 10.dp, horizontal = DS.Space.m),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -333,7 +333,7 @@ fun AnalysisButton(viewModel: GameViewModel, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(DS.Radius.m),
         colors = ButtonDefaults.buttonColors(
             containerColor = DS.accent,
             contentColor = DS.onAccent
@@ -344,7 +344,7 @@ fun AnalysisButton(viewModel: GameViewModel, onClick: () -> Unit) {
             contentDescription = null,
             modifier = Modifier.size(18.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(DS.Space.s))
         Text(
             text = loc("Analiziraj partiju"),
             // iOS: `.dsBody.weight(.semibold)` (`Chessko/Views/GameView.swift:280`).
