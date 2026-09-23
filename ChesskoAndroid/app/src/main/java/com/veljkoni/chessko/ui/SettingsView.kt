@@ -99,7 +99,7 @@ fun SettingsView(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(scrollState)
-                .padding(16.dp),
+                .padding(DS.Space.l),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Language Selection Section
@@ -107,7 +107,7 @@ fun SettingsView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(DS.Radius.m))
                         // Nijedan par u paleti ne daje vidljivu ivicu (`line/fill` 1,067,
                         // `line/surface` 1,285 — vidi `ContrastTest.nonTextPairsOverFillAreDistinguishable`).
                         // Kartica se od `DS.ground` odvaja SAMO bojom podloge, kao iOS-ova
@@ -135,7 +135,7 @@ fun SettingsView(
                                     settings.updateLanguageCode(newCode)
                                     onLanguageChanged(newCode)
                                 }
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                                .padding(vertical = DS.Space.m, horizontal = DS.Space.l),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
@@ -183,7 +183,7 @@ fun SettingsView(
                         }
                     },
                     containerColor = DS.surface,
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(DS.Radius.l)
                 )
             }
 
@@ -204,12 +204,12 @@ fun SettingsView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(DS.Radius.m))
                         // Ivica uklonjena — `line/surface` daje 1,285, nevidljivo (vidi
                         // komentar uz karticu jezika iznad).
                         .background(DS.surface)
                         .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                 ) {
                     // Row 1: Main Counters
                     Row(
@@ -248,7 +248,7 @@ fun SettingsView(
                         ) {
                             TextButton(
                                 onClick = { showResetStatsConfirm = true },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                contentPadding = PaddingValues(horizontal = DS.Space.s, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = loc("Resetuj statistiku"),
@@ -268,7 +268,7 @@ fun SettingsView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(DS.Radius.m))
                         // Ivica uklonjena — vidi komentar uz karticu jezika iznad.
                         .background(DS.surface)
                 ) {
@@ -296,7 +296,7 @@ fun SettingsView(
 
             // 2. Board Themes Customization
             SettingsSection(title = loc("Izgled table")) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
                     Text(
                         text = loc("Tema table"),
                         color = DS.inkMuted,
@@ -307,7 +307,7 @@ fun SettingsView(
 
                     // LazyRow for Board Themes
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         items(BoardTheme.values()) { theme ->
@@ -322,11 +322,11 @@ fun SettingsView(
                                 Column(
                                     modifier = Modifier
                                         .size(44.dp)
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(DS.Radius.s))
                                         .border(
                                             width = if (isSelected) 2.5.dp else 1.dp,
                                             color = if (isSelected) DS.accent else DS.line,
-                                            shape = RoundedCornerShape(8.dp)
+                                            shape = RoundedCornerShape(DS.Radius.s)
                                         )
                                 ) {
                                     Row(modifier = Modifier.weight(1f)) {
@@ -355,7 +355,7 @@ fun SettingsView(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(DS.Space.xs))
 
                     SettingsToggle(
                         label = loc("Prikaži koordinate"),
@@ -389,7 +389,7 @@ fun SettingsView(
 
             // 3. Piece Styles Customization
             SettingsSection(title = loc("Stil figura")) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
                     Text(
                         text = loc("Stil"),
                         color = DS.inkMuted,
@@ -420,12 +420,12 @@ fun SettingsView(
                                             Box(
                                                 modifier = Modifier
                                                     .size(46.dp)
-                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clip(RoundedCornerShape(DS.Radius.s))
                                                     .background(DS.fill)
                                                     .border(
                                                         width = if (isSelected) 2.dp else 1.dp,
                                                         color = if (isSelected) DS.accent else DS.line,
-                                                        shape = RoundedCornerShape(8.dp)
+                                                        shape = RoundedCornerShape(DS.Radius.s)
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
@@ -441,7 +441,7 @@ fun SettingsView(
                                                 )
                                             }
 
-                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Spacer(modifier = Modifier.height(DS.Space.xs))
 
                                             Text(
                                                 text = loc(style.label),
@@ -460,7 +460,7 @@ fun SettingsView(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(DS.Space.xs))
 
                     SettingsToggle(
                         label = loc("Zadrži pa prevuci gore/dole (menja stil)"),
@@ -504,7 +504,7 @@ fun SettingsView(
             SettingsSection(title = loc("Izgled aplikacije")) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
                 ) {
                     val themes = listOf(
                         "system" to loc("Sistem"),
@@ -553,11 +553,11 @@ fun SettingsView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(DS.Radius.m))
                         // Ivica uklonjena — vidi komentar uz karticu jezika iznad.
                         .background(DS.surface)
                         .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                 ) {
                     // iOS: `.headline` pa `.subheadline`
                     // (`Chessko/Views/SettingsSheet.swift:346`, `:349`).
@@ -574,11 +574,11 @@ fun SettingsView(
                         style = Type.caption
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(DS.Space.xs))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
                     ) {
                         Button(
                             onClick = {
@@ -589,7 +589,7 @@ fun SettingsView(
                                 containerColor = DS.fill,
                                 contentColor = DS.ink
                             ),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(DS.Radius.s),
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
@@ -600,7 +600,7 @@ fun SettingsView(
                             // "spoljni link, Stockfish" umesto samo "Stockfish".
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Public,
@@ -621,7 +621,7 @@ fun SettingsView(
                                 containerColor = DS.fill,
                                 contentColor = DS.ink
                             ),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(DS.Radius.s),
                             modifier = Modifier.weight(1f),
                             contentPadding = PaddingValues(vertical = 6.dp)
                         ) {
@@ -629,7 +629,7 @@ fun SettingsView(
                             // ikona, tekst dugmeta nosi ceo vidljiv sadrzaj.
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Public,
@@ -653,7 +653,7 @@ fun SettingsSection(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(DS.Space.s)
     ) {
         Text(
             text = title,
@@ -681,7 +681,7 @@ fun SettingsToggle(
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(DS.fill)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = DS.Space.m, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -746,7 +746,7 @@ fun DifficultyOptionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
