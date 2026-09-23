@@ -77,7 +77,7 @@ fun MoveHistoryView(
             .clip(RoundedCornerShape(10.dp))
             .background(DS.fill)
             .border(1.dp, DS.line, RoundedCornerShape(10.dp))
-            .padding(vertical = 4.dp),
+            .padding(vertical = DS.Space.xs),
         contentAlignment = Alignment.Center
     ) {
         if (notations.isEmpty()) {
@@ -108,7 +108,7 @@ fun MoveHistoryView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(bg)
-                            .padding(vertical = 4.dp, horizontal = 12.dp),
+                            .padding(vertical = DS.Space.xs, horizontal = DS.Space.m),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Left Pair
@@ -125,14 +125,14 @@ fun MoveHistoryView(
 
                         // Divider if right pair exists
                         if (row.second != null) {
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(DS.Space.s))
                             Box(
                                 modifier = Modifier
                                     .width(1.dp)
                                     .height(16.dp)
                                     .background(DS.line)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(DS.Space.s))
                             
                             // Right Pair
                             val rightWhiteIdx = row.second!!.number * 2 - 1
@@ -181,7 +181,7 @@ fun RowScope.MovePairCell(
                 .clip(RoundedCornerShape(4.dp))
                 .background(if (isLastWhite) DS.accent.copy(alpha = 0.2f) else Color.Transparent)
                 .clickable(onClick = onWhiteClick)
-                .padding(horizontal = 4.dp, vertical = 2.dp),
+                .padding(horizontal = DS.Space.xs, vertical = 2.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
@@ -191,14 +191,14 @@ fun RowScope.MovePairCell(
                 fontWeight = if (isLastWhite) FontWeight.Bold else FontWeight.Normal
             )
         }
-        Spacer(modifier = Modifier.width(4.dp))
+        Spacer(modifier = Modifier.width(DS.Space.xs))
         Box(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(4.dp))
                 .background(if (isLastBlack) DS.accent.copy(alpha = 0.2f) else Color.Transparent)
                 .clickable(enabled = pair.black != null, onClick = onBlackClick)
-                .padding(horizontal = 4.dp, vertical = 2.dp),
+                .padding(horizontal = DS.Space.xs, vertical = 2.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
