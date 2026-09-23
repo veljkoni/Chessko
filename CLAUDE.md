@@ -89,7 +89,7 @@ na istim zadacima i istim rejtinzima. Dve stvari koje Android traži a iOS ne:
 Čita se kroz `ChesskoAndroid/.../logic/PuzzleRepository.kt` (`android.database.sqlite`,
 sistemski — **bez ijedne nove Gradle zavisnosti**).
 
-> **Generator je ZAMRZNUT.** `build_lesson_json.py` je prenео lekcije iz Swift-a u JSON
+> **Generator je ZAMRZNUT.** `build_lesson_json.py` je preneo lekcije iz Swift-a u JSON
 > tako što je prevode vadio iz `Localizable.xcstrings`. Task 6 iste faze obrisao je baš te
 > ključeve, pa generator više **ne može da se pokrene** — i to jasno kaže ako se pokuša.
 > **Izvor istine su od Faze 3 sami JSON fajlovi**; lekcija se menja tako što se uredi
@@ -174,7 +174,7 @@ vrednosti, pa daje više):
 |---|---|---|
 | `DS.Space.*` | **169 linija / 181 pojava** (183 sa KDoc prozom) | neke linije nose dva poziva |
 | `DS.Radius.*` | **65** (67 sa KDoc prozom) | |
-| `DS.maxBoardSide` | **6 mesta** (8 pojava — `sizeIn` ga nosi na obe ose) | sve igračke table, nijedna lekcijska |
+| `DS.maxBoardSide` | **6 mesta** (7 pojava — `sizeIn` u pejzažu Zadataka ga nosi na obe ose; ekran Igra ga od Task-a 5b nosi u **vrednosti** `boardSize`, ne u modifikatoru) | sve igračke table, nijedna lekcijska |
 | `Type.title/heading/body/caption/label/mono` | **159 referenci** | 161 migrirano pozivno mesto: 158 na skalu, uslovno mesto u `LessonRenderer.kt:189` pola-pola, 3 imenovane konstante van skale |
 
 Skala posle Faze 10: `title 22 / heading 17 / body 15 / caption 12 / label 11 / mono 13`.
@@ -1003,14 +1003,22 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   pozivnih mesta; tabela i obe presude su u „Android dizajn sistem". Ostaje **285 literala namerno**
   (119 razmak / 97 dimenzija / 39 radijus / 24 ivica / 6 ostalo); samo onih 119 bi buduća faza
   mogla da zatvori, i to samo zajedno sa iOS-om, koji nosi istu raspodelu zakucanu.
-- **Na tabletu eval traka i red oko table NE prate `DS.maxBoardSide` — Faza 10 je to uvela.**
-  Task 1 je ograničio `BoardView`, a `EvalBar` pored nje i dalje dobija
-  `height = boardSize` (neograničen, `MainActivity.kt` portret i pejzaž). Izmereno na simuliranom
-  tabletu: portret — traka **1558 px**, tabla ~840 px (`27_tablet_igra_portret_light`); pejzaž —
-  traka **1422 px**, tabla ~840 px (`31_tablet_igra_pejzaz_light`). Traka zato štrči iznad i ispod
-  table, a red koji je nosi drži punu visinu, pa oko table stoji prazan pojas od ~360 px (portret) / ~290 px
-  (pejzaž) iznad i ispod. Na telefonu nedostižno (411 dp < 560). Popravka je jeftina (ista granica na `boardSize`
-  pre nego što se razdeli traci i tabli), ali nije rađena: zatvaranje faze sme samo `CLAUDE.md`.
+- ~~**Na tabletu eval traka i red oko table NE prate `DS.maxBoardSide` — Faza 10 je to uvela.**~~
+  — **ZATVORENO u Fazi 10 (Task 5b).** Uzrok su bila **dva izvora istine** u `MainActivity.kt`:
+  Task 1 je granicu stavio **na tablu**, modifikatorom (`sizeIn`/`widthIn` pa `.size(boardSize)`),
+  a promenljiva `boardSize` — iz koje `EvalBar` čita visinu (`height = boardSize`) — ostala je
+  neograničena. Izmereno pre popravke na simuliranom tabletu: portret traka **1558 px** uz tablu
+  ~840 (`27_tablet_igra_portret_light`), pejzaž **1422 px** (`31_…`), prazan pojas ~360/~290 px.
+  Popravka ograničava **vrednost, ne tablu**, isto kao iOS (`Chessko/Views/GameView.swift:35` i
+  `:105`, `let side = min(available, DS.maxBoardSide)`): `boardSize` se računa već sa
+  `.coerceAtMost(DS.maxBoardSide)` i nju čitaju **i tabla i traka**, a modifikatori granice na
+  tabli su uklonjeni jer bi bili drugi izvor istine za istu vrednost. Time je razlaz strukturno
+  nemoguć, ne zakrpljen. Izmereno posle, isti `wm size`/`wm density 240`: portret tabla
+  **233–1072 (840 px)**, okvir trake **237–1068**; pejzaž tabla **347–1186 (840)**, okvir
+  **351–1182** (`44_tablet_igra_portret_light_5b`, `45_tablet_igra_pejzaz_light_5b`) — okvir se
+  meri po `#708090` na ivičnoj koloni, pa zaobljeni uglovi odnesu po ~4 px. Ostala četiri ekrana
+  sa tablom (`PuzzleView` ×2, `StepGameView`, `StepPracticeView`) nemaju ništa što čita veličinu
+  table iz zasebne promenljive — granica i tabla su tamo isti čvor — pa nisu dirani.
 - **`.widthIn(max = 500.dp)` u portretu Igre je mrtav kod** (`MainActivity.kt:942-943`):
   `.fillMaxWidth()` ispred njega fiksira min = max = širina roditelja, pa kolona sadržaja na
   tabletu ide celom širinom (kartice igrača 1600 px na `27_…`). Zatečeno pre Faze 10. Popravka bi
@@ -1040,14 +1048,31 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
 - **Vizuelna pokrivenost Faze 10 je DELIMIČNA, odlukom korisnika.** Svetla tema: svih devet mesta
   sa spiska rizika **osim jednog** (naslov greške u pejzažnom `PuzzleView`-u, 14 → 17 — snimak
   `26_zadaci_light_pejzaz_greska` je u stvari **početni ekran launcher-a**, portretan, 1080×2400,
-  bez ijednog piksela aplikacije), plus šest tabli na simuliranom tabletu i dva `BEZ_granice`
+  bez ijednog piksela aplikacije — **dopunjeno u Task-u 5b**, vidi kraj ovog unosa), plus šest tabli na simuliranom tabletu i dva `BEZ_granice`
   snimka. Tamna tema: **9 snimaka, 4 različita ekrana** (Igra portret, Podešavanja — srpski, ruski i
   ruski `PRE_taska3` — Put, lekcija). Ledger je tvrdio „10 ekrana, uključujući Zadatke": netačno —
   `43_zadaci_dark_portret` je **splash ekran** (jedna ikona na praznoj podlozi `#212229`, koja nije
   `DS.ground` tamne teme `#0E1428`), ne Zadaci. Korisnik je izričito presudio da se tamna tema **ne dovršava**: faza menja
   veličine, ne boje, a veličina ne zavisi od teme; nula novih zakucanih boja potvrđena na tri
-  pregleda. Da li je `26_…` posledica pada aplikacije u pejzažu ili pritiska na Home **ne zna se** —
-  logcat iz tog trenutka nije sačuvan, a emulator se posle presude više ne diže.
+  pregleda.
+  **Task 5b (jedan uzak prolaz, ~3 min) je zatvorio rupu oko `26_…`.** Ekran greške u
+  `PuzzleView` (`PuzzlePhase.NETWORK_ERROR`) ima tri ulaza u `PuzzleViewModel.kt`: repozitorijum
+  ne vrati zadatak (`showUnavailable`), neispravan FEN (`setupPuzzle`) i korak koji nije vežba
+  (`startStepPractice`). **Nijedan nije dostižan običnim korišćenjem:** baza od 20.000 redova uvek
+  vraća zadatak (`dailyPuzzle` je modulo nad `COUNT(*)`), FEN svih redova čuva
+  `everyPuzzleInDatabaseHasValidFenAndAtLeastOneMove`, a kurikulum ne šalje ne-vežbu u vežbu.
+  Izazvan je **veštački**: kopija baze sa obrisanim redovima (`DELETE`, bez `VACUUM`, pa **ista
+  veličina** — 7.331.840 B — i repozitorijum je ne prepisuje) podmetnuta u `filesDir` preko
+  `run-as`; `count() = 0` → `showUnavailable()`. U pejzažu (`wm size 2400x1080`, simulirano)
+  naslov „Greška pri učitavanju zadatka" na 17 staje **u jedan red** u levoj koloni
+  (`46_zadaci_light_pejzaz_greska_5b`); dugme „Pokušaj ponovo" posle toga proces ne obara.
+  **Aplikacija nije pala:** u `logcat`-u celog prolaza nema nijednog `FATAL EXCEPTION`, jedini
+  `AndroidRuntime` redovi su `monkey` alat (uid 2000, „VM exiting with result code 0"), a
+  `pidof com.veljkoni.chessko` je i posle tapa vratio živ proces. To **ne dokazuje** šta se desilo
+  pri snimanju `26_…` (tadašnji logcat ne postoji) — dokazuje samo da ekran greške u pejzažu ne
+  obara aplikaciju, pa je launcher na `26_…` najverovatnije neuspeo pokušaj da se do ekrana uopšte
+  stigne, ne pad. Baza je posle vraćena (fajl obrisan, aplikacija ga prepisala; SHA-256 `3cd00a83…`
+  = asset), `wm size`/`wm density` resetovani. Svetla tema time pokriva **svih devet** rizika.
 - **`dynamicColor` je uklonjen sa Android teme** (`ChesskoTheme` u `Theme.kt`). Zatečena verzija
   je bila Android Studio šablon sa `dynamicColor = true`, koji na Androidu 12+ vuče boje sa
   korisnikove tapete — za spec koji traži jedan fiksan akcent to nije funkcija nego greška
@@ -1496,7 +1521,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
       animacijski overlay elementi skriveni `.accessibilityHidden(true)`.
 - [x] Istorija poteza u srpskoj algebarskoj notaciji — `PieceType.srbNotationLetter` (K/D/T/L/S);
       `GameState.moveNotations [String]` paralelno sa `moveHistory`; `baseNotation(for:in:)` u
-      `applying()` (pre primene poteza za info o figuri, sufiks +/# posle statusа);
+      `applying()` (pre primene poteza za info o figuri, sufiks +/# posle statusa);
       `MoveHistoryView` sa `ScrollViewReader` (auto-scroll na poslednji potez, monospaced font,
       naizmenične pozadine redova); prikazuje se u `GameView` ispod status bara.
 - [x] Čuvanje/nastavak partije — `Codable` na svim modelima; `SavedGame` struct u VM; UserDefaults.
@@ -3173,7 +3198,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   (`fillMaxWidth()` ispred nje), tabla u portretu je bez `DS.maxBoardSide` išla na 1552 px, pa je
   bug postojao na **svih šest** mesta. I jedna regresija koju je Task 1 uveo a niko nije video:
   eval traka pored ograničene table ostaje pune visine (1558 px naspram ~840) — upisano u „Poznata
-  ograničenja", nepopravljeno. Oba nalaza su iz snimaka koje je prethodna sesija napravila i nije
+  ograničenja", nepopravljeno (**popravljeno u Task-u 5b, vidi sledeći unos**). Oba nalaza su iz snimaka koje je prethodna sesija napravila i nije
   stigla da izmeri; emulator za njih nije dizan.
 
   **Pokrivenost je delimična, i to se kaže otvoreno.** Tamna tema je stala na 9 snimaka / 4 ekrana
@@ -3216,3 +3241,22 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   Snimci (44, bez praznog) u
   `.superpowers/sdd/2026-09-21-faza-10-android-razmaci-tipografija/screenshots/`.
   `Chessko/Localizable.xcstrings` nije diran.
+
+- **2026-09-23** — Faza 10, Task 5b (pred spajanje): regresija eval trake popravljena, jedan uzak
+  prolaz emulatora. **Uzrok** su bila dva izvora istine u `MainActivity.kt` — granica na tabli
+  (modifikator), visina trake iz neograničene `boardSize`. **Popravka** ograničava vrednost
+  (`boardSize = … .coerceAtMost(DS.maxBoardSide)`), isto kao iOS `GameView.swift:35`/`:105`, pa
+  tabla i traka čitaju isti broj; modifikatori granice na tabli uklonjeni. Commit `ddacd2e`.
+  Izmereno na simuliranom tabletu: traka i tabla sada **840 px** i u portretu i u pejzažu (bile
+  1558 / 1422 naspram 840). Ostala četiri ekrana sa tablom nemaju drugog čitaoca veličine — nisu
+  dirana. `BoardWidthCapTest` zelen (granica je i dalje u izvoru, sada u vrednosti).
+  Snimak `26_…` razrešen koliko se može: ekran greške u `PuzzleView` nije dostižan običnim
+  korišćenjem, izazvan je veštački (prazna baza iste veličine u `filesDir`), u pejzažu naslov staje
+  u jedan red i **aplikacija ne pada** (0 `FATAL EXCEPTION` u logcat-u, živ `pid`) — detalji u
+  „Poznatim ograničenjima", unos o vizuelnoj pokrivenosti. Emulator: **~3 minuta** (19:31:56 →
+  19:34:51), `-gpu host`, `wm size`/`wm density` resetovani pre gašenja, `pgrep -f qemu-system`
+  prazan. JVM **114/114**, 0 padova, iz XML-a (HEAD `ddacd2e` ispisan u 19:36:34, XML 19:36:38).
+  Usput ispravljena dva ćirilična slova usred latinice u ovom fajlu, provereno bajtovima:
+  „preneo" (poslednja dva slova bila su ćirilična, `d0 b5 d0 be` → `65 6f`) i „statusa" (poslednje
+  slovo, `d0 b0` → `61`) — ovde namerno ispisani latinicom, da ovaj unos sam ne ponovi grešku. Reč
+  iz ruskog prevoda u unosu o ruskom UI-ju je **citat** pokvarenog prevoda i namerno ostaje.
