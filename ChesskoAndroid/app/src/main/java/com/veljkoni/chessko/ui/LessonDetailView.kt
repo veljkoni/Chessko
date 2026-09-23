@@ -71,7 +71,7 @@ fun LessonDetailView(
         repo.discoveredLessonIds().indexOf(lessonId).let { if (it >= 0) it + 1 else null }
     }
 
-    // `padding(DS.Space.l)` je ranije davao `LearnView`-ov spoljni `Box`, deljen sa
+    // `padding(16.dp)` je ranije davao `LearnView`-ov spoljni `Box`, deljen sa
     // spiskom lekcija. Ovaj ekran sada zivi i van `LearnView`-a (otvara ga
     // `PathView`, bez ijednog Box-a oko sebe), pa marginu mora da nosi SAM —
     // inace sadrzaj (i tabla) idu ivica-do-ivice ekrana kad se otvori iz Puta.
