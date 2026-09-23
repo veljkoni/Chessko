@@ -343,7 +343,7 @@ fun PlayerArea(
                     modifier = Modifier
                         .clip(CapsuleShape)
                         .background(textColor.copy(alpha = 0.1f))
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .padding(horizontal = DS.Space.l, vertical = 6.dp)
                 ) {
                     Text(
                         text = loc("Vreme je isteklo!"),
@@ -367,7 +367,7 @@ fun PlayerArea(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(DS.Space.m))
 
             Text(
                 text = formatTime(timeLeft),
@@ -420,7 +420,7 @@ fun ControlBar(
         modifier = modifier
             .fillMaxWidth()
             .background(ClockBarBackground)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = DS.Space.m),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -446,7 +446,7 @@ fun ControlBar(
         if (!hasStarted) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
             ) {
                 Row(
                     modifier = Modifier
@@ -456,7 +456,7 @@ fun ControlBar(
                         // 0,12 je uz to i iOS vrednost (`ChessClockView.swift:278`).
                         .background(ClockBarAccent.copy(alpha = 0.12f))
                         .clickable { onPresetClick() }
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = DS.Space.l, vertical = DS.Space.s),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // `ClockBarAccent` (=`DarkColors.accent`) na sopstvenom @12% cipu:
@@ -590,15 +590,15 @@ fun PresetChooserDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(DS.Radius.l),
             color = DS.surface,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(DS.Space.l)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(DS.Space.l),
+                verticalArrangement = Arrangement.spacedBy(DS.Space.l)
             ) {
                 Text(
                     text = loc("Vremenska kontrola"),
@@ -620,10 +620,10 @@ fun PresetChooserDialog(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(DS.Radius.s))
                                 .background(if (isSelected) DS.accent else DS.fill)
                                 .clickable { selectedCategory = category }
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = DS.Space.s),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -639,7 +639,7 @@ fun PresetChooserDialog(
 
                 // Preset List
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                 ) {
                     presets.filter { it.category == selectedCategory }.forEach { preset ->
                         val isSelected = currentPreset == preset
@@ -654,7 +654,7 @@ fun PresetChooserDialog(
                                     RoundedCornerShape(10.dp)
                                 )
                                 .clickable { onPresetSelected(preset) }
-                                .padding(12.dp),
+                                .padding(DS.Space.m),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -726,15 +726,15 @@ fun InfoDialog(onDismiss: () -> Unit) {
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(DS.Radius.l),
             color = DS.surface,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(DS.Space.l)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(DS.Space.l),
+                verticalArrangement = Arrangement.spacedBy(DS.Space.l)
             ) {
                 Text(
                     text = loc("Objašnjenje vremenskih kontrola"),
@@ -750,8 +750,8 @@ fun InfoDialog(onDismiss: () -> Unit) {
                     modifier = Modifier
                         .weight(1f, fill = false)
                         .verticalScroll(scrollState)
-                        .padding(vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(vertical = DS.Space.xs),
+                    verticalArrangement = Arrangement.spacedBy(DS.Space.l)
                 ) {
                     InfoCategorySection(
                         title = loc("Blic"),
@@ -810,15 +810,15 @@ fun InfoCategorySection(
             fontWeight = FontWeight.Bold
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
             items.forEach { (name, description) ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(DS.Radius.s))
                         .background(DS.fill)
                         .padding(10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
                     verticalAlignment = Alignment.Top
                 ) {
                     Text(
