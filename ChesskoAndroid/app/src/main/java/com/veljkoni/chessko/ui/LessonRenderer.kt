@@ -67,6 +67,7 @@ import com.veljkoni.chessko.models.ExerciseKind
 import com.veljkoni.chessko.models.LessonBlock
 import com.veljkoni.chessko.models.PieceValueRow
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.LearnViewModel
 
 // MARK: - Lesson Renderer
@@ -124,9 +125,11 @@ private fun colorFor(style: BoxStyle?, accent: Color): Color = when (style) {
 @Composable
 private fun LQuote(text: String, author: String) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(text = mdBold(text), fontSize = 15.sp, color = DS.ink)
+        // iOS citat crta kao `L_Box` (`Chessko/Views/LessonRenderer.swift:48`):
+        // telo `.dsBody`, potpis `.dsCaption.weight(.bold)` (`:442`, `:446`).
+        Text(text = mdBold(text), style = Type.body, color = DS.ink)
         Spacer(Modifier.height(4.dp))
-        Text(text = "— $author", fontSize = 13.sp, color = DS.inkMuted)
+        Text(text = "— $author", style = Type.caption, color = DS.inkMuted)
     }
 }
 
@@ -166,12 +169,24 @@ internal fun lessonPieceSymbol(lessonKey: String): String? = when (lessonKey) {
     else -> null
 }
 
+/**
+ * Velicina Unicode figure u lekcijskom redu (♙♘♗♖♕♔) — **namerno van
+ * tipografske skale**: to je SADRZAJ, ne tekst interfejsa. iOS na istom mestu
+ * uopste ne crta tekst nego sliku (`PieceImageView` u `L_PieceRow`,
+ * `Chessko/Views/LessonRenderer.swift:466`), pa font-pandan ne postoji i
+ * vezivanje za bilo koji korak skale bi bilo lazno poreklo. Vrednost je ista
+ * kao pre Faze 10; sto je i cela izmena na ovom mestu — dobila je ime i razlog.
+ */
+private val LessonPieceGlyphSize = 22.sp
+
 @Composable
 private fun LessonPieceGlyph(piece: String) {
     val symbol = lessonPieceSymbol(piece)
     Text(
         text = symbol ?: "\u26A0",
-        fontSize = if (symbol != null) 22.sp else 15.sp,
+        // Figura je SADRZAJ, pa velicinu uzima iz sopstvene konstante; znak
+        // upozorenja je tekst interfejsa i ide na skalu.
+        fontSize = if (symbol != null) LessonPieceGlyphSize else Type.body.fontSize,
         // Nepoznat naziv figure daje `DS.danger`, ne ukras -- vidljiva poruka o
         // pokvarenom sadrzaju JSON-a (CLAUDE.md, „Android cita isti JSON").
         color = if (symbol != null) DS.ink else DS.danger,
@@ -189,14 +204,15 @@ fun LPieceRow(piece: String, name: String, count: String, accent: Color) {
         // o figurama upravo trazi da se figura VIDI (iOS crta `PieceImageView`).
         LessonPieceGlyph(piece)
         // `name` i `count` dolaze iz JSON-a vec prevedeni — NE kroz `loc()`.
-        Text(text = name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accent)
+        Text(text = name, style = Type.body, fontWeight = FontWeight.SemiBold, color = accent)
         Spacer(Modifier.weight(1f))
         // IZUZETAK od pravila „zateceno 0,75–0,9 → `ink`": zateceno je bilo
         // `White@0,75`, ali iOS `L_PieceRow` daje kolicini `.secondary`
         // (`Chessko/Views/LessonRenderer.swift:474`) — otvoreno i provereno. `name`
         // levo je `accent`; da je i kolicina `ink`, red bi imao dva jednako jaka
         // glasa umesto naziva i njegovog dodatka.
-        Text(text = count, fontSize = 15.sp, color = DS.inkMuted)
+        // Velicina je takodje iOS-ova: `.dsCaption.weight(.medium)` na istom mestu.
+        Text(text = count, style = Type.caption, color = DS.inkMuted)
     }
 }
 
@@ -209,7 +225,8 @@ fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LessonPieceGlyph(r.piece)
-                Text(text = r.name, fontSize = 15.sp, color = DS.ink)
+                // iOS: `.dsBody` (`Chessko/Views/LessonRenderer.swift:537`).
+                Text(text = r.name, style = Type.body, color = DS.ink)
                 Spacer(Modifier.weight(1f))
                 // `valueLabel` je vec preveden (stize iz JSON-a na tom jeziku), ali
                 // ga nijedna isporucena lekcija ne zadaje — pa se u praksi UVEK ide
@@ -217,7 +234,8 @@ fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
                 // „1 bod" / „1 point", sto iOS crta na istom JSON-u.
                 Text(
                     text = r.valueLabel ?: valueUnitLabel(r.value),
-                    fontSize = 15.sp,
+                    // iOS: `.dsBody.weight(.semibold)` (`Chessko/Views/LessonRenderer.swift:544`).
+                    style = Type.body,
                     fontWeight = FontWeight.SemiBold,
                     color = accent
                 )
@@ -232,7 +250,7 @@ private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         if (state == null) {
             // Pokvaren FEN u sadrzaju mora da se VIDI, ne da ostavi prazninu.
-            Text(text = "⚠︎ $fen", fontSize = 13.sp, color = DS.danger)
+            Text(text = "⚠︎ $fen", style = Type.body, color = DS.danger)
         } else {
             // POTPIS JE PROVEREN uz stvarni `BoardView` (`ui/BoardView.kt`):
             // prima `board`, ne `gameState`, i `onTap`, ne `onSquareClick`.
@@ -257,13 +275,14 @@ private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
         }
         if (caption.isNotEmpty()) {
             Spacer(Modifier.height(6.dp))
-            Text(text = caption, fontSize = 13.sp, color = DS.inkMuted)
+            // iOS: `.dsCaption` (`Chessko/Views/LessonRenderer.swift:205`).
+            Text(text = caption, style = Type.caption, color = DS.inkMuted)
         }
         if (interactive) {
             // Interaktivna tabla u lekciji jos ne postoji ni na iOS-u. Umesto
             // tihe razlike izmedju platformi, kaze se sta fali.
             Text(text = loc("Interaktivna tabla još nije dostupna."),
-                 fontSize = 12.sp, color = DS.inkMuted)
+                 style = Type.caption, color = DS.inkMuted)
         }
     }
 }
