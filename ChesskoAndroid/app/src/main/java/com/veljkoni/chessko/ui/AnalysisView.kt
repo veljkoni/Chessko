@@ -317,7 +317,9 @@ private fun TurningPointCard(move: AnalyzedMove, onClick: () -> Unit) {
 @Composable
 private fun MoveStrip(result: GameAnalysis, onClick: (AnalyzedMove) -> Unit) {
     val itemMinWidth = 96.dp
-    val spacing = 8.dp
+    // Imenovan razmak, ne dimenzija: ide pravo u `Arrangement.spacedBy` dva
+    // reda nize. Zato token, iako nije zapisan unutar `spacedBy(...)`.
+    val spacing = DS.Space.s
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val columns = max(1, ((maxWidth + spacing) / (itemMinWidth + spacing)).toInt())
         Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
