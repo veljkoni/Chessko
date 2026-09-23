@@ -50,7 +50,7 @@ val Typography = Typography(
  * definicija ispod, `bodyLarge` iznad, i 2 unutar zakomentarisanog
  * Material bloka. Grepovana lista se cita, ne broji. Uz to postoji i jedno
  * uslovno mesto koje sablon `fontSize = N.sp` uopste ne vidi:
- * `LessonRenderer.kt:174`.)
+ * `LessonRenderer.kt:174` u zatecenom stablu, danas `:189`.)
  *
  * **Mereno, ne pretpostavljeno.** Vrednosti ove skale nisu proizvoljne: to su
  * bas velicine koje iOS `Font.ds*` daje na telefonu, jer `appFont` za
@@ -96,6 +96,21 @@ val Typography = Typography(
  * bez teksta; razlika je razlozena uz samu definiciju `label` ispod.
  * Bez ovog koraka bi 31 mesto moralo na `caption` (12), cime bi nestao tier
  * koji iOS stvarno koristi.
+ *
+ * **Izvrseno stanje je drugacije od te recenice, i broj se ovde ispravlja, ne
+ * prepisuje:** od tih 31 mesta na 11 Task 3 je po ULOZI poslao **18 na `label`
+ * a 13 na `caption`** (prigusene sporedne oznake, hintovi vezbi, dugmad
+ * „Reset"/„Ponovo", tekst licence). Korak i dalje zaradjuje mesto — `label`
+ * danas ima **23 pozivna mesta** (18 iz 11-tiera + 5 koja su dosla sa 12 i sa
+ * 9) — ali ga aritmetika „inace bi 31 mesto moralo na caption" vise ne
+ * opisuje.
+ *
+ * Jedna posledica koju vredi znati: `materialAdvantage` („+3") i `evalText` su
+ * dva SUSEDNA brojcana bedza u istoj kartici igraca i bila su iste velicine
+ * (oba 11). Prvi je otisao na `caption` (12, jer iOS ga crta
+ * `.caption.weight(.medium)`, `GameView.swift:423`), drugi na `label` (11, jer
+ * iOS pandan nema — uloga 4 gore). Razilaze se za 1sp; branjivo, ali nov
+ * razlaz koji pre Faze 10 nije postojao.
  *
  * ## Sta NAMERNO nema ime: 14
  *
@@ -155,13 +170,18 @@ object Type {
     )
 
     /**
-     * Najsitnija oznaka interfejsa — Apple `caption2`. Tri merene uloge na
-     * Androidu, i NISU sve tri paritet sa iOS-om:
+     * Najsitnija oznaka interfejsa — Apple `caption2`. **Cetiri** uloge na
+     * Androidu, i NISU sve cetiri paritet sa iOS-om:
      *
      *  1. Prigusen podnaslov ispod naslova reda — iOS crta bas `caption2`
      *     (`SettingsSheet.swift:156`, ispod naslova na `.subheadline`).
      *  2. Oznaka ispod brojcane vrednosti — iOS crta bas `caption2`
      *     (`SettingsSheet.swift:411`, ispod vrednosti na `.headline`).
+     *     **Ali iOS tu nije jednoznacan:** istu ulogu u
+     *     `AnalysisView.swift:93` („Tacnost" ispod procenta) crta
+     *     `.dsCaption` (12). Task 3 je poslusao iOS na oba mesta, pa ista
+     *     uloga u aplikaciji stoji na dva koraka. Zabelezeno da se ne
+     *     „ujednacava" bez te informacije.
      *  3. Tekst uz ikonu na zbijenom dugmetu („Vrati" / „Predaj" / „Podeli"
      *     u `MainActivity.ActionsRow`) — **nema iOS pandan ni u kom fontu.**
      *     iOS te radnje drzi u `ToolbarItem`-ima kao IKONU BEZ TEKSTA
@@ -170,11 +190,19 @@ object Type {
      *     IKONA, dok tekst pored nje ide na `dsCaption` (12).
      *     Za ovu ulogu je `label` **android odluka, ne paritet** — drzi je
      *     doslednost sa prve dve uloge, ne iOS.
+     *  4. Brojcani bedz u kartici igraca (ocena pozicije, `UiComponents.kt`)
+     *     — takodje **android odluka**: iOS taj broj u kartici uopste nema,
+     *     Faza 1 ga je odatle sklonila i ostavila samo na eval traci
+     *     („uzima boje table umesto dupliranog broja u kartici").
+     *     Ulogu je dodao Task 3; ovaj KDoc je do tada poznavao tri.
      *
      * (Provereno: `caption2` ima tacno 5 upotreba u svim `.swift` fajlovima
      * pod `Chessko/Views` — dve gore, `LessonRenderer.swift:306` i `:613`,
-     * i `–` placeholder u `CapturedPiecesView.swift:34`, koji Android nema
-     * jer ga je Faza 1 uklonila.)
+     * i `–` placeholder u `CapturedPiecesView.swift:34`. Broj je tacan;
+     * **zakljucak da Android taj placeholder nema NIJE** — ima ga,
+     * `CapturedPiecesView.kt`, i Task 3 ga je bas zato stavio na `label`,
+     * dakle u paritet sa iOS-ovim `caption2`. Faza 1 je `–` uklonila sa
+     * iOS-ovih KARTICA IGRACA, ne iz prikaza uzetih figura.)
      *
      * NIJE „caption koji je ispao premali" — ovo je zaseban tier, i jedini
      * korak koji Faza 10 dodaje. Ako se ikad spaja sa `caption`, spaja se

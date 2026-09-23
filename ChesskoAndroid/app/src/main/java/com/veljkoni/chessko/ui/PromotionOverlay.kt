@@ -104,8 +104,14 @@ fun PromotionOverlay(viewModel: GameViewModel) {
             Text(
                 text = loc("Izaberi figuru"),
                 color = DS.ink,
-                // Naslov dijaloga -> Type.heading. `fontWeight` ostaje: heading je
-                // SemiBold, a ovo mesto je Bold i to se ne gubi usput.
+                // IZUZETAK, isti oblik kao naslov sekcije u info dijalogu sata
+                // (`ChessClockView.kt`, `InfoCategorySection`): iOS je ovde na
+                // `.title3.weight(.semibold)` = **20**
+                // (`Chessko/Views/PromotionOverlay.swift:28`), dakle IZNAD
+                // `heading`-a. Skala nema 20, pa mesto ide na najblizu ULOGU
+                // (naslov kartice/dijaloga), ne na najblizi broj.
+                // `fontWeight` ostaje: heading je SemiBold, a ovo mesto je Bold i
+                // to se ne gubi usput.
                 fontWeight = FontWeight.Bold,
                 style = Type.heading
             )

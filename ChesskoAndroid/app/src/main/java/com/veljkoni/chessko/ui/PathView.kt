@@ -303,6 +303,14 @@ private fun stepCardTitle(step: CurriculumStep, lessonRepo: LessonRepository, fi
  * crta `Image(systemName: "chevron.right")`, dakle ikonu a ne slovo
  * (`Chessko/Views/PathView.swift:407`).
  *
+ * **Poredjenje velicina NIJE u korist ove konstante, i to se ne precutkuje:**
+ * ta iOS ikona stoji na `.dsCaption.weight(.semibold)` = **12**, dok ovaj glif
+ * ostaje na 20. Razlog nije izbor nego mera: `›` (`U+203A`) je jedan tanak
+ * ugao unutar em kvadrata, pa na 12sp ne bi bio vidljiv kao SF ikona iste
+ * nominalne velicine. Vrednost je nepromenjena u odnosu na zateceno stablo,
+ * pa ovde nema regresije — ali ni parieta; pravo poravnanje je zamena glifa
+ * ikonom (vidi nalaz ispod).
+ *
  * NALAZ za neku sledecu fazu, ne za ovu: `›` je `U+203A`, blok koji provera
  * obima Faze 8 nije grepovala (isti propust kao `◀` u `LessonDetailView.kt`,
  * koji je talas ispravki te faze preveo u `Icon`). Prevodjenje u

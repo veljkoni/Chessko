@@ -802,7 +802,7 @@ fun InfoCategorySection(
             text = title,
             color = DS.accent,
             // IZUZETAK od „14 -> body/caption": ovo je naslov sekcije u dijalogu i
-            // iznad njega stoje dva nivoa (naziv 13, opis 12) koja moraju ostati
+            // ispod njega stoje dva nivoa (naziv 13, opis 12) koja moraju ostati
             // ispod njega. iOS: `.title3.weight(.bold)` = 20
             // (`Chessko/Views/ChessClockView.swift:497`), dakle iznad `heading`-a,
             // ne ispod. Tri nivoa dijaloga -> `heading`/`body`/`caption`.
