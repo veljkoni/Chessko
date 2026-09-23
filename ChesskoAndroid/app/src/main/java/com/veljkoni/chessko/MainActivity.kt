@@ -766,7 +766,13 @@ class MainActivity : ComponentActivity() {
                                                     showLastMoveHighlight = settingsManager.showLastMoveHighlight,
                                                     showLegalMoves = settingsManager.showLegalMoves,
                                                     onTap = { pos -> gameViewModel.tap(pos) },
-                                                    modifier = Modifier.size(boardSize)
+                                                    // Pejzaz: strana table se racuna iz VISINE
+                                                    // (boardSize = maxHeight), pa granica ide na
+                                                    // obe ose — jedna osa bi ostavila pravougaonik
+                                                    // umesto kvadrata na tabletu.
+                                                    modifier = Modifier
+                                                        .sizeIn(maxWidth = DS.maxBoardSide, maxHeight = DS.maxBoardSide)
+                                                        .size(boardSize)
                                                 )
                                             }
                                         }
@@ -1029,7 +1035,12 @@ class MainActivity : ComponentActivity() {
                                                         showLastMoveHighlight = settingsManager.showLastMoveHighlight,
                                                         showLegalMoves = settingsManager.showLegalMoves,
                                                         onTap = { pos -> gameViewModel.tap(pos) },
-                                                        modifier = Modifier.size(boardSize)
+                                                        // Portret: strana table se racuna iz SIRINE
+                                                        // (boardSize = totalWidth), pa je dovoljna
+                                                        // gornja granica sirine.
+                                                        modifier = Modifier
+                                                            .widthIn(max = DS.maxBoardSide)
+                                                            .size(boardSize)
                                                     )
                                                 }
                                             }

@@ -226,7 +226,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                 showCoordinates = settings.showCoordinates,
                 showLastMoveHighlight = settings.showLastMoveHighlight,
                 showLegalMoves = settings.showLegalMoves,
-                onTap = { pos -> viewModel.tap(pos) }
+                onTap = { pos -> viewModel.tap(pos) },
+                modifier = Modifier.widthIn(max = DS.maxBoardSide)
             )
         }
 

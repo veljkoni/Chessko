@@ -68,6 +68,9 @@ fun PuzzleView(
             // Left Side: Board
             Box(
                 modifier = Modifier
+                    // Strana se racuna iz VISINE (fillMaxHeight + aspectRatio), pa
+                    // granica ide na obe ose — vidi MainActivity.kt pejzaz.
+                    .sizeIn(maxWidth = DS.maxBoardSide, maxHeight = DS.maxBoardSide)
                     .fillMaxHeight()
                     .aspectRatio(1f),
                 contentAlignment = Alignment.Center
@@ -277,7 +280,8 @@ fun PuzzleView(
                             showCoordinates = settings.showCoordinates,
                             showLastMoveHighlight = settings.showLastMoveHighlight,
                             showLegalMoves = settings.showLegalMoves,
-                            onTap = { pos -> viewModel.tap(pos) }
+                            onTap = { pos -> viewModel.tap(pos) },
+                            modifier = Modifier.widthIn(max = DS.maxBoardSide)
                         )
                     }
                 }
