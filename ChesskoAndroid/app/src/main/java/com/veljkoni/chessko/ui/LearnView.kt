@@ -320,9 +320,9 @@ fun LBox(icon: LessonGlyph, title: String, text: String, color: Color) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(color.copy(alpha = 0.1f))
-            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(DS.Radius.m))
             .padding(14.dp)
     ) {
         Row(
@@ -335,7 +335,7 @@ fun LBox(icon: LessonGlyph, title: String, text: String, color: Color) {
             LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = color)
             Text(text = title, color = color, style = Type.caption, fontWeight = FontWeight.Bold)
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(DS.Space.xs))
         // TELO kutije, ne sporedan tekst: zateceno `White@0,85`, iOS `L_Box` daje
         // `.primary.opacity(0.85)` (`Chessko/Views/LessonRenderer.swift:447`) — dakle
         // `ink`, ne `inkMuted`. Prvi prelaz je 0,85 preslikao naniže i telo je u svetloj
@@ -370,7 +370,7 @@ fun LBullet(icon: LessonGlyph, title: String, text: String, color: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp),
+            .padding(horizontal = DS.Space.xs),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Top
     ) {
@@ -389,8 +389,8 @@ fun LBullet(icon: LessonGlyph, title: String, text: String, color: Color) {
 fun LSectionHeader(icon: LessonGlyph, title: String, color: Color) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(vertical = 4.dp)
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
+        modifier = Modifier.padding(vertical = DS.Space.xs)
     ) {
         // iOS `L_SectionHeader`: ikona `.dsBody.weight(.semibold)`, naslov
         // `.dsBody.weight(.bold)` (`Chessko/Views/LessonRenderer.swift:360`, `:362`).
@@ -406,8 +406,8 @@ fun LNumberedRule(number: Int, title: String, text: String, color: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = DS.Space.xs),
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
         verticalAlignment = Alignment.Top
     ) {
         Box(
@@ -446,7 +446,7 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
         modifier = Modifier
             .fillMaxWidth()
             .height(110.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.surface)
             .padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -469,10 +469,10 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
             val fg = if (isSelected) DS.onAccent else DS.ink
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(DS.Radius.s))
                     .background(bg)
                     .clickable { viewModel.select(piece) }
-                    .padding(vertical = 6.dp, horizontal = 4.dp),
+                    .padding(vertical = 6.dp, horizontal = DS.Space.xs),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -512,7 +512,7 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(DS.surface)
-            .padding(12.dp)
+            .padding(DS.Space.m)
     ) {
         // Tri nivoa (naslov / opis / brojac) ostaju TRI, kao i boje iznad:
         // `body` / `caption` / `label`. iOS ovde nema pandan — `LessonPieceExplorer`
@@ -535,7 +535,7 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
     if (scenarios.isNotEmpty()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
         ) {
             scenarios.forEach { sc ->
                 val active = viewModel.activeScenario == sc
@@ -548,7 +548,7 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
                         containerColor = if (active) DS.accent else DS.fill,
                         contentColor = if (active) DS.onAccent else DS.ink
                     ),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(DS.Radius.s),
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(text = sc.label, style = Type.caption, fontWeight = FontWeight.Bold)
@@ -577,10 +577,10 @@ fun OpeningExerciseCard(line: OpeningLine) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.surface)
-            .border(1.dp, line.accentColor.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-            .padding(12.dp)
+            .border(1.dp, line.accentColor.copy(alpha = 0.2f), RoundedCornerShape(DS.Radius.m))
+            .padding(DS.Space.m)
     ) {
         // Header
         Row(
@@ -590,7 +590,7 @@ fun OpeningExerciseCard(line: OpeningLine) {
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
             ) {
                 Box(
                     modifier = Modifier
@@ -645,7 +645,7 @@ fun OpeningExerciseCard(line: OpeningLine) {
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(DS.Radius.s))
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -689,7 +689,7 @@ fun OpeningExerciseCard(line: OpeningLine) {
                     containerColor = DS.fill,
                     contentColor = DS.ink
                 ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = DS.Space.xs),
                 shape = RoundedCornerShape(6.dp)
             ) {
                 // iOS: `.dsCaption.weight(.medium)` (`Chessko/Views/LessonRenderer.swift:663`).
@@ -716,10 +716,10 @@ fun MateExerciseCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.surface)
-            .border(1.dp, color.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-            .padding(12.dp)
+            .border(1.dp, color.copy(alpha = 0.2f), RoundedCornerShape(DS.Radius.m))
+            .padding(DS.Space.m)
     ) {
         // Header
         Row(
@@ -729,7 +729,7 @@ fun MateExerciseCard(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
             ) {
                 Box(
                     modifier = Modifier
@@ -779,7 +779,7 @@ fun MateExerciseCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(DS.Radius.s))
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -812,7 +812,7 @@ fun MateExerciseCard(
                     containerColor = DS.fill,
                     contentColor = DS.ink
                 ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = DS.Space.xs),
                 shape = RoundedCornerShape(6.dp)
             ) {
                 // iOS: `.dsCaption.weight(.medium)` (`Chessko/Views/LessonRenderer.swift:663`).
@@ -885,7 +885,7 @@ fun MatePuzzleCard(
                 },
                 shape = RoundedCornerShape(14.dp)
             )
-            .padding(12.dp)
+            .padding(DS.Space.m)
     ) {
         // Header
         Row(
@@ -896,12 +896,12 @@ fun MatePuzzleCard(
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
             ) {
                 Box(
                     modifier = Modifier
                         .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(DS.Radius.s))
                         .background(accentColor.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -982,7 +982,7 @@ fun MatePuzzleCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(DS.Radius.s))
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -1015,7 +1015,7 @@ fun MatePuzzleCard(
                     containerColor = DS.fill,
                     contentColor = DS.ink
                 ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = DS.Space.xs),
                 shape = RoundedCornerShape(6.dp)
             ) {
                 Text(text = loc("Ponovo"), style = Type.caption)
