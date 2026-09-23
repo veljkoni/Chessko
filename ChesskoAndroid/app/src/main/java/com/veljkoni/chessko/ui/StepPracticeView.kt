@@ -27,11 +27,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.models.CurriculumStep
 import com.veljkoni.chessko.models.StepKind
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.PuzzlePhase
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
 
@@ -86,7 +86,9 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
             Text(
                 text = stepTitle(step),
                 color = DS.ink,
-                fontSize = 18.sp,
+                // Zaglavlje ekrana koraka -> `Type.heading`. Ne `title`: 22 nosi
+                // naslov aplikacije (`MainActivity`), a ovaj red je nivo ispod.
+                style = Type.heading,
                 fontWeight = FontWeight.Bold
             )
             Button(
@@ -126,7 +128,8 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                     Text(
                         text = viewModel.networkErrorMessage,
                         color = DS.ink,
-                        fontSize = 14.sp,
+                        // Poruka u recenici, ne oznaka -> `body`.
+                        style = Type.body,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -182,7 +185,9 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
         Text(
             text = locF("Zadatak %d od %d", current, total),
             color = DS.inkMuted,
-            fontSize = 13.sp,
+            // iOS crta bas `.dsCaption.weight(.semibold)`
+            // (`Chessko/Views/StepPracticeView.swift:116`).
+            style = Type.caption,
             fontWeight = FontWeight.SemiBold
         )
 
@@ -220,7 +225,8 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
             Text(
                 text = loc("Test mora biti rešen bez greške"),
                 color = DS.ink,
-                fontSize = 12.sp,
+                // iOS: `.dsCaption` (`Chessko/Views/StepPracticeView.swift:134`).
+                style = Type.caption,
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
                     .background(DS.warning.copy(alpha = 0.15f))
