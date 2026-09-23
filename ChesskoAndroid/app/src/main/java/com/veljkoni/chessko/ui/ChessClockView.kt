@@ -40,6 +40,7 @@ import com.veljkoni.chessko.logic.HapticManager
 import com.veljkoni.chessko.logic.SoundManager
 import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import kotlinx.coroutines.delay
 
 // MARK: - Fiksne boje kontrolne trake
@@ -347,7 +348,11 @@ fun PlayerArea(
                     Text(
                         text = loc("Vreme je isteklo!"),
                         color = textColor,
-                        fontSize = 14.sp,
+                        // NALAZ: iOS je ovde na `.headline.weight(.semibold)` = 17
+                        // (`Chessko/Views/ChessClockView.swift:198`), dakle `heading`.
+                        // Ostaje `body` jer je 14-tier presuda Task-a 2 „body ili
+                        // caption, po ulozi" — a ovo je objava u kapsuli, ne naslov.
+                        style = Type.body,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -355,7 +360,9 @@ fun PlayerArea(
                 Text(
                     text = if (!hasStarted) subtitle else "Poteza: $moves",
                     color = subtextColor,
-                    fontSize = 13.sp,
+                    // iOS: `.subheadline.weight(.semibold)` = 15
+                    // (`Chessko/Views/ChessClockView.swift:206`, `:210`).
+                    style = Type.body,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -365,6 +372,11 @@ fun PlayerArea(
             Text(
                 text = formatTime(timeLeft),
                 color = textColor,
+                // JEDINI zakucan `fontSize` koji ostaje u modulu, i to je izuzetak
+                // upisan po VREDNOSTI u `TypographyScaleTest.allowed`: cifre sata
+                // nisu tekst interfejsa nego prikaz vremena i imaju sopstveni
+                // registar. iOS ih iz istog razloga drzi na 86pt
+                // (`Chessko/Views/ChessClockView.swift:216`).
                 fontSize = 72.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace
@@ -461,7 +473,11 @@ fun ControlBar(
                     Text(
                         text = selectedPresetName,
                         color = ClockBarAccent,
-                        fontSize = 14.sp,
+                        // NALAZ: iOS cip vremenske kontrole crta na `.headline` = 17
+                        // (`Chessko/Views/ChessClockView.swift:275`). Ostaje `body`:
+                        // traka je uska i nosi jos dve kontrole, a 14-tier se po
+                        // presudi Task-a 2 razvrstava na `body`/`caption`.
+                        style = Type.body,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -587,7 +603,8 @@ fun PresetChooserDialog(
                 Text(
                     text = loc("Vremenska kontrola"),
                     color = DS.ink,
-                    fontSize = 16.sp,
+                    // Naslov dijaloga -> `heading`.
+                    style = Type.heading,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -612,7 +629,8 @@ fun PresetChooserDialog(
                             Text(
                                 text = category,
                                 color = if (isSelected) DS.onAccent else DS.ink,
-                                fontSize = 11.sp,
+                                // Oznaka zbijenog taba -> `label`, bez promene vrednosti.
+                                style = Type.label,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -645,7 +663,7 @@ fun PresetChooserDialog(
                                     Text(
                                         text = preset.name,
                                         color = DS.ink,
-                                        fontSize = 14.sp,
+                                        style = Type.body,
                                         fontWeight = FontWeight.Bold
                                     )
                                     if (preset.isOfficial) {
@@ -677,13 +695,14 @@ fun PresetChooserDialog(
                                 Text(
                                     text = preset.subtitle,
                                     color = DS.inkMuted,
-                                    fontSize = 11.sp
+                                    // iOS: `.caption` (`Chessko/Views/ChessClockView.swift:261`).
+                                    style = Type.caption
                                 )
                             }
                             Text(
                                 text = loc("Izaberi"),
                                 color = if (isSelected) DS.accent else DS.inkMuted,
-                                fontSize = 12.sp,
+                                style = Type.caption,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -720,7 +739,8 @@ fun InfoDialog(onDismiss: () -> Unit) {
                 Text(
                     text = loc("Objašnjenje vremenskih kontrola"),
                     color = DS.ink,
-                    fontSize = 16.sp,
+                    // Naslov dijaloga -> `heading`.
+                    style = Type.heading,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -781,7 +801,12 @@ fun InfoCategorySection(
         Text(
             text = title,
             color = DS.accent,
-            fontSize = 14.sp,
+            // IZUZETAK od „14 -> body/caption": ovo je naslov sekcije u dijalogu i
+            // iznad njega stoje dva nivoa (naziv 13, opis 12) koja moraju ostati
+            // ispod njega. iOS: `.title3.weight(.bold)` = 20
+            // (`Chessko/Views/ChessClockView.swift:497`), dakle iznad `heading`-a,
+            // ne ispod. Tri nivoa dijaloga -> `heading`/`body`/`caption`.
+            style = Type.heading,
             fontWeight = FontWeight.Bold
         )
 
@@ -799,7 +824,9 @@ fun InfoCategorySection(
                     Text(
                         text = name,
                         color = DS.ink,
-                        fontSize = 13.sp,
+                        // iOS: `.headline.weight(.bold)` (`:504`); ovde `body`, jer
+                        // `heading` vec nosi naslov sekcije iznad.
+                        style = Type.body,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.width(80.dp)
                     )
@@ -807,8 +834,9 @@ fun InfoCategorySection(
                     Text(
                         text = description,
                         color = DS.inkMuted,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp
+                        // `Type.caption` je tacno 12/16, pa se i `lineHeight` gubi
+                        // bez ijedne promene piksela.
+                        style = Type.caption
                     )
                 }
             }
