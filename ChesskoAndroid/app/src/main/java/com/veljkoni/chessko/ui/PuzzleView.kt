@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -86,7 +85,8 @@ fun PuzzleView(
                             Text(
                                 text = loc("Učitavam zadatak..."),
                                 color = DS.inkMuted,
-                                fontSize = 14.sp
+                                // iOS: `.dsBody` (`Chessko/Views/PuzzleView.swift:457`).
+                                style = Type.body
                             )
                         }
                     }
@@ -113,7 +113,10 @@ fun PuzzleView(
                             Text(
                                 text = loc("Greška pri učitavanju zadatka"),
                                 color = DS.ink,
-                                fontSize = 14.sp,
+                                // Isti string, dve velicine u istom fajlu (pejzaz 14,
+                                // portret 16) -- tacno drift koji Task 2 opisuje.
+                                // Obe grane sada idu na `heading`.
+                                style = Type.heading,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
@@ -216,7 +219,8 @@ fun PuzzleView(
                             Text(
                                 text = loc("Učitavam zadatak..."),
                                 color = DS.inkMuted,
-                                fontSize = 14.sp
+                                // iOS: `.dsBody` (`Chessko/Views/PuzzleView.swift:457`).
+                                style = Type.body
                             )
                         }
                     }
@@ -239,7 +243,7 @@ fun PuzzleView(
                             Text(
                                 text = loc("Greška pri učitavanju zadatka"),
                                 color = DS.ink,
-                                fontSize = 16.sp,
+                                style = Type.heading,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
@@ -247,7 +251,9 @@ fun PuzzleView(
                             Text(
                                 text = viewModel.networkErrorMessage,
                                 color = DS.inkMuted,
-                                fontSize = 13.sp,
+                                // Sama poruka o gresci -- iOS: `.dsBody`
+                                // (`Chessko/Views/PuzzleView.swift:468`).
+                                style = Type.body,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(16.dp))
@@ -369,7 +375,10 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             Text(
                 text = dateStr,
                 color = DS.ink,
-                fontSize = 14.sp,
+                // Oznaka u traci datuma -> `body`. iOS tu crta
+                // `.system(size: 16, weight: .bold)` (`Chessko/Views/PuzzleView.swift:106`,
+                // `:139`), dakle i on je na tom mestu van svoje skale.
+                style = Type.body,
                 fontWeight = FontWeight.SemiBold
             )
             // Kvacica resenosti: Faza 8, Task 3 zamenila je emoji (✅) sa
@@ -438,7 +447,9 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
             Text(
                 text = loc("Rejting: "),
                 color = DS.inkMuted,
-                fontSize = 13.sp
+                // iOS: `.dsCaption` (`Chessko/Views/PuzzleView.swift:314`); vrednost
+                // pored vec stoji na `Type.mono`, kao iOS `.dsMono.weight(.semibold)`.
+                style = Type.caption
             )
             Text(
                 text = puzzle.rating.toString(),
@@ -459,7 +470,9 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
             Text(
                 text = puzzle.difficultyLabel,
                 color = diffColor,
-                fontSize = 11.sp,
+                // Bedz, ne recenica -> `label`. iOS pilulu tezine nema uopste
+                // (`grep -rn difficultyLabel Chessko/Views` je prazan).
+                style = Type.label,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -494,7 +507,8 @@ fun PuzzleStatusBanner(phase: PuzzlePhase, message: String) {
         Text(
             text = message,
             color = DS.onAccent,
-            fontSize = 13.sp,
+            // iOS status kartica: `.dsBody` (`Chessko/Views/PuzzleView.swift:345`).
+            style = Type.body,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
         )
@@ -554,7 +568,9 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                         contentDescription = null,
                         modifier = Modifier.size(14.dp)
                     )
-                    Text(text = loc("Prikaži rešenje"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    // Tekst uz ikonu na zbijenom dugmetu (dva dugmeta dele red) ->
+                    // `Type.label`, ista uloga kao `ActionsRow` na ekranu Igra.
+                    Text(text = loc("Prikaži rešenje"), style = Type.label, fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -579,7 +595,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                         contentDescription = null,
                         modifier = Modifier.size(14.dp)
                     )
-                    Text(text = loc("Pokušaj ponovo"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = loc("Pokušaj ponovo"), style = Type.label, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
