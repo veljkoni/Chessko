@@ -115,18 +115,18 @@ fun PromotionOverlay(viewModel: GameViewModel) {
                 fontWeight = FontWeight.Bold,
                 style = Type.heading
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.m)) {
                 for (type in choices) {
                     val assetName = getAssetName(ChessPiece(type, color), activeStyle, activeTheme)
                     Box(
                         modifier = Modifier
                             .size(64.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(DS.Radius.m))
                             .background(PromotionTile)
                             .clickable {
                                 viewModel.confirmPromotion(type)
                             }
-                            .padding(8.dp),
+                            .padding(DS.Space.s),
                         contentAlignment = Alignment.Center
                     ) {
                         AsyncImage(
