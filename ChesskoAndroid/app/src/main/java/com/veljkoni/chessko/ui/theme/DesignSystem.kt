@@ -118,10 +118,21 @@ object DS {
      * ## Presuda Faze 10: skala uzima SVOJE, i nista preko toga
      *
      * Ovo je obrnuta presuda od `Type` (`ui/theme/Type.kt`), i razlika je
-     * namerna. Tamo su ekrani dosli skali, jer skala IMA POREKLO — to su
-     * Apple-ove velicine izmerene na uredjaju. `Space` nema nikakvo poreklo:
-     * to je mreza od 4dp kojoj i sam nedostaje korak 20. Skala bez porekla
-     * ne sme da pomera ekrane.
+     * namerna — ali NE zato sto bi `Space` bio proizvoljan. Mreza od 4dp ima
+     * svoje poreklo (Material baseline grid), isto kao sto ga ima i minimum
+     * od 48dp na koji se tacka 3 ispod poziva.
+     *
+     * Razlika je u tome sto poreklo ovde **ne razresava pitanje**, a tamo
+     * jeste. `Type` je imao JEDNU lestvicu sa poreklom (Apple-ovu, izmerenu
+     * na uredjaju) naspram 161 nezavisne odluke bez ijednog pravila — tu je
+     * skala jedina strana koja nesto tvrdi, pa ekrani dolaze njoj. Kod
+     * razmaka postoje DVE lestvice sa poreklom, Material-ova 4dp mreza i
+     * ono sto iOS stvarno crta, i one se ne poklapaju: mreza trazi 16 ili 24,
+     * iOS na istom mestu pise 20. Kad se dva porekla sukobe, odlucuje
+     * merenje, a merenje (tacka 4) kaze da je iOS tu gde jeste i da ga
+     * zaokruzivanje pomera od nas.
+     *
+     * Presudu, dakle, nosi **paritet sa iOS-om**, ne odsustvo porekla.
      *
      * ### Sta je mereno
      *
@@ -133,7 +144,16 @@ object DS {
      *   104  radijus     (RoundedCornerShape)
      *    97  dimenzija   (size / width / height, van Spacer-a)
      *    24  ivica       (debljina linije)
-     *     7  ostalo      (elevacija, imenovani lokalni `val`-ovi)
+     *     7  ostalo      (elevacija i imenovani lokalni `val`-ovi)
+     *
+     * Kategorija „ostalo" je tu zato sto je klasifikator gledao OBLIK POZIVA,
+     * a imenovan `val` nema poziv oko sebe. Po ULOZI ona nije homogena: od 7
+     * mesta, **3 su razmaci** (`AnalysisView.kt:322` i `MainActivity.kt:745`
+     * i `:1019`, sve tri `val spacing` koji ide pravo u `Spacer` ili
+     * `spacedBy`), 3 su dimenzije (`evalBarWidth` ×2, `itemMinWidth`) i 1 je
+     * elevacija. Posledice po presudu nema — `6.dp` nije na skali, pa bi i po
+     * ulozi ostao zakucan — ali se belezi, jer je pravilo cele ove presude
+     * „po ULOZI, ne po mestu zapisa", a tabela iznad ga u ovom redu ne prati.
      *
      * Task 4 je zamenio **179 od 298 razmaka**, **65 od 104 radijusa** i jedan
      * imenovan razmak iz „ostalo" (`AnalysisView.kt`, `val spacing`) — ukupno
@@ -147,8 +167,9 @@ object DS {
      * na ikoni nije razmak nego velicina stvari; `DS.Space.l` bi tu bio tvrdnja
      * da jeste. **Mereno na iOS-u, ne pretpostavljeno:** `DS.Space` ima **86**
      * pozivnih mesta u `Chessko`, od kojih je **0** u `.frame(...)` — a iOS uz
-     * to nosi **40** zakucanih `.frame(width:height:)`. Dimenzije i tamo imaju
-     * sopstvena imena ili ostaju brojevi; `maxBoardSide` ispod je bas takvo ime.
+     * to nosi **40** `.frame(...)` poziva sa zakucanom sirinom ili visinom
+     * (od toga 29 sa oba). Dimenzije i tamo imaju sopstvena imena ili ostaju
+     * brojevi; `maxBoardSide` ispod je bas takvo ime.
      *
      * Zato NIJE tokenizovano ni 16 dimenzija koje slucajno padaju na skalu
      * (npr. `MainActivity.kt:963` `size(24.dp)`, `PuzzleView.kt:363`
@@ -172,7 +193,9 @@ object DS {
      * ### 4. „Blizu skale" 6 / 10 / 14 / 18 / 20 (157 mesta, NE zaokruzuju se)
      *
      * Najteza odluka: 96 od njih su pravi razmaci, i zaokruzivanje na najblizi
-     * korak bi ih pomerilo za ≤2dp. **Ne zaokruzuju se**, iz razloga koji je
+     * korak bi ih pomerilo za 2dp — osim `20.dp`, koje je **4dp** i od `l` (16)
+     * i od `xl` (24), jer skali bas taj korak nedostaje; takva su 3 mesta.
+     * **Ne zaokruzuju se**, iz razloga koji je
      * izmeren u iOS izvoru: iOS ima **istu** raspodelu zakucanu PORED svojih
      * tokena, i nikad je nije poravnao. `Chessko/Views/GameView.swift` nosi
      * oba u jednom fajlu — `:283` `.padding(.vertical, DS.Space.m)` i
@@ -202,7 +225,9 @@ object DS {
      * do `widthIn(max = 500.dp)` u `MainActivity.kt`), **1 radijus**
      * (`50.dp`, obrazlozen uz `Radius` ispod), **1 imenovana dimenzija**
      * (`AnalysisView.kt:319` `itemMinWidth = 96.dp`) i **3 razmaka**:
-     * dva `0.dp` i jedan `7.dp` (`UiComponents.kt:164`).
+     * dva `0.dp` i jedan `7.dp` (`UiComponents.kt:164`). Uz njih idu i dva
+     * imenovana razmaka iz „ostalo" (`MainActivity.kt:745`, `:1019`,
+     * `val spacing = 6.dp`) — oba su „blizu skale", pa ih drzi tacka 4.
      *
      * `0.dp` se NE tokenizuje jer nula nije korak skale nego odsustvo
      * razmaka; `Space.none = 0.dp` bi bio token cija je jedina informacija
@@ -232,9 +257,24 @@ object DS {
      * razmaci uopste (97 dimenzija, 39 radijusa, 24 ivice, 6 ostalo) i za
      * njih ovde nema sta da se zatvara.
      *
-     * Testa nema i ne moze ga biti: test koji zabranjuje `.dp` literal
-     * zabranio bi i ivice i touch-targete, pa bi ga prvi izuzetak ucinio
-     * beskorisnim. Jedina odbrana su ovi komentari i vizuelni prolaz.
+     * ### Test POSTOJI, i ova alineja je ispravka sopstvene tvrdnje
+     *
+     * Ovde je isprva pisalo da testa „ne moze biti", jer bi test koji
+     * zabranjuje `.dp` literal zabranio i ivice i touch-targete. Tvrdnja je
+     * bila tacna o SIREM testu, a pogresna kao zakljucak: invarijanta nije
+     * „nema `.dp`" nego **„on-scale vrednost u OBLIKU POZIVA razmaka mora
+     * biti token"**. Taj oblik je uzak — `.border(1.dp, …)` i `size(48.dp)`
+     * mu ne odgovaraju uopste, pa im izuzetak nije ni potreban.
+     *
+     * Cuva ga `SpacingTokensTest.onScaleSpacingAndRadiusValuesAreWrittenAsTokens`
+     * (JVM, cita izvor). Namerno je SINTAKSNI, ne po ulozi: klasifikator uloge
+     * je heuristika, a heuristika u testu sutra daje lazan pad. Dokazan
+     * mutacijom — sa vracenim `MainActivity.kt` na stanje pre ovog taska
+     * prijavljuje 62 mesta, sa danasnjim 0.
+     *
+     * Ostatak presude (dimenzije, ivice, „blizu skale", `xxl`) test NE cuva i
+     * ne moze — to su odluke o ulozi. Njih cuvaju ovi komentari i vizuelni
+     * prolaz.
      *
      * (Jos jedna mera, zapisana da se ne izvodi ponovo: naivno prebrojavanje
      * „na skali" nad svim `.dp` u modulu daje **275 od 550** i tako je i bilo
