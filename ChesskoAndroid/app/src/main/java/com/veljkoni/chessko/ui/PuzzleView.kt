@@ -60,8 +60,8 @@ fun PuzzleView(
         Row(
             modifier = modifier
                 .fillMaxSize()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(DS.Space.s),
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Left Side: Board
@@ -81,7 +81,7 @@ fun PuzzleView(
                             verticalArrangement = Arrangement.Center
                         ) {
                             CircularProgressIndicator(color = DS.accent)
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(DS.Space.m))
                             Text(
                                 text = loc("Učitavam zadatak..."),
                                 color = DS.inkMuted,
@@ -94,7 +94,7 @@ fun PuzzleView(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(DS.Space.l)
                         ) {
                             // Faza 8, Task 3: emoji -> Icon. Podloga je `DS.ground`
                             // (isti ekran, obe orijentacije — vidi ContrastTest).
@@ -120,7 +120,7 @@ fun PuzzleView(
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(DS.Space.m))
                             Button(
                                 onClick = { viewModel.loadDailyPuzzle() },
                                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
@@ -163,7 +163,7 @@ fun PuzzleView(
                     .weight(1f)
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState())
-                    .padding(end = 8.dp),
+                    .padding(end = DS.Space.s),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Vezi se za KONKRETAN datum — u vezbovnom rezimu bi tvrdila
@@ -175,7 +175,7 @@ fun PuzzleView(
                 if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
                     PuzzleMetadataHeader(viewModel)
                     PuzzleStatusBanner(phase = viewModel.phase, message = viewModel.statusMessage)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(DS.Space.s))
                     PuzzleActionsRow(viewModel)
                 }
             }
@@ -184,7 +184,7 @@ fun PuzzleView(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(DS.Space.l),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -215,7 +215,7 @@ fun PuzzleView(
                             verticalArrangement = Arrangement.Center
                         ) {
                             CircularProgressIndicator(color = DS.accent)
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(DS.Space.m))
                             Text(
                                 text = loc("Učitavam zadatak..."),
                                 color = DS.inkMuted,
@@ -228,7 +228,7 @@ fun PuzzleView(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(24.dp)
+                            modifier = Modifier.padding(DS.Space.xl)
                         ) {
                             // Faza 8, Task 3: isti obrazac kao pejzazna grana iznad
                             // (ista ikona, ista podloga `DS.ground`, isto
@@ -239,7 +239,7 @@ fun PuzzleView(
                                 tint = DS.warning,
                                 modifier = Modifier.size(48.dp)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(DS.Space.s))
                             Text(
                                 text = loc("Greška pri učitavanju zadatka"),
                                 color = DS.ink,
@@ -256,7 +256,7 @@ fun PuzzleView(
                                 style = Type.body,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(DS.Space.l))
                             Button(
                                 onClick = { viewModel.loadDailyPuzzle() },
                                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
@@ -293,14 +293,14 @@ fun PuzzleView(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(DS.Space.m))
 
             // 4. Status banner
             if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
                 PuzzleStatusBanner(phase = viewModel.phase, message = viewModel.statusMessage)
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(DS.Space.l))
 
             // 5. Actions row
             if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
@@ -339,7 +339,7 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(DS.fill)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = DS.Space.s, vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -350,7 +350,7 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
                 containerColor = Color.Transparent,
                 contentColor = DS.ink
             ),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            contentPadding = PaddingValues(horizontal = DS.Space.s)
         ) {
             // Faza 8, Task 3: emoji -> Icon. Dugme nema tekst pored sebe —
             // strelica STOJI SAMA, pa joj treba opis (za razliku od ikona koje
@@ -411,7 +411,7 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
                 disabledContainerColor = Color.Transparent,
                 disabledContentColor = DS.inkMuted
             ),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            contentPadding = PaddingValues(horizontal = DS.Space.s)
         ) {
             // Isti obrazac kao "Prethodni dan" iznad — sama, bez teksta pored
             // sebe. `disabledContentColor = DS.inkMuted` kad `!canGoNext`;
@@ -438,7 +438,7 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp),
+            .padding(horizontal = DS.Space.xs),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -465,7 +465,7 @@ fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
                 .clip(RoundedCornerShape(6.dp))
                 .background(diffColor.copy(alpha = 0.15f))
                 .border(1.dp, diffColor.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                .padding(horizontal = 8.dp, vertical = 3.dp)
+                .padding(horizontal = DS.Space.s, vertical = 3.dp)
         ) {
             Text(
                 text = puzzle.difficultyLabel,
@@ -499,9 +499,9 @@ fun PuzzleStatusBanner(phase: PuzzlePhase, message: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(DS.Radius.s))
             .background(backgroundColor)
-            .padding(vertical = 10.dp, horizontal = 12.dp),
+            .padding(vertical = 10.dp, horizontal = DS.Space.m),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -519,7 +519,7 @@ fun PuzzleStatusBanner(phase: PuzzlePhase, message: String) {
 fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(DS.Space.s)
     ) {
         // Vezbanje bez kraja: uvek dostupno kad je zadatak resen, u OBA rezima
         // (dnevni i vezbovni) — iznad ostalih kontrola, kao primarna akcija.
@@ -534,7 +534,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Solution Button
@@ -562,7 +562,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 // izgovorio „Prikaži rešenje, Prikaži rešenje, dugme". Boja se
                 // nasledjuje iz `ButtonDefaults` (`DS.ink`/`DS.inkMuted`), isti
                 // par kao ostatak dugmadi ovog reda.
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                     Icon(
                         imageVector = Icons.Default.Lightbulb,
                         contentDescription = null,
@@ -589,7 +589,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                 // koju je prvi prelaz stavio u `contentDescription` („Pokušaj
                 // ponovo"), pa je ikona dekorativna. Kljuc ostaje u recniku —
                 // ovde je i dalje VIDLJIV tekst dugmeta, samo vise nije opis.
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = null,
