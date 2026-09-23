@@ -120,7 +120,7 @@ fun AnalysisView(viewModel: GameViewModel, onClose: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -143,9 +143,9 @@ fun AnalysisView(viewModel: GameViewModel, onClose: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = DS.Space.l)
+                .padding(bottom = DS.Space.xl),
+            verticalArrangement = Arrangement.spacedBy(DS.Space.l)
         ) {
             when {
                 error != null -> ErrorMessage(error)
@@ -228,7 +228,7 @@ private fun errorText(error: AnalysisError): String = when (error) {
 private fun AccuracyRow(result: GameAnalysis) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.l)
     ) {
         AccuracyBox(
             title = loc("beli").replaceFirstChar { it.uppercase() },
@@ -247,9 +247,9 @@ private fun AccuracyRow(result: GameAnalysis) {
 private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.surface)
-            .padding(12.dp),
+            .padding(DS.Space.m),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
@@ -279,13 +279,13 @@ private fun TurningPointCard(move: AnalyzedMove, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.surface)
             .clickable(onClick = onClick)
             .padding(14.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
     ) {
         Icon(
             imageVector = Icons.Default.Warning,
@@ -344,10 +344,10 @@ private fun MoveChip(move: AnalyzedMove, modifier: Modifier = Modifier, onClick:
     val description = "${move.displayNotation}, ${classLabel(move.moveClass)}"
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(DS.Radius.s))
             .background(DS.surface)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .padding(horizontal = DS.Space.s, vertical = 6.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
