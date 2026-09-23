@@ -20,12 +20,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.logic.Loc
 import com.veljkoni.chessko.logic.LessonRepository
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.LearnViewModel
 
 // MARK: - Detalj lekcije
@@ -117,7 +117,9 @@ fun LessonDetailView(
                         contentDescription = null,
                         modifier = Modifier.size(14.dp)
                     )
-                    Text(text = loc("Put"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    // Tekst uz ikonu na zbijenom dugmetu -> `Type.label`, ista uloga
+                    // (i ista velicina) kao „Vrati"/„Predaj"/„Podeli" u `ActionsRow`.
+                    Text(text = loc("Put"), style = Type.label, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -140,14 +142,15 @@ fun LessonDetailView(
                     // Direktno na `DS.ground` (skrol nema Card ni Surface iza ovog
                     // teksta) — isti par kao `inkMuted`/`ground` u `PathView`.
                     color = DS.inkMuted,
-                    fontSize = 13.sp
+                    // Recenica, ne oznaka -> `body`.
+                    style = Type.body
                 )
             } else {
                 // Lesson Header — BEZ kartice ispod naslova. iOS (`LessonDetailView.swift:128-150`,
                 // `lessonHeader`) nema pozadinu/ivicu na celom header-u; tint akcenta stoji SAMO
                 // iza kvadrata sa ikonom. Kriska 6d-2, krug ispravki 1: prethodna verzija je
                 // tintovala CEO red (`accent@12%` preko `DS.ground`), pa je podnaslov
-                // (`DS.inkMuted`, 12sp, nije bold) pao na 3,62:1 u svetloj temi -- ispod AA i
+                // (`DS.inkMuted`, tada 12sp, nije bold) pao na 3,62:1 u svetloj temi -- ispod AA i
                 // NOV sub-AA par kog iOS nema, jer iOS ovde nema kompozitnu podlogu uopste.
                 // Uklanjanjem tinta sa reda podnaslov pada na goli `DS.ground`, gde je
                 // `inkMuted`/`ground` = 4,36 (svetla) / 5,94 (tamna) -- vec poznat, vec pinovan
@@ -165,7 +168,10 @@ fun LessonDetailView(
                             .background(accent.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        LessonGlyphView(lessonGlyph(doc.icon), fontSize = 24.sp, tint = accent)
+                        // Naslovna ikona lekcije: iOS je crta na `.dsTitle.weight(.medium)`
+                        // (`Chessko/Views/LessonDetailView.swift:135`), dakle bas velicinom
+                        // `title`. Glif nije tekst, pa uzima samo velicinu iz skale.
+                        LessonGlyphView(lessonGlyph(doc.icon), fontSize = Type.title.fontSize, tint = accent)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
@@ -173,20 +179,26 @@ fun LessonDetailView(
                             Text(
                                 text = locF("Lekcija %d", number),
                                 color = accent,
-                                fontSize = 11.sp,
+                                // Sitna oznaka iznad naslova -> `label`. iOS ovaj red
+                                // nema (`lessonHeader` ne pise redni broj).
+                                style = Type.label,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Text(
                             text = doc.title,
                             color = DS.ink,
-                            fontSize = 16.sp,
+                            // iOS: `.dsHeading.weight(.bold)`
+                            // (`Chessko/Views/LessonDetailView.swift:140`).
+                            style = Type.heading,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = doc.subtitle,
                             color = DS.inkMuted,
-                            fontSize = 12.sp
+                            // iOS: `.dsBody` (`Chessko/Views/LessonDetailView.swift:142`).
+                            // 12 je ovde bilo razilazenje naniže, ne odluka.
+                            style = Type.body
                         )
                     }
                 }
