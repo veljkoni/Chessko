@@ -27,6 +27,7 @@ import com.veljkoni.chessko.models.CurriculumStep
 import com.veljkoni.chessko.models.StepKind
 import com.veljkoni.chessko.models.loadCurriculum
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 
 /**
  * Odluka o tome gde korak vodi stoji na JEDNOM mestu. Razmazana po UI-ju, ona
@@ -171,21 +172,24 @@ private fun PathHeader(
                 Text(
                     text = streak.toString(),
                     color = DS.ink,
-                    fontSize = 22.sp,
+                    // iOS: `.dsTitle` (`Chessko/Views/PathView.swift:288`).
+                    style = Type.title,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.alignByBaseline()
                 )
                 Text(
                     text = loc("Dana zaredom"),
                     color = DS.inkMuted,
-                    fontSize = 15.sp,
+                    // iOS: `.dsBody` (`Chessko/Views/PathView.swift:291`).
+                    style = Type.body,
                     modifier = Modifier.alignByBaseline()
                 )
             }
             Text(
                 text = if (goalMet) loc("Cilj za danas je ispunjen") else loc("Cilj za danas nije ispunjen"),
                 color = if (goalMet) DS.success else DS.inkMuted,
-                fontSize = 13.sp
+                // iOS: `.dsCaption` (`Chessko/Views/PathView.swift:299`).
+                style = Type.caption
             )
 
             if (continueLabel != null) {
@@ -202,7 +206,8 @@ private fun PathHeader(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = loc("Nastavi"), fontWeight = FontWeight.Bold)
-                        Text(text = continueLabel, fontSize = 12.sp)
+                        // iOS: `.dsCaption` (`Chessko/Views/PathView.swift:259`).
+                        Text(text = continueLabel, style = Type.caption)
                     }
                 }
             }
@@ -250,13 +255,16 @@ private fun ChapterSection(
                 Text(
                     text = title,
                     color = DS.ink,
-                    fontSize = 16.sp,
+                    // Naslov poglavlja -- iOS: `.dsHeading`
+                    // (`Chessko/Views/PathView.swift:316`).
+                    style = Type.heading,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "${progress.first}/${progress.second}",
                     color = DS.inkMuted,
-                    fontSize = 13.sp
+                    // iOS: `.dsCaption` (`Chessko/Views/PathView.swift:322`).
+                    style = Type.caption
                 )
             }
 
@@ -288,6 +296,20 @@ private fun stepCardTitle(step: CurriculumStep, lessonRepo: LessonRepository, fi
         is StepKind.Test -> locF("Test · %d", k.count)
         is StepKind.Game -> loc("Partija")
     }
+
+/**
+ * Velicina glifa „›" na kraju reda koraka — **namerno van tipografske skale**.
+ * To nije tekst interfejsa nego oznaka da red vodi negde; iOS na istom mestu
+ * crta `Image(systemName: "chevron.right")`, dakle ikonu a ne slovo
+ * (`Chessko/Views/PathView.swift:407`).
+ *
+ * NALAZ za neku sledecu fazu, ne za ovu: `›` je `U+203A`, blok koji provera
+ * obima Faze 8 nije grepovala (isti propust kao `◀` u `LessonDetailView.kt`,
+ * koji je talas ispravki te faze preveo u `Icon`). Prevodjenje u
+ * `Icons.AutoMirrored.Filled.KeyboardArrowRight` je izmena ikonografije, ne
+ * tipografije, pa ne pripada ovom tasku.
+ */
+private val StepChevronSize = 20.sp
 
 @Composable
 private fun StepRow(
@@ -321,7 +343,8 @@ private fun StepRow(
                     StepState.AVAILABLE -> DS.ink
                     StepState.LOCKED -> DS.inkMuted
                 },
-                fontSize = 14.sp,
+                // iOS: `.dsBody` (`Chessko/Views/PathView.swift:390`).
+                style = Type.body,
                 fontWeight = FontWeight.Medium
             )
             Text(
@@ -331,12 +354,12 @@ private fun StepRow(
                     StepState.AVAILABLE -> if (hasRoute) loc("Dostupno") else loc("Uskoro")
                 },
                 color = DS.inkMuted,
-                fontSize = 12.sp
+                style = Type.caption
             )
         }
 
         if (clickable) {
-            Text(text = "›", color = DS.inkMuted, fontSize = 20.sp)
+            Text(text = "›", color = DS.inkMuted, fontSize = StepChevronSize)
         }
     }
 }
