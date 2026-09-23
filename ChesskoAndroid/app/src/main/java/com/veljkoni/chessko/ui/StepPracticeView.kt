@@ -75,7 +75,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(DS.Space.l),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
@@ -124,7 +124,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                         tint = DS.warning,
                         modifier = Modifier.size(40.dp)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(DS.Space.s))
                     Text(
                         text = viewModel.networkErrorMessage,
                         color = DS.ink,
@@ -195,7 +195,7 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
         // (index == progress.first, upravo se resava) -> accent, jos
         // neodigrano -> fill. Ranije su "reseno" i "tekuce" delili istu
         // (accent) boju -- tri stanja sad se stvarno razlikuju.
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs), modifier = Modifier.fillMaxWidth()) {
             for (index in 0 until total) {
                 Box(
                     modifier = Modifier
@@ -230,7 +230,7 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
                     .background(DS.warning.copy(alpha = 0.15f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .padding(horizontal = DS.Space.s, vertical = DS.Space.xs)
             )
         }
     }
