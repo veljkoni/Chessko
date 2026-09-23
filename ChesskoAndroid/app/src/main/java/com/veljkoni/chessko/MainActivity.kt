@@ -70,6 +70,7 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.foundation.shape.CircleShape
 import com.veljkoni.chessko.ui.theme.ChesskoTheme
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.GameMode
 import com.veljkoni.chessko.viewmodels.GameViewModel
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
@@ -195,7 +196,8 @@ class MainActivity : ComponentActivity() {
                                 Text(
                                     text = loc("Nova igra"),
                                     color = DS.ink,
-                                    fontSize = 18.sp,
+                                    // Naslov menija -> `heading`.
+                                    style = Type.heading,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Center
@@ -224,8 +226,8 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Column {
-                                        Text(text = loc("Igraj protiv računara"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Igraj protiv veštačke inteligencije sa izborom boje"), color = DS.inkMuted, fontSize = 11.sp)
+                                        Text(text = loc("Igraj protiv računara"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Igraj protiv veštačke inteligencije sa izborom boje"), color = DS.inkMuted, style = Type.label)
                                     }
                                 }
 
@@ -251,8 +253,8 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Column {
-                                        Text(text = loc("Igraj sa prijateljem"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Lokalna igra na istom telefonu sa rotiranjem table"), color = DS.inkMuted, fontSize = 11.sp)
+                                        Text(text = loc("Igraj sa prijateljem"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Lokalna igra na istom telefonu sa rotiranjem table"), color = DS.inkMuted, style = Type.label)
                                     }
                                 }
 
@@ -278,8 +280,8 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Column {
-                                        Text(text = loc("Šahovski sat"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Premium šahovski sat sa vremenskim kontrolama"), color = DS.inkMuted, fontSize = 11.sp)
+                                        Text(text = loc("Šahovski sat"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Premium šahovski sat sa vremenskim kontrolama"), color = DS.inkMuted, style = Type.label)
                                     }
                                 }
 
@@ -312,7 +314,8 @@ class MainActivity : ComponentActivity() {
                                 Text(
                                     text = loc("Izaberi boju figura"),
                                     color = DS.ink,
-                                    fontSize = 16.sp,
+                                    // Naslov dijaloga -> `heading`.
+                                    style = Type.heading,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Center
@@ -353,7 +356,7 @@ class MainActivity : ComponentActivity() {
                                                 .border(1.dp, Color.Black.copy(alpha = 0.3f), CircleShape)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        Text(text = loc("Beli"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Beli"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
                                     }
 
                                     // Random Color Card
@@ -378,7 +381,7 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier.size(32.dp)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        Text(text = loc("Nasumično"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Nasumično"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
                                     }
 
                                     // Black Color Card
@@ -415,7 +418,7 @@ class MainActivity : ComponentActivity() {
                                                 .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
-                                        Text(text = loc("Crni"), color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                        Text(text = loc("Crni"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
@@ -571,7 +574,7 @@ class MainActivity : ComponentActivity() {
                                 Text(
                                     text = loc("Kraj partije"),
                                     color = DS.inkMuted,
-                                    fontSize = 12.sp,
+                                    style = Type.caption,
                                     fontWeight = FontWeight.Medium,
                                     letterSpacing = 1.sp
                                 )
@@ -579,7 +582,10 @@ class MainActivity : ComponentActivity() {
                                 Text(
                                     text = getStatusMessage(gameViewModel),
                                     color = DS.ink,
-                                    fontSize = 18.sp,
+                                    // Naslov ishoda partije -> `title`, i to je paritet:
+                                    // iOS crta `.title2.weight(.semibold)` = 22
+                                    // (`Chessko/Views/GameView.swift:574`).
+                                    style = Type.title,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
                                 )
@@ -612,7 +618,7 @@ class MainActivity : ComponentActivity() {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = loc("Pregledaj partiju"),
-                                        fontSize = 15.sp,
+                                        style = Type.body,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 }
@@ -640,7 +646,7 @@ class MainActivity : ComponentActivity() {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = loc("Nova igra"),
-                                        fontSize = 15.sp,
+                                        style = Type.body,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -808,7 +814,10 @@ class MainActivity : ComponentActivity() {
                                                 Text(
                                                     text = loc("Chessko"),
                                                     color = DS.ink,
-                                                    fontSize = 20.sp,
+                                                    // Naslov aplikacije -> `title`. Pejzazna
+                                                    // grana je stajala na 20, portretna na 22 --
+                                                    // ista uloga, dve vrednosti; sada jedna.
+                                                    style = Type.title,
                                                     fontWeight = FontWeight.Bold,
                                                     textAlign = TextAlign.Center,
                                                     modifier = Modifier.weight(1f)
@@ -877,7 +886,10 @@ class MainActivity : ComponentActivity() {
                                                 Text(
                                                     text = loc("Potezi"),
                                                     color = DS.inkMuted,
-                                                    fontSize = 13.sp,
+                                                    // iOS: `.subheadline.weight(.semibold)`
+                                                    // (`Chessko/Views/GameView.swift:81`). Pejzaz je
+                                                    // bio 13, portret 14 -- ista uloga, dve vrednosti.
+                                                    style = Type.body,
                                                     fontWeight = FontWeight.SemiBold
                                                 )
                                                 MoveHistoryView(
@@ -955,7 +967,7 @@ class MainActivity : ComponentActivity() {
                                                 Text(
                                                     text = loc("Chessko"),
                                                     color = DS.ink,
-                                                    fontSize = 22.sp,
+                                                    style = Type.title,
                                                     fontWeight = FontWeight.Bold,
                                                     textAlign = TextAlign.Center,
                                                     modifier = Modifier.weight(1f)
@@ -1097,7 +1109,7 @@ class MainActivity : ComponentActivity() {
                                                     Text(
                                                         text = loc("Potezi"),
                                                         color = DS.inkMuted,
-                                                        fontSize = 14.sp,
+                                                        style = Type.body,
                                                         fontWeight = FontWeight.SemiBold,
                                                         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                                                     )
@@ -1211,7 +1223,10 @@ fun ReviewControlsRow(
         Text(
             text = label,
             color = if (viewModel.isReviewing) DS.accent else DS.ink,
-            fontSize = 13.sp,
+            // Zbijen pokazivac izmedju cetiri dugmeta -> `caption`. NALAZ: i iOS je
+            // ovde van sopstvene skale, `.system(size: 13, weight: .semibold)`
+            // (`Chessko/Views/GameView.swift:327`), pa pandan ne postoji.
+            style = Type.caption,
             fontWeight = FontWeight.Bold
         )
 
@@ -1284,7 +1299,7 @@ fun ActionsRow(
                     contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
-                Text(text = if (isVsComputer) loc("Računar") else loc("Prijatelj"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = if (isVsComputer) loc("Računar") else loc("Prijatelj"), style = Type.label, fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -1316,7 +1331,7 @@ fun ActionsRow(
                     GameDifficulty.HARD -> loc("Teško")
                     GameDifficulty.STOCKFISH -> "Stockfish"
                 }
-                Text(text = label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = label, style = Type.label, fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -1345,7 +1360,7 @@ fun ActionsRow(
                     contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
-                Text(text = loc("Vrati"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = loc("Vrati"), style = Type.label, fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -1372,7 +1387,7 @@ fun ActionsRow(
                         contentDescription = null,
                         modifier = Modifier.size(14.dp)
                     )
-                    Text(text = loc("Predaj"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = loc("Predaj"), style = Type.label, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -1399,7 +1414,7 @@ fun ActionsRow(
                     contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
-                Text(text = loc("Podeli"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = loc("Podeli"), style = Type.label, fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -1424,7 +1439,7 @@ fun ActionsRow(
                     contentDescription = null,
                     modifier = Modifier.size(14.dp)
                 )
-                Text(text = loc("Reset"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = loc("Reset"), style = Type.label, fontWeight = FontWeight.SemiBold)
             }
         }
     }
