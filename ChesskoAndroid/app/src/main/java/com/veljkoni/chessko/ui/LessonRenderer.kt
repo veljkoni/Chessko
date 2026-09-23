@@ -101,7 +101,7 @@ fun LessonBlocks(
             is LessonBlock.Explorer -> LExplorer(explorerViewModel, accent)
             is LessonBlock.Exercise -> LExercise(b.spec, accent)
             is LessonBlock.Divider -> HorizontalDivider(
-                modifier = Modifier.padding(vertical = 12.dp),
+                modifier = Modifier.padding(vertical = DS.Space.m),
                 color = DS.line
             )
         }
@@ -124,11 +124,11 @@ private fun colorFor(style: BoxStyle?, accent: Color): Color = when (style) {
 
 @Composable
 private fun LQuote(text: String, author: String) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+    Column(modifier = Modifier.padding(vertical = DS.Space.s)) {
         // iOS citat crta kao `L_Box` (`Chessko/Views/LessonRenderer.swift:48`):
         // telo `.dsBody`, potpis `.dsCaption.weight(.bold)` (`:442`, `:446`).
         Text(text = mdBold(text), style = Type.body, color = DS.ink)
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(DS.Space.xs))
         Text(text = "— $author", style = Type.caption, color = DS.inkMuted)
     }
 }
@@ -218,10 +218,10 @@ fun LPieceRow(piece: String, name: String, count: String, accent: Color) {
 
 @Composable
 fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = DS.Space.s)) {
         for (r in rows) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = DS.Space.xs),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LessonPieceGlyph(r.piece)
@@ -247,7 +247,7 @@ fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
 @Composable
 private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
     val state = remember(fen) { com.veljkoni.chessko.models.GameState.fromFEN(fen) }
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = DS.Space.s)) {
         if (state == null) {
             // Pokvaren FEN u sadrzaju mora da se VIDI, ne da ostavi prazninu.
             Text(text = "⚠︎ $fen", style = Type.body, color = DS.danger)
