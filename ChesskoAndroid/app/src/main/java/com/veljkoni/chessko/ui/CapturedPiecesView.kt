@@ -12,11 +12,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.ChessPiece
 import com.veljkoni.chessko.models.PieceColor
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 
 @Composable
 fun CapturedPiecesView(
@@ -36,7 +36,9 @@ fun CapturedPiecesView(
         if (sortedPieces.isEmpty()) {
             Text(
                 text = "–",
-                fontSize = 12.sp,
+                // iOS crta bas caption2 (`Chessko/Views/CapturedPiecesView.swift:34`),
+                // dakle Type.label -- 12 je ovde bilo razilazenje, ne odluka.
+                style = Type.label,
                 // Hrom (prazno stanje), ne sadrzaj stila figure -- za razliku od metalik
                 // gradijenata ispod, ovo mora da prati temu.
                 color = DS.inkMuted
