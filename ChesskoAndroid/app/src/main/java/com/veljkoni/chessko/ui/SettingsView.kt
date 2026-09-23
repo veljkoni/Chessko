@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.ChessPiece
 import com.veljkoni.chessko.models.PieceColor
@@ -53,6 +52,7 @@ import com.veljkoni.chessko.logic.GameDifficulty
 import com.veljkoni.chessko.logic.StockfishLevel
 import com.veljkoni.chessko.logic.StatsManager
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,14 +79,15 @@ fun SettingsView(
                 Text(
                     text = loc("Podešavanja"),
                     color = DS.ink,
-                    fontSize = 18.sp,
+                    // Zaglavlje ekrana -> `heading`, isto kao ostala zaglavlja grane.
+                    style = Type.heading,
                     fontWeight = FontWeight.Bold
                 )
             },
             navigationIcon = {},
             actions = {
                 TextButton(onClick = onDismiss) {
-                    Text(text = loc("Gotovo"), color = DS.accent, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                    Text(text = loc("Gotovo"), color = DS.accent, fontWeight = FontWeight.SemiBold, style = Type.body)
                 }
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -140,7 +141,9 @@ fun SettingsView(
                             Text(
                                 text = endonym,
                                 color = if (isSelected) DS.accent else DS.ink,
-                                fontSize = 14.sp,
+                                // Red liste -> `body`; iOS ekvivalentne redove crta
+                                // `.subheadline` (`Chessko/Views/SettingsSheet.swift:151`).
+                                style = Type.body,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 modifier = Modifier.weight(1f)
                             )
@@ -250,7 +253,8 @@ fun SettingsView(
                                 Text(
                                     text = loc("Resetuj statistiku"),
                                     color = DS.danger,
-                                    fontSize = 12.sp,
+                                    // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:134`).
+                                    style = Type.caption,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -296,7 +300,8 @@ fun SettingsView(
                     Text(
                         text = loc("Tema table"),
                         color = DS.inkMuted,
-                        fontSize = 12.sp,
+                        // iOS: `.subheadline` (`Chessko/Views/SettingsSheet.swift:175`).
+                        style = Type.body,
                         fontWeight = FontWeight.Medium
                     )
 
@@ -339,7 +344,11 @@ fun SettingsView(
                                 Text(
                                     text = loc(theme.label),
                                     color = if (isSelected) DS.accent else DS.inkMuted,
-                                    fontSize = 11.sp,
+                                    // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:207`).
+                                    // Oznaka ispod uzorka -- ista uloga i za stilove
+                                    // figura ispod, koji su stajali na 10. Dve
+                                    // vrednosti za jednu ulogu su bile drift.
+                                    style = Type.caption,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                             }
@@ -384,7 +393,8 @@ fun SettingsView(
                     Text(
                         text = loc("Stil"),
                         color = DS.inkMuted,
-                        fontSize = 12.sp,
+                        // iOS: `.subheadline` (`Chessko/Views/SettingsSheet.swift:240`).
+                        style = Type.body,
                         fontWeight = FontWeight.Medium
                     )
 
@@ -436,7 +446,9 @@ fun SettingsView(
                                             Text(
                                                 text = loc(style.label),
                                                 color = if (isSelected) DS.accent else DS.inkMuted,
-                                                fontSize = 10.sp,
+                                                // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:268`),
+                                                // isto kao oznaka teme table iznad.
+                                                style = Type.caption,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                             )
                                         }
@@ -511,7 +523,7 @@ fun SettingsView(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(text = label, style = Type.caption, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -547,16 +559,19 @@ fun SettingsView(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = loc("Chessko"), color = DS.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text(text = loc("Verzija 1.0.0"), color = DS.inkMuted, fontSize = 12.sp)
+                    // iOS: `.headline` pa `.subheadline`
+                    // (`Chessko/Views/SettingsSheet.swift:346`, `:349`).
+                    Text(text = loc("Chessko"), color = DS.ink, style = Type.heading, fontWeight = FontWeight.Bold)
+                    Text(text = loc("Verzija 1.0.0"), color = DS.inkMuted, style = Type.body)
 
                     HorizontalDivider(color = DS.line)
 
                     Text(
                         text = loc("Ova aplikacija je otvorenog koda, koristi Stockfish šahovski pokretač pod GPLv3 licencom i preuzima šahovske zadatke iz slobodne Lichess baze."),
                         color = DS.inkMuted,
-                        fontSize = 11.sp,
-                        lineHeight = 15.sp
+                        // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:356`).
+                        // `Type.caption` nosi i `lineHeight`, pa on odlazi sa velicinom.
+                        style = Type.caption
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -592,7 +607,8 @@ fun SettingsView(
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp)
                                 )
-                                Text(text = loc("Stockfish"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                // iOS: `.caption.weight(.semibold)` (`Chessko/Views/SettingsSheet.swift:364`).
+                                Text(text = loc("Stockfish"), style = Type.caption, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -620,7 +636,7 @@ fun SettingsView(
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp)
                                 )
-                                Text(text = loc("Lichess"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(text = loc("Lichess"), style = Type.caption, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -642,7 +658,11 @@ fun SettingsSection(
         Text(
             text = title,
             color = DS.accent,
-            fontSize = 13.sp,
+            // Naslov sekcije NAMERNO na `body`, ne `heading`: redovi ispod njega su
+            // takodje `body`, a razlikuju se tezinom i bojom -- tacno odnos koji je
+            // ovde vec postojao (13 bold accent nad 13 medium ink). Sa `caption`-om
+            // bi naslov postao MANJI od sopstvenih redova.
+            style = Type.body,
             fontWeight = FontWeight.Bold
         )
         content()
@@ -679,7 +699,7 @@ fun SettingsToggle(
                 tint = DS.accent,
                 modifier = Modifier.size(20.dp)
             )
-            Text(text = label, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Text(text = label, color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
         }
         Switch(
             checked = checked,
@@ -734,7 +754,8 @@ fun DifficultyOptionRow(
             Text(
                 text = label,
                 color = if (isSelected) DS.accent else DS.ink,
-                fontSize = 14.sp,
+                // iOS: `.subheadline` (`Chessko/Views/SettingsSheet.swift:151`).
+                style = Type.body,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
             if (subtitle != null) {
@@ -742,7 +763,9 @@ fun DifficultyOptionRow(
                 Text(
                     text = subtitle,
                     color = DS.inkMuted,
-                    fontSize = 11.sp
+                    // Uloga 1 uz `Type.label`: prigusen podnaslov ispod naslova reda.
+                    // iOS crta bas `caption2` (`Chessko/Views/SettingsSheet.swift:156`).
+                    style = Type.label
                 )
             }
         }
@@ -767,14 +790,17 @@ fun StatItem(
         Text(
             text = value,
             color = color,
-            fontSize = 17.sp,
+            // iOS: `.headline` (`Chessko/Views/SettingsSheet.swift:407`).
+            style = Type.heading,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
             color = DS.inkMuted,
-            fontSize = 11.sp,
+            // Uloga 2 uz `Type.label`: oznaka ispod brojcane vrednosti. iOS crta
+            // bas `caption2` (`Chessko/Views/SettingsSheet.swift:411`).
+            style = Type.label,
             fontWeight = FontWeight.Medium
         )
     }
