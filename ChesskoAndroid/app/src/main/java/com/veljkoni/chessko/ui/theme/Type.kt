@@ -87,12 +87,15 @@ val Typography = Typography(
  * ## Sta je dodato, i zasto bas to
  *
  * `label` (11) je JEDINI nov korak. Nije ustupak driftu: 11 je Apple-ov
- * `caption2`, a iOS ga svesno koristi za tacno one uloge za koje ga koristi
- * i Android — prigusen podnaslov ispod naslova (`SettingsSheet.swift:156`)
- * i oznaka ispod brojcane vrednosti (`:411`) — i sam ga u lekcijama
- * obelezava komentarom „van skale" (`LessonRenderer.swift:306`, `:613`).
+ * `caption2`, a iOS ga svesno koristi za **dve od tri** uloge za koje ga
+ * trazi i Android — prigusen podnaslov ispod naslova
+ * (`SettingsSheet.swift:156`) i oznaka ispod brojcane vrednosti (`:411`) —
+ * i sam ga u lekcijama obelezava komentarom „van skale"
+ * (`LessonRenderer.swift:306`, `:613`). Treca uloga (tekst uz ikonu na
+ * zbijenom dugmetu) **nema iOS pandan**, jer iOS te radnje crta kao ikonu
+ * bez teksta; razlika je razlozena uz samu definiciju `label` ispod.
  * Bez ovog koraka bi 31 mesto moralo na `caption` (12), cime bi nestao tier
- * koji obe platforme stvarno koriste.
+ * koji iOS stvarno koristi.
  *
  * ## Sta NAMERNO nema ime: 14
  *
@@ -152,10 +155,26 @@ object Type {
     )
 
     /**
-     * Najsitnija oznaka interfejsa — Apple `caption2`. Za tri merene uloge:
-     * prigusen podnaslov ispod naslova reda, tekst uz ikonu na zbijenom
-     * dugmetu, i oznaka ispod brojcane vrednosti. Sve tri iOS crta bas
-     * `caption2`-om (`SettingsSheet.swift:156`, `:411`).
+     * Najsitnija oznaka interfejsa — Apple `caption2`. Tri merene uloge na
+     * Androidu, i NISU sve tri paritet sa iOS-om:
+     *
+     *  1. Prigusen podnaslov ispod naslova reda — iOS crta bas `caption2`
+     *     (`SettingsSheet.swift:156`, ispod naslova na `.subheadline`).
+     *  2. Oznaka ispod brojcane vrednosti — iOS crta bas `caption2`
+     *     (`SettingsSheet.swift:411`, ispod vrednosti na `.headline`).
+     *  3. Tekst uz ikonu na zbijenom dugmetu („Vrati" / „Predaj" / „Podeli"
+     *     u `MainActivity.ActionsRow`) — **nema iOS pandan ni u kom fontu.**
+     *     iOS te radnje drzi u `ToolbarItem`-ima kao IKONU BEZ TEKSTA
+     *     (`GameView.swift:199-220`). A na jedinom mestu gde iOS stvarno
+     *     pari ikonu s tekstom (`LessonRenderer.swift:306`), 11 dobija
+     *     IKONA, dok tekst pored nje ide na `dsCaption` (12).
+     *     Za ovu ulogu je `label` **android odluka, ne paritet** — drzi je
+     *     doslednost sa prve dve uloge, ne iOS.
+     *
+     * (Provereno: `caption2` ima tacno 5 upotreba u svim `.swift` fajlovima
+     * pod `Chessko/Views` — dve gore, `LessonRenderer.swift:306` i `:613`,
+     * i `–` placeholder u `CapturedPiecesView.swift:34`, koji Android nema
+     * jer ga je Faza 1 uklonila.)
      *
      * NIJE „caption koji je ispao premali" — ovo je zaseban tier, i jedini
      * korak koji Faza 10 dodaje. Ako se ikad spaja sa `caption`, spaja se
