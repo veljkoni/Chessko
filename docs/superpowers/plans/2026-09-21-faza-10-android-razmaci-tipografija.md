@@ -342,8 +342,24 @@ Broj testova nepromenjen (**112**) — ovaj task menja definiciju, ne pozivna me
 - Test: `ChesskoAndroid/app/src/test/java/com/veljkoni/chessko/TypographyScaleTest.kt` (novi)
 
 **Interfaces:**
-- Consumes: imena iz Task-a 2 (`Type.title`, `Type.heading`, `Type.body`, `Type.caption`,
-  `Type.mono`, plus ona koja je Task 2 eventualno dodao). **Ne izmišljaj nova.**
+- Consumes: **konačan spisak imena iz Task-a 2** — `Type.title` 22 / `Type.heading` 17 /
+  `Type.body` 15 / `Type.caption` 12 / `Type.label` 11 (**nov**) / `Type.mono` 13.
+  **To su sva imena koja postoje. Ne izmišljaj nova i ne dodaj korak.**
+- Uloge, kako ih je Task 2 presudio: `label` je podnaslov ispod naslova, tekst uz ikonu na
+  zbijenom dugmetu, i oznaka ispod brojčane vrednosti. `body` je osnovni tekst **i telo lekcije**.
+
+> **Veličina 14 NAMERNO nema ime.** Jedina je česta veličina koje nema u Apple-ovoj lestvici
+> (Material drift). Njenih **29** mesta se razvrstava **po ulozi** na `body` ili `caption` —
+> **ne zaokružuje se** na najbliži korak. Isto važi za 16 (9×) i 18 (7×): razvrstaj po ulozi na
+> `heading`/`body`; ako nekom mestu 17 stvarno ne odgovara, to je **nalaz za izveštaj**, ne
+> povod da se doda korak.
+
+> **Pet od tih 29 mesta na 14 nisu tekst** nego veličina lekcijskog glifa (`LessonGlyphView`).
+> Ako ostaju doslovni, moraju nositi komentar zašto.
+
+> **`ui/LessonRenderer.kt:174` nosi USLOVNU veličinu** — `fontSize = if (symbol != null) 22.sp
+> else 15.sp` — koju šablon `fontSize = N.sp` **uopšte ne vidi**. Nije u brojci od 161 i mora se
+> obraditi ručno.
 - Produces: nijedan zakucan `fontSize` van `ui/theme/` i van imenovanih izuzetaka.
 
 - [ ] **Korak 1: Napiši test koji pada**
@@ -399,8 +415,12 @@ class TypographyScaleTest {
 ```bash
 cd ChesskoAndroid && ./gradlew testDebugUnitTest --tests '*TypographyScaleTest*'
 ```
-Očekivano: FAIL, sa spiskom od ~160 unosa (169 minus oni u satu). **Zalepi prvih deset** — to je
-tvoja radna lista.
+Očekivano: FAIL, sa spiskom od ~160 unosa. **Zalepi prvih deset** — to je tvoja radna lista.
+
+> **Tačan broj je 161, ne 169** (izmereno posle Task-a 2, potvrđeno nezavisno). Naivan grep
+> prijavi 170 jer broji i **devet pogodaka u samom `Type.kt`**, od kojih su dva unutar `/* */`
+> bloka — pa ih filter koji gleda samo linije što *počinju* sa `//`/`*` ne skida. Implementer
+> Task-a 2 je u tu zamku pao pa se sam ispravio; ne ponavljaj je.
 
 - [ ] **Korak 3: Zameni, fajl po fajlu, po presudi Task-a 2**
 
@@ -528,12 +548,34 @@ $ANDROID_HOME/platform-tools/adb shell 'while [ "$(getprop sys.boot_completed)" 
 
 U tom prolazu, **obe teme**:
 
-1. **Tablet** — `DS.maxBoardSide` se stvarno vidi. Ako nemaš tablet AVD, koristi
+1. **Tablet** — `DS.maxBoardSide` se stvarno vidi. Proveri **svih šest** igračkih tabli
+   (Igra portret i pejzaž, Zadaci portret i pejzaž, korak-partija, korak-vežba) — Task 1 ih je
+   ograničio na šest mesta u četiri fajla. **Igra u portretu je poseban slučaj:** tamo već
+   postoji `widthIn(max = 500.dp)` na obuhvatnoj koloni, pa je granica od 560 **nedostižna** i
+   tabla se neće promeniti — to nije greška nego sloj iznad.
+   **I jedna stvar koju Task 1 nije mogao da dokaže bez uređaja:** redosled modifiera (granica
+   **pre** `.size()`/`.fillMaxHeight()`) izveden je iz semantike `Constraints.constrain()`.
+   **Ako neka tabla ispadne nekvadratna na tabletu, prvo gledaj taj redosled** — naročito
+   `ui/PuzzleView.kt`, gde granica stoji na **spoljnom `Box`-u**, ne na `BoardView` pozivu. Ako nemaš tablet AVD, koristi
    `adb shell wm size 2560x1600` i `wm density 240` na postojećem, i **reci u izveštaju da je
    geometrija simulirana, ne uređaj** (isti obrazac kao pejzaž u Fazi 9).
    **Pre i posle:** snimi tablu i sa uklonjenom granicom, da se vidi da granica nešto radi.
-2. **Igra** (portret i pejzaž), **Zadaci**, **Put**, **korak Puta**, **lekcija**, **Podešavanja**
-   — svaki ekran koji je Task 3 ili 4 dirnuo.
+2. **Igra** (portret i pejzaž), **Zadaci**, **Put**, **korak Puta**, **lekcija**, **Podešavanja**,
+   **sat** (uključujući dijalog izbora vremenske kontrole i info dijalog), **ekran analize** —
+   dakle **svaki ekran**, ne uzorak.
+
+   > **Zašto svaki, a ne uzorak:** presuda Task-a 2 ne pomera nijednu vrednost skale, ali
+   > primena u Task-u 3 menja veličinu na **~60 pozivnih mesta** — najvidljivije **telo lekcije
+   > 13 → 15**. To je promena na ekranima koji su vizuelno provereni kroz Faze 6d-1, 6d-2, 8 i 9,
+   > pa uzorak ovde ne dokazuje ništa. Implementer Task-a 2 je to sam tražio.
+
+   > **Dve stvari koje Task 2 izričito nije mogao da proveri statički, pa se proveravaju ovde:**
+   > (a) `LSectionHeader` (15, bold) i telo (15) se **izjednačavaju po veličini** i razlikovaće
+   > se samo težinom — na iOS-u je već tako, ali Android gubi jedan vizuelni stepen; ako zasmeta,
+   > popravka je **težina ili razmak, ne nova veličina**;
+   > (b) tvrdnja da je 13 → 15 povratak paritetu je izvedena **iz izvora, ne iz dve lekcije jednu
+   > pored druge** — ako Android na 15 prelije karticu koju iOS ne prelije, uzrok je razmak ili
+   > širina, pa **proveri, ne pretpostavljaj**.
 3. **Sat** — jedanaest boja prati stranu; potvrdi da su crna i bela polovina i dalje crna i bela.
 4. **Tipografija** — na bar tri ekrana uporedi sa snimcima iz Faze 9
    (`.superpowers/sdd/2026-09-20-faza-9-lekcijske-ikone-i-precica/screenshots/`) i reci **šta se
