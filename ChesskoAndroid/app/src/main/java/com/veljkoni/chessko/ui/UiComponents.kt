@@ -22,11 +22,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.*
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.GameMode
 import com.veljkoni.chessko.viewmodels.GameViewModel
 import kotlin.math.max
@@ -97,14 +97,18 @@ fun PlayerHeaderCard(
                 Text(
                     text = name,
                     color = DS.ink,
-                    fontSize = 14.sp,
+                    // iOS: `.subheadline.weight(.semibold)` (`Chessko/Views/GameView.swift:420`).
+                    style = Type.body,
                     fontWeight = FontWeight.SemiBold
                 )
                 if (materialAdvantage > 0) {
                     Text(
                         text = "+$materialAdvantage",
                         color = DS.accent.copy(alpha = 0.85f),
-                        fontSize = 11.sp,
+                        // iOS: `.caption.weight(.medium)` (`Chessko/Views/GameView.swift:423`),
+                        // dakle `caption`. Tezina ostaje Bold -- to je razlika u izgledu
+                        // koju ovaj task ne resava.
+                        style = Type.caption,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -163,7 +167,10 @@ fun PlayerHeaderCard(
                     Text(
                         text = evalText,
                         color = if (isMate) Color(0xFFFFD700) else DS.ink,
-                        fontSize = 11.sp,
+                        // Brojcani bedz u kartici igraca -> `label`. iOS pandan ne
+                        // postoji: Faza 1 je taj broj sklonila iz kartice i ostavila ga
+                        // samo na eval traci.
+                        style = Type.label,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -229,7 +236,9 @@ fun StatusBanner(message: String) {
         Text(
             text = message,
             color = DS.ink,
-            fontSize = 13.sp,
+            // Recenica o stanju partije -> `body`, isto kao status kartica koraka
+            // (iOS `.dsBody`, `Chessko/Views/StepGameView.swift:229`).
+            style = Type.body,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center
         )
@@ -268,7 +277,8 @@ fun RowScope.BottomNavItem(
             Text(
                 text = label,
                 color = contentColor,
-                fontSize = 11.sp,
+                // Oznaka uz ikonu u donjoj navigaciji -> `label`.
+                style = Type.label,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
         }
@@ -337,7 +347,8 @@ fun AnalysisButton(viewModel: GameViewModel, onClick: () -> Unit) {
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = loc("Analiziraj partiju"),
-            fontSize = 15.sp,
+            // iOS: `.dsBody.weight(.semibold)` (`Chessko/Views/GameView.swift:280`).
+            style = Type.body,
             fontWeight = FontWeight.Bold
         )
     }
