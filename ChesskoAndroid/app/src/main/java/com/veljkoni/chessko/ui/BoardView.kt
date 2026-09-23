@@ -91,6 +91,18 @@ private fun applyBoardSwipe(
     }
 }
 
+/**
+ * Velicina koordinatne oznake na tabli (a-h, 1-8) — **namerno van tipografske
+ * skale**, isto kao iOS: `Chessko/Views/SquareView.swift:212` i `:224` crtaju
+ * `.font(.system(size: 9, weight: .semibold))`, dakle isti broj i ista tezina.
+ *
+ * Razlog je isti kao za boje table: koordinata nije tekst interfejsa nego deo
+ * table, jedinog elementa koji namerno ostaje netokenizovan. `Type.label` (11)
+ * bi oznaku prelio preko polja na malim ekranima, a i razisao bi je sa iOS-om.
+ * Vrednost stoji ovde, na jednom mestu, umesto dvaput doslovno u kodu.
+ */
+private val BoardCoordinateSize = 9.sp
+
 @Composable
 fun BoardView(
     board: List<List<ChessPiece?>>,
@@ -722,7 +734,7 @@ fun SquareView(
                 Text(
                     text = fileChar.toString(),
                     color = labelColor,
-                    fontSize = 9.sp,
+                    fontSize = BoardCoordinateSize,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -736,7 +748,7 @@ fun SquareView(
                 Text(
                     text = rankNum.toString(),
                     color = labelColor,
-                    fontSize = 9.sp,
+                    fontSize = BoardCoordinateSize,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .align(Alignment.TopStart)
