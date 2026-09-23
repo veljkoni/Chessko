@@ -118,7 +118,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(DS.Space.l),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
@@ -133,7 +133,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                 style = Type.heading,
                 fontWeight = FontWeight.Bold
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                 Button(
                     onClick = { viewModel.undo() },
                     enabled = viewModel.canUndo,
@@ -280,7 +280,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                 }
             },
             containerColor = DS.surface,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(DS.Radius.l)
         )
     }
 }
@@ -289,12 +289,12 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
 private fun OpponentCard(viewModel: GameViewModel) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.fill)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .padding(horizontal = 14.dp, vertical = DS.Space.m)
     ) {
         // Faza 8, Task 3: emoji -> Icon. Ikona stoji NEPOSREDNO uz vidljiv
         // `Text(loc("Računar"))` -- isti obrazac kao `Computer`/`People` u
@@ -329,9 +329,9 @@ private fun StatusCard(message: String) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.fill)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .padding(horizontal = 14.dp, vertical = DS.Space.m)
     ) {
         // iOS: `.dsBody` (`Chessko/Views/StepGameView.swift:229`).
         Text(text = message, color = DS.ink, style = Type.body)
