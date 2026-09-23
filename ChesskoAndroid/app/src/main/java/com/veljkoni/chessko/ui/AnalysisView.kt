@@ -25,14 +25,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.models.AnalyzedMove
 import com.veljkoni.chessko.models.GameAnalysis
 import com.veljkoni.chessko.models.MoveClass
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.AnalysisError
 import com.veljkoni.chessko.viewmodels.AnalysisViewModel
 import com.veljkoni.chessko.viewmodels.GameViewModel
@@ -128,7 +127,8 @@ fun AnalysisView(viewModel: GameViewModel, onClose: () -> Unit) {
             Text(
                 text = loc("Analiza partije"),
                 color = DS.ink,
-                fontSize = 18.sp,
+                // Zaglavlje ekrana -> `heading`, isto kao koraci Puta.
+                style = Type.heading,
                 fontWeight = FontWeight.Bold
             )
             TextButton(onClick = onClose) {
@@ -194,8 +194,9 @@ private fun RunningView(progress: Float, done: Int, total: Int) {
         )
         // Bez `loc()`: goli brojevi se ne prevode, isti obrazac kao iOS
         // (`Text(verbatim: "\(done) / \(total)")`).
-        Text(text = "$done / $total", color = DS.inkMuted, fontSize = 12.sp)
-        Text(text = loc("Analiziram…"), color = DS.ink, fontSize = 14.sp)
+        // iOS: `.dsCaption` i `.dsBody` (`Chessko/Views/AnalysisView.swift:66`, `:69`).
+        Text(text = "$done / $total", color = DS.inkMuted, style = Type.caption)
+        Text(text = loc("Analiziram…"), color = DS.ink, style = Type.body)
     }
 }
 
@@ -206,7 +207,8 @@ private fun ErrorMessage(error: AnalysisError) {
     Text(
         text = errorText(error),
         color = DS.inkMuted,
-        fontSize = 14.sp,
+        // iOS: `.dsBody` (`Chessko/Views/AnalysisView.swift:26`).
+        style = Type.body,
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 32.dp)
@@ -251,7 +253,9 @@ private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modif
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Text(text = title, color = DS.inkMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        // Cela kartica je paritet: naslov i oznaka `.dsCaption`, vrednost `.dsTitle`
+        // (`Chessko/Views/AnalysisView.swift:87`, `:90`, `:93`).
+        Text(text = title, color = DS.inkMuted, style = Type.caption, fontWeight = FontWeight.Medium)
         Text(
             // `Locale.US` NIJE kozmetika: `String.format` bez njega uzima
             // SISTEMSKI jezik, pa bi na nemackom ili ruskom uredjaju pisalo
@@ -260,10 +264,10 @@ private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modif
             // traka ocene (`UiComponents.kt:131`).
             text = String.format(java.util.Locale.US, "%.1f%%", value),
             color = DS.ink,
-            fontSize = 24.sp,
+            style = Type.title,
             fontWeight = FontWeight.Bold
         )
-        Text(text = loc("Tačnost"), color = DS.inkMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+        Text(text = loc("Tačnost"), color = DS.inkMuted, style = Type.caption, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -290,11 +294,13 @@ private fun TurningPointCard(move: AnalyzedMove, onClick: () -> Unit) {
             modifier = Modifier.size(22.dp)
         )
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = loc("Prelomni potez"), color = DS.inkMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            // iOS: `.dsCaption` pa `.dsHeading`
+            // (`Chessko/Views/AnalysisView.swift:109`, `:112`).
+            Text(text = loc("Prelomni potez"), color = DS.inkMuted, style = Type.caption, fontWeight = FontWeight.Medium)
             Text(
                 text = "${move.displayNotation}  (−${move.cpLoss})",
                 color = DS.ink,
-                fontSize = 16.sp,
+                style = Type.heading,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -355,8 +361,10 @@ private fun MoveChip(move: AnalyzedMove, modifier: Modifier = Modifier, onClick:
         Text(
             text = move.displayNotation,
             color = DS.ink,
-            fontSize = 13.sp,
-            fontFamily = FontFamily.Monospace
+            // iOS: `.dsMono` (`Chessko/Views/AnalysisView.swift:137`). `fontFamily`
+            // je obrisan jer ga `Type.mono` vec nosi -- brisanje je bez posledica
+            // samo zato sto se poklapa sa stilom.
+            style = Type.mono
         )
     }
 }
