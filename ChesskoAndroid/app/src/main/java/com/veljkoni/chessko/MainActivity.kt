@@ -183,15 +183,15 @@ class MainActivity : ComponentActivity() {
                 if (showNewGameMenu) {
                     Dialog(onDismissRequest = { showNewGameMenu = false }) {
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(DS.Radius.l),
                             color = DS.surface,
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(DS.Space.l)
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    .padding(DS.Space.l),
+                                verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                             ) {
                                 Text(
                                     text = loc("Nova igra"),
@@ -208,9 +208,9 @@ class MainActivity : ComponentActivity() {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(DS.Radius.m))
                                         .background(DS.fill)
-                                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                                        .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
                                         .clickable {
                                             showNewGameMenu = false
                                             showColorPicker = true
@@ -235,9 +235,9 @@ class MainActivity : ComponentActivity() {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(DS.Radius.m))
                                         .background(DS.fill)
-                                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                                        .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
                                         .clickable {
                                             showNewGameMenu = false
                                             gameViewModel.newGame(GameMode.LOCAL_FRIEND, PieceColor.WHITE)
@@ -262,9 +262,9 @@ class MainActivity : ComponentActivity() {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .clip(RoundedCornerShape(DS.Radius.m))
                                         .background(DS.fill)
-                                        .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                                        .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
                                         .clickable {
                                             showNewGameMenu = false
                                             showChessClock = true
@@ -285,7 +285,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(DS.Space.xs))
                                 TextButton(
                                     onClick = { showNewGameMenu = false },
                                     modifier = Modifier.fillMaxWidth()
@@ -300,15 +300,15 @@ class MainActivity : ComponentActivity() {
                 if (showColorPicker) {
                     Dialog(onDismissRequest = { showColorPicker = false }) {
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(DS.Radius.l),
                             color = DS.surface,
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(DS.Space.l)
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    .padding(DS.Space.l),
+                                verticalArrangement = Arrangement.spacedBy(DS.Space.l),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
@@ -323,20 +323,20 @@ class MainActivity : ComponentActivity() {
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
                                 ) {
                                     // White Color Card
                                     Column(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clip(RoundedCornerShape(12.dp))
+                                            .clip(RoundedCornerShape(DS.Radius.m))
                                             .background(DS.fill)
-                                            .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                                            .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
                                             .clickable {
                                                 showColorPicker = false
                                                 gameViewModel.newGame(GameMode.VS_COMPUTER, PieceColor.WHITE)
                                             }
-                                            .padding(vertical = 16.dp),
+                                            .padding(vertical = DS.Space.l),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         // PieceColor.WHITE se namerno NE tokenizuje -- ovaj krug
@@ -355,7 +355,7 @@ class MainActivity : ComponentActivity() {
                                                 .size(32.dp)
                                                 .border(1.dp, Color.Black.copy(alpha = 0.3f), CircleShape)
                                         )
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Spacer(modifier = Modifier.height(DS.Space.s))
                                         Text(text = loc("Beli"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
                                     }
 
@@ -363,15 +363,15 @@ class MainActivity : ComponentActivity() {
                                     Column(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clip(RoundedCornerShape(12.dp))
+                                            .clip(RoundedCornerShape(DS.Radius.m))
                                             .background(DS.fill)
-                                            .border(1.dp, DS.line, RoundedCornerShape(12.dp))
+                                            .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
                                             .clickable {
                                                 showColorPicker = false
                                                 val selectedColor = if (Math.random() < 0.5) PieceColor.WHITE else PieceColor.BLACK
                                                 gameViewModel.newGame(GameMode.VS_COMPUTER, selectedColor)
                                             }
-                                            .padding(vertical = 16.dp),
+                                            .padding(vertical = DS.Space.l),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Icon(
@@ -380,7 +380,7 @@ class MainActivity : ComponentActivity() {
                                             tint = DS.accent,
                                             modifier = Modifier.size(32.dp)
                                         )
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Spacer(modifier = Modifier.height(DS.Space.s))
                                         Text(text = loc("Nasumično"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
                                     }
 
@@ -399,14 +399,14 @@ class MainActivity : ComponentActivity() {
                                     Column(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clip(RoundedCornerShape(12.dp))
+                                            .clip(RoundedCornerShape(DS.Radius.m))
                                             .background(Color.Black.copy(alpha = 0.4f))
-                                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(DS.Radius.m))
                                             .clickable {
                                                 showColorPicker = false
                                                 gameViewModel.newGame(GameMode.VS_COMPUTER, PieceColor.BLACK)
                                             }
-                                            .padding(vertical = 16.dp),
+                                            .padding(vertical = DS.Space.l),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Icon(
@@ -417,7 +417,7 @@ class MainActivity : ComponentActivity() {
                                                 .size(32.dp)
                                                 .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
                                         )
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Spacer(modifier = Modifier.height(DS.Space.s))
                                         Text(text = loc("Crni"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
                                     }
                                 }
@@ -470,7 +470,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         containerColor = DS.surface,
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(DS.Radius.l)
                     )
                 }
 
@@ -493,7 +493,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         containerColor = DS.surface,
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(DS.Radius.l)
                     )
                 }
 
@@ -514,13 +514,13 @@ class MainActivity : ComponentActivity() {
                             color = DS.surface,
                             tonalElevation = 8.dp,
                             modifier = Modifier
-                                .padding(16.dp)
+                                .padding(DS.Space.l)
                                 .fillMaxWidth()
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(24.dp),
+                                    .padding(DS.Space.xl),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
@@ -601,7 +601,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(48.dp),
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(DS.Radius.m),
                                     // Nema tacnog pogotka u tabeli preslikavanja za solidnu 0xFF334155 --
                                     // ista uloga (sekundarno dugme) kao svi ostali translucentni beli
                                     // fill-ovi u ovom fajlu, pa ide na isti DS.fill (vidi izvestaj).
@@ -615,7 +615,7 @@ class MainActivity : ComponentActivity() {
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(DS.Space.s))
                                     Text(
                                         text = loc("Pregledaj partiju"),
                                         style = Type.body,
@@ -632,7 +632,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(48.dp),
-                                    shape = RoundedCornerShape(12.dp),
+                                    shape = RoundedCornerShape(DS.Radius.m),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = DS.accent,
                                         contentColor = DS.onAccent
@@ -643,7 +643,7 @@ class MainActivity : ComponentActivity() {
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(DS.Space.s))
                                     Text(
                                         text = loc("Nova igra"),
                                         style = Type.body,
@@ -663,7 +663,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth()
                                 .height(68.dp)
                                 .background(DS.navBar)
-                                .padding(vertical = 4.dp),
+                                .padding(vertical = DS.Space.xs),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -729,15 +729,15 @@ class MainActivity : ComponentActivity() {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(8.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            .padding(DS.Space.s),
+                                        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         // Left Side: Board & EvalBar
                                         BoxWithConstraints(
                                             modifier = Modifier
                                                 .fillMaxHeight()
-                                                .padding(vertical = 4.dp),
+                                                .padding(vertical = DS.Space.xs),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             val boardSize = maxHeight
@@ -790,8 +790,8 @@ class MainActivity : ComponentActivity() {
                                                 .weight(1f)
                                                 .fillMaxHeight()
                                                 .verticalScroll(landscapeScrollState)
-                                                .padding(end = 8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                                .padding(end = DS.Space.s),
+                                            verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                                         ) {
                                             // Top Header
                                             Row(
@@ -941,14 +941,14 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .widthIn(max = 500.dp)
-                                                .padding(vertical = 12.dp),
+                                                .padding(vertical = DS.Space.m),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             // 0. Top Header
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                                                    .padding(horizontal = DS.Space.l, vertical = 2.dp),
                                                 horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
@@ -989,7 +989,7 @@ class MainActivity : ComponentActivity() {
                                             Spacer(modifier = Modifier.height(6.dp))
 
                                             // 1. Top Player Card
-                                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+                                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) {
                                                 PlayerHeaderCard(
                                                     color = topColor,
                                                     name = getPlayerName(gameViewModel, topColor),
@@ -1011,7 +1011,7 @@ class MainActivity : ComponentActivity() {
                                             BoxWithConstraints(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = if (gameViewModel.showEvalBar) 8.dp else 0.dp),
+                                                    .padding(horizontal = if (gameViewModel.showEvalBar) DS.Space.s else 0.dp),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 val totalWidth = maxWidth
@@ -1060,7 +1060,7 @@ class MainActivity : ComponentActivity() {
                                             Spacer(modifier = Modifier.height(10.dp))
 
                                             // 3. Bottom Player Card
-                                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+                                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) {
                                                 PlayerHeaderCard(
                                                     color = bottomColor,
                                                     name = getPlayerName(gameViewModel, bottomColor),
@@ -1080,7 +1080,7 @@ class MainActivity : ComponentActivity() {
 
                                             // Review Controls (Move Navigation)
                                             if (gameViewModel.totalReviewMoves > 0) {
-                                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+                                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) {
                                                     ReviewControlsRow(
                                                         viewModel = gameViewModel,
                                                         modifier = Modifier.fillMaxWidth()
@@ -1091,7 +1091,7 @@ class MainActivity : ComponentActivity() {
 
                                             // 4. Move history, Status & Actions
                                             Column(
-                                                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)
+                                                modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)
                                             ) {
                                                 // Dugme "Analiziraj partiju" -- vidljivo samo na gotovoj
                                                 // partiji sa bar jednim potezom. Ova Column (za razliku od
@@ -1102,7 +1102,7 @@ class MainActivity : ComponentActivity() {
                                                         viewModel = gameViewModel,
                                                         onClick = { showAnalysis = true }
                                                     )
-                                                    Spacer(modifier = Modifier.height(12.dp))
+                                                    Spacer(modifier = Modifier.height(DS.Space.m))
                                                 }
 
                                                 if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
@@ -1111,7 +1111,7 @@ class MainActivity : ComponentActivity() {
                                                         color = DS.inkMuted,
                                                         style = Type.body,
                                                         fontWeight = FontWeight.SemiBold,
-                                                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                                                        modifier = Modifier.padding(start = DS.Space.xs, bottom = DS.Space.xs)
                                                     )
                                                     MoveHistoryView(
                                                         notations = gameViewModel.gameState.moveNotations,
@@ -1119,12 +1119,12 @@ class MainActivity : ComponentActivity() {
                                                         onSelectMove = { gameViewModel.goToMove(it) },
                                                         modifier = Modifier.fillMaxWidth()
                                                     )
-                                                    Spacer(modifier = Modifier.height(12.dp))
+                                                    Spacer(modifier = Modifier.height(DS.Space.m))
                                                 }
 
                                                 StatusBanner(message = getStatusMessage(gameViewModel))
 
-                                                Spacer(modifier = Modifier.height(12.dp))
+                                                Spacer(modifier = Modifier.height(DS.Space.m))
 
                                                 ActionsRow(
                                                     viewModel = gameViewModel,
@@ -1179,10 +1179,10 @@ fun ReviewControlsRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(DS.Radius.m))
             .background(DS.fill)
-            .border(1.dp, DS.line, RoundedCornerShape(12.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
+            .padding(horizontal = DS.Space.s, vertical = DS.Space.xs),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1291,7 +1291,7 @@ fun ActionsRow(
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
             val isVsComputer = viewModel.gameMode == GameMode.VS_COMPUTER
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                 Icon(
                     imageVector = if (isVsComputer) Icons.Default.Computer else Icons.Default.People,
                     // vidi progress.md); za "Prijatelj" nema dodeljenog kljuca u tabeli, a
@@ -1349,7 +1349,7 @@ fun ActionsRow(
             modifier = Modifier.weight(0.7f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                 // Dekorativna: `Button` spaja semantiku potomaka, pa bi opis uz
                 // vidljiv `Text` naterao citac ekrana da radnju kaze dvaput
                 // ("Vrati potez, Vrati, dugme"). Isto vazi za preostala tri
@@ -1379,7 +1379,7 @@ fun ActionsRow(
                 modifier = Modifier.weight(0.7f),
                 contentPadding = PaddingValues(vertical = 10.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                     // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Predaj partiju"
                     // ostaje — koristi ga `StepGameView.kt`, gde zastava stoji sama.
                     Icon(
@@ -1406,7 +1406,7 @@ fun ActionsRow(
             modifier = Modifier.weight(0.7f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                 // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Podeli partiju"
                 // ostaje — naslov je `Intent.createChooser` dijaloga (`:908`, `:1125`).
                 Icon(
@@ -1429,7 +1429,7 @@ fun ActionsRow(
             modifier = Modifier.weight(0.7f),
             contentPadding = PaddingValues(vertical = 10.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                 // Dekorativna (vidi dugme „Vrati" iznad), i to je ovde POPRAVKA a
                 // ne samo dosledost: raniji opis je bio "Pokušaj ponovo" — fraza sa
                 // ekrana Zadataka — dok se dugme zove „Reset" i zove `onReset()`.
