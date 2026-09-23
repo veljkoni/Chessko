@@ -106,7 +106,7 @@ fun PathView(modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
+        modifier = modifier.fillMaxSize().padding(DS.Space.l).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Nastavak: prvi korak koji nije zavrsen.
@@ -153,7 +153,7 @@ private fun PathHeader(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = DS.surface),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(DS.Radius.l)
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -202,7 +202,7 @@ private fun PathHeader(
                         containerColor = DS.accent,
                         contentColor = DS.onAccent
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(DS.Radius.m)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = loc("Nastavi"), fontWeight = FontWeight.Bold)
@@ -242,13 +242,13 @@ private fun ChapterSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = DS.surface),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(DS.Radius.l)
     ) {
-        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(vertical = DS.Space.s)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = DS.Space.l, vertical = DS.Space.s),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -336,7 +336,7 @@ private fun StepRow(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (clickable) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
