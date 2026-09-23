@@ -68,7 +68,9 @@ fun PuzzleView(
             Box(
                 modifier = Modifier
                     // Strana se racuna iz VISINE (fillMaxHeight + aspectRatio), pa
-                    // granica ide na obe ose — vidi MainActivity.kt pejzaz.
+                    // granica ide na obe ose. Ovde stoji na CVORU, ne na vrednosti, jer
+                    // velicinu table ne cita niko drugi; u MainActivity je od Task-a 5b
+                    // na vrednosti, jer je eval traka cita pored table.
                     .sizeIn(maxWidth = DS.maxBoardSide, maxHeight = DS.maxBoardSide)
                     .fillMaxHeight()
                     .aspectRatio(1f),

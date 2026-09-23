@@ -148,8 +148,8 @@ object DS {
      *
      * Kategorija „ostalo" je tu zato sto je klasifikator gledao OBLIK POZIVA,
      * a imenovan `val` nema poziv oko sebe. Po ULOZI ona nije homogena: od 7
-     * mesta, **3 su razmaci** (`AnalysisView.kt:322` i `MainActivity.kt:745`
-     * i `:1019`, sve tri `val spacing` koji ide pravo u `Spacer` ili
+     * mesta, **3 su razmaci** (`AnalysisView.kt:322` i `MainActivity.kt:751`
+     * i `:1021`, sve tri `val spacing` koji ide pravo u `Spacer` ili
      * `spacedBy`), 3 su dimenzije (`evalBarWidth` ×2, `itemMinWidth`) i 1 je
      * elevacija. Posledice po presudu nema — `6.dp` nije na skali, pa bi i po
      * ulozi ostao zakucan — ali se belezi, jer je pravilo cele ove presude
@@ -172,7 +172,7 @@ object DS {
      * brojevi; `maxBoardSide` ispod je bas takvo ime.
      *
      * Zato NIJE tokenizovano ni 16 dimenzija koje slucajno padaju na skalu
-     * (npr. `MainActivity.kt:963` `size(24.dp)`, `PuzzleView.kt:363`
+     * (npr. `MainActivity.kt:965` `size(24.dp)`, `PuzzleView.kt:363`
      * `size(16.dp)`). Da jesu, broj bi bio lepsi a tvrdnja netacna.
      *
      * ### 2. Ivice i hairline (24 mesta, ostaju zakucane)
@@ -226,7 +226,7 @@ object DS {
      * (`50.dp`, obrazlozen uz `Radius` ispod), **1 imenovana dimenzija**
      * (`AnalysisView.kt:319` `itemMinWidth = 96.dp`) i **3 razmaka**:
      * dva `0.dp` i jedan `7.dp` (`UiComponents.kt:164`). Uz njih idu i dva
-     * imenovana razmaka iz „ostalo" (`MainActivity.kt:745`, `:1019`,
+     * imenovana razmaka iz „ostalo" (`MainActivity.kt:751`, `:1021`,
      * `val spacing = 6.dp`) — oba su „blizu skale", pa ih drzi tacka 4.
      *
      * `0.dp` se NE tokenizuje jer nula nije korak skale nego odsustvo

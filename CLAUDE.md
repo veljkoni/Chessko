@@ -225,19 +225,19 @@ izuzetak.
 
 **`DS.maxBoardSide` (560) je popravka buga, ne higijena tokena — i tvrdnja o njemu je u ovoj fazi
 bila suzena pogrešno, pa ispravljena merenjem.** Pre Faze 10 igračka tabla na Androidu **nije
-imala gornju granicu**: na tabletu u pejzažu Igre strana table je **1452 px** (snimak
+imala gornju granicu**: na tabletu u pejzažu Igre strana table je **1426 px** (snimak
 `33_tablet_igra_pejzaz_BEZ_granice`), sa granicom **~840 px** = 560 dp × 1,5 (`31_…`); u portretu
-Igre **1552 px** bez granice (`34_…`) naspram **~836 px** sa njom (`27_…`). Granica stoji na svih
+Igre **1558 px** bez granice (`34_…`) naspram **840 px** sa njom (`27_…`). Granica stoji na svih
 **šest** igračkih pozivnih mesta (Igra portret i pejzaž, Zadaci portret i pejzaž, oba koraka Puta),
 nijedno lekcijsko.
 > **Tvrdnja „4 od 5" iz ove faze je OBORENA, i to pošto je već ušla u plan i u ledger.**
 > Task 1 je prijavio da portret Igre već ima `.widthIn(max = 500.dp)` na obuhvatnoj koloni
-> (`MainActivity.kt:942-943`), pa da je 560 tamo „nedostižno, sloj ispod", i ta presuda je
+> (`MainActivity.kt:944-945`), pa da je 560 tamo „nedostižno, sloj ispod", i ta presuda je
 > prihvaćena bez merenja. **Nije tačno:** `.fillMaxWidth()` stoji **ispred** `.widthIn(max =
 > 500.dp)`, a `fillMaxWidth` postavlja min = max = širina roditelja, pa `widthIn` ne može da je
 > spusti — **granica od 500 je mrtav kod, i bila je i pre ove faze**. Dokaz sa uređaja, ne iz
-> semantike: na `27_tablet_igra_portret_light` tabla je ~836 px (dakle veća od 500 dp = 750 px),
-> a kartice igrača idu celom širinom od 1600 px; bez `DS.maxBoardSide` tabla ide na 1552 px.
+> semantike: na `27_tablet_igra_portret_light` tabla je 840 px (dakle veća od 500 dp = 750 px),
+> a kartice igrača idu celom širinom od 1600 px; bez `DS.maxBoardSide` tabla ide na 1558 px.
 > Dakle „tabla nema gornju granicu" je važilo za **svih šest** mesta, ne za četiri od pet, i
 > jedina granica koja stvarno radi u portretu je nova. Kod nije diran (zatvaranje sme samo
 > `CLAUDE.md`) — mrtav `widthIn(500)` ostaje, vidi „Poznata ograničenja". Geometrija tableta je
@@ -1019,11 +1019,36 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   meri po `#708090` na ivičnoj koloni, pa zaobljeni uglovi odnesu po ~4 px. Ostala četiri ekrana
   sa tablom (`PuzzleView` ×2, `StepGameView`, `StepPracticeView`) nemaju ništa što čita veličinu
   table iz zasebne promenljive — granica i tabla su tamo isti čvor — pa nisu dirani.
-- **`.widthIn(max = 500.dp)` u portretu Igre je mrtav kod** (`MainActivity.kt:942-943`):
+- **`.widthIn(max = 500.dp)` u portretu Igre je mrtav kod** (`MainActivity.kt:944-945`):
   `.fillMaxWidth()` ispred njega fiksira min = max = širina roditelja, pa kolona sadržaja na
   tabletu ide celom širinom (kartice igrača 1600 px na `27_…`). Zatečeno pre Faze 10. Popravka bi
   bila zamena redosleda, ali bi **prvi put** suzila kartice i istoriju na tabletu — nova odluka o
   rasporedu, ne ispravka.
+- **Posle Task-a 5b tabla u portretu na tabletu stoji uz VRH ekrana, sa praznom donjom
+  polovinom** (`44_tablet_igra_portret_light_5b`). Pre 5b je bila centrirana u visokom redu
+  (`27_…`, y 592–1431), jer je red imao neograničenu visinu. Ovo je **posledica ispravne
+  popravke**, ne nova greška: red je sada visok koliko i tabla. iOS isti ekran centrira
+  (`GeometryReader` + `Spacer` na oba kraja, Faza 1). Nađeno tek na finalnom pregledu —
+  izveštaj 5b tu promenu izgleda **nije prijavio**. Samo tablet, samo izgled.
+- **Tri nova testa obećavaju u KDoc-u više nego što pokrivaju.** Nijedan ne laže o onome što
+  **proverava** — dokaz mutacijom je zalepljen za sva tri — ali opis je širi od domena:
+  `TypographyScaleTest` traži `fontSize\s*=\s*\d+\.sp`, pa **ne vidi** `private val X = N.sp`
+  (tako i žive `BoardCoordinateSize`/`StepChevronSize`/`LessonPieceGlyphSize`, van `allowed`) ni
+  uslovni oblik `if (…) 22.sp else …` — isti put je otvoren svakom budućem ekranu.
+  `BoardWidthCapTest` proverava da string `DS.maxBoardSide` **postoji u fajlu**, ne da ograničava
+  svako mesto: uklanjanje jednog od dva `coerceAtMost` u `MainActivity` **prolazi**, pa regresija
+  eval trake iz Task-a 5b nema automatsku odbranu. `lessonBoardsAreNotCapped` nema dokaz
+  mutacijom, a njegova tvrdnja „lekcijske table su već ograničene širinom stranice" na tabletu
+  **nije proverena** — lekcija na tabletu nije snimljena.
+- **`GameViewModel.load()` izlazi kroz tihe `?: return` puteve bez ijednog loga.** Otkriveno kad je
+  Task 5b prijavio da je posle prelaza tableta portret → pejzaž ekran Igra pokazao početnu
+  poziciju: snimak „partije u toku" (`44_…5b`) nosi poziciju **bez belog kralja**, dakle ne
+  može nastati legalnom igrom — stanje nepoznatog porekla, ne prava partija. U `logcat`-u tog
+  prolaza nema ni „Game loaded successfully" ni „Failed to load game state", iako se D-nivo
+  loguje; `load()` je dakle izašao tiho. **Nije regresija ove faze** (diff ne dira
+  `viewmodels/`/`models/`/`logic/`) i skoro sigurno je artefakt simulacije. Ali tihi `return`
+  je **sakrio baš ovu dijagnozu**, i to vredi popraviti. Stvarna rekreacija sa legalnom partijom
+  na uređaju **nije proverena**.
 - **Četiri ZATEČENE greške na ruskom UI-ju, sve vidljive na ekranu Podešavanja.** Nijednu nije
   uvela Faza 10 — dokaz su snimci `38_…_ru_PRE_taska3` i `39_…_ru_PRE_taska3`, napravljeni na istom
   uređaju sa privremeno vraćenom tipografijom od pre Task-a 3 (veći tekst samo pomera mesto
@@ -3185,7 +3210,11 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   pokretanja, XML zapisan **19:18:21** — commit `82edda4` je iz **14:36:15**, dakle prolaz je posle
   poslednjeg commit-a. Instrumentisanih **54/54**, 0 padova, 0 grešaka — iz **postojećeg** XML-a
   (`17:32:39`), ne ponovljeno: poslednja izmena koda je `89cdf41` (14:31:40), a `82edda4` dira
-  samo plan, pa je i taj prolaz posle poslednje izmene koda. Ostaje **285 `.dp` literala namerno**
+  samo plan, pa je i taj prolaz posle poslednje izmene koda — **u trenutku kad je ovo pisano.**
+  > **Posle toga je zastarelo:** Task 5b (`ddacd2e`, 19:31:49) je izmenio kod, a instrumentisani
+  > prolaz je iz 17:32:39 — dakle **pre** njega. 54/54 zato ne opisuje završno stablo. Praktična
+  > težina je vrlo mala: nijedan od 54 testa ne mount-uje `MainActivity`, a 5b dira samo račun
+  > `boardSize`. Nije ponovljeno; zapisano da se ne čita kao dokaz koji nije. Ostaje **285 `.dp` literala namerno**
   (119 / 97 / 39 / 24 / 6 po ulozi) + 10 u tabli, i jedan `fontSize` literal (`72.sp`, cifre sata).
   `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS netaknut); lekcije i
   `curriculum.json` bajt-identični; `build.gradle.kts`/`libs.versions.toml` bez izmena na grani
@@ -3195,7 +3224,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   **Tvrdnja faze je u zatvaranju ispravljena u SUPROTNOM smeru od onog koji je plan predvideo.**
   Plan i ledger su je suzili na „tabla nema gornju granicu važi za 4 od 5 mesta, jer portret Igre
   već ima `widthIn(max = 500.dp)`". Merenje snimaka sa tableta ju je oborilo: ta granica je mrtva
-  (`fillMaxWidth()` ispred nje), tabla u portretu je bez `DS.maxBoardSide` išla na 1552 px, pa je
+  (`fillMaxWidth()` ispred nje), tabla u portretu je bez `DS.maxBoardSide` išla na 1558 px, pa je
   bug postojao na **svih šest** mesta. I jedna regresija koju je Task 1 uveo a niko nije video:
   eval traka pored ograničene table ostaje pune visine (1558 px naspram ~840) — upisano u „Poznata
   ograničenja", nepopravljeno (**popravljeno u Task-u 5b, vidi sledeći unos**). Oba nalaza su iz snimaka koje je prethodna sesija napravila i nije
@@ -3238,7 +3267,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
     su pale na jednom otvaranju snimaka (dimenzije, piksel podloge, pogled). Ista klasa greške koju
     ovaj fajl nosi iz 6d-1 i Faze 9: prosleđen broj primljen bez merenja.
 
-  Snimci (44, bez praznog) u
+  Snimci (47, bez praznog; `44`–`46` iz Task-a 5b) u
   `.superpowers/sdd/2026-09-21-faza-10-android-razmaci-tipografija/screenshots/`.
   `Chessko/Localizable.xcstrings` nije diran.
 

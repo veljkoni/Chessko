@@ -46,8 +46,8 @@ val Typography = Typography(
  * 12 (31x), 11 (31x) i 14 (29x) — dakle oko 30% poklapanja sa skalom.
  * Pitanje je bilo da li se skala pomera ka ekranima ili ekrani ka skali.
  *
- * (Broj je 161, ne 169: naivan grep hvata i 8 pogodaka u ovom fajlu — 5
- * definicija ispod, `bodyLarge` iznad, i 2 unutar zakomentarisanog
+ * (Broj je 161, ne 169: u trenutku merenja — pre koraka `label` — naivan grep
+ * je hvatao i 8 pogodaka u ovom fajlu: 5 definicija ispod, `bodyLarge` iznad, i 2 unutar zakomentarisanog
  * Material bloka. Grepovana lista se cita, ne broji. Uz to postoji i jedno
  * uslovno mesto koje sablon `fontSize = N.sp` uopste ne vidi:
  * `LessonRenderer.kt:174` u zatecenom stablu, danas `:189`.)
@@ -129,7 +129,9 @@ val Typography = Typography(
  * provera mora da obidje SVAKI ekran, ne uzorak.
  *
  * Velicina van ove skale sme da ostane samo za sadrzaj i hrom koji nije
- * tekst interfejsa (koordinate table 9, cifre sata 72, lekcijski glif 24),
+ * tekst interfejsa — koordinate table 9 (`BoardCoordinateSize`), cifre sata
+ * 72, strelica u redu koraka Puta 20 (`StepChevronSize`) i figura u lekciji
+ * 22 (`LessonPieceGlyphSize`) —
  * i tada nosi komentar zasto — isti obrazac kojim iOS obelezava svoja
  * „van skale" mesta.
  */
