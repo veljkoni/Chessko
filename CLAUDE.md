@@ -162,13 +162,88 @@ nad golom podlogom). `dynamicColor` (Android Studio šablon, boja sa
 korisnikove tapete na Androidu 12+) je uklonjen — sa spec-om koji traži jedan fiksan akcent to
 nije funkcija nego greška.
 
-**6d-1 i 6d-2 su prenele PALETU, ne ceo sistem.** `DS.Space`, `DS.Radius`, `DS.maxBoardSide` i
-`Type.title/heading/body/caption` postoje kao tokeni ali **i dalje nemaju nijedno pozivno
-mesto** — svi ekrani i dalje zakucavaju `12.dp`, `RoundedCornerShape(16.dp)` i
-`fontSize = 14.sp`; jedina upotreba tipografske skale je `Type.mono`. Ovo je odloženo odlukom
-korisnika (vidi „Poznata ograničenja"), ne propust: primena razmaka, radijusa i tipografije kroz
-sve ekrane je posao veličine cele još jedne kriške. Tokeni se ne brišu u međuvremenu: brisanje
-bi značilo da ih neka buduća faza ponovo uvodi.
+**6d-1 i 6d-2 su prenele PALETU, ne ceo sistem — ostatak je prenela Faza 10.** Do nje su
+`DS.Space`, `DS.Radius`, `DS.maxBoardSide` i tipografska skala postojali kao tokeni bez ijednog
+pozivnog mesta (`DS.Space` 1, `DS.Radius` 0, `DS.maxBoardSide` 0, skala 1 — `Type.mono`), a
+ekrani su zakucavali `12.dp`, `RoundedCornerShape(16.dp)` i `fontSize = 14.sp`. Ta rečenica je
+stajala ovde od 6d-1 do Faze 10 i **više nije tačna**. Stanje posle Faze 10, mereno nad kodom
+van `ui/theme/` **sa oljuštenim komentarima** (sirov grep broji i KDoc prozu koja pominje
+vrednosti, pa daje više):
+
+| token | pozivna mesta | napomena |
+|---|---|---|
+| `DS.Space.*` | **169 linija / 181 pojava** (183 sa KDoc prozom) | neke linije nose dva poziva |
+| `DS.Radius.*` | **65** (67 sa KDoc prozom) | |
+| `DS.maxBoardSide` | **6 mesta** (8 pojava — `sizeIn` ga nosi na obe ose) | sve igračke table, nijedna lekcijska |
+| `Type.title/heading/body/caption/label/mono` | **159 referenci** | 161 migrirano pozivno mesto: 158 na skalu, uslovno mesto u `LessonRenderer.kt:189` pola-pola, 3 imenovane konstante van skale |
+
+Skala posle Faze 10: `title 22 / heading 17 / body 15 / caption 12 / label 11 / mono 13`.
+Jedini nov korak je `Type.label` = 11.sp (= Apple `caption2`), imenovan po **ulozi**; predlog
+`bodySmall 13` iz plana je odbijen jer bi **ozakonio baš drift** koji se uklanja.
+
+**Dve presude ove faze su OBRNUTE jedna od druge, i to je poenta, ne nedoslednost:**
+
+- **Tipografija se PRIMENILA na ekrane** (Task 2 + 3). Skala ima **poreklo**: Android skala je
+  Apple-ova lestvica do jedinice, **merena pokretanjem UIKit-a na simulatoru**
+  (`UIFont.preferredFont`: title2 22 · headline 17 · subheadline 15 · caption 12 · footnote 13 ·
+  caption2 11), ne čitanjem dokumentacije — iOS-ov `DesignSystem.swift` ne zadaje nijednu tačku,
+  tokeni su semantički. Dakle **drift su bili brojevi na ekranima, ne skala**, pa je opcija
+  „prilagodi skalu ekranima" otpala: razišla bi dve platforme umesto da ih spoji. Presudan
+  pojedinačan nalaz: iOS `L_Para` je `.dsBody` = 15, Android `LPara` je bio **13** — 13 → 15 je
+  **povratak paritetu**, ne razlaz. Cena: menja se veličina na ~60 mesta, najvidljivije telo
+  lekcije (13 → 15) i naslov `LBox` kutije koji postaje **manji od sopstvenog tela** (12 bold
+  nad 15 — iOS paritet, `LessonRenderer.swift:438`/`:446`, na 44 `RULE`/`WARNING` kutije).
+- **Razmaci se NISU tokenizovali van skale** (Task 4). Kod tipografije je **jedna** lestvica sa
+  poreklom stajala naspram 161 odluke bez pravila. Kod razmaka se **dve** lestvice sa poreklom
+  sukobljavaju — Material mreža od 4/8dp traži 16 ili 24, iOS na istom mestu piše 20 — a **kad
+  se porekla sukobe, odlučuje merenje**: iOS nosi istu raspodelu zakucanu pored sopstvenih tokena
+  i nikad je nije poravnao (`cornerRadius` **76 = 23 tokenizovana + 53 zakucana**, reprodukovano
+  u pregledu, svih 53 pročitano). Zaokruživanje bi bilo razlaz sa iOS-om u 96 tačaka u fazi čija
+  je centralna tvrdnja paritet. Zato je zamenjeno samo ono što **već pada na skalu** — 245 zamena,
+  po konstrukciji bez promene piksela (pregled je supstitucijom token → vrednost dobio **0 razlika
+  u 14/14 fajlova**) — a `DS.Radius` ne dobija korak, `xxl` i `xxs` se ne uvode.
+
+**Šta ostaje namerno zakucano, po ULOZI, ne po vrednosti** (van table, komentari oljušteni):
+**285 `.dp` literala** = **119 razmak / 97 dimenzija / 39 radijus / 24 ivica / 6 ostalo**. Sa
+tablom (10, `BoardView.kt` — sadržaj, zabranjeno mu je `DS.`) je 295 u kodu, a sirov grep daje
+296 (jedan pogodak je komentar u `LessonDetailView.kt:74` koji namerno govori o **ranijem**
+stanju, pa bi token tu bio netačna tvrdnja o istoriji). **Samo 119 razmaka** bi buduća faza mogla
+da zatvori, i to **samo zajedno sa iOS-om**; dimenzije (ikone, pločice, touch-targeti), ivice i
+radijusi ne. Nijedan preostali on-scale literal nije u ulozi razmaka — svih 21 (`4/8/12/16/24.dp`)
+pročitano: `size()` ikone i tačke, `RoundedCornerShape(4.dp)`, `tonalElevation`, i jedan
+komentar. Tipografija: **jedan** `fontSize` literal van skale (`ChessClockView.kt:380`,
+`72.sp` — cifre sata, izuzetak imenovan u `TypographyScaleTest`), uz tri imenovane konstante sa
+iOS citatom (`BoardCoordinateSize = 9.sp`, `StepChevronSize = 20.sp`,
+`LessonPieceGlyphSize = 22.sp`) i jedan `letterSpacing = 1.sp`.
+
+Čuvaju ga tri nova JVM testa: `TypographyScaleTest` (nijedan `fontSize` van `Type.*` osim
+imenovanih izuzetaka), `SpacingTokensTest` (sintaksni — `padding`/`spacedBy`/`Spacer` sa on-scale
+vrednošću mora biti token; dokazan mutacijom: vraćen `MainActivity.kt` → 62 prekršaja) i
+`BoardWidthCapTest` (2 testa). `SpacingTokensTest` namerno ne pokriva razmak zapisan kao imenovan
+`val` (`val spacing = 6.dp`) — uzak test koji ne laže bolji je od širokog koji se gasi na prvi
+izuzetak.
+
+**`DS.maxBoardSide` (560) je popravka buga, ne higijena tokena — i tvrdnja o njemu je u ovoj fazi
+bila suzena pogrešno, pa ispravljena merenjem.** Pre Faze 10 igračka tabla na Androidu **nije
+imala gornju granicu**: na tabletu u pejzažu Igre strana table je **1452 px** (snimak
+`33_tablet_igra_pejzaz_BEZ_granice`), sa granicom **~840 px** = 560 dp × 1,5 (`31_…`); u portretu
+Igre **1552 px** bez granice (`34_…`) naspram **~836 px** sa njom (`27_…`). Granica stoji na svih
+**šest** igračkih pozivnih mesta (Igra portret i pejzaž, Zadaci portret i pejzaž, oba koraka Puta),
+nijedno lekcijsko.
+> **Tvrdnja „4 od 5" iz ove faze je OBORENA, i to pošto je već ušla u plan i u ledger.**
+> Task 1 je prijavio da portret Igre već ima `.widthIn(max = 500.dp)` na obuhvatnoj koloni
+> (`MainActivity.kt:942-943`), pa da je 560 tamo „nedostižno, sloj ispod", i ta presuda je
+> prihvaćena bez merenja. **Nije tačno:** `.fillMaxWidth()` stoji **ispred** `.widthIn(max =
+> 500.dp)`, a `fillMaxWidth` postavlja min = max = širina roditelja, pa `widthIn` ne može da je
+> spusti — **granica od 500 je mrtav kod, i bila je i pre ove faze**. Dokaz sa uređaja, ne iz
+> semantike: na `27_tablet_igra_portret_light` tabla je ~836 px (dakle veća od 500 dp = 750 px),
+> a kartice igrača idu celom širinom od 1600 px; bez `DS.maxBoardSide` tabla ide na 1552 px.
+> Dakle „tabla nema gornju granicu" je važilo za **svih šest** mesta, ne za četiri od pet, i
+> jedina granica koja stvarno radi u portretu je nova. Kod nije diran (zatvaranje sme samo
+> `CLAUDE.md`) — mrtav `widthIn(500)` ostaje, vidi „Poznata ograničenja". Geometrija tableta je
+> **simulirana** (`wm size` 2560×1600 na `Medium_Phone_API_36.1`, gustina izvedena iz merenja —
+> 560 dp ≈ 840 px → 1,5×), ne pravi tablet. Na telefonu (411 dp širine) granica nije dostižna i
+> ništa ne menja.
 
 **Načelo koje je 6d-1 platila četiri puta, a 6d-2 mu je ostala verna:** *tema-zavisna boja i
 tema-izuzeta podloga ne smeju se mešati — ni u jednom smeru.* Prva tri puta u 6d-1 je to bilo
@@ -728,13 +803,14 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **6d-2 — dizajn sistem, deo 2** | **da** | preostalih pet celina prebačeno na tokene: hrom sata, blokovi i okvir lekcije, ekran učenja + tri kartice vežbi, četiri kartice u Podešavanjima (bez ivice — vidi „Poznata ograničenja"); tabla i osam tema table ostaju namerno netokenizovane, samo poravnate sa iOS vrednostima (poslednji potez 0,40, prsten uzimanja 0,65, tačka praznog polja 0,55) |
 | 5 — analiza partije | **da** | ista stavka pod dva broja kao 2/6a i 4/6c — isporučeno kao **6e** |
 | **6e — analiza partije** | **da** | native Stockfish preko JNI (ne `ChessKitEngine`), isti N+1 ugovor i pragovi klasifikacije kao iOS; ekran analize + dugme u obe grane `MainActivity` (portret/pejzaž) i u `game` koraku Puta; vidi „Android (Faza 6e) — šta je drugačije" |
+| **10 — razmaci i tipografija** (spec 5.6) | **da, uz presudu** | `DS.Space` 169 / `DS.Radius` 65 / `DS.maxBoardSide` 6 / skala 159 pozivnih mesta; 285 `.dp` literala ostaje namerno po ulozi — vidi „Android dizajn sistem" |
 
-Testovi: **110 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 18, `EngineTest` 9,
-`ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5,
+Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `ContrastTest` 18,
+`EngineTest` 9, `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5,
 `LessonBoardsOptOutOfSwipeTest` 2, `LocTest` 5,
 `MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 27, `PathProgressTest` 9,
-`PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9,
-`StepWindowTest` 3, `UCIScoreParserTest` 9) + **54 instrumentisana**
+`PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9, `SpacingTokensTest` 1,
+`StepWindowTest` 3, `TypographyScaleTest` 1, `UCIScoreParserTest` 9) + **54 instrumentisana**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
 `GameViewModelActivityRecreationTest` 1, `LessonContentTest` 9, `LessonGlyphMapTest` 2,
 `LessonRepositoryTest` 6,
@@ -754,6 +830,17 @@ Testovi: **110 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 18, `Engi
 > **`connectedDebugAndroidTest` ume da kaže `BUILD SUCCESSFUL` a da ne pokrene nijedan test**
 > (npr. `INSTALL_FAILED_INSUFFICIENT_STORAGE`). Rezultat se čita iz
 > `app/build/outputs/androidTest-results/connected/debug/*.xml`, ne iz izlaznog koda.
+>
+> **Dopuna (Faza 10): pravilo „broj iz XML-a" ima DVA preduslova, i oba se proveravaju.**
+> (1) XML je iz **tog** prolaza, i (2) prolaz je **posle poslednjeg commit-a**. Zamka je u jednoj
+> fazi udarila **tri puta, svaki put drugačije**: XML iz **mutacionog** prolaza (namerno pokvareno
+> stablo); „112 testova, 0 padova" pročitano **dva reda ispod `BUILD FAILED`** — XML je ostao od
+> prethodnog prolaza; i zeleno izmereno **22 s pre HEAD-a** (`266795f`, dok je `e548198` bio
+> poslednji). Zato: obriši `app/build/test-results/testDebugUnitTest` pre prolaza, ispiši
+> `git rev-parse HEAD` pre njega, i **navedi vremena** (mtime XML-a naspram vremena commit-a).
+> Isto važi za instrumentisani XML, samo što se njega ne briše olako — drugo pokretanje traži
+> emulator. Uz to: **jedan** XML fajl u `connected/debug/` je ispravno — suite ga piše **po
+> uređaju**, ne po test-klasi.
 
 > **Emulator se pokreće bez prozora I ograničen**, inače otima i fokus i procesor:
 > ```bash
@@ -799,6 +886,26 @@ Testovi: **110 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 18, `Engi
 > ```
 > Faza 6b je ovo prekršila i držala emulator aktivnim satima. Finalni pregled iste faze, sa
 > pravilom na snazi, završio je ceo vizuelni deo za **15,5 minuta na ~149%**.
+>
+> **Dopuna (Faza 10): pri prekidu prvo ugasi AGENTA, pa tek onda emulator.** Plan je glasio „ako
+> te bilo šta prekine — prvo ugasi emulator", i pretpostavljao je da ništa drugo više ne radi.
+> Nije važilo: korisnik je rekao „stani", kontroler je ugasio emulator, a agent koji ga je koristio
+> **nije stao** — ostao je `running` još sat vremena (otkriveno tek kad korisnik nije mogao da
+> izađe iz sesije), primetio da mu je emulator nestao i **podigao ga ponovo** („The emulator was
+> shut down externally mid-pass. Restarting once…"). Gašenje je time proizvelo **drugo dizanje**.
+> „Korisnik je rekao stani" nije isto što i „agent je stao". Redosled: **`TaskStop` na agenta →
+> provera da više nije `running` → tek onda** `adb emu kill` / `./gradlew --stop` / `pgrep`.
+> Obrnuto je trka koju agent dobija, jer i on zna recept za dizanje. Taj prolaz je trajao
+> **1 sat i 35 minuta** — četvrti najduži u projektu, iako je bio u upotrebi (snimci su
+> napredovali), a ne zaboravljen.
+>
+> **Dopuna: ime snimka je tvrdnja, i proverava se hešom i pikselom, ne okom ni imenom.** Faza 6e
+> je imala `-dark` snimak koji je bio svetao. Faza 10 je imala tri: jedan „snimak" od **0 bajtova**
+> (SHA-256 `e3b0c442…` je heš praznog fajla — prekinut u zapisu, verovatno baš pri gašenju
+> emulatora; uklonjen), `43_zadaci_dark_portret` koji je **splash ekran**, i
+> `26_zadaci_light_pejzaz_greska` koji je **launcher**, uz to portretan. Provera koja je sve tri
+> uhvatila je jeftina: `find -size 0`, dimenzije iz PNG zaglavlja (pejzaž mora biti širi nego viši)
+> i piksel podloge (`#F2F3F7` svetla / `#0E1428` tamna `DS.ground`).
 >
 > Za razliku od iOS simulatora, **sintetički tapovi na Androidu rade**
 > (`adb shell input tap`, koordinate iz `uiautomator dump`), pa nije potreban nijedan
@@ -891,11 +998,56 @@ Testovi: **110 JVM** (`./gradlew testDebugUnitTest` — `ContrastTest` 18, `Engi
   ostalo tri mrtva `color=` na emoji glifovima (`🔄` uz `DS.ink`/`DS.inkMuted`, `ℹ️` i
   `▶️`/`⏸️` uz `DS.accent`/`DS.onAccent`) — kod koji izgleda kao da mehanizam radi. Talas
   ispravki ih je uklonio. Pravilo: **na emoji glif se `color=` ne piše uopšte.**
-- **`DS.Space`/`DS.Radius`/`DS.maxBoardSide`/`Type.title/heading/body/caption` (Android) i dalje
-  nemaju nijedno pozivno mesto**, ni posle Faze 6d-2. Svi ekrani i dalje zakucavaju `12.dp`,
-  `RoundedCornerShape(16.dp)`, `fontSize = 14.sp`; jedina upotreba tipografske skale je
-  `Type.mono`. Odloženo odlukom korisnika (vidi „Android dizajn sistem" gore) — primena razmaka,
-  radijusa i tipografije kroz sve ekrane je posao veličine cele još jedne kriške.
+- ~~**`DS.Space`/`DS.Radius`/`DS.maxBoardSide`/`Type.title/heading/body/caption` (Android) i dalje
+  nemaju nijedno pozivno mesto**~~ — **ZATVORENO Fazom 10.** Tokeni sada imaju 169 / 65 / 6 / 159
+  pozivnih mesta; tabela i obe presude su u „Android dizajn sistem". Ostaje **285 literala namerno**
+  (119 razmak / 97 dimenzija / 39 radijus / 24 ivica / 6 ostalo); samo onih 119 bi buduća faza
+  mogla da zatvori, i to samo zajedno sa iOS-om, koji nosi istu raspodelu zakucanu.
+- **Na tabletu eval traka i red oko table NE prate `DS.maxBoardSide` — Faza 10 je to uvela.**
+  Task 1 je ograničio `BoardView`, a `EvalBar` pored nje i dalje dobija
+  `height = boardSize` (neograničen, `MainActivity.kt` portret i pejzaž). Izmereno na simuliranom
+  tabletu: portret — traka **1558 px**, tabla ~840 px (`27_tablet_igra_portret_light`); pejzaž —
+  traka **1422 px**, tabla ~840 px (`31_tablet_igra_pejzaz_light`). Traka zato štrči iznad i ispod
+  table, a red koji je nosi drži punu visinu, pa oko table stoji prazan pojas od ~360 px (portret) / ~290 px
+  (pejzaž) iznad i ispod. Na telefonu nedostižno (411 dp < 560). Popravka je jeftina (ista granica na `boardSize`
+  pre nego što se razdeli traci i tabli), ali nije rađena: zatvaranje faze sme samo `CLAUDE.md`.
+- **`.widthIn(max = 500.dp)` u portretu Igre je mrtav kod** (`MainActivity.kt:942-943`):
+  `.fillMaxWidth()` ispred njega fiksira min = max = širina roditelja, pa kolona sadržaja na
+  tabletu ide celom širinom (kartice igrača 1600 px na `27_…`). Zatečeno pre Faze 10. Popravka bi
+  bila zamena redosleda, ali bi **prvi put** suzila kartice i istoriju na tabletu — nova odluka o
+  rasporedu, ne ispravka.
+- **Četiri ZATEČENE greške na ruskom UI-ju, sve vidljive na ekranu Podešavanja.** Nijednu nije
+  uvela Faza 10 — dokaz su snimci `38_…_ru_PRE_taska3` i `39_…_ru_PRE_taska3`, napravljeni na istom
+  uređaju sa privremeno vraćenom tipografijom od pre Task-a 3 (veći tekst samo pomera mesto
+  preloma za jedno slovo). Nijedna se u Fazi 10 ne popravlja: 1 i 2 su lokalizacija, 3 i 4
+  raspored — van obima tokena.
+  1. **„Внешний vuд доски" je pokvaren prevod, na OBE platforme.** Bajtovi `76 75` su latinično
+     „v"+„u" usred ćirilice (`d0 b4` = „д"); treba „вид". Stoji u `Loc.kt:133` (ključ „Izgled
+     table"), u `Chessko/Localizable.xcstrings` i u `build_localizations.py:329` — zajednički izvor,
+     pa popravka traži izmenu iOS kataloga, a popravka samo na Androidu bi razbila paritet.
+  2. **5 od 8 naziva stilova figura nisu prevedeni** — Klasični / Neonski / Drvene / Metalne /
+     Ravne nemaju unos u `Loc.kt`, pa `Loc.get` vraća sam ključ i na ruskom UI-ju stoji srpska
+     latinica, dok su Tanke / Igraonica / Staklene prevedeni. Ista klasa kao „`Loc.get` na nepoznat
+     ključ tiho vraća sam ključ" niže.
+  3. **„Классическая" se lomi usred reči** u mreži tema table (5 kolona): „Классичес / кая" (pre
+     Task-a 3 „Классическ / ая").
+  4. **„Игровая комната" prelama u dva reda** u mreži stilova (4 kolone). iOS to izbegava sa
+     `lineLimit(1)` + `minimumScaleFactor(0.8)` (`SettingsSheet.swift:209-210`, `:269-270`);
+     `SettingsView.kt` nema nijedan `maxLines` ni `TextOverflow`.
+  Pregled Task-a 3 je pogodio **mehanizam** (prelom, ne odsecanje) ali ne i **atribuciju** —
+  prelamalo se već. Zato su `PRE_taska3` snimci i pravljeni: bez njih bi 3 i 4 bili upisani kao
+  regresija ove faze.
+- **Vizuelna pokrivenost Faze 10 je DELIMIČNA, odlukom korisnika.** Svetla tema: svih devet mesta
+  sa spiska rizika **osim jednog** (naslov greške u pejzažnom `PuzzleView`-u, 14 → 17 — snimak
+  `26_zadaci_light_pejzaz_greska` je u stvari **početni ekran launcher-a**, portretan, 1080×2400,
+  bez ijednog piksela aplikacije), plus šest tabli na simuliranom tabletu i dva `BEZ_granice`
+  snimka. Tamna tema: **9 snimaka, 4 različita ekrana** (Igra portret, Podešavanja — srpski, ruski i
+  ruski `PRE_taska3` — Put, lekcija). Ledger je tvrdio „10 ekrana, uključujući Zadatke": netačno —
+  `43_zadaci_dark_portret` je **splash ekran** (jedna ikona na praznoj podlozi `#212229`, koja nije
+  `DS.ground` tamne teme `#0E1428`), ne Zadaci. Korisnik je izričito presudio da se tamna tema **ne dovršava**: faza menja
+  veličine, ne boje, a veličina ne zavisi od teme; nula novih zakucanih boja potvrđena na tri
+  pregleda. Da li je `26_…` posledica pada aplikacije u pejzažu ili pritiska na Home **ne zna se** —
+  logcat iz tog trenutka nije sačuvan, a emulator se posle presude više ne diže.
 - **`dynamicColor` je uklonjen sa Android teme** (`ChesskoTheme` u `Theme.kt`). Zatečena verzija
   je bila Android Studio šablon sa `dynamicColor = true`, koji na Androidu 12+ vuče boje sa
   korisnikove tapete — za spec koji traži jedan fiksan akcent to nije funkcija nego greška
@@ -2992,3 +3144,75 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   22 snimka (obe teme za svaki ekran iz brief-a; tema potvrđena **pikselom**, `(242,243,247)` =
   `#F2F3F7`) u `.superpowers/sdd/2026-09-20-faza-9-lekcijske-ikone-i-precica/screenshots/`.
   `Chessko/Localizable.xcstrings` nije diran u ovoj fazi.
+
+- **2026-09-23** — Faza 10 (Android: razmaci, radijusi, tipografija, gornja granica table —
+  spec 5.6). Tokeni koje su 6d-1 i 6d-2 uvele bez ijednog pozivnog mesta sada se koriste:
+  `DS.Space` **169 linija / 181 pojava**, `DS.Radius` **65**, `DS.maxBoardSide` **6**, tipografska
+  skala **159 referenci** (161 migrirano pozivno mesto). Task 1: gornja granica table na svih šest
+  igračkih mesta. Task 2: presuda o skali — nijedna vrednost se ne pomera, dodat samo
+  `Type.label` = 11. Task 3: skala primenjena na 161 mesto u 15 fajlova (plan je naveo 13). Task 4:
+  245 on-scale zamena bez promene piksela, i presuda da se ostatak **ne** tokenizuje. Obe presude
+  i zašto su obrnute jedna od druge — vidi „Android dizajn sistem"; zastarela tvrdnja da tokeni
+  „nemaju nijedno pozivno mesto" je prepisana kao zatvorena na **oba** mesta gde je stajala.
+
+  **Izmereni brojevi.** JVM **110 → 114** (+2 `BoardWidthCapTest`, +1 `TypographyScaleTest`,
+  +1 `SpacingTokensTest`), 0 padova: XML obrisan pre prolaza, HEAD `82edda4` ispisan pre
+  pokretanja, XML zapisan **19:18:21** — commit `82edda4` je iz **14:36:15**, dakle prolaz je posle
+  poslednjeg commit-a. Instrumentisanih **54/54**, 0 padova, 0 grešaka — iz **postojećeg** XML-a
+  (`17:32:39`), ne ponovljeno: poslednja izmena koda je `89cdf41` (14:31:40), a `82edda4` dira
+  samo plan, pa je i taj prolaz posle poslednje izmene koda. Ostaje **285 `.dp` literala namerno**
+  (119 / 97 / 39 / 24 / 6 po ulozi) + 10 u tabli, i jedan `fontSize` literal (`72.sp`, cifre sata).
+  `git diff --stat main..HEAD -- Chessko Chessko.xcodeproj` prazan (iOS netaknut); lekcije i
+  `curriculum.json` bajt-identični; `build.gradle.kts`/`libs.versions.toml` bez izmena na grani
+  (`libs.versions.toml` nosi **tuđu** nekomitovanu izmenu `agp 9.4.0 → 9.4.1` iz Android Studija —
+  cele faze van svakog commit-a); `BoardView.kt`/`BoardTheme.kt` i dalje **0** `DS.`.
+
+  **Tvrdnja faze je u zatvaranju ispravljena u SUPROTNOM smeru od onog koji je plan predvideo.**
+  Plan i ledger su je suzili na „tabla nema gornju granicu važi za 4 od 5 mesta, jer portret Igre
+  već ima `widthIn(max = 500.dp)`". Merenje snimaka sa tableta ju je oborilo: ta granica je mrtva
+  (`fillMaxWidth()` ispred nje), tabla u portretu je bez `DS.maxBoardSide` išla na 1552 px, pa je
+  bug postojao na **svih šest** mesta. I jedna regresija koju je Task 1 uveo a niko nije video:
+  eval traka pored ograničene table ostaje pune visine (1558 px naspram ~840) — upisano u „Poznata
+  ograničenja", nepopravljeno. Oba nalaza su iz snimaka koje je prethodna sesija napravila i nije
+  stigla da izmeri; emulator za njih nije dizan.
+
+  **Pokrivenost je delimična, i to se kaže otvoreno.** Tamna tema je stala na 9 snimaka / 4 ekrana
+  **odlukom korisnika** (faza menja veličine, ne boje). Svetla pokriva osam od devet mesta sa spiska
+  rizika — deveto (naslov greške u pejzažnom `PuzzleView`-u) nije snimljeno, jer je fajl sa tim
+  imenom launcher. Četiri greške na ruskom UI-ju su **zatečene**, ne uvedene (dokaz: `PRE_taska3`
+  snimci), i upisane u „Poznata ograničenja" bez popravke — prva traži izmenu iOS kataloga.
+
+  ### Šta je faza pogrešila, imenom
+
+  - **Kontroler je dvaput brojao grep pogotke umesto da ih pročita** — 44 umesto 43 ikone u Fazi 9,
+    i ovde lažna „2 `Type.`" u `BoardView.kt` (jedan pogodak je komentar koji objašnjava zašto se
+    `Type.label` NE koristi, drugi je `PieceType.KING`), iz čega je izveo sumnju da tabla zavisi
+    od skale. Pravilo „grepovana lista se čita, ne broji" stoji ovde od 6d-1.
+  - **Kontrolerov plan je bio tačan po vrednosti a slep za ulogu.** „275 od 550" je tačan grep;
+    po ulozi je posla bilo **245** — razlika od 30 su pogoci koji se **ne smeju** tokenizovati (16
+    dimenzija koje slučajno padaju na skalu, 8 definicija samih tokena, 3 radijusa od 4 dp, 1 u
+    tabli, 1 `tonalElevation`, 1 u komentaru). Isto je Task 3 naišao na 161 umesto 169 (8 pogodaka
+    u samom `Type.kt`).
+  - **Kontroler je izmenom plana nečujno obrisao korak koji pokreće instrumentisane testove.**
+    `str.replace` bez `assert`-a je promašio, prošao kao no-op, a okolni tekst je prepisan — Task 5
+    bi odradio jedini prolaz emulatora bez 54 testa. Otkriveno tek pokušajem da se plan ponovo
+    uredi; od tada svaka zamena u planu ide uz `assert`.
+  - **Task 2 je u rundi ispravki uveo netačnu tvrdnju dok je popravljao drugu.** Popravljajući
+    preteranu tvrdnju o iOS paritetu za `Type.label`, upisao je da Android nema `–` placeholder
+    iz `CapturedPiecesView.swift:34` — ima ga (`CapturedPiecesView.kt:38`), i Task 3 ga je baš
+    stavio na `Type.label`. Tvrdnja i kontraprimer su bili u istom repou. Ista runda je otvorila
+    blok-komentar **unutar putanje** u KDoc-u (`…/Views/` + `*` + `.swift` → `Unclosed comment`).
+  - **Task 4 je tvrdio da test ne može da postoji** („test koji zabranjuje `.dp` zabranio bi i
+    ivice i touch-targete"). Rečenica je tačna o **širem** testu, a iz nje je izveden zaključak o
+    **svakom**. Mogao je: `SpacingTokensTest` ima uzak sintaksni domen, izuzeci mu nisu potrebni,
+    zelen je danas i crven na vraćanje jednog commit-a (62 prekršaja).
+  - **Kontroler je emulator ugasio PRE agenta, pa ga je agent podigao ponovo.** Emulator je radio
+    **1 sat i 35 minuta**. Pravilo je dopunjeno u „Stanju Android porta" (`TaskStop` prvo).
+  - **I zatvaranje je umalo prepisalo tuđu tvrdnju bez merenja** — brief je doneo „4 od 5" kao
+    gotovu činjenicu za `CLAUDE.md`, a „9 od 9 rizika" i „10 tamnih ekrana" kao pokrivenost. Sve tri
+    su pale na jednom otvaranju snimaka (dimenzije, piksel podloge, pogled). Ista klasa greške koju
+    ovaj fajl nosi iz 6d-1 i Faze 9: prosleđen broj primljen bez merenja.
+
+  Snimci (44, bez praznog) u
+  `.superpowers/sdd/2026-09-21-faza-10-android-razmaci-tipografija/screenshots/`.
+  `Chessko/Localizable.xcstrings` nije diran.
