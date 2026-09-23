@@ -577,7 +577,22 @@ U tom prolazu, **obe teme**:
    > pored druge** — ako Android na 15 prelije karticu koju iOS ne prelije, uzrok je razmak ili
    > širina, pa **proveri, ne pretpostavljaj**.
 3. **Sat** — jedanaest boja prati stranu; potvrdi da su crna i bela polovina i dalje crna i bela.
-4. **Tipografija** — na bar tri ekrana uporedi sa snimcima iz Faze 9
+4. **Spisak mesta sa najvecim rizikom** — izmeren u Task-u 3 i zaostren u njegovom pregledu.
+   Ovo nije „pogledaj okolo" nego **radna lista**; svako mesto ili potvrdi ili prijavi:
+
+   | mesto | promena | šta tačno gledaš |
+   |---|---|---|
+   | oznake ispod uzoraka **stila figura**, mreža od 4 kolone (`SettingsView`) | 10/11 → 12 | **najveći rizik.** iOS ima `lineLimit(1)` + `minimumScaleFactor(0.8)` (`SettingsSheet.swift:209-210`, `:269-270`); `SettingsView.kt` nema **nijedan** `maxLines` ni `TextOverflow` u celom fajlu — pa režim otkaza **nije odsecanje nego PRELOM U DVA REDA**, dakle neujednačena visina ćelija i razbijen red |
+   | telo lekcije | 13 → 15 | preliva svaku lekciju; proveri na **oba** jezika |
+   | naslov `LBox` kutije naspram njenog tela | naslov 13 → **12**, telo 13 → **15** | naslov postaje **manji od sopstvenog tela**. To **jeste** iOS paritet (`LessonRenderer.swift:438` caption / `:446` body, naslov je bold) — ali pogađa **44 `RULE`/`WARNING` kutije** u isporučenom sadržaju, pa se gleda, ne pretpostavlja |
+   | naslov greške u **pejzažnoj** grani `PuzzleView` | 14 → 17 | +3 u **užoj** koloni |
+   | poruka o ishodu partije | 18 → 22 | jedini +4 u grani |
+   | „Tema table" / „Stil" | 12 → 15 | |
+   | čip „Mat u %d" | 9 → 11 | zaglavlje kartica vežbi |
+   | naslov dijaloga sata i naslovi sekcija u njemu | 16 → 17 i 14 → 17 | sada su **iste veličine**, pre 16 vs 14 — razlikuju se još samo bojom |
+   | naslov aplikacije u pejzažu | 20 → 22 | |
+
+5. **Tipografija** — na bar tri ekrana uporedi sa snimcima iz Faze 9
    (`.superpowers/sdd/2026-09-20-faza-9-lekcijske-ikone-i-precica/screenshots/`) i reci **šta se
    promenilo**. Ako se ništa nije promenilo a Task 2 je izabrao opciju (b), nešto nije primenjeno.
 
