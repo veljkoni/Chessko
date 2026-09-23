@@ -28,6 +28,7 @@ import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -740,7 +741,12 @@ class MainActivity : ComponentActivity() {
                                                 .padding(vertical = DS.Space.xs),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            val boardSize = maxHeight
+                                            // Granica ide na VREDNOST, ne na tablu: istu
+                                            // `boardSize` citaju i tabla i eval traka, pa ne
+                                            // mogu da se razidju (Faza 10: tabla ogranicena
+                                            // modifikatorom, traka celom visinom tableta).
+                                            // Isto kao iOS, `GameView.swift:35`.
+                                            val boardSize = maxHeight.coerceAtMost(DS.maxBoardSide)
                                             val evalBarWidth = 6.dp
                                             val spacing = 6.dp
 
@@ -772,13 +778,9 @@ class MainActivity : ComponentActivity() {
                                                     showLastMoveHighlight = settingsManager.showLastMoveHighlight,
                                                     showLegalMoves = settingsManager.showLegalMoves,
                                                     onTap = { pos -> gameViewModel.tap(pos) },
-                                                    // Pejzaz: strana table se racuna iz VISINE
-                                                    // (boardSize = maxHeight), pa granica ide na
-                                                    // obe ose — jedna osa bi ostavila pravougaonik
-                                                    // umesto kvadrata na tabletu.
-                                                    modifier = Modifier
-                                                        .sizeIn(maxWidth = DS.maxBoardSide, maxHeight = DS.maxBoardSide)
-                                                        .size(boardSize)
+                                                    // Pejzaz: strana table se racuna iz VISINE i
+                                                    // vec je ogranicena u `boardSize` iznad.
+                                                    modifier = Modifier.size(boardSize)
                                                 )
                                             }
                                         }
@@ -1017,7 +1019,11 @@ class MainActivity : ComponentActivity() {
                                                 val totalWidth = maxWidth
                                                 val evalBarWidth = 6.dp
                                                 val spacing = 6.dp
-                                                val boardSize = if (gameViewModel.showEvalBar) (totalWidth - evalBarWidth - spacing) else totalWidth
+                                                // Granica na VREDNOSTI, ne na tabli — tabla i
+                                                // eval traka citaju istu `boardSize`. Isto kao
+                                                // iOS, `GameView.swift:105`.
+                                                val boardSize = (if (gameViewModel.showEvalBar) (totalWidth - evalBarWidth - spacing) else totalWidth)
+                                                    .coerceAtMost(DS.maxBoardSide)
 
                                                 Row(
                                                     modifier = Modifier.fillMaxWidth(),
@@ -1047,12 +1053,9 @@ class MainActivity : ComponentActivity() {
                                                         showLastMoveHighlight = settingsManager.showLastMoveHighlight,
                                                         showLegalMoves = settingsManager.showLegalMoves,
                                                         onTap = { pos -> gameViewModel.tap(pos) },
-                                                        // Portret: strana table se racuna iz SIRINE
-                                                        // (boardSize = totalWidth), pa je dovoljna
-                                                        // gornja granica sirine.
-                                                        modifier = Modifier
-                                                            .widthIn(max = DS.maxBoardSide)
-                                                            .size(boardSize)
+                                                        // Portret: strana table se racuna iz SIRINE i
+                                                        // vec je ogranicena u `boardSize` iznad.
+                                                        modifier = Modifier.size(boardSize)
                                                     )
                                                 }
                                             }
