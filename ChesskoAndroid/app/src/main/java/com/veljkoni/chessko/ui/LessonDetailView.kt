@@ -71,14 +71,14 @@ fun LessonDetailView(
         repo.discoveredLessonIds().indexOf(lessonId).let { if (it >= 0) it + 1 else null }
     }
 
-    // `padding(16.dp)` je ranije davao `LearnView`-ov spoljni `Box`, deljen sa
+    // `padding(DS.Space.l)` je ranije davao `LearnView`-ov spoljni `Box`, deljen sa
     // spiskom lekcija. Ovaj ekran sada zivi i van `LearnView`-a (otvara ga
     // `PathView`, bez ijednog Box-a oko sebe), pa marginu mora da nosi SAM —
     // inace sadrzaj (i tabla) idu ivica-do-ivice ekrana kad se otvori iz Puta.
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(DS.Space.l)
     ) {
         // Back Button Toolbar
         Row(
@@ -94,8 +94,8 @@ fun LessonDetailView(
                     containerColor = DS.fill,
                     contentColor = DS.ink
                 ),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                shape = RoundedCornerShape(DS.Radius.s),
+                contentPadding = PaddingValues(horizontal = DS.Space.m, vertical = 6.dp)
             ) {
                 // Dugme vodi na Put (spisak lekcija je ova grana obrisala -- vidi
                 // header komentar fajla), pa mora i da ga IMENUJE. Postojeci kljuc
@@ -110,7 +110,7 @@ fun LessonDetailView(
                 // pokriveno sa `ContrastTest.textOnFillMeetsAA`).
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -124,14 +124,14 @@ fun LessonDetailView(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(DS.Space.m))
 
         // Scrollable Lesson Content
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(DS.Space.l)
         ) {
             if (doc == null) {
                 // Kartica postoji samo ako se lekcija vec jednom ucitala,
@@ -173,7 +173,7 @@ fun LessonDetailView(
                         // `title`. Glif nije tekst, pa uzima samo velicinu iz skale.
                         LessonGlyphView(lessonGlyph(doc.icon), fontSize = Type.title.fontSize, tint = accent)
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(DS.Space.m))
                     Column {
                         if (number != null) {
                             Text(
@@ -211,7 +211,7 @@ fun LessonDetailView(
                 // kraja lekcije i POTVRDI, ne samim otvaranjem.
                 if (onComplete != null) {
                     Column(
-                        modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
+                        modifier = Modifier.padding(top = DS.Space.xs, bottom = DS.Space.xl),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         HorizontalDivider(color = DS.line)
