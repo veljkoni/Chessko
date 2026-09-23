@@ -3289,3 +3289,14 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   „preneo" (poslednja dva slova bila su ćirilična, `d0 b5 d0 be` → `65 6f`) i „statusa" (poslednje
   slovo, `d0 b0` → `61`) — ovde namerno ispisani latinicom, da ovaj unos sam ne ponovi grešku. Reč
   iz ruskog prevoda u unosu o ruskom UI-ju je **citat** pokvarenog prevoda i namerno ostaje.
+
+- **2026-09-23** — Android izdanje 2.0 za testere (grana `v2/izdanje-2.0`). `versionCode 3`,
+  `versionName "2.0"` (`884aea2`), uz komitovan AGP `9.4.0 → 9.4.1` iz Android Studija
+  (`15a27fc`). Release put proveren na emulatoru pre potpisivanja, APK izveden iz bundle-a
+  (`:app:packageReleaseUniversalApk`, isti put kao Play): nije `debuggable`, `puzzles.sqlite`
+  `Stored`, sveža instalacija bez ijednog `FATAL EXCEPTION`, Stockfish `readyok` i AI odgovor
+  (1. e4 Sf6), dnevni zadatak offline, prva lekcija Puta se iscrtava. **Nije provereno:**
+  nadogradnja sa stare testerske verzije — stari lokalni potpisani AAB od 4. septembra je
+  pregažen novim buildom; migraciju pokriva samo `ProgressStoreTest`. Release build nema R8, pa
+  Stockfish D-nivo logovi ostaju u release-u. Potpisani bundle (alias `key0`) je u
+  `ChesskoAndroid/app/release/app-release.aab` (ignorisan u git-u).
