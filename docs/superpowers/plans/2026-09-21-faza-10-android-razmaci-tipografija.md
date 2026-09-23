@@ -533,8 +533,17 @@ učinio beskorisnim. Čuva ih vizuelni prolaz u Task-u 5.
 
 - [ ] **Korak 1: Oba skupa testova, brojevi iz XML-a**
 
-Očekivano **113 JVM / 54 instrumentisanih**, 0 padova. Ako se ne poklapa — reci, ne prepravljaj
-očekivanje.
+Očekivano **114 JVM / 54 instrumentisanih**, 0 padova (110 na početku faze; +2 Task 1,
++1 Task 3, +1 Task 4). Ako se ne poklapa — reci, ne prepravljaj očekivanje.
+
+> **Zamka „broj iz XML-a" je u ovoj fazi udarila TRI puta, svaki put drugačije.** Pravilo ima
+> **dva** preduslova, i oba se proveravaju:
+> 1. XML je iz **tog** prolaza — ne iz ranijeg (jednom je pročitano „112 testova, 0 padova"
+>    **dva reda ispod `BUILD FAILED`**), i ne iz prolaza nad namerno pokvarenim stablom;
+> 2. prolaz je **posle poslednjeg commit-a** — jednom je zeleno bilo izmereno 22 s **pre** HEAD-a.
+>
+> Zato: obriši `app/build/test-results/testDebugUnitTest` pre prolaza, ispiši `git rev-parse HEAD`
+> pre njega, i **navedi vremena** (mtime XML-a naspram vremena commit-a).
 
 - [ ] **Korak 2: JEDAN prolaz emulatora**
 
@@ -595,6 +604,38 @@ U tom prolazu, **obe teme**:
 5. **Tipografija** — na bar tri ekrana uporedi sa snimcima iz Faze 9
    (`.superpowers/sdd/2026-09-20-faza-9-lekcijske-ikone-i-precica/screenshots/`) i reci **šta se
    promenilo**. Ako se ništa nije promenilo a Task 2 je izabrao opciju (b), nešto nije primenjeno.
+
+6. **Sedam mesta iz Task-a 4 — rizik je GREŠKA U ULOZI, ne veličina ekrana.**
+
+   > **Atribucija, pročitaj pre nego što nešto prijaviš:** Task 4 je **po konstrukciji bez
+   > promene piksela** (`DS.Space.m` **jeste** `12.dp`; pregled je to reprodukovao mehanički —
+   > supstitucija token→vrednost daje **0 razlika u 14/14 fajlova**). Svaka razlika u rasporedu
+   > prema stanju pre Faze 10 dolazi iz **Task-a 3**. Odavde može doći samo pogrešno pročitana
+   > **uloga** vrednosti.
+
+   1. **`MainActivity.kt`, Igra — portret I pejzaž.** 63 zamene, najviše u modulu, a dve grane
+      rasporeda **ne dele telo**.
+   2. **`AnalysisView.kt`, traka poteza.** Jedina ručna zamena: `spacing` ulazi u **račun broja
+      kolona**, pa bi greška promenila **broj čipova u redu**, ne samo razmak.
+   3. **`ChessClockView.kt`, kontrolna traka i dijalozi.** 23 zamene na ekranu čija je paleta
+      namerno fiksna a razmaci tokenizovani — jedino mesto gde se dva režima mešaju u istom fajlu.
+   4. **`LearnView.kt:936`, čip „Mat u N".** `50.dp` namerno ostao — mora izgledati kao
+      **pilula**, ne kao zaobljen pravougaonik (iOS tu crta `Capsule()`).
+   5. **Deset linija** `.border(…dp…, RoundedCornerShape(DS.Radius…))` — 7 u `MainActivity.kt`
+      (`:213/:240/:267/:334/:368/:404/:1184`) i 3 u `LearnView.kt` (`:325/:582/:721`).
+   6. **`LessonDetailView.kt`** — pločica zaglavlja `size(50.dp)` namerno ostala.
+   7. **`PromotionOverlay.kt` (3 zamene) i `StepPracticeView.kt` (5)** — najmanji brojevi, najlakše
+      ispadnu; promocija se vidi tek ako pešak stigne do zadnjeg reda.
+
+7. **`connectedDebugAndroidTest` — pokreni ga u OVOM prolazu**, jer emulatora drugi put nema.
+   Broj **iz XML-a** (`app/build/outputs/androidTest-results/connected/debug/*.xml`), ne iz
+   izlaznog koda: `BUILD SUCCESSFUL` ume da znači **nula** pokrenutih testova. Očekivano **54**.
+   Ako XML pokaže manje, ti testovi se nisu izvršili i **to je nalaz, ne uspeh**.
+
+8. **Vizuelna potvrda ikona i glifova** — Faza 9 je mapu prevela na `Icons.*`; potvrdi da je
+   zaglavlje lekcije i dalje ikona a **šest emoji-ja i dalje emoji**. (Četiri od tih šest —
+   `dot.square.fill`, `l.joystick.fill`, `rhombus.fill`, `tuningfork` — Faza 9 **nije uspela da
+   vidi na ekranu**; ako naiđeš na njih, zatvori i taj dug.)
 
 Snimci u `.superpowers/sdd/<plan>/screenshots/`, **ne u sesijski `/tmp`** — odatle su u ranijoj
 fazi nestali pre finalnog pregleda.
