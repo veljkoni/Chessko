@@ -18,8 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 
 data class MovePair(
     val number: Int,
@@ -84,8 +84,10 @@ fun MoveHistoryView(
             Text(
                 text = loc("Nema odigranih poteza"),
                 color = DS.inkMuted,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Normal
+                // Prigusena poruka u istom panelu u kom stoje redovi poteza ->
+                // `Type.caption`, isto kao oni. `fontWeight` je obrisan jer je
+                // `Normal`, dakle vec tezina `caption`-a.
+                style = Type.caption
             )
         } else {
             LazyColumn(
@@ -169,7 +171,7 @@ fun RowScope.MovePairCell(
         Text(
             text = "${pair.number}.",
             color = DS.inkMuted,
-            fontSize = 12.sp,
+            style = Type.caption,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.width(26.dp)
         )
@@ -185,7 +187,7 @@ fun RowScope.MovePairCell(
             Text(
                 text = pair.white,
                 color = if (isLastWhite) DS.accent else DS.ink,
-                fontSize = 12.sp,
+                style = Type.caption,
                 fontWeight = if (isLastWhite) FontWeight.Bold else FontWeight.Normal
             )
         }
@@ -202,7 +204,7 @@ fun RowScope.MovePairCell(
             Text(
                 text = pair.black ?: "",
                 color = if (isLastBlack) DS.accent else DS.ink,
-                fontSize = 12.sp,
+                style = Type.caption,
                 fontWeight = if (isLastBlack) FontWeight.Bold else FontWeight.Normal
             )
         }
