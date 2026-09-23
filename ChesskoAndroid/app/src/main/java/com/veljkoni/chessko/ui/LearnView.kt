@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.*
 import com.veljkoni.chessko.logic.SoundManager
@@ -33,6 +32,7 @@ import com.veljkoni.chessko.logic.MoveGenerator
 import com.veljkoni.chessko.viewmodels.LearnScenario
 import com.veljkoni.chessko.viewmodels.LearnViewModel
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -329,8 +329,11 @@ fun LBox(icon: LessonGlyph, title: String, text: String, color: Color) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            LessonGlyphView(icon, fontSize = 14.sp, tint = color)
-            Text(text = title, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            // iOS `L_Box`: i ikona i naslov na `.dsCaption.weight(.bold)`
+            // (`Chessko/Views/LessonRenderer.swift:438-443`). Glif nije tekst, pa
+            // uzima samo velicinu iz skale.
+            LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = color)
+            Text(text = title, color = color, style = Type.caption, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(4.dp))
         // TELO kutije, ne sporedan tekst: zateceno `White@0,85`, iOS `L_Box` daje
@@ -338,7 +341,8 @@ fun LBox(icon: LessonGlyph, title: String, text: String, color: Color) {
         // `ink`, ne `inkMuted`. Prvi prelaz je 0,85 preslikao naniže i telo je u svetloj
         // temi palo na 3,73:1 nad sopstvenim tintom (`ink` vraca 13,40–14,19, po stilu
         // kutije) — mereno u `ContrastTest.lessonBoxStylesMeetAA`.
-        Text(text = mdBold(text), color = DS.ink, fontSize = 13.sp)
+        // iOS: `.dsBody` (`Chessko/Views/LessonRenderer.swift:446`).
+        Text(text = mdBold(text), color = DS.ink, style = Type.body)
     }
 }
 
@@ -352,8 +356,11 @@ fun LPara(text: String) {
         // blokova u isporucenom sadrzaju), ne podnaslov: `inkMuted` bi ga u svetloj temi
         // drzao na 4,36:1 nad `DS.ground`, `ink` daje 15,72.
         color = DS.ink,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
+        // NAJVIDLJIVIJA izmena Faze 10: telo lekcije 13 -> 15. iOS `L_Para` crta
+        // `.dsBody` (`Chessko/Views/LessonRenderer.swift:394`), pa je Android ovde
+        // bio razidjen naniže; dolazak skali ga vraca u paritet. `lineHeight` odlazi
+        // sa velicinom — `Type.body` nosi 20, srazmerno istom odnosu.
+        style = Type.body,
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -367,10 +374,13 @@ fun LBullet(icon: LessonGlyph, title: String, text: String, color: Color) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Top
     ) {
-        LessonGlyphView(icon, fontSize = 14.sp, tint = color, modifier = Modifier.padding(top = 2.dp))
+        // iOS `L_Bullet`: ikona `.dsCaption.weight(.semibold)`, naslov
+        // `.dsBody.weight(.semibold)`, telo `.dsBody`
+        // (`Chessko/Views/LessonRenderer.swift:408`, `:414`, `:417`).
+        LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = color, modifier = Modifier.padding(top = 2.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
+            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+            Text(text = mdBold(text), color = DS.inkMuted, style = Type.body)
         }
     }
 }
@@ -382,8 +392,12 @@ fun LSectionHeader(icon: LessonGlyph, title: String, color: Color) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(vertical = 4.dp)
     ) {
-        LessonGlyphView(icon, fontSize = 18.sp, tint = color)
-        Text(text = title, color = color, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        // iOS `L_SectionHeader`: ikona `.dsBody.weight(.semibold)`, naslov
+        // `.dsBody.weight(.bold)` (`Chessko/Views/LessonRenderer.swift:360`, `:362`).
+        // Naslov sekcije i telo lekcije su NAMERNO iste velicine, kao na iOS-u —
+        // razlikuju se tezinom i bojom.
+        LessonGlyphView(icon, fontSize = Type.body.fontSize, tint = color)
+        Text(text = title, color = color, style = Type.body, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -403,11 +417,13 @@ fun LNumberedRule(number: Int, title: String, text: String, color: Color) {
                 .background(color.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = number.toString(), color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            // iOS `L_NumberedRule`: sva tri reda na `.dsBody`
+            // (`Chessko/Views/LessonRenderer.swift:494`, `:499`, `:502`).
+            Text(text = number.toString(), color = color, style = Type.body, fontWeight = FontWeight.Bold)
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(text = mdBold(text), color = DS.inkMuted, fontSize = 13.sp)
+            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+            Text(text = mdBold(text), color = DS.inkMuted, style = Type.body)
         }
     }
 }
@@ -470,7 +486,7 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
                 // `srbName` je bukvalno srpski string u modelu; kljucevi („Kralj",
                 // „Dama"...) postoje u `Loc.kt` na svih 8 jezika. Bez `loc()` je
                 // birac figura u lekciji pisao srpski i na engleskom UI-ju.
-                Text(text = loc(piece.srbName), color = fg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(text = loc(piece.srbName), color = fg, style = Type.label, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -498,7 +514,10 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
             .background(DS.surface)
             .padding(12.dp)
     ) {
-        Text(text = viewModel.infoTitle, color = accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        // Tri nivoa (naslov / opis / brojac) ostaju TRI, kao i boje iznad:
+        // `body` / `caption` / `label`. iOS ovde nema pandan — `LessonPieceExplorer`
+        // (`Chessko/Views/LessonRenderer.swift:306`) nema info panel.
+        Text(text = viewModel.infoTitle, color = accent, style = Type.body, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(2.dp))
         // Tri nivoa, tri boje. `infoText` je zatecen na `White@0,8` a
         // `movesCountLabel` na `White@0,4`; prvi prelaz ih je oba poslao na
@@ -506,9 +525,9 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
         // poteza" su se citali kao isti red. iOS ovde nema par za poredjenje
         // (`LessonPieceExplorer` u `Chessko/Views/LessonRenderer.swift` uopste nema
         // info panel), pa vazi pravilo raspona: 0,75–0,9 → `ink`, 0,4–0,7 → `inkMuted`.
-        Text(text = viewModel.infoText, color = DS.ink, fontSize = 12.sp)
+        Text(text = viewModel.infoText, color = DS.ink, style = Type.caption)
         Spacer(modifier = Modifier.height(6.dp))
-        Text(text = viewModel.movesCountLabel, color = DS.inkMuted, fontSize = 11.sp)
+        Text(text = viewModel.movesCountLabel, color = DS.inkMuted, style = Type.label)
     }
 
     // Scenario selectors
@@ -532,7 +551,7 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(text = sc.label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(text = sc.label, style = Type.caption, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -580,11 +599,14 @@ fun OpeningExerciseCard(line: OpeningLine) {
                         .background(line.accentColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    LessonGlyphView(line.icon, fontSize = 14.sp, tint = line.accentColor)
+                    // iOS `OpeningExerciseCard`: ikona `.dsCaption.weight(.semibold)`,
+                    // naziv `.dsBody.weight(.semibold)`, hint `.dsCaption`
+                    // (`Chessko/Views/LessonRenderer.swift:720`, `:723`, `:726`).
+                    LessonGlyphView(line.icon, fontSize = Type.caption.fontSize, tint = line.accentColor)
                 }
                 Column {
-                    Text(text = line.name, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text(text = line.hint, color = DS.inkMuted, fontSize = 11.sp)
+                    Text(text = line.name, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+                    Text(text = line.hint, color = DS.inkMuted, style = Type.caption)
                 }
             }
             // Faza 8, Task 4: emoji -> Material ikona. Ovaj bedz stoji SAM na
@@ -655,7 +677,9 @@ fun OpeningExerciseCard(line: OpeningLine) {
                     // `ink`, „u toku" bi vikalo jace od „reseno".
                     else -> DS.inkMuted
                 },
-                fontSize = 12.sp,
+                // iOS: `.dsCaption.weight(.medium)`
+                // (`Chessko/Views/LessonRenderer.swift:655`, `:776`, `:902`).
+                style = Type.caption,
                 fontWeight = FontWeight.Medium
             )
 
@@ -668,7 +692,8 @@ fun OpeningExerciseCard(line: OpeningLine) {
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text(text = loc("Reset"), fontSize = 11.sp)
+                // iOS: `.dsCaption.weight(.medium)` (`Chessko/Views/LessonRenderer.swift:663`).
+                Text(text = loc("Reset"), style = Type.caption)
             }
         }
     }
@@ -713,11 +738,13 @@ fun MateExerciseCard(
                         .background(color.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    LessonGlyphView(icon, fontSize = 14.sp, tint = color)
+                    // iOS `MateExerciseCard`: isti trojac kao kartica iznad
+                    // (`Chessko/Views/LessonRenderer.swift:852`, `:856`, `:858`).
+                    LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = color)
                 }
                 Column {
-                    Text(text = title, color = DS.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text(text = hint, color = DS.inkMuted, fontSize = 11.sp)
+                    Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+                    Text(text = hint, color = DS.inkMuted, style = Type.caption)
                 }
             }
             // Faza 8, Task 4: emoji -> Material ikona. Isti obrazac kao
@@ -773,7 +800,9 @@ fun MateExerciseCard(
                     // vraca `.secondary` (`Chessko/Views/LessonRenderer.swift:809`).
                     else -> DS.inkMuted
                 },
-                fontSize = 12.sp,
+                // iOS: `.dsCaption.weight(.medium)`
+                // (`Chessko/Views/LessonRenderer.swift:655`, `:776`, `:902`).
+                style = Type.caption,
                 fontWeight = FontWeight.Medium
             )
 
@@ -786,7 +815,8 @@ fun MateExerciseCard(
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text(text = loc("Reset"), fontSize = 11.sp)
+                // iOS: `.dsCaption.weight(.medium)` (`Chessko/Views/LessonRenderer.swift:663`).
+                Text(text = loc("Reset"), style = Type.caption)
             }
         }
     }
@@ -875,7 +905,9 @@ fun MatePuzzleCard(
                         .background(accentColor.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    LessonGlyphView(icon, fontSize = 14.sp, tint = accentColor)
+                    // iOS `MatePuzzleCard`: ikona `.dsCaption.weight(.semibold)`
+                    // (`Chessko/Views/LessonRenderer.swift:603`).
+                    LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = accentColor)
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
@@ -886,21 +918,26 @@ fun MatePuzzleCard(
                         Text(
                             text = title,
                             color = DS.ink,
-                            fontSize = 13.sp,
+                            // iOS: `.dsBody.weight(.semibold)` (`:608`).
+                            style = Type.body,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f, fill = false)
                         )
                         Text(
                             text = locF("Mat u %d", mateIn),
                             color = accentColor,
-                            fontSize = 9.sp,
+                            // iOS ovaj cip crta `.appFont(.caption2).weight(.bold)` uz
+                            // komentar „van skale — caption2 nema DS ekvivalent"
+                            // (`Chessko/Views/LessonRenderer.swift:611`). Na Androidu
+                            // caption2 OD FAZE 10 ima ekvivalent: `Type.label` = 11.
+                            style = Type.label,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
                                 .background(accentColor.copy(alpha = 0.18f), RoundedCornerShape(50.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                    Text(text = hint, color = DS.inkMuted, fontSize = 11.sp)
+                    Text(text = hint, color = DS.inkMuted, style = Type.caption)
                 }
             }
             // Faza 8, Task 4: emoji -> Material ikona. Isti obrazac kao dve
@@ -966,7 +1003,9 @@ fun MatePuzzleCard(
                     OpeningPhase.WRONG_MOVE -> DS.danger
                     OpeningPhase.PLAYING -> DS.inkMuted
                 },
-                fontSize = 12.sp,
+                // iOS: `.dsCaption.weight(.medium)`
+                // (`Chessko/Views/LessonRenderer.swift:655`, `:776`, `:902`).
+                style = Type.caption,
                 fontWeight = FontWeight.Medium
             )
 
@@ -979,7 +1018,7 @@ fun MatePuzzleCard(
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text(text = loc("Ponovo"), fontSize = 11.sp)
+                Text(text = loc("Ponovo"), style = Type.caption)
             }
         }
     }
