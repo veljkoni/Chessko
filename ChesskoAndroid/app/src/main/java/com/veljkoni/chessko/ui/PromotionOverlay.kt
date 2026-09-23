@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.logic.SettingsManager
@@ -22,6 +21,7 @@ import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.models.ChessPiece
 import com.veljkoni.chessko.models.PieceType
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.GameViewModel
 
 /**
@@ -104,8 +104,10 @@ fun PromotionOverlay(viewModel: GameViewModel) {
             Text(
                 text = loc("Izaberi figuru"),
                 color = DS.ink,
+                // Naslov dijaloga -> Type.heading. `fontWeight` ostaje: heading je
+                // SemiBold, a ovo mesto je Bold i to se ne gubi usput.
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                style = Type.heading
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 for (type in choices) {
