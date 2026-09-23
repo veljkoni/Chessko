@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.veljkoni.chessko.logic.GameDifficulty
@@ -37,6 +36,7 @@ import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.GameViewModel
 
 // MARK: - Pokretac koraka `game` (Faza 6c, Task 7)
@@ -129,7 +129,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
             Text(
                 text = loc("Partija"),
                 color = DS.ink,
-                fontSize = 18.sp,
+                // Zaglavlje ekrana koraka -> `heading`, isto kao `StepPracticeView`.
+                style = Type.heading,
                 fontWeight = FontWeight.Bold
             )
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -309,11 +310,15 @@ private fun OpponentCard(viewModel: GameViewModel) {
             tint = DS.ink,
             modifier = Modifier.size(16.dp)
         )
-        Text(text = loc("Računar"), color = DS.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        Text(text = viewModel.difficulty.label, color = DS.inkMuted, fontSize = 12.sp)
+        // Kartica protivnika je paritet sa iOS-om
+        // (`Chessko/Views/StepGameView.swift:199-205`): naziv `.dsBody`, tezina
+        // `.dsCaption`. `fontWeight = Medium` ostaje -- iOS ga nema, ali brisanje
+        // bi bila promena izgleda koju ovaj task ne trazi.
+        Text(text = loc("Računar"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
+        Text(text = viewModel.difficulty.label, color = DS.inkMuted, style = Type.caption)
         Spacer(modifier = Modifier.weight(1f))
         if (viewModel.isThinking) {
-            Text(text = loc("Računar razmišlja..."), color = DS.inkMuted, fontSize = 12.sp)
+            Text(text = loc("Računar razmišlja..."), color = DS.inkMuted, style = Type.caption)
         }
     }
 }
@@ -328,7 +333,8 @@ private fun StatusCard(message: String) {
             .background(DS.fill)
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        Text(text = message, color = DS.ink, fontSize = 14.sp)
+        // iOS: `.dsBody` (`Chessko/Views/StepGameView.swift:229`).
+        Text(text = message, color = DS.ink, style = Type.body)
     }
 }
 
@@ -364,7 +370,8 @@ private fun StepGameFooter(
         Text(
             text = loc("Korak se završava kad partija dođe do kraja."),
             color = DS.inkMuted,
-            fontSize = 12.sp,
+            // iOS: `.dsCaption` (`Chessko/Views/StepGameView.swift:290`).
+            style = Type.caption,
             modifier = Modifier.fillMaxWidth()
         )
     }
