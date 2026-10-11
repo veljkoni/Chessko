@@ -657,6 +657,8 @@ class MainActivity : ComponentActivity() {
                                 val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
                                 // spec § 5: ispod 360 dp sirine ikona iznad labele u akcionoj traci.
                                 val compactActions = configuration.screenWidthDp < 360
+                                // spec § 13: tablet = prozor >= 600 x 480 dp (telefon u pejzazu nije).
+                                val isTablet = isTabletWindow()
 
                                 val activeTheme = remember(settingsManager.boardTheme) {
                                     BoardTheme.values().find { it.rawValue == settingsManager.boardTheme } ?: BoardTheme.CLASSIC
@@ -787,19 +789,25 @@ class MainActivity : ComponentActivity() {
                                 if (isLandscape) {
                                     // Telefon pejzaz (spec § 5): tabla i panel 400 kao par, VRHOVI
                                     // poravnati; lista poteza ide do dna table.
+                                    // Tablet (spec § 13): umetak i razmak `Space.xl` — isti koje
+                                    // `BoardSizing` vec oduzima od NEUMANJENOG prostora, pa se
+                                    // umetak tu daje redu, ne prostoru koji funkcija meri.
+                                    // Telefon: zateceno — prostor umanjen za `Space.s`, razmak `Space.l`.
+                                    val gap = if (isTablet) DS.Space.xl else DS.Space.l
+                                    val inset = if (isTablet) DS.Space.xl else 0.dp
                                     BoxWithConstraints(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(DS.Space.s)
+                                            .padding(if (isTablet) 0.dp else DS.Space.s)
                                     ) {
-                                        val boardSize = gameBoardSide(maxWidth, maxHeight, isLandscape = true, showEvalBar = gameViewModel.showEvalBar)
+                                        val boardSize = gameBoardSide(maxWidth, maxHeight, isTablet, isLandscape = true)
                                         val evalWidth = if (gameViewModel.showEvalBar) GameEvalBarWidth + GameEvalBarSpacing else 0.dp
-                                        val panelWidth = (maxWidth - boardSize - evalWidth - DS.Space.l)
+                                        val panelWidth = (maxWidth - inset * 2 - boardSize - evalWidth - gap)
                                             .coerceAtMost(GameLandscapePanelWidth)
                                             .coerceAtLeast(0.dp)
                                         Row(
-                                            modifier = Modifier.fillMaxSize(),
-                                            horizontalArrangement = Arrangement.spacedBy(DS.Space.l, Alignment.CenterHorizontally),
+                                            modifier = Modifier.fillMaxSize().padding(inset),
+                                            horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
                                             verticalAlignment = Alignment.Top
                                         ) {
                                             board(boardSize)
@@ -844,8 +852,12 @@ class MainActivity : ComponentActivity() {
                                         val viewportHeight = maxHeight
                                         val density = LocalDensity.current
                                         var fixedHeightPx by remember { mutableIntStateOf(0) }
-                                        val evalPadding = if (gameViewModel.showEvalBar) DS.Space.s * 2 else 0.dp
-                                        val boardSize = gameBoardSide(maxWidth - evalPadding, maxHeight, isLandscape = false, showEvalBar = gameViewModel.showEvalBar)
+                                        val boardSize = gameBoardSide(maxWidth, maxHeight, isTablet, isLandscape = false)
+                                        // spec § 13: kolona siroka kao tabla (+ eval traka), centrirana —
+                                        // kartice, akcije i lista poteza u njoj (na tabletu su isle celom
+                                        // sirinom, 776 dp). Na telefonu je granica sira od ekrana.
+                                        val evalWidth = if (gameViewModel.showEvalBar) GameEvalBarWidth + GameEvalBarSpacing else 0.dp
+                                        val columnMax = boardSize + evalWidth + DS.Space.m * 2
                                         val fixedHeight = with(density) { fixedHeightPx.toDp() }
                                         val listHeight = (viewportHeight - fixedHeight - DS.Space.m * 2)
                                             .coerceAtLeast(GameMinMoveListHeight)
@@ -858,6 +870,7 @@ class MainActivity : ComponentActivity() {
                                         ) {
                                             Column(
                                                 modifier = Modifier
+                                                    .widthIn(max = columnMax)
                                                     .fillMaxWidth()
                                                     .onSizeChanged { fixedHeightPx = it.height }
                                                     .padding(top = DS.Space.m),
@@ -878,6 +891,7 @@ class MainActivity : ComponentActivity() {
                                             Spacer(modifier = Modifier.height(DS.Space.m))
                                             moveList(
                                                 Modifier
+                                                    .widthIn(max = columnMax)
                                                     .padding(horizontal = DS.Space.m)
                                                     .height(listHeight)
                                             )
@@ -1005,15 +1019,13 @@ val GameLandscapePanelWidth = 400.dp
 val GameMinMoveListHeight = MoveRowHeight * 3 + 8.dp
 
 /**
- * Strana table na ekranu Igra. JEDNO mesto za vrednost — Task 11 (spec § 13) ovde
- * menja telo zajednickom funkcijom `boardSide`; raspored cita samo ovaj broj.
- * Logika je zatecena: portret iz sirine, pejzaz iz visine, granica 560.
+ * Strana table na ekranu Igra — zajednicka funkcija `boardSide` (spec § 13,
+ * `logic/BoardSizing`); raspored cita samo ovaj broj. Telefon: portret
+ * `sirina − 2·Space.l` do 560, pejzaz visina (prostor je vec umanjen za `Space.s`);
+ * tablet do 800.
  */
-fun gameBoardSide(availableWidth: Dp, availableHeight: Dp, isLandscape: Boolean, showEvalBar: Boolean): Dp {
-    if (isLandscape) return availableHeight.coerceAtMost(DS.maxBoardSide)
-    val evalWidth = if (showEvalBar) GameEvalBarWidth + GameEvalBarSpacing else 0.dp
-    return (availableWidth - evalWidth).coerceAtMost(DS.maxBoardSide).coerceAtLeast(0.dp)
-}
+fun gameBoardSide(availableWidth: Dp, availableHeight: Dp, isTablet: Boolean, isLandscape: Boolean): Dp =
+    boardSide(availableWidth, availableHeight, isTablet, isLandscape)
 
 @Composable
 private fun NewGameOptionRow(

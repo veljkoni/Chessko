@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -132,11 +133,20 @@ fun PlayerCard(
                 .background(DS.fill),
             contentAlignment = Alignment.Center
         ) {
+            // Avatar je UVEK kralj boje igraca — ne cita poziciju na tabli. § 17
+            // („prazan avatar Ti", snimak 44): ista datoteka se tu nije iscrtala ni
+            // na tabli (ceo beli prvi red prazan), a na pravom tabletu (snimci 92,
+            // 102, 107) se crta — dakle neuspelo ucitavanje SVG-a u toj sesiji, ne
+            // logika avatara. Zato se greska ucitavanja sada belezi umesto da prode
+            // tiho (vidi IMPLEMENTACIJA-LOG, Task 11).
             val kingAsset = getAssetName(ChessPiece(PieceType.KING, color), pieceStyle, boardTheme)
             AsyncImage(
                 model = "file:///android_asset/pieces/$kingAsset.svg",
                 contentDescription = null,
-                modifier = Modifier.size(26.dp)
+                modifier = Modifier.size(26.dp),
+                onError = { state ->
+                    Log.w("PlayerCard", "Avatar $kingAsset.svg nije ucitan", state.result.throwable)
+                }
             )
         }
 

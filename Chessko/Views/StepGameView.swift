@@ -44,6 +44,11 @@ struct StepGameView: View {
     @State private var showAnalysis = false
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.verticalSizeClass) private var vSize
+
+    /// Spec § 13: tablet = `regular` u obe ose.
+    private var isTablet: Bool { hSize == .regular && vSize == .regular }
 
     // MARK: - Body
 
@@ -141,32 +146,57 @@ struct StepGameView: View {
 
     private func content(_ viewModel: GameViewModel) -> some View {
         GeometryReader { geo in
-            ScrollView {
-                // spec § 7: sadržaj od vrha (`Space.l` ispod zaglavlja), iste
-                // komponente kao Igra — kartica protivnika, tabla, kartica igrača
-                // („Na potezu" umesto posebnog reda „Tvoj potez"), pa napomena.
-                VStack(spacing: DS.Space.m) {
-                    opponentCard(viewModel)
-                    board(viewModel, side: boardSide(in: geo.size))
-                    playerCard(viewModel)
-                    footer(viewModel)
+            let isLandscape = geo.size.width > geo.size.height
+            let side = boardSide(in: geo.size, isLandscape: isLandscape)
+            if isTablet && isLandscape {
+                // spec § 13: tabla + panel 400 centrirani kao par, vrhovi
+                // poravnati (isti raspored kao Igra i Zadaci na tabletu).
+                HStack(alignment: .top, spacing: DS.Space.xl) {
+                    board(viewModel, side: side)
+                        .padding(.vertical, DS.Space.xl)
+                    ScrollView {
+                        VStack(spacing: DS.Space.m) {
+                            opponentCard(viewModel)
+                            playerCard(viewModel)
+                            footer(viewModel)
+                        }
+                        .padding(.vertical, DS.Space.xl)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .frame(width: BoardSizing.tabletPanelWidth)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, DS.Space.l)
-                .padding(.vertical, DS.Space.l)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+            } else {
+                ScrollView {
+                    // spec § 7: sadržaj od vrha (`Space.l` ispod zaglavlja), iste
+                    // komponente kao Igra — kartica protivnika, tabla, kartica igrača
+                    // („Na potezu" umesto posebnog reda „Tvoj potez"), pa napomena.
+                    // § 13: kolona široka kao tabla, centrirana.
+                    VStack(spacing: DS.Space.m) {
+                        opponentCard(viewModel)
+                        board(viewModel, side: side)
+                        playerCard(viewModel)
+                        footer(viewModel)
+                    }
+                    .frame(maxWidth: side)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, DS.Space.l)
+                    .padding(.vertical, DS.Space.l)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .safeAreaPadding(.bottom, 24)
+                .frame(width: geo.size.width, height: geo.size.height)
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .safeAreaPadding(.bottom, 24)
-            .frame(width: geo.size.width, height: geo.size.height)
         }
     }
 
-    /// Tabla mora da stane i kad je ekran polozen — bez granice po VISINI
-    /// racun bi je vodio samo po sirini i u pejzazu bi progutala ceo ekran.
-    private func boardSide(in size: CGSize) -> CGFloat {
-        let byWidth = size.width - 2 * DS.Space.l
-        let byHeight = size.height - 220
-        return max(200, min(byWidth, byHeight, DS.maxBoardSide))
+    /// Strana table — zajednička funkcija `BoardSizing.boardSide` (spec § 13).
+    /// Na telefonu zatečena rezerva 220 po visini (bez nje bi tabla u pejzažu
+    /// progutala ceo ekran).
+    private func boardSide(in size: CGSize, isLandscape: Bool) -> CGFloat {
+        BoardSizing.boardSide(width: size.width, height: size.height,
+                              isTablet: isTablet, isLandscape: isLandscape,
+                              phoneHeightReserve: BoardSizing.stepPhoneHeightReserve)
     }
 
     private func board(_ viewModel: GameViewModel, side: CGFloat) -> some View {

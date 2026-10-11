@@ -128,8 +128,10 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
         PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
     }
 
+    val isTablet = isTabletWindow()
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val side = stepBoardSide(maxWidth, maxHeight)
+        val isLandscape = maxWidth > maxHeight
+        val side = stepBoardSide(maxWidth, maxHeight, isTablet, isLandscape)
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = DS.Space.l)) {
             StepHeader(title = loc("Partija"), onClose = onClose) {
                 IconButton(
@@ -161,20 +163,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                 }
             }
 
-            // spec § 7: sadrzaj od vrha, iste komponente kao Igra — kartica
-            // protivnika („Računar · Početnik"), tabla, kartica igraca („Na potezu"
-            // umesto posebnog reda „Tvoj potez"), pa napomena.
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = DS.Space.l, bottom = DS.Space.l),
-                verticalArrangement = Arrangement.spacedBy(DS.Space.m),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                StepOpponentCard(viewModel, activeTheme, activeStyle)
-
+            val board: @Composable () -> Unit = {
                 BoardView(
                     board = viewModel.gameState.board,
                     isFlipped = viewModel.isFlipped,
@@ -190,15 +179,61 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                     onTap = { pos -> viewModel.tap(pos) },
                     modifier = Modifier.size(side)
                 )
-
-                StepPlayerCard(viewModel, activeTheme, activeStyle)
-
+            }
+            val footer: @Composable () -> Unit = {
                 StepGameFooter(
                     viewModel = viewModel,
                     isGameOver = viewModel.isGameOver,
                     onClose = onClose,
                     onAnalyze = { showAnalysis = true }
                 )
+            }
+            if (isTablet && isLandscape) {
+                // spec § 13: tabla + panel 400 centrirani kao par, vrhovi poravnati
+                // (isti raspored kao Igra i Zadaci na tabletu).
+                Row(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(DS.Space.xl, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Box(modifier = Modifier.padding(vertical = DS.Space.xl)) { board() }
+                    Column(
+                        modifier = Modifier
+                            .width(TabletPanelWidth)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = DS.Space.xl),
+                        verticalArrangement = Arrangement.spacedBy(DS.Space.m)
+                    ) {
+                        StepOpponentCard(viewModel, activeTheme, activeStyle)
+                        StepPlayerCard(viewModel, activeTheme, activeStyle)
+                        footer()
+                    }
+                }
+            } else {
+                // spec § 7: sadrzaj od vrha, iste komponente kao Igra — kartica
+                // protivnika („Računar · Početnik"), tabla, kartica igraca („Na potezu"
+                // umesto posebnog reda „Tvoj potez"), pa napomena. § 13: kolona
+                // siroka kao tabla, centrirana.
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = DS.Space.l, bottom = DS.Space.l),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Column(
+                        modifier = Modifier.widthIn(max = side).fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(DS.Space.m),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        StepOpponentCard(viewModel, activeTheme, activeStyle)
+                        board()
+                        StepPlayerCard(viewModel, activeTheme, activeStyle)
+                        footer()
+                    }
+                }
             }
         }
     }

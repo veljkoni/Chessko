@@ -35,8 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
@@ -65,32 +63,35 @@ fun PuzzleView(
 
     val busy = viewModel.phase == PuzzlePhase.LOADING || viewModel.phase == PuzzlePhase.NETWORK_ERROR
 
+    val isTablet = isTabletWindow()
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
-        val side = puzzleBoardSide(maxWidth, maxHeight, isLandscape)
+        val side = puzzleBoardSide(maxWidth, maxHeight, isTablet, isLandscape)
 
         if (isLandscape) {
+            // Tablet (spec § 13): tabla + panel 400 centrirani kao par, vrhovi
+            // poravnati, umetak `Space.xl`; telefon zatecen (`Space.l`, panel do kraja).
+            val inset = if (isTablet) DS.Space.xl else DS.Space.l
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = DS.Space.l),
-                horizontalArrangement = Arrangement.spacedBy(DS.Space.xl),
+                    .padding(horizontal = inset),
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.xl, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.Top
             ) {
                 Box(
                     modifier = Modifier
-                        .padding(vertical = DS.Space.l)
+                        .padding(vertical = inset)
                         .size(side),
                     contentAlignment = Alignment.Center
                 ) {
                     if (busy) PuzzleLoadState(viewModel) else PuzzleBoard(viewModel, Modifier.fillMaxSize())
                 }
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
+                    modifier = (if (isTablet) Modifier.width(TabletPanelWidth) else Modifier.weight(1f))
                         .fillMaxHeight()
                         .verticalScroll(rememberScrollState())
-                        .padding(vertical = DS.Space.l),
+                        .padding(vertical = inset),
                     verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                 ) {
                     PuzzleHeaderRow(viewModel)
@@ -123,14 +124,21 @@ fun PuzzleView(
                             .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
                             .padding(top = DS.Space.s, bottom = DS.Space.l),
-                        verticalArrangement = Arrangement.spacedBy(DS.Space.m),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        PuzzleTagsRow(viewModel)
-                        PuzzleInstruction(viewModel)
-                        PuzzleBoard(viewModel, Modifier.size(side))
-                        Spacer(modifier = Modifier.height(DS.Space.l - DS.Space.m))
-                        PuzzleActionsRow(viewModel)
+                        // spec § 13: kolona siroka kao tabla, centrirana (na
+                        // telefonu je to ionako cela sirina).
+                        Column(
+                            modifier = Modifier.widthIn(max = side).fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(DS.Space.m),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            PuzzleTagsRow(viewModel)
+                            PuzzleInstruction(viewModel)
+                            PuzzleBoard(viewModel, Modifier.size(side))
+                            Spacer(modifier = Modifier.height(DS.Space.l - DS.Space.m))
+                            PuzzleActionsRow(viewModel)
+                        }
                     }
                 }
             }
@@ -139,13 +147,12 @@ fun PuzzleView(
 }
 
 /**
- * Jedna vrednost strane table po ekranu (Task 11 menja samo telo, spec § 13).
- * Portret: sirina; pejzaz: visina — obe do `DS.maxBoardSide`.
+ * Strana table — zajednicka funkcija `boardSide` (spec § 13). Telefon: portret
+ * sirina, pejzaz visina − 2·`Space.l` (zateceno), do 560; tablet do 800.
  */
-internal fun puzzleBoardSide(width: Dp, height: Dp, isLandscape: Boolean): Dp {
-    val available = if (isLandscape) height - DS.Space.l * 2 else width - DS.Space.l * 2
-    return max(200.dp, min(available, DS.maxBoardSide))
-}
+internal fun puzzleBoardSide(width: Dp, height: Dp, isTablet: Boolean, isLandscape: Boolean): Dp =
+    boardSide(width, height, isTablet, isLandscape,
+        phoneHeightReserve = if (isLandscape) DS.Space.l * 2 else 0.dp)
 
 @Composable
 private fun PuzzleBoard(viewModel: PuzzleViewModel, modifier: Modifier) {

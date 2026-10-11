@@ -487,7 +487,7 @@ fun PieceExplorer(viewModel: LearnViewModel) {
                 // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
                 allowsStyleSwipe = false,
                 onTap = { viewModel.tap(it) },
-                modifier = Modifier.widthIn(max = LessonBoardMaxSide).fillMaxWidth()
+                modifier = Modifier.widthIn(max = LocalLessonBoardMaxSide.current).fillMaxWidth()
             )
         }
 
@@ -613,10 +613,10 @@ private fun ExerciseHeader(
     }
 }
 
-/** Lekcijska tabla u kartici: privremena granica (`LessonBoardMaxSide`), centrirana. */
+/** Lekcijska tabla u kartici: granica iz `LocalLessonBoardMaxSide` (spec § 13), centrirana. */
 @Composable
 private fun exerciseBoardModifier(): Modifier = Modifier
-    .widthIn(max = LessonBoardMaxSide)
+    .widthIn(max = LocalLessonBoardMaxSide.current)
     .fillMaxWidth()
     .aspectRatio(1f)
     .clip(RoundedCornerShape(DS.Radius.s))

@@ -29,6 +29,11 @@ struct StepPracticeView: View {
     @State private var started = false
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.verticalSizeClass) private var vSize
+
+    /// Spec § 13: tablet = `regular` u obe ose.
+    private var isTablet: Bool { hSize == .regular && vSize == .regular }
 
     // MARK: - Body
 
@@ -37,26 +42,45 @@ struct StepPracticeView: View {
             AppBackgroundView()
 
             GeometryReader { geo in
-                ScrollView {
-                    // spec § 7: sadržaj od vrha — `Space.l` ispod zaglavlja,
-                    // ništa centrirano po visini.
-                    VStack(spacing: DS.Space.m) {
-                        progressHeader
-                        DSInstructionBox(
-                            text: viewModel.statusMessage,
-                            sideToMove: viewModel.phase.isSolving ? viewModel.playerColor : nil,
-                            tone: viewModel.phase.instructionTone
-                        )
-                        board(side: boardSide(in: geo.size))
-                        footer
+                let isLandscape = geo.size.width > geo.size.height
+                let side = boardSide(in: geo.size, isLandscape: isLandscape)
+                if isTablet && isLandscape {
+                    // spec § 13: korak vežbe u pejzažu na tabletu isto kao Zadaci —
+                    // tabla + panel 400 centrirani kao par, vrhovi poravnati.
+                    HStack(alignment: .top, spacing: DS.Space.xl) {
+                        board(side: side)
+                            .padding(.vertical, DS.Space.xl)
+                        ScrollView {
+                            VStack(spacing: DS.Space.m) {
+                                progressHeader
+                                instructionBox
+                                footer
+                            }
+                            .padding(.vertical, DS.Space.xl)
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .frame(width: BoardSizing.tabletPanelWidth)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, DS.Space.l)
-                    .padding(.vertical, DS.Space.l)
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+                } else {
+                    ScrollView {
+                        // spec § 7: sadržaj od vrha — `Space.l` ispod zaglavlja,
+                        // ništa centrirano po visini. § 13: kolona široka kao tabla.
+                        VStack(spacing: DS.Space.m) {
+                            progressHeader
+                            instructionBox
+                            board(side: side)
+                            footer
+                        }
+                        .frame(maxWidth: side)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, DS.Space.l)
+                        .padding(.vertical, DS.Space.l)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .safeAreaPadding(.bottom, 24)
+                    .frame(width: geo.size.width, height: geo.size.height)
                 }
-                .scrollBounceBehavior(.basedOnSize)
-                .safeAreaPadding(.bottom, 24)
-                .frame(width: geo.size.width, height: geo.size.height)
             }
         }
         .navigationTitle(navigationTitle)
@@ -72,14 +96,22 @@ struct StepPracticeView: View {
 
     // MARK: - Raspored
 
-    /// Tabla mora da stane i kad je ekran polozen: bez ogranicenja po VISINI
-    /// racun bi je vodio samo po sirini, pa bi u pejzazu progutala ceo ekran i
-    /// gurnula traku napretka i status van vidnog polja (ista greska koja je u
-    /// Fazi 1 cetiri puta popravljana na ekranu Igra).
-    private func boardSide(in size: CGSize) -> CGFloat {
-        let byWidth = size.width - 2 * DS.Space.l
-        let byHeight = size.height - 220
-        return max(200, min(byWidth, byHeight, DS.maxBoardSide))
+    private var instructionBox: some View {
+        DSInstructionBox(
+            text: viewModel.statusMessage,
+            sideToMove: viewModel.phase.isSolving ? viewModel.playerColor : nil,
+            tone: viewModel.phase.instructionTone
+        )
+    }
+
+    /// Strana table — zajednička funkcija `BoardSizing.boardSide` (spec § 13).
+    /// Na telefonu ostaje zatečena rezerva od 220 po visini: bez nje bi tabla u
+    /// pejzažu progutala ceo ekran i gurnula traku napretka i status van vidnog
+    /// polja (ista greška koja je u Fazi 1 četiri puta popravljana na ekranu Igra).
+    private func boardSide(in size: CGSize, isLandscape: Bool) -> CGFloat {
+        BoardSizing.boardSide(width: size.width, height: size.height,
+                              isTablet: isTablet, isLandscape: isLandscape,
+                              phoneHeightReserve: BoardSizing.stepPhoneHeightReserve)
     }
 
     private func board(side: CGFloat) -> some View {

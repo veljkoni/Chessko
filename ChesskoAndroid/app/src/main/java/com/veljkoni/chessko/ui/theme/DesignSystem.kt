@@ -6,6 +6,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.veljkoni.chessko.logic.BoardSizing
 
 // MARK: - Dizajn tokeni
 //
@@ -329,8 +330,10 @@ object DS {
     }
 
     /**
-     * Najveca stranica table. Na telefonu se nikad ne dostigne; na tabletu
-     * sprecava da tabla proguta ceo ekran.
+     * Najveca stranica table na TELEFONU (i u uskom prozoru). Tablet ide do
+     * `maxBoardSideTablet` (spec § 13). Obe vrednosti zive u `logic/BoardSizing`
+     * (JVM test); ekrani zovu `BoardSizing.boardSide`.
      */
-    val maxBoardSide: Dp = 560.dp
+    val maxBoardSide: Dp = BoardSizing.PHONE_MAX_SIDE.dp
+    val maxBoardSideTablet: Dp = BoardSizing.TABLET_MAX_SIDE.dp
 }

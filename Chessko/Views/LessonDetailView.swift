@@ -41,6 +41,7 @@ struct LessonDetailView: View {
     }
 
     @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.verticalSizeClass) private var vSize
     /// Položaj oznaka blokova sa tablom (iPad pejzaž) u prostoru skrola.
     @State private var markerY: [Int: CGFloat] = [:]
 
@@ -52,7 +53,8 @@ struct LessonDetailView: View {
                 // Spec § 13: tablet = `regular` širina. Dve kolone (spec § 9) samo u
                 // pejzažu i uz dovoljno visine — iPhone Max u pejzažu je takođe
                 // `regular`, ali bi mu kolona table ispala ~250 pt.
-                let isTablet = hSize == .regular
+                // § 13: tablet = `regular` u obe ose (isti uslov kao Igra/Zadaci).
+                let isTablet = hSize == .regular && vSize == .regular
                 let twoColumn = isTablet && geo.size.width > geo.size.height
                     && geo.size.height >= 480
                     && (document?.blocks.contains { $0.carriesBoard } ?? false)
@@ -60,6 +62,11 @@ struct LessonDetailView: View {
                 if twoColumn, let document {
                     twoColumnLayout(document, size: geo.size)
                 } else {
+                    // Lekcija je dokument koji se čita uspravno, pa se tabla računa
+                    // po portretnom pravilu (telefon do 560, tablet do 800); kolona
+                    // teksta (640) je na tabletu ionako uža.
+                    let boardCap = BoardSizing.boardSide(width: geo.size.width, height: geo.size.height,
+                                                         isTablet: isTablet, isLandscape: false)
                     // Jedna kolona: tekst do 640 (spec § 9), centrirana.
                     ScrollView(.vertical, showsIndicators: true) {
                         content(boardMode: .inline)
@@ -69,6 +76,7 @@ struct LessonDetailView: View {
                             .padding(.bottom, 40)
                     }
                     .safeAreaPadding(.bottom, 24)
+                    .environment(\.lessonBoardMaxSide, boardCap)
                 }
             }
         }
@@ -167,11 +175,13 @@ struct LessonDetailView: View {
     /// tekst skroluje. Desno je tabla bloka do kog je čitalac stigao — poslednja
     /// oznaka iznad sredine vidnog polja. Sve table ostaju u hijerarhiji (napredak
     /// u vežbi ne nestaje kad čitalac skroluje dalje), neaktivne su skrivene.
-    /// TODO(design § 13): širinu kolone table zameniti zajedničkom funkcijom
-    /// strane table (Task 11); do tada `lessonBoardMaxSide`.
+    /// Kolona table: zajednička funkcija `BoardSizing.boardSide` (tablet, pejzaž),
+    /// uz granice ovog rasporeda — tekst bar 480, prostor za dugmad ispod table.
     private func twoColumnLayout(_ document: LessonDocument, size: CGSize) -> some View {
         let gutter = DS.Space.xl
-        let boardCol = max(280, min(size.height - 160, size.width - 480 - gutter * 3, lessonBoardMaxSide))
+        let shared = BoardSizing.boardSide(width: size.width, height: size.height,
+                                           isTablet: true, isLandscape: true)
+        let boardCol = max(280, min(size.height - 160, size.width - 480 - gutter * 3, shared))
         let textCol = min(520, max(480, size.width - boardCol - gutter * 3))
         let boardIndices = document.blocks.indices.filter { document.blocks[$0].carriesBoard }
         let viewportMid = size.height / 2
@@ -199,6 +209,7 @@ struct LessonDetailView: View {
                 .padding(.vertical, DS.Space.l)
             }
             .frame(width: boardCol)
+            .environment(\.lessonBoardMaxSide, boardCol)
         }
         .frame(maxWidth: .infinity)
         .safeAreaPadding(.bottom, 24)

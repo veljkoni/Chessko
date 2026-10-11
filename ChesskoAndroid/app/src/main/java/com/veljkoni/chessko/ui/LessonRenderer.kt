@@ -53,6 +53,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -120,13 +121,14 @@ internal fun LessonBlock.carriesBoard(): Boolean =
 internal val LessonBodyStyle = Type.body.copy(lineHeight = 22.5.sp)
 
 /**
- * TODO(design § 13): privremena granica lekcijske table. Task 11 uvodi jednu
- * funkciju strane table za sve ekrane (tablet 560–800); do tada lekcija nosi
- * isti plafon kao telefon, da tabla na tabletu ne ide do 1336 pt (spec § 9).
- * `BoardWidthCapTest.lessonBoardsUseTheTemporaryCap` cuva da ova konstanta
- * postoji i da je kartice vezbi koriste.
+ * Gornja granica lekcijske table (spec § 9/§ 13). Vrednost racuna
+ * `LessonDetailView` zajednickom funkcijom `boardSide` i spusta je kroz ovaj
+ * `CompositionLocal`; podrazumevano je telefonska granica (`DS.maxBoardSide`).
+ * Bez granice je tabla na tabletu isla do 1336 pt.
+ * `BoardWidthCapTest.lessonBoardsUseTheSharedBoardSide` cuva da je svaka lekcijska
+ * tabla nosi i da je `LessonDetailView` racuna iz `boardSide`.
  */
-internal val LessonBoardMaxSide = DS.maxBoardSide
+internal val LocalLessonBoardMaxSide = staticCompositionLocalOf { DS.maxBoardSide }
 
 /**
  * Razmak IZNAD bloka (spec § 9 „Ritam"): `Space.xl` iznad i ispod razdelnika,
@@ -420,7 +422,7 @@ private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
                     // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
                     allowsStyleSwipe = false,
                     onTap = {},
-                    modifier = Modifier.widthIn(max = LessonBoardMaxSide).fillMaxWidth().aspectRatio(1f)
+                    modifier = Modifier.widthIn(max = LocalLessonBoardMaxSide.current).fillMaxWidth().aspectRatio(1f)
                 )
             }
         }

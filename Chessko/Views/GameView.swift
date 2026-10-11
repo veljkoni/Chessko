@@ -6,6 +6,8 @@ struct GameView: View {
     var viewModel: GameViewModel
     var localization: LocalizationManager = .shared
     @AppStorage("showEvalBar") private var showEvalBar: Bool = true
+    @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.verticalSizeClass) private var vSize
     @State private var showColorPicker = false
     @State private var showNewGameConfirm = false
     @State private var showResignConfirm = false
@@ -121,16 +123,17 @@ struct GameView: View {
 
     // MARK: - Raspored
 
-    /// Strana table. JEDNO mesto za veličinu table na ovom ekranu — Task 11
-    /// (spec § 13) ovde menja telo zajedničkom funkcijom `boardSide`; raspored
-    /// ispod čita samo ovu vrednost. Logika je zatečena (telefon do 560).
+    /// Spec § 13: tablet = `regular` u obe ose (iPhone Max u pejzažu je `regular`
+    /// samo po širini — telefon). Split View / Slide Over = `compact` = telefon.
+    private var isTablet: Bool { hSize == .regular && vSize == .regular }
+
+    /// Strana table — zajednička funkcija `BoardSizing.boardSide` (spec § 13);
+    /// raspored ispod čita samo ovu vrednost. Telefon: širina do 560, u pejzažu
+    /// visina − 2·`Space.s` (zatečeno); tablet: do 800.
     private func boardSide(for size: CGSize, isLandscape: Bool) -> CGFloat {
-        if isLandscape {
-            // Pejzaž je visinski ograničen — strana se računa iz VISINE.
-            return min(max(0, size.height - DS.Space.s * 2), DS.maxBoardSide)
-        }
-        let available = max(0, size.width - DS.Space.s * 2 - evalBarWidth)
-        return min(available, DS.maxBoardSide)
+        BoardSizing.boardSide(width: size.width, height: size.height,
+                              isTablet: isTablet, isLandscape: isLandscape,
+                              phoneHeightReserve: isLandscape ? DS.Space.s * 2 : 0)
     }
 
     private var evalBarWidth: CGFloat { showEvalBar ? EvalBarView.width + DS.Space.xs : 0 }
@@ -175,15 +178,17 @@ struct GameView: View {
         .safeAreaPadding(.bottom, tabBarClearance)
     }
 
-    /// Pejzaž (telefon, spec § 5): tabla i panel 400 kao par, vrhovi poravnati;
-    /// lista poteza ide do dna table.
+    /// Pejzaž (spec § 5, § 13): tabla i panel 400 kao par, centrirani, vrhovi
+    /// poravnati; lista poteza ide do dna table. Na tabletu razmaci `Space.xl`
+    /// (isti koje `BoardSizing` oduzima), na telefonu zatečeni `Space.l`/`Space.s`.
     @ViewBuilder
     private func landscapeLayout(size: CGSize) -> some View {
         let side = boardSide(for: size, isLandscape: true)
+        let gap = isTablet ? DS.Space.xl : DS.Space.l
         let panelWidth = max(0, min(Self.landscapePanelWidth,
-                                    size.width - side - evalBarWidth - DS.Space.l * 3))
+                                    size.width - side - evalBarWidth - gap * 3))
 
-        HStack(alignment: .top, spacing: DS.Space.l) {
+        HStack(alignment: .top, spacing: gap) {
             boardRow(side: side)
 
             // Lista dobija ostatak visine panela (do dna table); kad gornji deo ne
@@ -208,7 +213,7 @@ struct GameView: View {
             .scrollBounceBehavior(.basedOnSize)
             .frame(width: panelWidth, height: side)
         }
-        .padding(.vertical, DS.Space.s)
+        .padding(.vertical, isTablet ? DS.Space.xl : DS.Space.s)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 

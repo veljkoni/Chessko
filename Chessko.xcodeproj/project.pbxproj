@@ -44,6 +44,7 @@
 		D5A1C0DE00000000000000G1 /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A1C0DE00000000000000G2 /* GameComponents.swift */; };
 		10CA7A1000000000000000T1 /* AnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000T2 /* AnalysisView.swift */; };
 		10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000M2 /* MoveAnalysis.swift */; };
+		B0A2D51000000000000000B1 /* BoardSizing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A2D51000000000000000B2 /* BoardSizing.swift */; };
 		10CA7A1000000000000000Q1 /* AnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */; };
 		10CA7A1000000000000000C5 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C6 /* Content */; };
 		89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */; };
@@ -97,6 +98,7 @@
 		D5A1C0DE00000000000000G2 /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000T2 /* AnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisView.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000M2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
+		B0A2D51000000000000000B2 /* BoardSizing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSizing.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisViewModel.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000C6 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
 		5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
@@ -199,6 +201,7 @@
 				10CA7A1000000000000000L2 /* LessonContent.swift */,
 				10CA7A1000000000000000U2 /* Curriculum.swift */,
 				10CA7A1000000000000000M2 /* MoveAnalysis.swift */,
+				B0A2D51000000000000000B2 /* BoardSizing.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -361,6 +364,7 @@
 				D5A1C0DE00000000000000G1 /* GameComponents.swift in Sources */,
 				10CA7A1000000000000000T1 /* AnalysisView.swift in Sources */,
 				10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */,
+				B0A2D51000000000000000B1 /* BoardSizing.swift in Sources */,
 				89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */,
 				B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,

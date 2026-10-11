@@ -1,5 +1,6 @@
 package com.veljkoni.chessko
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -7,10 +8,10 @@ import java.io.File
 /**
  * Igracka tabla mora imati gornju granicu sirine, inace na tabletu proguta ceo ekran.
  *
- * iOS istu granicu (`DS.maxBoardSide`, 560) primenjuje na pet mesta:
- * GameView.swift:35 i :105, PuzzleView.swift:296, StepGameView.swift:174,
- * StepPracticeView.swift:84. Android ih ima cetiri fajla jer su portret i pejzaz
- * tab-a Igra oba u MainActivity.kt.
+ * Od Task-a 11 (spec § 13) granicu nosi jedna funkcija — `logic/BoardSizing`
+ * (telefon 560 = `DS.maxBoardSide`, tablet 800), ista kao iOS `Models/BoardSizing.swift`.
+ * Android ima cetiri fajla sa igrackom tablom jer su portret i pejzaz tab-a Igra
+ * oba u MainActivity.kt.
  *
  * Do kompozicije se iz JVM testa ne moze doci (nema `ViewModelStore`, nema uredjaja),
  * pa se cita izvor — isti obrazac kao MainActivitySoundWiringTest.
@@ -38,43 +39,58 @@ class BoardWidthCapTest {
         "src/main/java/com/veljkoni/chessko/ui/StepPracticeView.kt"
     )
 
+    /** Poziv zajednicke funkcije `boardSide(` — ne `gameBoardSide(`/`stepBoardSide(`. */
+    private val sharedCall = Regex("(?<![A-Za-z_])boardSide\\(")
+
+    /**
+     * Task 11 (dizajnerski pregled, spec § 13): JEDNA funkcija strane table za sve
+     * ekrane. Svesno izmenjeno — ranije je svaki ekran morao da nosi `DS.maxBoardSide`
+     * (560); sada granicu (telefon 560, tablet 800) nosi samo `logic/BoardSizing`, a
+     * ekran mora da je dobije iz nje. `DS.maxBoardSide` na ekranu je zabranjen: to bi
+     * bio drugi izvor istine (tablet bi opet stao na 560). Zastita nije oslabljena —
+     * premestena je na jedno mesto koje pokriva `BoardSizingTest`.
+     */
     @Test
-    fun everyPlayerBoardIsWidthCapped() {
+    fun everyPlayerBoardUsesTheSharedBoardSide() {
         for (path in playerScreens) {
             val src = read(path)
-            // Task 5 (dizajnerski pregled): koraci Puta dele JEDNU funkciju strane
-            // table (`stepBoardSide`, definisana u `StepPracticeView.kt`), da je
-            // Task 11 menja na jednom mestu. `StepGameView` je zato poziva umesto
-            // da sam nosi `DS.maxBoardSide`; sama funkcija mora da je nosi (ispod).
             assertTrue(
-                "$path crta tablu, pa mora da koristi DS.maxBoardSide (samo StepGameView sme kroz deljeni stepBoardSide)",
-                "DS.maxBoardSide" in src ||
+                "$path crta tablu, pa mora da zove zajednicku boardSide( (StepGameView sme kroz stepBoardSide)",
+                sharedCall.containsMatchIn(src) ||
                     (path.endsWith("/StepGameView.kt") && "stepBoardSide(" in src)
             )
+            assertFalse(
+                "$path ne sme da nosi sopstvenu granicu DS.maxBoardSide — granica je u BoardSizing",
+                "DS.maxBoardSide" in src
+            )
         }
-        val helper = read("src/main/java/com/veljkoni/chessko/ui/StepPracticeView.kt")
+        val stepHelper = read("src/main/java/com/veljkoni/chessko/ui/StepPracticeView.kt")
             .substringAfter("fun stepBoardSide(", "")
-            .substringBefore("\n}")
-        assertTrue("stepBoardSide mora da ogranici tablu sa DS.maxBoardSide", "DS.maxBoardSide" in helper)
+        assertTrue("stepBoardSide mora da zove zajednicku boardSide(", sharedCall.containsMatchIn(stepHelper.substringBefore("\n\n")))
+
+        val wrapper = read("src/main/java/com/veljkoni/chessko/ui/BoardLayout.kt")
+        assertTrue("ui/BoardLayout.kt boardSide mora da delegira na BoardSizing.boardSide", "BoardSizing.boardSide(" in wrapper)
+
+        val sizing = read("src/main/java/com/veljkoni/chessko/logic/BoardSizing.kt")
+        assertTrue("BoardSizing mora da ogranici telefon", "coerceIn(0f, PHONE_MAX_SIDE)" in sizing)
+        assertTrue("BoardSizing mora da ogranici tablet", "coerceIn(0f, TABLET_MAX_SIDE)" in sizing)
     }
 
     /**
-     * Svesno obrnuto u dizajnerskom pregledu (Task 8, spec § 9/§ 13). Ovde je stajao
-     * `lessonBoardsAreNotCapped` — tvrdnja da lekcijskim tablama granica ne treba jer
-     * su „vec ogranicene sirinom stranice". Na tabletu to nije bilo tacno (tabla do
-     * 1336 pt, snimci 87/95/110/119), pa spec trazi granicu i za lekciju.
-     *
-     * Do Task-a 11 (jedna funkcija strane table za sve ekrane) granica je privremena
-     * konstanta `LessonBoardMaxSide` u `LessonRenderer.kt` (= `DS.maxBoardSide`), a
-     * svaka lekcijska tabla je mora nositi. Test tvrdi oba: da konstanta postoji i
-     * izvodi se iz `DS.maxBoardSide`, i da je svaki fajl sa lekcijskom tablom koristi.
+     * Lekcija (spec § 9/§ 13). Do Task-a 11 je ovde stajao
+     * `lessonBoardsUseTheTemporaryCap` (privremena konstanta = `DS.maxBoardSide`);
+     * pre njega `lessonBoardsAreNotCapped`, oboren snimcima 87/95/110/119 (tabla do
+     * 1336 pt na tabletu). Sada granicu racuna `LessonDetailView` zajednickom
+     * funkcijom i spusta je kroz `LocalLessonBoardMaxSide`; svaka lekcijska tabla je
+     * nosi.
      */
     @Test
-    fun lessonBoardsUseTheTemporaryCap() {
-        val renderer = read("src/main/java/com/veljkoni/chessko/ui/LessonRenderer.kt")
+    fun lessonBoardsUseTheSharedBoardSide() {
+        val detail = read("src/main/java/com/veljkoni/chessko/ui/LessonDetailView.kt")
+        assertTrue("LessonDetailView mora da racuna granicu iz boardSide(", sharedCall.containsMatchIn(detail))
         assertTrue(
-            "LessonRenderer.kt mora da definise LessonBoardMaxSide iz DS.maxBoardSide",
-            Regex("val\\s+LessonBoardMaxSide\\s*=\\s*DS\\.maxBoardSide").containsMatchIn(renderer)
+            "LessonDetailView mora da spusti granicu kroz LocalLessonBoardMaxSide",
+            "LocalLessonBoardMaxSide provides" in detail
         )
         for (path in listOf(
             "src/main/java/com/veljkoni/chessko/ui/LearnView.kt",
@@ -82,8 +98,8 @@ class BoardWidthCapTest {
         )) {
             val src = read(path)
             assertTrue(
-                "$path crta lekcijsku tablu, pa mora da je ogranici sa LessonBoardMaxSide",
-                "widthIn(max = LessonBoardMaxSide)" in src
+                "$path crta lekcijsku tablu, pa mora da je ogranici sa LocalLessonBoardMaxSide",
+                "widthIn(max = LocalLessonBoardMaxSide.current)" in src
             )
         }
     }

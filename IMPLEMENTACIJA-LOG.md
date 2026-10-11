@@ -1338,7 +1338,125 @@ iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; And
 
 ## Task 11 — Tablet (§ 13, § 17 avatar)
 
-_(popunjava Task 11)_
+### Urađeno po stavkama § 13 (obe platforme, obe teme — samo raspored, nijedna boja)
+
+- [x] **Jedna funkcija strane table.** iOS `Chessko/Models/BoardSizing.swift` (Foundation-only,
+  u `Package.swift` i ručno u `project.pbxproj`), Android `logic/BoardSizing.kt` (bez `android.*`
+  / Compose uvoza) + tanak Dp omotač `ui/BoardLayout.kt` (`boardSide(...)`, `isTabletWindow()`,
+  `TabletPanelWidth`). Telo je formula iz § 13 doslovno (tablet portret `min(w−32−8, h−top−bottom−264)`,
+  pejzaž `min(h−top−48, w−rail−400−72−8)`, plafon 800). Zamenjeno svih šest per-ekran funkcija:
+  iOS `GameView.boardSide`, `PuzzleView.boardSide`, `StepPracticeView.boardSide`,
+  `StepGameView.boardSide`; Android `gameBoardSide`, `puzzleBoardSide`, `stepBoardSide` (imena
+  ostala kao tanki omotači, telo zove `boardSide`). Lekcija: privremena konstanta
+  (`lessonBoardMaxSide` / `LessonBoardMaxSide`) zamenjena okruženjem `\.lessonBoardMaxSide`
+  (iOS `EnvironmentKey` + `LessonBoardCap` modifier) / `LocalLessonBoardMaxSide`
+  (`staticCompositionLocalOf`), koje `LessonDetailView` računa iz `boardSide` (jedna kolona:
+  portretno pravilo; dve kolone: tablet-pejzaž pravilo uz zatečene granice rasporeda 480/160/280).
+  **Analiza nema tablu** ni na jednoj platformi (dodir na potez vodi u pregled na ekranu Igra) —
+  nema šta da se menja.
+- [x] **Testovi tabele § 13** (`swift test` `BoardSizingTests.swift`, 8; JVM `BoardSizingTest.kt`, 8):
+  Pixel Tablet 760 / 664, iPad Pro 13" 800 / 800, iPad 11" 794 / 688, telefon ≤ 560, telefon u
+  pejzažu ograničen visinom, rezerva koraka 220, plafon 800 i nikad < 0, `isTabletWindow`
+  (Android), `DS.maxBoardSide`/`DS.maxBoardSideTablet` = konstante iz `BoardSizing`.
+  **Formula daje sve vrednosti iz tabele**, ali samo uz hrom koji spec ne navodi; pretpostavljeno
+  (i zapisano u testu): Pixel Tablet `chromeTop 88` (status 24 + traka 64), `chromeBottom 80`,
+  `railWidth 80` u pejzažu; iPad `chromeTop 98`, `chromeBottom 20`. **98 je izvedeno iz same
+  tabele** (iPad 11" pejzaž 688 = 834 − 98 − 48), ne izmereno; iPad Pro 13" daje 800 za svaki
+  `chromeTop ≤ 184`. Pixel portret 760 važi za `top+bottom ≤ 256`.
+- [x] **Tablet = prozor ≥ 600** — iOS `horizontalSizeClass == .regular && verticalSizeClass == .regular`;
+  Android `screenWidthDp ≥ 600 && screenHeightDp ≥ 480` (isto čitanje kao prag rail-a, Task 3; bez
+  `material3-window-size-class`). Vidi Odluke.
+- [x] **Portret:** kolona široka kao tabla (Igra: + eval traka), centrirana; sadržaj od vrha,
+  višak visine upija lista poteza (Igra, Task 4), inače ostaje ispod. iOS Igra je kolonu već imala
+  (`frame(maxWidth: side + eval)`); dodato za Zadatke i oba koraka na obe platforme i za Android Igru
+  (kartice, akcije i lista poteza više ne idu celom širinom, „776 dp").
+- [x] **Pejzaž na tabletu:** tabla + panel 400 centrirani kao par, vrhovi poravnati, umetak i
+  razmak `Space.xl` (isti koje formula oduzima). Igra (obe; panel: kartice, akcije, lista do dna
+  table — zatečeno), Zadaci (obe; panel fiksno 400 umesto „ostatak širine"), korak vežbe i korak
+  partije (obe; do sada jedna kolona u oba položaja). Telefon u pejzažu: zatečeni raspored.
+- [x] **Lekcija / Put:** Put 720 (Task 7) i lekcija 640 + dve kolone (Task 8) nisu dirani osim
+  table, koja sada ide kroz zajedničku funkciju.
+- [x] **Android `NavigationRail` ≥ 840** — Task 3; prostor ekrana je već bez rail-a, pa ekrani
+  zovu funkciju sa `railWidth = 0`.
+- [x] **Figure do 100 pt, tačke rastu sa poljem, prsten šaha 2 pt** — provereno, bez izmene:
+  tačka legalnog poteza je već `0,28 × polje` (iOS `SquareView.swift` `legalMoveIndicator`,
+  Android `BoardView.kt` `fillMaxSize(0.28f)`), prsten uzimanja `0,08 × polje`, figura `polje − 5 %`
+  sa svake strane; prsten šaha je fiksnih 2 pt / 2 dp. Na 800 je polje 100.
+- [x] **CLAUDE.md „Poznata ograničenja":** mrtav `.widthIn(max = 500.dp)` u portretu Igre — više ne
+  postoji (uklonjen sa Task-om 4, grep 0). „Tabla u portretu uz vrh, prazna donja polovina" —
+  rešeno po § 13 („nikad centriranje po visini"): sadržaj od vrha, lista poteza upija ostatak visine
+  (Task 4), kolona je sada i po širini kao tabla. Task 13 prepisuje te stavke u `CLAUDE.md`.
+- [~] **Doslednost leve ivice** — Igra, Zadaci i koraci koriste istu funkciju, isto centriranje i
+  iste umetke, pa je strana table ista; Igra ima eval traku levo od table (iOS 14 pt, Android 12 dp),
+  pa je njena tabla u portretu pomerena udesno za pola trake (~6–7) u odnosu na Zadatke. Vrh se
+  razlikuje po zaglavlju ekrana (kartica protivnika / tagovi / traka napretka) — po § 13 rasporedu.
+  Nije poravnavano do piksela.
+
+### § 17 — prazan avatar „Ti" (snimak 44)
+
+- **Uzrok nije u avataru.** Avatar (iOS `DSPlayerCard`, Android `PlayerCard`) uvek crta
+  `ChessPiece(king, boja igrača)` — ne čita poziciju, pa „pozicija bez belog kralja" (CLAUDE.md
+  o snimku 44) ne može da ga isprazni. Na snimku 44 je prazan i **ceo beli prvi red table** (isti
+  `piece_white_*.svg` fajlovi, isti Coil), a na pravom tabletu (snimci 92, 102, 107 — `real`) i
+  avatar i beli red se crtaju. Snimak 44 je pravljen na telefonu sa `wm size`/`wm density`
+  promenjenim u toku rada (CLAUDE.md, Task 5b) — dakle neuspelo učitavanje SVG-a u toj sesiji,
+  ne logika avatara ni pozicija. Bez emulatora se ne može reprodukovati.
+- **Urađeno:** Android `PlayerCard` sada beleži grešku učitavanja avatara (`AsyncImage(onError =
+  Log.w(...))`) umesto da prođe tiho — sledeći put je uzrok u logcat-u. iOS (`PieceImageView`,
+  asset katalog) nema isti put učitavanja; nije diran.
+- Task 13 (vizuelna provera): otvoriti Igru na tabletu sa simuliranom geometrijom i pogledati
+  logcat `PlayerCard`.
+
+### Odluke
+
+- **Telefon „bez promene" ≠ doslovna telefonska grana formule.** Spec za telefon piše samo
+  `min(w − 2·Space.l, 560)`; u pejzažu bi to dalo 560 na visini ~390 (preliva se, a tabela kaže
+  „bez promene"). Funkcija zato dobija `phoneHeightReserve` (samo telefon): u pejzažu je tabla
+  uvek ograničena visinom minus rezerva, u portretu samo kad je rezerva > 0. Rezerve su zatečene
+  vrednosti ekrana: Igra pejzaž `2·Space.s` (iOS; Android prostor je već umanjen), Zadaci pejzaž
+  `2·Space.l`, koraci 220 u oba položaja. Telefonski portret Igre je sada doslovno `w − 32`
+  (bio `w − 16 − eval`, iOS `w − 30`, Android `w − 28`) — razlika 2–4 pt, ista leva ivica na svim
+  ekranima.
+- **Tablet zahteva i visinu ≥ 480 (Android) / `verticalSizeClass == .regular` (iOS).** Telefon u
+  pejzažu je ≥ 600 dp širok (M3 „Expanded"), iPhone Max u pejzažu je `regular` po širini; bez
+  dodatnog uslova bi dobili tabletni raspored sa tablom ~290 i panelom 400 — gore od zatečenog, a
+  tabela kaže „iPhone pejzaž: bez promene". Isti uslov je Task 8 uveo za dve kolone lekcije; sada
+  ga dele svi ekrani.
+- **Ekrani zovu funkciju sa veličinom svog prostora** (GeometryReader / BoxWithConstraints, već bez
+  navigacione trake, trake tabova i rail-a), pa `chromeTop/Bottom/railWidth = 0` na pozivnim
+  mestima; parametri postoje za reprodukciju tabele u prozorskim veličinama. Posledica: stvarne
+  vrednosti u aplikaciji zavise od stvarnog hroma (npr. Android Igra u pejzažu na Pixel Tablet-u
+  nema traku iznad table — zaglavlje je u panelu — pa daje ~700 umesto 664 iz tabele; obe vrednosti
+  su u opsegu 560–800).
+- **Android koraci na tabletu prosleđuju `chromeTop = 56`** (`StepHeaderMinHeight`): zaglavlje
+  koraka („Zatvori") je na Androidu u istom prostoru iznad table, dok je na iOS-u u navigacionoj
+  traci (van GeometryReader-a). Android Igra u portretu zaglavlje ne prosleđuje — portretna granica
+  po visini (`h − 264`) na tabletu nije dostižna (Pixel Tablet ~1176 − 264 = 912 > 760).
+- **Android Igra pejzaž na tabletu:** umetak `Space.xl` ide redu, ne `BoxWithConstraints`-u —
+  formula već oduzima `2·Space.xl`/`3·Space.xl` od neumanjenog prostora (inače bi se oduzimalo dvaput).
+- **Donja granica 200 iz starih funkcija Zadataka/koraka je uklonjena** (sada `max(0, …)`): „nikad
+  ne prelivati" ima prednost; pogađa samo prozore uže od ~232.
+- **`DS.maxBoardSide` ostaje 560** (telefon) i sada se izvodi iz `BoardSizing.phoneMaxSide` /
+  `PHONE_MAX_SIDE`; dodat `DS.maxBoardSideTablet` (800). Nijedan ekran ih više ne koristi direktno.
+- **`BoardWidthCapTest` svesno izmenjen** (ne ugašen): `everyPlayerBoardIsWidthCapped` →
+  `everyPlayerBoardUsesTheSharedBoardSide` — svaki ekran mora da zove zajedničku `boardSide(`
+  (`StepGameView` kroz `stepBoardSide`), i **ne sme** da nosi `DS.maxBoardSide` (drugi izvor istine
+  bi tablet vratio na 560); omotač mora da delegira na `BoardSizing.boardSide(`, a `BoardSizing`
+  mora da nosi oba plafona. `lessonBoardsUseTheTemporaryCap` → `lessonBoardsUseTheSharedBoardSide`
+  (`LessonDetailView` računa iz `boardSide(` i spušta kroz `LocalLessonBoardMaxSide`; obe lekcijske
+  datoteke ga nose). Vrednosti same pokriva `BoardSizingTest`.
+
+### TODO(design § N)
+- Uklonjena oba `TODO(design § 13)` iz Task-a 8 (lekcijska granica i kolona table u dve kolone).
+  Novih nema.
+
+### Neurađeno / za kasnije
+- Vizuelna provera (Task 13 / vlasnik): iPad i Pixel Tablet u oba položaja — par tabla + panel,
+  kolona u portretu, korak vežbe i partije u pejzažu (novi raspored), lekcija u dve kolone.
+- Leva ivica Igre naspram Zadataka nije poravnata za pola eval trake (vidi gore).
+
+### Novi stringovi
+- Nijedan.
 
 ## Task 12 — Teme table i stilovi figura (§ 11, § 12 + brisanje)
 

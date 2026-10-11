@@ -20,8 +20,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.veljkoni.chessko.logic.BoardSizing
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.models.CurriculumStep
 import com.veljkoni.chessko.models.StepKind
@@ -78,8 +77,10 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
     // ziv (nije slucaj danas), red se ponovo puni za novi korak.
     LaunchedEffect(step.id) { viewModel.startStepPractice(step) }
 
+    val isTablet = isTabletWindow()
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val side = stepBoardSide(maxWidth, maxHeight)
+        val isLandscape = maxWidth > maxHeight
+        val side = stepBoardSide(maxWidth, maxHeight, isTablet, isLandscape)
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = DS.Space.l)) {
             StepHeader(title = stepTitle(step), onClose = onClose)
 
@@ -119,27 +120,7 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                     val activeStyle = remember(settings.pieceStyle) {
                         PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
                     }
-                    // spec § 7: sadrzaj od vrha (`Space.l` ispod zaglavlja) — ranije
-                    // je tabla bila centrirana u `weight(1f)` pa je iznad nje ostajalo
-                    // ~300 dp praznog.
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
-                            .padding(top = DS.Space.l, bottom = DS.Space.l),
-                        verticalArrangement = Arrangement.spacedBy(DS.Space.m),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        ProgressHeader(
-                            progress = viewModel.stepProgress,
-                            requiresFlawless = viewModel.stepRequiresFlawless,
-                            finished = isStepFinished(viewModel.stepProgress, viewModel.stepFailed)
-                        )
-
-                        // Isti uputni okvir kao Zadaci (spec § 7).
-                        PuzzleInstruction(viewModel)
-
+                    val board: @Composable () -> Unit = {
                         BoardView(
                             board = viewModel.gameState.board,
                             isFlipped = viewModel.isFlipped,
@@ -155,8 +136,60 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                             onTap = { pos -> viewModel.tap(pos) },
                             modifier = Modifier.size(side)
                         )
-
-                        StepFooter(progress = viewModel.stepProgress, stepFailed = viewModel.stepFailed, onClose = onClose)
+                    }
+                    val progressHeader: @Composable () -> Unit = {
+                        ProgressHeader(
+                            progress = viewModel.stepProgress,
+                            requiresFlawless = viewModel.stepRequiresFlawless,
+                            finished = isStepFinished(viewModel.stepProgress, viewModel.stepFailed)
+                        )
+                    }
+                    if (isTablet && isLandscape) {
+                        // spec § 13: korak vezbe u pejzazu na tabletu isto kao Zadaci —
+                        // tabla + panel 400 centrirani kao par, vrhovi poravnati.
+                        Row(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(DS.Space.xl, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Box(modifier = Modifier.padding(vertical = DS.Space.xl)) { board() }
+                            Column(
+                                modifier = Modifier
+                                    .width(TabletPanelWidth)
+                                    .fillMaxHeight()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(vertical = DS.Space.xl),
+                                verticalArrangement = Arrangement.spacedBy(DS.Space.m)
+                            ) {
+                                progressHeader()
+                                PuzzleInstruction(viewModel)
+                                StepFooter(progress = viewModel.stepProgress, stepFailed = viewModel.stepFailed, onClose = onClose)
+                            }
+                        }
+                    } else {
+                        // spec § 7: sadrzaj od vrha (`Space.l` ispod zaglavlja) — ranije
+                        // je tabla bila centrirana u `weight(1f)` pa je iznad nje ostajalo
+                        // ~300 dp praznog. § 13: kolona siroka kao tabla, centrirana.
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .padding(top = DS.Space.l, bottom = DS.Space.l),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Column(
+                                modifier = Modifier.widthIn(max = side).fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(DS.Space.m),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                progressHeader()
+                                // Isti uputni okvir kao Zadaci (spec § 7).
+                                PuzzleInstruction(viewModel)
+                                board()
+                                StepFooter(progress = viewModel.stepProgress, stepFailed = viewModel.stepFailed, onClose = onClose)
+                            }
+                        }
                     }
                 }
             }
@@ -165,15 +198,19 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
 }
 
 /**
- * Jedna vrednost strane table za ekrane koraka (Task 11 menja samo telo, spec § 13).
- * Sirina do `DS.maxBoardSide`, uz granicu po visini da tabla u pejzazu ne proguta
- * ceo ekran (isti racun kao iOS `boardSide(in:)`, rezerva 220).
+ * Strana table za ekrane koraka — zajednicka funkcija `boardSide` (spec § 13).
+ * Na telefonu ostaje zatecena rezerva 220 po visini, da tabla u pejzazu ne proguta
+ * ceo ekran (isti racun kao iOS). Deli je `StepGameView`.
  */
-internal fun stepBoardSide(width: Dp, height: Dp): Dp {
-    val byWidth = width - DS.Space.l * 2
-    val byHeight = height - 220.dp
-    return max(200.dp, min(min(byWidth, byHeight), DS.maxBoardSide))
-}
+internal fun stepBoardSide(width: Dp, height: Dp, isTablet: Boolean, isLandscape: Boolean): Dp =
+    boardSide(width, height, isTablet, isLandscape,
+        // Na tabletu `StepHeader` stoji iznad table u istom prostoru (hrom po § 13);
+        // na telefonu ga zatecena rezerva 220 vec ukljucuje.
+        chromeTop = if (isTablet) StepHeaderMinHeight else 0.dp,
+        phoneHeightReserve = BoardSizing.STEP_PHONE_HEIGHT_RESERVE.dp)
+
+/** Najmanja visina zaglavlja koraka (`StepHeader`). */
+internal val StepHeaderMinHeight = 56.dp
 
 /**
  * Zaglavlje ekrana koraka: naslov + „Zatvori" kao tekst-dugme u `accent`
@@ -183,7 +220,7 @@ internal fun stepBoardSide(width: Dp, height: Dp): Dp {
 internal fun StepHeader(title: String, onClose: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+        modifier = Modifier.fillMaxWidth().heightIn(min = StepHeaderMinHeight)
     ) {
         Text(
             text = title,

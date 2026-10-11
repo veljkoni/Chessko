@@ -11,6 +11,11 @@ struct PuzzleView: View {
     @State private var bounceCalendar = 0
     @State private var bounceCheckmark = 0
     @State private var bounceRight = 0
+    @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.verticalSizeClass) private var vSize
+
+    /// Spec § 13: tablet = `regular` u obe ose.
+    private var isTablet: Bool { hSize == .regular && vSize == .regular }
 
     var body: some View {
         NavigationStack {
@@ -39,11 +44,14 @@ struct PuzzleView: View {
                         if isLandscape {
                             // spec § 7: od vrha — tabla levo, desno tagovi →
                             // uputstvo → radnja; ništa centrirano po visini.
+                            // Tablet (spec § 13): tabla + panel 400 centrirani kao
+                            // par, vrhovi poravnati, umetak `Space.xl`.
+                            let inset = isTablet ? DS.Space.xl : DS.Space.l
                             HStack(alignment: .top, spacing: DS.Space.xl) {
-                                // `side` je već visina − 2 × `Space.l`; isti umetak
+                                // Telefon: `side` je visina − 2 × `Space.l`; isti umetak
                                 // gore i dole kao Android pejzaž.
                                 board(side: side)
-                                    .padding(.vertical, DS.Space.l)
+                                    .padding(.vertical, inset)
 
                                 ScrollView {
                                     VStack(alignment: .leading, spacing: DS.Space.m) {
@@ -54,11 +62,12 @@ struct PuzzleView: View {
                                         actionButtons
                                             .padding(.top, DS.Space.xs)
                                     }
-                                    .padding(.vertical, DS.Space.l)
+                                    .padding(.vertical, inset)
                                 }
                                 .scrollBounceBehavior(.basedOnSize)
+                                .frame(maxWidth: isTablet ? BoardSizing.tabletPanelWidth : .infinity)
                             }
-                            .padding(.horizontal, DS.Space.l)
+                            .padding(.horizontal, inset)
                             .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
                         } else {
                             ScrollView {
@@ -267,13 +276,13 @@ struct PuzzleView: View {
 
     // MARK: - Main Content
 
-    /// Jedna vrednost strane table po ekranu (Task 11 menja samo telo).
-    /// Portret: širina (do `DS.maxBoardSide`); pejzaž: visina.
+    /// Strana table — zajednička funkcija `BoardSizing.boardSide` (spec § 13).
+    /// Telefon: portret širina, pejzaž visina − 2·`Space.l` (zatečeno), do 560;
+    /// tablet do 800.
     private func boardSide(in size: CGSize, isLandscape: Bool) -> CGFloat {
-        let available = isLandscape
-            ? size.height - 2 * DS.Space.l
-            : size.width - 2 * DS.Space.l
-        return max(200, min(available, DS.maxBoardSide))
+        BoardSizing.boardSide(width: size.width, height: size.height,
+                              isTablet: isTablet, isLandscape: isLandscape,
+                              phoneHeightReserve: isLandscape ? DS.Space.l * 2 : 0)
     }
 
     private func board(side: CGFloat) -> some View {
@@ -309,6 +318,10 @@ struct PuzzleView: View {
             actionButtons
                 .padding(.top, DS.Space.l - DS.Space.m)
         }
+        // spec § 13: kolona široka kao tabla, centrirana (na telefonu je to
+        // ionako cela širina minus `Space.l`).
+        .frame(maxWidth: side)
+        .frame(maxWidth: .infinity)
         .padding(.horizontal, DS.Space.l)
         .padding(.top, DS.Space.l)
         .padding(.bottom, DS.Space.l)

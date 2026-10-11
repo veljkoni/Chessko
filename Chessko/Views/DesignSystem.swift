@@ -67,9 +67,11 @@ enum DS {
         static let xl: CGFloat = 24
     }
 
-    /// Najveca stranica table. Na iPhone-u se nikad ne dostigne; na iPad-u
-    /// sprecava da tabla proguta ceo ekran i da raspored izgleda kao uvecan telefon.
-    static let maxBoardSide: CGFloat = 560
+    /// Najveca stranica table na TELEFONU (i u uskom prozoru na tabletu). Tablet
+    /// ide do `maxBoardSideTablet` (spec § 13). Obe vrednosti zive u
+    /// `BoardSizing` (testirano u `swift test`); ekrani zovu `BoardSizing.boardSide`.
+    static let maxBoardSide: CGFloat = BoardSizing.phoneMaxSide
+    static let maxBoardSideTablet: CGFloat = BoardSizing.tabletMaxSide
 
     // MARK: Radijusi
 

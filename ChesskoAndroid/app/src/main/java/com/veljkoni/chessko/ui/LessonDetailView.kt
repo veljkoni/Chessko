@@ -26,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -130,15 +131,20 @@ fun LessonDetailView(
                 .padding(horizontal = DS.Space.xs)
         )
 
+        val isTablet = isTabletWindow()
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            // Spec § 13: tablet = sirina prozora >= 600. Dve kolone (spec § 9) samo
-            // u pejzazu I uz dovoljno visine: telefon u pejzazu je takodje >= 600
-            // sirok, ali bi mu kolona table ispala ~220 dp — tu vazi jedna kolona.
-            val isTablet = maxWidth >= 600.dp
+            // Spec § 13: tablet = prozor >= 600 x 480 dp (`isTabletWindow`, isto kao
+            // Igra/Zadaci). Dve kolone (spec § 9) samo u pejzazu I uz dovoljno visine:
+            // telefon u pejzazu je >= 600 sirok, ali nizak — tu vazi jedna kolona.
             val twoColumn = doc != null && isTablet && maxWidth > maxHeight &&
                 maxHeight >= 480.dp && doc.blocks.any { it.carriesBoard() }
 
             if (!twoColumn) {
+                // Lekcija je dokument koji se cita uspravno, pa se tabla racuna po
+                // portretnom pravilu (telefon do 560, tablet do 800); kolona teksta
+                // (640) je na tabletu ionako uza.
+                val boardCap = boardSide(maxWidth, maxHeight, isTablet, isLandscape = false)
+                CompositionLocalProvider(LocalLessonBoardMaxSide provides boardCap) {
                 // Jedna kolona: tekst do 640 (spec § 9 „Tablet: tekst u koloni do
                 // 640"), centrirana; na telefonu granica nije dostizna.
                 Column(
@@ -155,14 +161,16 @@ fun LessonDetailView(
                         LessonContent(doc, explorerViewModel, LessonBoardMode.Inline, onComplete)
                     }
                 }
+                }
             } else {
                 // Tablet pejzaz (spec § 9): tekst 480–520 levo, tabla desno i
                 // lepljiva dok tekst skroluje. Desno stoji tabla bloka do kog je
                 // citalac stigao — poslednja oznaka iznad sredine vidnog polja.
-                // TODO(design § 13): sirinu kolone table zameniti zajednickom
-                // funkcijom strane table (Task 11); do tada `LessonBoardMaxSide`.
+                // Kolona table: zajednicka funkcija `boardSide` (tablet, pejzaz), uz
+                // granice ovog rasporeda — tekst bar 480, prostor za dugmad ispod.
                 val gutter = DS.Space.xl
-                val boardCol = minOf(maxHeight - 160.dp, maxWidth - 480.dp - gutter * 3, LessonBoardMaxSide)
+                val shared = boardSide(maxWidth, maxHeight, isTablet = true, isLandscape = true)
+                val boardCol = minOf(maxHeight - 160.dp, maxWidth - 480.dp - gutter * 3, shared)
                     .coerceAtLeast(280.dp)
                 val textCol = (maxWidth - boardCol - gutter * 3).coerceIn(480.dp, 520.dp)
                 val boardIndices = doc!!.blocks.indices.filter { doc.blocks[it].carriesBoard() }
@@ -216,7 +224,9 @@ fun LessonDetailView(
                                         layout(0, 0) {}
                                     }
                             ) {
-                                LessonBoardBlock(doc.blocks[i], explorerViewModel)
+                                CompositionLocalProvider(LocalLessonBoardMaxSide provides boardCol) {
+                                    LessonBoardBlock(doc.blocks[i], explorerViewModel)
+                                }
                             }
                         }
                     }

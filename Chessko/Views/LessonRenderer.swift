@@ -17,9 +17,28 @@ import SwiftUI
 /// `lineHeight = 22.5.sp`).
 let lessonBodyLineSpacing: CGFloat = 4.5
 
-/// TODO(design § 13): privremena granica lekcijske table do zajedničke funkcije
-/// strane table (Task 11). Bez nje je tabla na iPad-u išla do 1336 pt (spec § 9).
-let lessonBoardMaxSide: CGFloat = DS.maxBoardSide
+/// Gornja granica lekcijske table (spec § 9/§ 13). Vrednost računa
+/// `LessonDetailView` zajedničkom funkcijom `BoardSizing.boardSide` i spušta je
+/// kroz okruženje; podrazumevano je telefonska granica (560). Bez granice je
+/// tabla na iPad-u išla do 1336 pt.
+private struct LessonBoardMaxSideKey: EnvironmentKey {
+    static let defaultValue: CGFloat = BoardSizing.phoneMaxSide
+}
+
+extension EnvironmentValues {
+    var lessonBoardMaxSide: CGFloat {
+        get { self[LessonBoardMaxSideKey.self] }
+        set { self[LessonBoardMaxSideKey.self] = newValue }
+    }
+}
+
+/// Primena granice — svaka lekcijska tabla je nosi.
+private struct LessonBoardCap: ViewModifier {
+    @Environment(\.lessonBoardMaxSide) private var maxSide
+    func body(content: Content) -> some View {
+        content.frame(maxWidth: maxSide)
+    }
+}
 
 /// Kako se crtaju blokovi sa tablom. `.inline` — u toku teksta; `.markers` —
 /// iPad u pejzažu (spec § 9): na mestu bloka stoji samo oznaka, a tabla se crta
@@ -314,7 +333,7 @@ struct LessonStaticBoard: View {
                 .aspectRatio(1, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .allowsHitTesting(false)
-                .frame(maxWidth: lessonBoardMaxSide)
+                .modifier(LessonBoardCap())
                 .frame(maxWidth: .infinity)
             } else {
                 LessonBlockError(message: "Neispravan FEN: \(fen)")
@@ -359,7 +378,7 @@ struct LessonPieceExplorer: View {
                 allowsStyleSwipe: false,
                 onTap:            { vm.tap(position: $0) }
             )
-            .frame(maxWidth: lessonBoardMaxSide)
+            .modifier(LessonBoardCap())
             .frame(maxWidth: .infinity)
 
             let scenarios = vm.availableScenarios
@@ -772,7 +791,7 @@ private extension View {
         self
             .aspectRatio(1, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerRadius: 6))
-            .frame(maxWidth: lessonBoardMaxSide)
+            .modifier(LessonBoardCap())
             .frame(maxWidth: .infinity)
     }
 }
