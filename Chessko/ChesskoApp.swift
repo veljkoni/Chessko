@@ -20,6 +20,12 @@ struct ChesskoApp: App {
         // `write()` u ChessKitEngine-u ionako ne gleda povratnu vrednost, pa se
         // ignorisanjem signala nista ne gubi: upis u zatvoren pipe vrati EPIPE.
         signal(SIGPIPE, SIG_IGN)
+
+        // Neizabran tab: obris u `inkMuted` (5,86 / 5,62 na navBar), spec § 10.
+        // Izabran ide kroz `.tint(DS.accent)` u `ContentView`. Staklena traka
+        // ostaje (§ 4). Proxy izgleda se postavlja jednom, pri pokretanju
+        // aplikacije, pre nego sto nastane prvi `UITabBar`.
+        UITabBar.appearance().unselectedItemTintColor = UIColor(DS.inkMuted)
     }
 
     var body: some Scene {

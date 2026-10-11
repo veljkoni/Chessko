@@ -24,11 +24,7 @@ struct ContentView: View {
 
     private enum AppTab: Hashable { case game, puzzles, path }
 
-    init() {
-        // Neizabran tab: obris u `inkMuted` (5,86 / 5,62 na navBar), spec § 10.
-        // Izabran ide kroz `.tint(DS.accent)` ispod. Staklena traka ostaje (§ 4).
-        UITabBar.appearance().unselectedItemTintColor = UIColor(DS.inkMuted)
-    }
+    // Neizabran tab (`inkMuted`) se podesava jednom, u `ChesskoApp.init`.
 
     var body: some View {
         TabView(selection: $selectedTab) {

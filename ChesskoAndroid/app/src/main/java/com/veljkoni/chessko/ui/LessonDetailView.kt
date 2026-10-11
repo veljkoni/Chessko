@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.activity.compose.BackHandler
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -24,6 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -92,44 +96,31 @@ fun LessonDetailView(
         // App bar lekcije (spec § 4): `navBar` podloga, nazad + „Put" u `accent`
         // (8,53 / 6,65), naslov `Type.body` medium, `line` ispod tek kad sadrzaj
         // klizi. Zamenjuje plutajuce „← Put" na `fill` plocici.
-        Box(
+        val navBar = DS.navBar
+        val line = DS.line
+        val statusBarTop = WindowInsets.statusBars.getTop(LocalDensity.current).toFloat()
+        LessonAppBar(
+            title = barTitle,
+            onBack = onClose,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(DS.navBar)
                 .heightIn(min = 48.dp)
-                .padding(horizontal = DS.Space.xs),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            TextButton(onClick = onClose) {
-                // Ikona je DEKORATIVNA — „Put" odmah do nje nosi celo znacenje.
-                // `AutoMirrored` jer je strelica smerna (RTL).
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
-                    tint = DS.accent,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(DS.Space.xs))
-                Text(text = loc("Put"), color = DS.accent, style = Type.body)
-            }
-            Text(
-                text = barTitle,
-                color = DS.ink,
-                style = Type.body,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    // Prostor za „← Put" sa obe strane, da naslov ostane centriran.
-                    .padding(horizontal = 96.dp)
-            )
-        }
-        if (contentScrolled) {
-            HorizontalDivider(color = DS.line)
-        }
+                .drawBehind {
+                    // Traka statusa iznad app bara je u `navBar` boji, kao na iOS-u.
+                    // Ekran je unutar `Scaffold`-ovog paddinga (vrh = statusna traka),
+                    // pa se ta traka crta IZNAD sopstvenih granica: Compose ne
+                    // isece crtanje van granica bez `clip`, a nijedan roditelj do
+                    // `Scaffold`-a ne isece (a `Scaffold` pokriva ceo prozor).
+                    drawRect(navBar, topLeft = Offset(0f, -statusBarTop), size = Size(size.width, size.height + statusBarTop))
+                    // Linija ispod se CRTA, ne slaze kao element: pojava linije ne
+                    // menja visinu trake, pa skrol ne poskoci.
+                    if (contentScrolled) {
+                        val stroke = 1.dp.toPx()
+                        drawRect(line, topLeft = Offset(0f, size.height - stroke), size = Size(size.width, stroke))
+                    }
+                }
+                .padding(horizontal = DS.Space.xs)
+        )
 
         // Scrollable Lesson Content
         Column(
@@ -241,6 +232,60 @@ fun LessonDetailView(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * App bar lekcije: „← Put" na pocetku, naslov centriran kad ima mesta.
+ *
+ * Naslov se NIKAD ne preklapa sa dugmetom, ni na jednom od 8 jezika (dugme je
+ * „← Parcours"/„← Percorso" sire od fiksne margine koja je ranije stajala ovde):
+ * ako stane izmedju dve sirine dugmeta — centriran po celoj traci; inace stoji
+ * odmah iza dugmeta i skracuje se trotackom.
+ */
+@Composable
+private fun LessonAppBar(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Layout(
+        modifier = modifier,
+        content = {
+            TextButton(onClick = onBack) {
+                // Ikona je DEKORATIVNA — „Put" odmah do nje nosi celo znacenje.
+                // `AutoMirrored` jer je strelica smerna (RTL).
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = DS.accent,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(DS.Space.xs))
+                Text(text = loc("Put"), color = DS.accent, style = Type.body, maxLines = 1)
+            }
+            Text(
+                text = title,
+                color = DS.ink,
+                style = Type.body,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val back = measurables[0].measure(loose)
+        val gap = DS.Space.s.roundToPx()
+        val side = back.width + gap
+        val titleMeasurable = measurables[1]
+        val centeredRoom = (width - 2 * side).coerceAtLeast(0)
+        val centered = titleMeasurable.maxIntrinsicWidth(back.height) <= centeredRoom
+        val titleMax = if (centered) centeredRoom else (width - side).coerceAtLeast(0)
+        val titlePlaceable = titleMeasurable.measure(loose.copy(maxWidth = titleMax))
+        val height = maxOf(back.height, titlePlaceable.height, constraints.minHeight)
+        layout(width, height) {
+            back.placeRelative(0, (height - back.height) / 2)
+            val x = if (centered) (width - titlePlaceable.width) / 2 else side
+            titlePlaceable.placeRelative(x, (height - titlePlaceable.height) / 2)
         }
     }
 }

@@ -539,7 +539,7 @@ Opšti rizici:
 - [x] **Stanja:** izabran = pun oblik `accent`, neizabran = obris `inkMuted`. iOS: `TabView(selection:)`
   bira ime ikone po izabranom tabu, `.environment(\.symbolVariants, .none)` sprečava da sistemska
   traka sama napuni obris, `UITabBar.appearance().unselectedItemTintColor = UIColor(DS.inkMuted)`
-  (dinamička boja) u `ContentView.init`. Labele iz prevoda (postojeći ključevi „Igra/Zadaci/Put").
+  (dinamička boja) u `ChesskoApp.init`. Labele iz prevoda (postojeći ključevi „Igra/Zadaci/Put").
 
 ### Odluke
 - **Celoekranska odredišta kao sloj, ne `NavHost` i ne dijalog.** `androidx.navigation` bi bio
@@ -570,8 +570,23 @@ Opšti rizici:
   bi bio prvi takav kod u projektu) — razlika od nijanse.
 - **Android `mipmap-anydpi` umesto `mipmap-anydpi-v26`** iz spec tabele: sa `minSdk = 26` je
   ekvivalentno; zatečena fascikla zadržana.
+- **Porodice Material ikona za Zadaci/Put su izmešane:** izabran = `Icons.Rounded.*` (pun,
+  zaobljen), neizabran = `Icons.Outlined.*` (obris, oštri uglovi). Spec traži Material Symbols
+  *Rounded* u oba stanja, ali `material-icons-extended` nema zaobljen obris (Symbols-ov
+  „Rounded outline"); `Outlined` je najbliži obris bez nove zavisnosti. Razlika je samo u
+  uglovima, na 24 dp jedva vidljiva.
 - **Android labela taba ostaje `Type.label`** (kao zatečeno), indikator `fill` i na donjoj traci
   (spec ga navodi za rail; ista komponenta, isti par 7,08 / 5,69).
+
+- **Fix runda 1:** naslov u app baru Lekcije je imao fiksnu marginu 96 dp, a „← Parcours"/
+  „← Percorso" su ~108–112 dp — naslov je prelazio preko dugmeta (fr/it). Sada sopstveni
+  `Layout` (`LessonAppBar` u `AND/ui/LessonDetailView.kt`): naslov centriran po traci ako stane
+  između dve širine dugmeta, inače stoji odmah iza dugmeta i skraćuje se trotačkom — preklapanje
+  je nemoguće za bilo koju dužinu labele. Linija ispod trake se crta (`drawBehind`), pa njena
+  pojava ne menja visinu i skrol ne poskoči. Traka statusne linije iznad app bara je `navBar`
+  (kao iOS): crta se iz istog `drawBehind`-a iznad granica trake (visina = `WindowInsets.statusBars`)
+  — ništa do `Scaffold`-a ne iseca crtanje, a `Scaffold` pokriva ceo prozor. iOS:
+  `UITabBar.appearance()` prebačen iz `ContentView.init` u `ChesskoApp.init` (jednom, pri pokretanju).
 
 ### TODO(design § N)
 - `TODO(design § 10)` — `iOS/ContentView.swift`: pravi SF custom symbol za skakača

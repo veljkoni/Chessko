@@ -63,6 +63,10 @@ import com.veljkoni.chessko.ui.theme.DS
 // sopstvene insete — to radi kontejner. Ekran koji mora da crta ispod
 // sistemskih traka (npr. polovine sata do ivice) prosledjuje
 // `applySafeDrawingInsets = false` i sam postavlja insete svom sadrzaju.
+// Sadrzaj odredista se komponuje na mestu HOSTA, ne pozivaoca: ne vidi
+// `CompositionLocal`-e koje pozivalac postavi oko sebe (npr. `LocalContentColor`,
+// `LocalTextStyle` iz okolnog `Surface`/`Button`-a). Boje i stil teksta zato
+// zadaj eksplicitno (`DS.*`, `Type.*`) — ne oslanjaj se na nasledjene.
 
 /** Stek otvorenih celoekranskih odredista. Pravi se jednom, u `MainActivity`. */
 class FullScreenHost {
