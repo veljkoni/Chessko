@@ -458,7 +458,7 @@ fun PieceExplorer(viewModel: LearnViewModel) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            val pieceAsset = getAssetName(ChessPiece(piece, PieceColor.WHITE), PieceStyle.CLASSIC, BoardTheme.CLASSIC)
+                            val pieceAsset = getAssetName(ChessPiece(piece, PieceColor.WHITE), PieceStyle.CLASSIC)
                             AsyncImage(
                                 model = "file:///android_asset/pieces/$pieceAsset.svg",
                                 contentDescription = null,

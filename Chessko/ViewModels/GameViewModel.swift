@@ -214,6 +214,19 @@ final class GameViewModel {
         updateEvaluation()
     }
 
+    /// Teme Polarna/Smaragd/Pesak/Sajber i stilovi Neonski/Drvene/Metalne/Ravne/Tanke su obrisani
+    /// (odluka vlasnika, spec § 11/§ 12). Sačuvana vrednost koja više ne postoji prepisuje se na
+    /// `classic` — crtanje bi i bez toga palo na `.classic` (`?? .classic`), ali mreža u
+    /// Podešavanjima poredi sirov string, pa nijedna pločica ne bi bila izabrana. Idempotentno.
+    static func migrateRemovedAppearance(_ defaults: UserDefaults = .standard) {
+        if let raw = defaults.string(forKey: "boardTheme"), BoardTheme(rawValue: raw) == nil {
+            defaults.set(BoardTheme.classic.rawValue, forKey: "boardTheme")
+        }
+        if let raw = defaults.string(forKey: "pieceStyle"), PieceStyle(rawValue: raw) == nil {
+            defaults.set(PieceStyle.classic.rawValue, forKey: "pieceStyle")
+        }
+    }
+
     // MARK: Computed
 
     var allHistoryStates: [(state: GameState, lastMove: ChessMove?)] {

@@ -26,6 +26,10 @@ struct ChesskoApp: App {
         // ostaje (§ 4). Proxy izgleda se postavlja jednom, pri pokretanju
         // aplikacije, pre nego sto nastane prvi `UITabBar`.
         UITabBar.appearance().unselectedItemTintColor = UIColor(DS.inkMuted)
+
+        // Obrisane teme/stilovi (spec § 11/§ 12) → `classic`, pre prvog ekrana koji čita
+        // `@AppStorage("boardTheme")`/`("pieceStyle")`.
+        GameViewModel.migrateRemovedAppearance()
     }
 
     var body: some Scene {

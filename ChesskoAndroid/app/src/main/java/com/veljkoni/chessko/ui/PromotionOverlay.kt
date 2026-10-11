@@ -34,7 +34,8 @@ import com.veljkoni.chessko.viewmodels.GameViewModel
  * plocici crna figura stila „Ravne" (`piece_black_*_flat.svg`, puna silueta
  * `#2C2C30`) meri **1,280 odnosno 1,278** — prakticno nevidljiva. To NIJE greska
  * ove grane; postojalo je i pre nje, samo je selidba kartice na `DS.surface`
- * ucinila da se mora presuditi. Sa `DS.surface` plocicom bio bi isti problem sa
+ * ucinila da se mora presuditi. (Stil „Ravne" je obrisan u Task-u 12
+ * dizajnerskog pregleda; merenje ostaje kao razlog za fiksnu plocicu.) Sa `DS.surface` plocicom bio bi isti problem sa
  * BELIM figurama u svetloj temi, pa nijedan tema-zavisan token ovde ne prolazi.
  *
  * `#708090` je izabran merenjem: jedini ton koji omedji i near-belu i near-crnu
@@ -65,9 +66,6 @@ fun PromotionOverlay(viewModel: GameViewModel) {
     if (viewModel.promotionMove == null) return
     val context = LocalContext.current
     val settings = remember { SettingsManager.getInstance(context) }
-    val activeTheme = remember(settings.boardTheme) {
-        BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
-    }
     val activeStyle = remember(settings.pieceStyle) {
         PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
     }
@@ -118,7 +116,7 @@ fun PromotionOverlay(viewModel: GameViewModel) {
             )
             Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.m)) {
                 for (type in choices) {
-                    val assetName = getAssetName(ChessPiece(type, color), activeStyle, activeTheme)
+                    val assetName = getAssetName(ChessPiece(type, color), activeStyle)
                     Box(
                         modifier = Modifier
                             .size(64.dp)

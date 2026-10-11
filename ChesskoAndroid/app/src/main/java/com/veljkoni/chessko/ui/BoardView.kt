@@ -30,14 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
@@ -67,7 +64,8 @@ private fun applyBoardSwipe(
     if (kotlin.math.abs(swipeX) > kotlin.math.abs(swipeY)) {
         if (settings.swipeToChangeBoardTheme && kotlin.math.abs(swipeX) > 100f) {
             val themes = BoardTheme.values()
-            val currentIdx = themes.indexOfFirst { it.rawValue == settings.boardTheme }
+            // Nepoznata (obrisana) vrednost = klasična, indeks 0 — kao iOS `?? .classic`.
+            val currentIdx = themes.indexOfFirst { it.rawValue == settings.boardTheme }.coerceAtLeast(0)
             val nextIdx = if (swipeX < 0) {
                 (currentIdx + 1) % themes.size
             } else {
@@ -79,7 +77,7 @@ private fun applyBoardSwipe(
     } else {
         if (settings.swipeToChangePieceStyle && kotlin.math.abs(swipeY) > 100f) {
             val styles = PieceStyle.values()
-            val currentIdx = styles.indexOfFirst { it.rawValue == settings.pieceStyle }
+            val currentIdx = styles.indexOfFirst { it.rawValue == settings.pieceStyle }.coerceAtLeast(0)
             val nextIdx = if (swipeY < 0) {
                 (currentIdx + 1) % styles.size
             } else {
@@ -431,30 +429,7 @@ fun BoardView(
         // Floating Piece Overlay during Drag & Drop
         if (draggedPiece != null) {
             val p = draggedPiece!!
-            val assetName = getAssetName(p, pieceStyle, boardTheme)
-            val metalBrush = if (pieceStyle == PieceStyle.METAL) {
-                if (p.color == PieceColor.WHITE) {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFFFFFFFF),
-                            Color(0xFFE0E2E5),
-                            Color(0xFFB9BFC5),
-                            Color(0xFFF1F3F5),
-                            Color(0xFF8B939C)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF4A4D54),
-                            Color(0xFF2B2D32),
-                            Color(0xFF1A1B1E),
-                            Color(0xFF383A3E),
-                            Color(0xFF111214)
-                        )
-                    )
-                }
-            } else null
+            val assetName = getAssetName(p, pieceStyle)
 
             AsyncImage(
                 model = "file:///android_asset/pieces/$assetName.svg",
@@ -470,18 +445,7 @@ fun BoardView(
                     .scale(1.18f)
                     .graphicsLayer {
                         shadowElevation = 8.dp.toPx()
-                        if (metalBrush != null) {
-                            compositingStrategy = CompositingStrategy.Offscreen
-                        }
                     }
-                    .then(
-                        if (metalBrush != null) {
-                            Modifier.drawWithContent {
-                                drawContent()
-                                drawRect(brush = metalBrush, blendMode = BlendMode.SrcIn)
-                            }
-                        } else Modifier
-                    )
             )
         }
 
@@ -514,19 +478,7 @@ fun SquareView(
     modifier: Modifier = Modifier
 ) {
     // Determine square base background
-    val baseModifier = when {
-        !isLight && (boardTheme == BoardTheme.MIDNIGHT_AURORA || boardTheme == BoardTheme.CYBER_LAVENDER) -> {
-            val centerColor = if (boardTheme == BoardTheme.MIDNIGHT_AURORA) Color(0xFF3A475C) else Color(0xFF4F3B8C)
-            Modifier.background(
-                Brush.radialGradient(
-                    colors = listOf(centerColor, boardTheme.darkColor)
-                )
-            )
-        }
-        else -> {
-            Modifier.background(if (isLight) boardTheme.lightColor else boardTheme.darkColor)
-        }
-    }
+    val baseModifier = Modifier.background(if (isLight) boardTheme.lightColor else boardTheme.darkColor)
 
     val animPercent = remember { Animatable(0f) }
     LaunchedEffect(lastMove) {
@@ -657,30 +609,7 @@ fun SquareView(
 
         // Render piece
         if (piece != null && !hidePiece) {
-            val assetName = getAssetName(piece, pieceStyle, boardTheme)
-            val metalBrush = if (pieceStyle == PieceStyle.METAL) {
-                if (piece.color == PieceColor.WHITE) {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFFFFFFFF),
-                            Color(0xFFE0E2E5),
-                            Color(0xFFB9BFC5),
-                            Color(0xFFF1F3F5),
-                            Color(0xFF8B939C)
-                        )
-                    )
-                } else {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF4A4D54),
-                            Color(0xFF2B2D32),
-                            Color(0xFF1A1B1E),
-                            Color(0xFF383A3E),
-                            Color(0xFF111214)
-                        )
-                    )
-                }
-            } else null
+            val assetName = getAssetName(piece, pieceStyle)
 
             val translationX: androidx.compose.ui.unit.Dp
             val translationY: androidx.compose.ui.unit.Dp
@@ -708,18 +637,6 @@ fun SquareView(
                 .padding(6.dp)
                 .offset(x = translationX, y = translationY)
                 .scale(if (isSelected) selectionScale else 1.0f)
-                .then(
-                    if (metalBrush != null) {
-                        Modifier
-                            .graphicsLayer {
-                                compositingStrategy = CompositingStrategy.Offscreen
-                            }
-                            .drawWithContent {
-                                drawContent()
-                                drawRect(brush = metalBrush, blendMode = BlendMode.SrcIn)
-                            }
-                    } else Modifier
-                )
 
             AsyncImage(
                 model = "file:///android_asset/pieces/$assetName.svg",
@@ -763,26 +680,10 @@ fun SquareView(
     }
 }
 
-fun getAssetName(piece: ChessPiece, style: PieceStyle, theme: BoardTheme): String {
+fun getAssetName(piece: ChessPiece, style: PieceStyle): String {
     val color = if (piece.color == PieceColor.WHITE) "white" else "black"
     val type = piece.type.name.lowercase()
-    val isDarkTheme = theme == BoardTheme.MIDNIGHT_AURORA || theme == BoardTheme.CYBER_LAVENDER
-
-    return when (style) {
-        PieceStyle.FLAT -> {
-            if (color == "black" && isDarkTheme) {
-                "piece_black_${type}_flat_outlined"
-            } else {
-                "piece_${color}_${type}_flat"
-            }
-        }
-        PieceStyle.SIMPLE_THIN -> "piece_${color}_${type}_simple_thin"
-        PieceStyle.NEON -> "piece_${color}_${type}_neo"
-        PieceStyle.WOOD -> "piece_${color}_${type}_wood"
-        PieceStyle.GLASS -> "piece_${color}_${type}_glass"
-        PieceStyle.GAMEROOM -> "piece_${color}_${type}_gameroom"
-        else -> "piece_${color}_${type}"
-    }
+    return style.assetSuffix?.let { "piece_${color}_${type}_$it" } ?: "piece_${color}_${type}"
 }
 
 @Composable

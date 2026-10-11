@@ -144,17 +144,7 @@ struct SquareView: View {
     @ViewBuilder
     private var baseColor: some View {
         let theme = BoardTheme(rawValue: boardTheme) ?? .classic
-        if !isLight && (theme == .midnightAurora || theme == .cyberLavender) {
-            let centerColor = theme == .midnightAurora ? Color(hex: "#3A475C") : Color(hex: "#4F3B8C")
-            RadialGradient(
-                colors: [centerColor, theme.darkSquareColor],
-                center: .center,
-                startRadius: 0,
-                endRadius: 42
-            )
-        } else {
-            isLight ? theme.lightSquareColor : theme.darkSquareColor
-        }
+        isLight ? theme.lightSquareColor : theme.darkSquareColor
     }
 
     // MARK: - Legal Move

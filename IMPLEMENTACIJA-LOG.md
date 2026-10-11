@@ -1460,7 +1460,86 @@ iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; And
 
 ## Task 12 — Teme table i stilovi figura (§ 11, § 12 + brisanje)
 
-_(popunjava Task 12)_
+### Brisanje (odluka vlasnika) — obe platforme
+- [x] **Teme Polarna, Smaragd, Pesak, Sajber** uklonjene iz `BoardTheme` (iOS `iOS/Views/SettingsSheet.swift`,
+  Android `AND/ui/BoardTheme.kt`) zajedno sa radijalnim gradijentom tamnih polja (iOS
+  `SquareView.baseColor`, Android `SquareView` `baseModifier`) — sada ravna boja za sve teme.
+- [x] **Stilovi Neonski, Drvene, Metalne, Ravne, Tanke** uklonjeni iz `PieceStyle` (iOS
+  `PieceImageView.swift`, Android `AND/ui/PieceStyle.kt`) sa svim granama crtanja: iOS neon/wood/metal
+  (gradijenti)/flat/simpleThin grane i `isDarkTheme`→`flat_outlined`; Android sve tri kopije metal
+  četkice (`BoardView.kt` prevlačena figura i figura na polju, `CapturedPiecesView.kt`) i
+  `isDarkTheme`/`flat_outlined` u `getAssetName`. Tema **Drvo (`wood`) ostaje** — obrisan je samo stil.
+- [x] **Asseti:** iOS 54 imageset-a (`*_neo`, `*_wood`, `*_flat`, `*_simple_thin`, `piece_black_*_flat_outlined`)
+  obrisana; Android 54 SVG-a iz `assets/pieces/`. Katalog je jedna referenca u `project.pbxproj`
+  (0 pogodaka za imageset) — pbxproj nije diran.
+- [x] **Prevodi:** iOS katalog — 9 ključeva obrisano hirurški (blokovi teksta, bez regeneracije; JSON
+  validan), isti `add(...)` redovi obrisani iz `build_localizations.py`. Android `Loc.kt` — 5 ključeva
+  (Polarna, Smaragd, Pesak, Sajber, Tanke; ostala 4 nisu ni postojala). Nijedan nije imao drugog
+  pozivaoca (grep).
+- [x] **Sačuvana obrisana vrednost → podrazumevana, i mreža je pokazuje izabranom.** iOS
+  `GameViewModel.migrateRemovedAppearance()` (statička, idempotentna; poziva se iz `ChesskoApp.init`,
+  pre prvog ekrana): ako `BoardTheme(rawValue:)`/`PieceStyle(rawValue:)` vrati `nil`, upisuje `classic`.
+  Android `BoardTheme.sanitizedRaw`/`PieceStyle.sanitizedRaw` (čiste funkcije) u `SettingsManager`
+  pri čitanju + jedan `init` blok koji ispravku upisuje nazad u `chessko_settings`. Crtanje je i ranije
+  padalo na `classic` (`?? .classic` / `?: CLASSIC`); nova je ispravka sirovog stringa koji mreža poredi.
+- [x] **Prečica prevlačenjem** kruži kroz nove spiskove (obe iteriraju enum). Android: nepoznat indeks
+  (`-1`) sada znači klasičnu (`coerceAtLeast(0)`), kao iOS `?? .classic` — ranije je „nazad" skakao na
+  `size-2`.
+
+### § 11 — teme
+- [x] **Klasična ostaje podrazumevana.**
+- [x] **Žalfija** (`sage`, `#E7EAE5`/`#87927F`) i **Glina** (`clay`, `#EEEAE8`/`#9A8A87`) posle Uglja,
+  ravna boja, iste vrednosti na obe platforme. Redosled: Klasična, Šumska, Drvo, Ugalj, Žalfija, Glina.
+- [x] Okvir table 1 pt u boji tamnog polja i adaptivna mreža — urađeno u Task-u 4/10; nove teme ih
+  dobijaju kroz enum.
+
+### § 12 — stilovi
+- [x] **Reljef** (`reljef`) i **Rez** (`rez`) posle Staklenih. Redosled: Klasični, Igraonica, Staklene,
+  Reljef, Rez. SVG-ovi iz `figure-C-reljef/` i `figure-A-rez/` kopirani **bajt-identično** (iste datoteke
+  na obe platforme, provereno `cmp`).
+  - iOS: 24 imageset-a `piece_{white,black}_{type}_{reljef,rez}` sa `preserves-vector-representation:
+    true`. U izgrađenom `Assets.car` (`xcrun assetutil --info`) svaki od 5 stilova ima 12 `Image` + 12
+    `Vector` rendicija, obrisani sufiksi 0; `piece_white_king_reljef` nosi „Preserved Vector
+    Representation: true".
+  - Android: 24 SVG-a u `assets/pieces/` po šemi `piece_{color}_{type}_{sufiks}.svg` (odluka kontrolora:
+    SVG kroz Coil, ne VectorDrawable — brief je pominjao VectorDrawable). `getAssetName` je sveden na
+    `style.assetSuffix` (bez parametra teme, koji je služio samo `flat_outlined`).
+  - **Reljef senka (`clipPath`) — NEPROVERENO do ponovnog snimanja na uređaju.** AndroidSVG (Coil-svg)
+    i CoreSVG podržavaju `clipPath`; senka je zadržana u izvornom obliku, bez preseka oblika.
+  - Reljef nema dodatnu senku u kodu (senka je u crtežu); Rez dobija istu blagu senku kao Klasični (iOS).
+- [x] Ruski za „Klasični" na Androidu dodat (iOS ga je već imao); ostali stilovi koji su bili
+  neprevedeni na Androidu su obrisani.
+
+### Odluke
+- Sirove vrednosti novih stavki: `sage`, `clay`, `reljef`, `rez` (iste na obe platforme).
+- Reljef SVG-ovi nose C2PA `<metadata>` blok (~7 KB po fajlu) — **zadržan** (fajlovi bajt-identični izvoru;
+  oba renderera metadata ignorišu).
+- Android `SettingsManager` (paket `logic`) sada uvozi `ui.BoardTheme`/`ui.PieceStyle` zbog
+  `sanitizedRaw` — jedan izvor istine za spisak, umesto dupliranog spiska stringova u `logic`.
+- Android `PlayerCard(boardTheme = …)` parametar je posle izmene `getAssetName` neiskorišćen u
+  `GameComponents.kt`; ostavljen da se ne diraju sva pozivna mesta (MainActivity ×2, StepGameView) —
+  kandidat za čišćenje. `CapturedPiecesView` je izgubio isti parametar (jedno pozivno mesto).
+- Istorijski komentar u `AND/ui/PromotionOverlay.kt` (merenje sa stilom „Ravne") ostaje kao razlog za
+  fiksnu pločicu, uz napomenu da je stil obrisan. Skripte u korenu (`split_svg.py`,
+  `merge_simple_svgs.py`) ostaju kao zapis kako su obrisani asseti nastali.
+
+### Testovi
+- Nov `ANDT/AppearanceCatalogTest.kt` (5): redosled 6 tema i 5 stilova, pad obrisanih/nepoznatih vrednosti
+  na `classic` (uz `wood` koji kao TEMA ostaje), boje Žalfije/Gline iz spec-a, i da `assets/pieces/`
+  sadrži tačno 12 SVG-ova po stilu (ništa više, ništa manje). Nijedan postojeći test nije pominjao
+  obrisane teme/stilove.
+
+### Novi stringovi (svih 8 jezika; iOS katalog + `build_localizations.py`, Android `Loc.kt`)
+- Žalfija — Sage / Sauge / Salbei / Salvia / Шалфей / 鼠尾草 / सेज (hi transliteracija, **nesigurno**)
+- Glina — Clay / Argile / Ton / Argilla / Глина / 陶土 / मिट्टी (de „Ton" dvosmisleno, **proveriti**)
+- Reljef — Relief / Relief / Relief / Rilievo / Рельеф / 浮雕 / उभार (hi **nesigurno**)
+- Rez — Cut / Découpe / Schnitt / Taglio / Срез / 切面 / कट (fr/de/it/zh/hi **nesigurno** — ime stila
+  „rez" nema ustaljen prevod)
+- Klasični (samo Android `Loc.kt`, prevodi preuzeti iz iOS kataloga)
+
+### Neurađeno / za Task 13
+- Vizuelna provera Reljef senke (`clipPath`) na Android uređaju i iOS-u na 36 pt / 100 pt polju.
+- `CLAUDE.md` pominje „osam tema table" i obrisane stilove na više mesta — ažurira Task 13.
 
 ## Task 13 — Lokalizacija, provere i završni izveštaj (§ 16, § 17, § 19)
 

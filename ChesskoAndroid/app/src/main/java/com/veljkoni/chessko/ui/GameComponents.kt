@@ -139,7 +139,7 @@ fun PlayerCard(
             // 102, 107) se crta — dakle neuspelo ucitavanje SVG-a u toj sesiji, ne
             // logika avatara. Zato se greska ucitavanja sada belezi umesto da prode
             // tiho (vidi IMPLEMENTACIJA-LOG, Task 11).
-            val kingAsset = getAssetName(ChessPiece(PieceType.KING, color), pieceStyle, boardTheme)
+            val kingAsset = getAssetName(ChessPiece(PieceType.KING, color), pieceStyle)
             AsyncImage(
                 model = "file:///android_asset/pieces/$kingAsset.svg",
                 contentDescription = null,
@@ -207,8 +207,7 @@ fun PlayerCard(
             if (capturedPieces.isNotEmpty()) {
                 CapturedPiecesView(
                     pieces = capturedPieces,
-                    pieceStyle = pieceStyle,
-                    boardTheme = boardTheme
+                    pieceStyle = pieceStyle
                 )
             }
         }

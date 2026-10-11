@@ -3,53 +3,49 @@ import SwiftUI
 // MARK: - Board Theme Definition
 
 enum BoardTheme: String, CaseIterable, Identifiable, Sendable {
+    // Redosled = redosled u mreži Podešavanja i u prečici prevlačenjem (spec § 11 + odluka
+    // vlasnika: Polarna/Smaragd/Pesak/Sajber obrisane, Žalfija i Glina dodate na kraj, ravna boja).
+    // Sačuvana obrisana vrednost se pri startu prepisuje na `classic` —
+    // `GameViewModel.migrateRemovedAppearance()`.
     case classic
     case forest
     case wood
     case charcoal
-    case midnightAurora = "midnight_aurora"
-    case sageEmerald    = "sage_emerald"
-    case warmTerracotta = "warm_terracotta"
-    case cyberLavender  = "cyber_lavender"
+    case sage
+    case clay
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .classic:        return Loc("Klasična")
-        case .forest:         return Loc("Šumska")
-        case .wood:           return Loc("Drvo")
-        case .charcoal:       return Loc("Ugalj")
-        case .midnightAurora: return Loc("Polarna")
-        case .sageEmerald:    return Loc("Smaragd")
-        case .warmTerracotta: return Loc("Pesak")
-        case .cyberLavender:  return Loc("Sajber")
+        case .classic:  return Loc("Klasična")
+        case .forest:   return Loc("Šumska")
+        case .wood:     return Loc("Drvo")
+        case .charcoal: return Loc("Ugalj")
+        case .sage:     return Loc("Žalfija")
+        case .clay:     return Loc("Glina")
         }
     }
 
     var lightSquareColor: Color {
         switch self {
-        case .classic:        return Color(hex: "#e9ebde")
-        case .forest:         return Color(hex: "#ececd7")
-        case .wood:           return Color(hex: "#f0d9b5")
-        case .charcoal:       return Color(hex: "#e8e8e8")
-        case .midnightAurora: return Color(hex: "#E4E9F2")
-        case .sageEmerald:    return Color(hex: "#F2F3EC")
-        case .warmTerracotta: return Color(hex: "#F5EFEB")
-        case .cyberLavender:  return Color(hex: "#ECE9FC")
+        case .classic:  return Color(hex: "#e9ebde")
+        case .forest:   return Color(hex: "#ececd7")
+        case .wood:     return Color(hex: "#f0d9b5")
+        case .charcoal: return Color(hex: "#e8e8e8")
+        case .sage:     return Color(hex: "#E7EAE5")
+        case .clay:     return Color(hex: "#EEEAE8")
         }
     }
 
     var darkSquareColor: Color {
         switch self {
-        case .classic:        return Color(hex: "#8592af")
-        case .forest:         return Color(hex: "#739552")
-        case .wood:           return Color(hex: "#b58863")
-        case .charcoal:       return Color(hex: "#646464")
-        case .midnightAurora: return Color(hex: "#1E2530")
-        case .sageEmerald:    return Color(hex: "#3D4F41")
-        case .warmTerracotta: return Color(hex: "#9E4A35")
-        case .cyberLavender:  return Color(hex: "#2B1D4F")
+        case .classic:  return Color(hex: "#8592af")
+        case .forest:   return Color(hex: "#739552")
+        case .wood:     return Color(hex: "#b58863")
+        case .charcoal: return Color(hex: "#646464")
+        case .sage:     return Color(hex: "#87927F")
+        case .clay:     return Color(hex: "#9A8A87")
         }
     }
 }

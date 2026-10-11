@@ -354,8 +354,7 @@ fun SettingsView(
                             ) {
                                 val pieceAsset = getAssetName(
                                     ChessPiece(PieceType.KNIGHT, PieceColor.WHITE),
-                                    style,
-                                    BoardTheme.CLASSIC
+                                    style
                                 )
                                 AsyncImage(
                                     model = "file:///android_asset/pieces/$pieceAsset.svg",

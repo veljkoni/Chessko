@@ -5,16 +5,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.ChessPiece
-import com.veljkoni.chessko.models.PieceColor
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
 
@@ -22,7 +15,6 @@ import com.veljkoni.chessko.ui.theme.Type
 fun CapturedPiecesView(
     pieces: List<ChessPiece>,
     pieceStyle: PieceStyle,
-    boardTheme: BoardTheme,
     modifier: Modifier = Modifier
 ) {
     val sortedPieces = remember(pieces) {
@@ -39,8 +31,7 @@ fun CapturedPiecesView(
                 // iOS crta bas caption2 (`Chessko/Views/CapturedPiecesView.swift:34`),
                 // dakle Type.label -- 12 je ovde bilo razilazenje, ne odluka.
                 style = Type.label,
-                // Hrom (prazno stanje), ne sadrzaj stila figure -- za razliku od metalik
-                // gradijenata ispod, ovo mora da prati temu.
+                // Hrom (prazno stanje), ne sadrzaj stila figure -- ovo mora da prati temu.
                 color = DS.inkMuted
             )
         } else {
@@ -48,45 +39,9 @@ fun CapturedPiecesView(
                 horizontalArrangement = Arrangement.spacedBy((-6).dp)
             ) {
                 sortedPieces.forEach { piece ->
-                    val assetName = getAssetName(piece, pieceStyle, boardTheme)
-                    val metalBrush = if (pieceStyle == PieceStyle.METAL) {
-                        if (piece.color == PieceColor.WHITE) {
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Color(0xFFFFFFFF),
-                                    Color(0xFFE0E2E5),
-                                    Color(0xFFB9BFC5),
-                                    Color(0xFFF1F3F5),
-                                    Color(0xFF8B939C)
-                                )
-                            )
-                        } else {
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Color(0xFF4A4D54),
-                                    Color(0xFF2B2D32),
-                                    Color(0xFF1A1B1E),
-                                    Color(0xFF383A3E),
-                                    Color(0xFF111214)
-                                )
-                            )
-                        }
-                    } else null
+                    val assetName = getAssetName(piece, pieceStyle)
 
-                    val imageModifier = Modifier
-                        .size(28.dp)
-                        .then(
-                            if (metalBrush != null) {
-                                Modifier
-                                    .graphicsLayer {
-                                        compositingStrategy = CompositingStrategy.Offscreen
-                                    }
-                                    .drawWithContent {
-                                        drawContent()
-                                        drawRect(brush = metalBrush, blendMode = BlendMode.SrcIn)
-                                    }
-                            } else Modifier
-                        )
+                    val imageModifier = Modifier.size(28.dp)
 
                     AsyncImage(
                         model = "file:///android_asset/pieces/$assetName.svg",
