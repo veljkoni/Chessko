@@ -47,8 +47,9 @@ class BoardWidthCapTest {
             // Task 11 menja na jednom mestu. `StepGameView` je zato poziva umesto
             // da sam nosi `DS.maxBoardSide`; sama funkcija mora da je nosi (ispod).
             assertTrue(
-                "$path crta tablu, pa mora da koristi DS.maxBoardSide (ili deljeni stepBoardSide)",
-                "DS.maxBoardSide" in src || "stepBoardSide(" in src
+                "$path crta tablu, pa mora da koristi DS.maxBoardSide (samo StepGameView sme kroz deljeni stepBoardSide)",
+                "DS.maxBoardSide" in src ||
+                    (path.endsWith("/StepGameView.kt") && "stepBoardSide(" in src)
             )
         }
         val helper = read("src/main/java/com/veljkoni/chessko/ui/StepPracticeView.kt")

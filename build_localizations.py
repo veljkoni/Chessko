@@ -423,6 +423,9 @@ add("Na potezu", "To move", "Au trait", "Am Zug", "Al tratto", "Ходит", "�
 add("Potezi će se pojaviti ovde", "Moves will appear here", "Les coups apparaîtront ici", "Züge erscheinen hier", "Le mosse appariranno qui", "Ходы появятся здесь", "着法将显示在这里", "चालें यहाँ दिखेंगी")
 add("igra crnima", "plays Black", "joue les Noirs", "spielt Schwarz", "gioca con il Nero", "играет чёрными", "执黑", "काले मोहरों से")
 add("igra belima", "plays White", "joue les Blancs", "spielt Weiß", "gioca con il Bianco", "играет белыми", "执白", "सफ़ेद मोहरों से")
+# Task 5 (§ 7): opisi za čitač ekrana u traci datuma na Zadacima (prevodi iz Android `Loc.kt`).
+add("Prethodni dan", "Previous day", "Jour précédent", "Vorheriger Tag", "Giorno precedente", "Предыдущий день", "上一天", "पिछला दिन")
+add("Rešeno", "Solved", "Résolu", "Gelöst", "Risolto", "Решено", "已解决", "हल हो गया")
 add("Mat · pobeda belih", "Checkmate · White wins", "Échec et mat · victoire des Blancs", "Matt · Sieg für Weiß", "Scacco matto · vince il Bianco", "Мат · победа белых", "将死 · 白方胜", "शह और मात · सफ़ेद की जीत")
 add("Mat · pobeda crnih", "Checkmate · Black wins", "Échec et mat · victoire des Noirs", "Matt · Sieg für Schwarz", "Scacco matto · vince il Nero", "Мат · победа чёрных", "将死 · 黑方胜", "शह और मात · काले की जीत")
 add("Partija je predata · pobeda belih", "Game resigned · White wins", "Partie abandonnée · victoire des Blancs", "Partie aufgegeben · Sieg für Weiß", "Partita abbandonata · vince il Bianco", "Партия сдана · победа белых", "已认输 · 白方胜", "बाज़ी छोड़ी गई · सफ़ेद की जीत")

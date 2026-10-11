@@ -40,7 +40,10 @@ struct PuzzleView: View {
                             // spec § 7: od vrha — tabla levo, desno tagovi →
                             // uputstvo → radnja; ništa centrirano po visini.
                             HStack(alignment: .top, spacing: DS.Space.xl) {
+                                // `side` je već visina − 2 × `Space.l`; isti umetak
+                                // gore i dole kao Android pejzaž.
                                 board(side: side)
+                                    .padding(.vertical, DS.Space.l)
 
                                 ScrollView {
                                     VStack(alignment: .leading, spacing: DS.Space.m) {
@@ -587,6 +590,7 @@ extension PuzzlePhase {
         case .wrongMove:       return .wrong
         case .solved:          return .solved
         case .showingSolution: return .solution
+        case .unavailable:     return .problem
         default:               return .hint
         }
     }

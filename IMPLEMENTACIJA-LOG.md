@@ -842,7 +842,9 @@ it „Al tratto"; fr „Au trait"; zh „轮到走棋". Ostalo standardna šahov
 - P3 „Zadatak 1940" / „Tvoj Elo" (vidi gore).
 - Neiskorišćeni ključevi posle ovog taska (za Task 13): Android „Rejting: ", „Predaja partije",
   „Da li ste sigurni da želite da predate partiju?", „Nastavi igru" (grep: 0 pozivalaca);
-  iOS „Da li ste sigurni da želite da predate trenutnu partiju?". Android `StatusBanner`
+  „Napad na dam" i „Napad na kral" (zatečeni odsečeni ključevi, bez pozivaoca — Task 5 je dodao
+  ispravne „Napad na damu"/„Napad na kralja"); iOS „Da li ste sigurni da želite da predate trenutnu
+  partiju?". Android `StatusBanner`
   (`UiComponents.kt`) više nema pozivaoca.
 - Vizuelno neprovereno (bez simulatora/emulatora): širina zaglavlja Zadataka na Androidu na uskim
   ekranima sa dugim nazivom datuma (npr. ru), horizontalni skrol reda tagova.
@@ -850,7 +852,28 @@ it „Al tratto"; fr „Au trait"; zh „轮到走棋". Ostalo standardna šahov
 ### Novi stringovi
 
 Android `Loc.kt`: „Napad na damu", „Napad na kralja" (teme zadataka) — prevodi preuzeti iz iOS
-kataloga (postojeći ključevi). iOS: nijedan nov ključ.
+kataloga (postojeći ključevi). iOS (`Localizable.xcstrings` hirurški + `build_localizations.py`):
+„Prethodni dan", „Rešeno" — opisi za čitač ekrana u traci datuma; prevodi preuzeti iz Android
+`Loc.kt`. (Prva verzija ovog odeljka je tvrdila „iOS: nijedan nov ključ" — netačno: oba ključa su
+korišćena kroz `Loc()` a nisu postojala u katalogu, pa bi VoiceOver na 7 jezika čitao srpski.
+Ispravljeno u fix rundi 1.)
+
+### Fix runda 1 (pregled Task-a 5)
+
+- Dodati iOS ključevi „Prethodni dan" i „Rešeno" (8 jezika), vidi gore.
+- **Nov `swift test` `everyLocCallInTheSourceHasAKeyInTheCatalogWithAllLanguages`**
+  (`Tests/ChesskoEngineTests/LocCatalogTests.swift`) — iOS blizanac Android
+  `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary`: čita `Chessko/**/*.swift` kao tekst, svaki
+  literal u `Loc("…")`/`LocF("…"` mora postojati u katalogu sa svih 8 jezika (preskaču se linije
+  koje počinju sa `//`; interpolacija u ključu je greška). Zatečeno stanje: jedina dva prekršaja bila
+  su upravo ova dva ključa — spisak izuzetaka je prazan. Dokazan mutacijom (katalog bez dva ključa →
+  test pada sa oba mesta; sa njima prolazi). Uz to tvrdi > 100 pogodaka, da pokvaren regex ne da
+  lažno zeleno.
+- iOS `PuzzlePhase.unavailable` → nov ton `DSInstructionTone.problem` (trougao, `warning`) umesto
+  sijalice — paritet sa Android ekranom greške u koraku (`Warning` u `warning`).
+- iOS pejzaž Zadataka: tabla dobila `Space.l` gore i dole (strana je već visina − 2 × `Space.l`),
+  kao Android.
+- `BoardWidthCapTest`: alternativa `stepBoardSide(` važi samo za `StepGameView.kt`.
 
 
 ## Task 6 — Analiza partije (§ 6, § 17 tačnost)

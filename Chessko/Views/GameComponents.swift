@@ -247,8 +247,10 @@ private struct EvaluationChip: View {
 /// okvir ne počne da liči na dugme (spec § 3 „status nikad ne izgleda kao dugme").
 /// Ikone na `fill`: `inkMuted` 4,86 / 4,81, `danger` 5,43 / 5,93, `success`
 /// 4,18 / 7,78 (≥ 3 : 1 za ikone), `warning` 4,75 / 7,51.
+/// `problem` = zadatak/korak nije dostupan (Android tu crta zaseban ekran greške
+/// sa istom `Warning` ikonom u `warning`).
 enum DSInstructionTone: Equatable {
-    case hint, wrong, solved, solution
+    case hint, wrong, solved, solution, problem
 
     var systemImage: String {
         switch self {
@@ -256,6 +258,7 @@ enum DSInstructionTone: Equatable {
         case .wrong:    return "xmark.circle.fill"
         case .solved:   return "checkmark.seal.fill"
         case .solution: return "eye.fill"
+        case .problem:  return "exclamationmark.triangle.fill"
         }
     }
 
@@ -264,7 +267,7 @@ enum DSInstructionTone: Equatable {
         case .hint:     return DS.inkMuted
         case .wrong:    return DS.danger
         case .solved:   return DS.success
-        case .solution: return DS.warning
+        case .solution, .problem: return DS.warning
         }
     }
 }
