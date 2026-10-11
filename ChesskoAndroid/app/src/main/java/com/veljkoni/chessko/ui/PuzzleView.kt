@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.ButtonShape
 import com.veljkoni.chessko.logic.Loc
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
@@ -123,7 +124,7 @@ fun PuzzleView(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(DS.Space.m))
-                            Button(
+                            Button(shape = ButtonShape, 
                                 onClick = { viewModel.loadDailyPuzzle() },
                                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
                             ) {
@@ -259,7 +260,7 @@ fun PuzzleView(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(DS.Space.l))
-                            Button(
+                            Button(shape = ButtonShape, 
                                 onClick = { viewModel.loadDailyPuzzle() },
                                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
                             ) {
@@ -346,7 +347,7 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Prev button
-        Button(
+        Button(shape = ButtonShape, 
             onClick = { viewModel.goToPrevious() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
@@ -404,7 +405,7 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
         }
 
         // Next button
-        Button(
+        Button(shape = ButtonShape, 
             onClick = { viewModel.goToNext() },
             enabled = viewModel.canGoNext,
             colors = ButtonDefaults.buttonColors(
@@ -526,7 +527,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
         // Vezbanje bez kraja: uvek dostupno kad je zadatak resen, u OBA rezima
         // (dnevni i vezbovni) — iznad ostalih kontrola, kao primarna akcija.
         if (viewModel.phase == PuzzlePhase.SOLVED) {
-            Button(
+            Button(shape = ButtonShape, 
                 onClick = { viewModel.nextPuzzle() },
                 modifier = Modifier.fillMaxWidth()
             ) {

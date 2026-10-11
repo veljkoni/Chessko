@@ -141,74 +141,48 @@ class ContrastTest {
     }
 
     /**
-     * SEST PAROVA JE ISPOD AA U SVETLOJ TEMI. Prva tri su NASLEDJENA iz spec
-     * tabele (iOS ima iste vrednosti); peti (`warning/fill`) je dodat u talasu
-     * ispravki pred spajanje i danas nema pozivno mesto (vidi komentar uz njega);
-     * sesti je dodat u Fazi 6d-2, Task 2 (vidi komentar ispod tabele). Cetvrti
-     * (`success/fill`) je TAKODJE dodat bez pozivnog mesta, ali je od Faze 8,
-     * Task 3 dobio pravog potrosaca — kvacicu resenosti u `PuzzleView.kt`
-     * (`Icons.Default.CheckCircle`). Prag ispod (4,5) je za TEKST i ta ikona ga
-     * ne dostize u svetloj temi — nebitno, ikona je graficki objekat, WCAG-ov
-     * prag za nju je 3:1 (SC 1.4.11), koji 4,18 lako prelazi; vidi
-     * `puzzleSolvedCheckmarkIsReadableOnDateRow` niže za tacnu tvrdnju i za
-     * TAMNU temu (7,78), koja ovde uopste nije bila pinovana.
+     * JEDAN PAR JE I DALJE ISPOD AA U SVETLOJ TEMI: `success/fill` (4,184348841952418).
+     * Ima pravog potrosaca samo kao IKONU — kvacicu resenosti u `PuzzleView.kt`
+     * (`Icons.Default.CheckCircle`) — gde je WCAG prag 3:1 (SC 1.4.11), vidi
+     * `puzzleSolvedCheckmarkIsReadableOnDateRow`. Prag ispod (4,5) je za TEKST.
      *
-     *   inkMuted / ground : 4,359965479387139   (svetla)   5,94 (tamna)
-     *   inkMuted / fill   : 4,014258257780754   (svetla)   4,81 (tamna)
-     *   warning  / surface: 3,611752903947211   (svetla)   8,48 (tamna)
-     *   success  / fill   : 4,184348841952418   (svetla)   7,78 (tamna)
-     *   warning  / fill   : 2,9989738277199414  (svetla)   7,51 (tamna)
-     *   warning  / ground : 3,257244931140301   (svetla)   9,27 (tamna)
+     * Do dizajnerskog pregleda (Task 2, spec § 2) ovde je bilo SEST parova. Spec je
+     * promenio dve vrednosti u svetloj temi — `inkMuted` `#6B7280 → #5E6573` i
+     * `warning` `#B07D2B → #865F21` (iOS isto, isti commit) — i preostalih pet je
+     * presao AA; sada ih tvrdi `designReviewTokensLiftFormerSubAAPairsAboveAA` ispod,
+     * na pragu 4,5 umesto pina „ne pogorsava se".
      *
-     * Sesti par je dodat u Fazi 6d-2, Task 2: `BoxStyle.RULE` kutije u
-     * lekcijama (`LessonRenderer.colorFor`) crtaju `DS.warning` tekst nad
-     * `DS.ground`. Ista klasa kao `warning/surface` iznad — ne popravlja se
-     * ovde jer bi znacilo razlaz sa iOS paletom; tamna varijanta (9,27) ide u
-     * `lessonBoxStylesMeetAA` jer prolazi.
-     *
-     * Pragovi ispod nose PUNU preciznost stvarno izmerenu OVIM testom na JVM-u
-     * (ne zaokruzeno „4,36", i ne double-precision racun izveden nezavisno u
-     * Python-u — `Color.red/green/blue` su `Float`, pa `toDouble()` nasledjuje
-     * float32 zaokruzivanje pre ovog racuna; nezavisan double-precision racun
-     * (bez tog koraka) daje 4.359965543674367 — vidljivo drugaciju vrednost na
-     * 8. decimali). Puna preciznost ne ostavlja marginu za procenu — prag je
-     * bukvalno izmerena vrednost.
-     *
-     * Prag se NE spusta da bi test prosao. Umesto toga se tvrdi da se stanje ne
-     * POGORSAVA: ako neko promeni token i obori kontrast ispod izmerenog, test
-     * pada i tera na razgovor. Popravka bi znacila razlaz sa iOS paletom, pa je
-     * svesno odlozena i zapisana u „Poznata ogranicenja".
+     * Prag nosi PUNU preciznost stvarno izmerenu OVIM testom na JVM-u (float32 kanali,
+     * pa nezavisan double racun daje drugaciju vrednost na 8. decimali).
+     * Prag se NE spusta da bi test prosao; tvrdi se da se stanje ne POGORSAVA.
      */
     @Test
     fun knownSubAAPairsDoNotGetWorse() {
-        // Task 2 dodaje jos potrosaca za `inkMuted/ground`: "Lekcija nije dostupna."
-        // (`LessonDetailView`), potpis citata i sitni tekstovi ispod table
-        // (`LQuote`, `LPieceRow` kolicina, `LStaticBoard` natpis i poruka o
-        // interaktivnoj tabli u `LessonRenderer`). Isti vec-poznat granicni slucaj,
-        // ne nov par.
-        check("svetla inkMuted/ground", LightColors, { it.inkMuted }, { it.ground }, 4.359965479387139)
-        check("svetla inkMuted/fill", LightColors, { it.inkMuted }, { it.fill }, 4.014258257780754)
-        check("svetla warning/surface", LightColors, { it.warning }, { it.surface }, 3.611752903947211)
-        // `warning/fill` DANAS nema nijedno pozivno mesto: statisticka kartica u
-        // Podesavanjima je presla sa `fill` na `surface` bas zato sto je nad `fill`
-        // merila `warning` 3,00 i `success` 4,18 (oba ispod AA za 17sp Bold, koji
-        // po WCAG-u NIJE „large text"). Pinovan je svejedno, da buduci pozivalac
-        // koji ipak stavi semanticku boju nad `fill` ne moze to da pogorsa u tisini.
-        //
-        // `success/fill` VISE NEMA taj status — Faza 8, Task 3 mu je dala pravog
-        // potrosaca (vidi doc-komentar iznad testa i
-        // `puzzleSolvedCheckmarkIsReadableOnDateRow`), samo kao IKONU (3:1), ne
-        // kao 17sp Bold tekst (4,5) — ova pinovana vrednost je i dalje tacna i i
-        // dalje dovoljna za tu upotrebu.
         check("svetla success/fill", LightColors, { it.success }, { it.fill }, 4.184348841952418)
-        check("svetla warning/fill", LightColors, { it.warning }, { it.fill }, 2.9989738277199414)
-        // Faza 8, Task 3 dodaje pravog potrosaca i za `warning/ground`: tri
-        // `Icons.Default.Warning` (bivsi ⚠️) u NETWORK_ERROR ekranima
-        // (`PuzzleView.kt` x2, `StepPracticeView.kt`) sede direktno na `DS.ground`
-        // (isti `Box` iz `MainActivity.kt` iza sva tri taba). Ikona je graficki
-        // objekat (WCAG prag 3:1), pa 3,26 ovde dostize potrebno iako ne dostize
-        // AA (4,5) za tekst — ista logika kao `success/fill` iznad.
-        check("svetla warning/ground", LightColors, { it.warning }, { it.ground }, 3.257244931140301)
+    }
+
+    /**
+     * Dizajnerski pregled, spec § 2: pet parova koji su do tada bili pinovani kao
+     * sub-AA u svetloj temi (stare vrednosti u zagradi) sada prelaze 4,5:1.
+     * Ocekivano po spec tabeli: inkMuted/ground 5,28 (4,36), inkMuted/fill 4,86 (4,01),
+     * warning/surface 5,72 (3,61), warning/fill 4,75 (3,00), warning/ground 5,16 (3,26).
+     * Uz njih i „bela na warning" (puna oznaka, 5,72) i `inkMuted/surface` (5,86).
+     * Tamna tema je nepromenjena i vec je prelazila prag.
+     */
+    @Test
+    fun designReviewTokensLiftFormerSubAAPairsAboveAA() {
+        for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            check("$label inkMuted/ground", p, { it.inkMuted }, { it.ground }, 4.5)
+            check("$label inkMuted/fill", p, { it.inkMuted }, { it.fill }, 4.5)
+            check("$label warning/surface", p, { it.warning }, { it.surface }, 4.5)
+            check("$label warning/fill", p, { it.warning }, { it.fill }, 4.5)
+            check("$label warning/ground", p, { it.warning }, { it.ground }, 4.5)
+        }
+        checkPair("svetla bela na warning (puna oznaka)", Color.White, LightColors.warning, 4.5)
+        // Tacne vrednosti iz spec tabele (zaokruzene na dve decimale) — da tabela u
+        // dokumentu i paleta u kodu ne mogu tiho da se raziđu.
+        checkPair("svetla inkMuted/ground ~5,28", LightColors.inkMuted, LightColors.ground, 5.27)
+        checkPair("svetla warning/surface ~5,72", LightColors.warning, LightColors.surface, 5.71)
     }
 
     /**
@@ -347,7 +321,7 @@ class ContrastTest {
      * probom, ali NISU pinovane na tacnu vrednost (samo `>= 3.0`) jer prolaze sa
      * velikom marginom:
      *
-     *   warning na warning@10% tintu: 2,9361847662648937 (svetla)   7,836767547933033 (tamna)
+     *   warning na warning@10% tintu: 2,9361847662648937 (svetla, STARI `#B07D2B`; od spec § 2 ~4,52)   7,836767547933033 (tamna)
      *   danger  na danger@10% tintu : 5,045202115823989  (svetla)   6,3852190528998   (tamna)
      *
      * Sve cetiri su i dalje GORE od merenja protiv golog `ground`-a ispod (svetla
@@ -374,6 +348,8 @@ class ContrastTest {
         // varijanta) imaju istu podlogu u OBE teme — samo je tamna vrednost
         // (9,27) vec bila iznad AA praga, pa je ovaj test (ne onaj) njeno mesto.
         check("tamna warning/ground", DarkColors, { it.warning }, { it.ground }, 4.5)
+        // Od spec § 2 (`warning` svetle `#865F21`) i svetla varijanta prelazi AA (5,16).
+        check("svetla warning/ground", LightColors, { it.warning }, { it.ground }, 4.5)
         // `danger/ground` (svetla i tamna) dobija stvarnog potrosaca u Fazi 8,
         // Task 3: `Icons.Default.Flag` ("Predaj partiju") u `StepGameView.kt`
         // (`containerColor = Transparent`, `contentColor = DS.danger`, na
@@ -581,7 +557,9 @@ class ContrastTest {
      * sebe), ali je graficki objekat: WCAG prag je 3:1 (SC 1.4.11), ne 4,5.
      *
      * IZMERENO OVIM testom (isti `over`/`contrast` put kao ostatak fajla, ne
-     * procenjeno): `RULE` (warning) u SVETLOJ temi pada NA 2,9361847662648937 —
+     * procenjeno): `RULE` (warning) u SVETLOJ temi je padao NA 2,9361847662648937 —
+     * [ISTORIJA: od dizajnerskog pregleda (spec § 2, `warning` `#865F21`) par prelazi
+     * 3:1, pa je pin zamenjen pragom 3,0; tekst ispod opisuje stanje pre toga] —
      * ispod 3:1, ista klasa granicnog slucaja kao `warning/surface` i
      * `warning/ground` vec pinovani u `knownSubAAPairsDoNotGetWorse`. Doc-komentar
      * iznad `lessonBoxStylesMeetAA` je do ovog testa nosio drugaciju prozu
@@ -605,10 +583,11 @@ class ContrastTest {
         }
         checkPair("tamna LBox ikona (RULE) na warning@10%% tintu",
             DarkColors.warning, over(DarkColors.warning, 0.1f, DarkColors.ground), 3.0)
-        // Svetla RULE: PINOVANO ispod praga, vidi doc-komentar iznad.
+        // Svetla RULE: do dizajnerskog pregleda PINOVANO ispod praga (2,936). Spec § 2
+        // menja `warning` svetle teme na `#865F21`, pa par prelazi 3:1 (~4,52 nad
+        // ground-tintom; nova kutija nad `surface` iz § 9 daje ~4,99).
         checkPair("svetla LBox ikona (RULE) na warning@10%% tintu",
-            LightColors.warning, over(LightColors.warning, 0.1f, LightColors.ground),
-            2.9361847662648937)
+            LightColors.warning, over(LightColors.warning, 0.1f, LightColors.ground), 3.0)
     }
 
     /**

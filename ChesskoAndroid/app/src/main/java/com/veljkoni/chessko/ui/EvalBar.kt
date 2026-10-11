@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.logic.locDecimal
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -71,9 +72,10 @@ fun EvalBar(
     // Formatted evaluation string
     val evalText: String = when {
         mateIn != null -> if (mateIn > 0) "M$mateIn" else "-M${abs(mateIn)}"
-        abs(evaluation) < 0.05 -> "0.0"
-        evaluation > 0 -> "+%.1f".format(evaluation)
-        else -> "%.1f".format(evaluation)
+        // Lokalni format jezika aplikacije (spec § 3): „+0,4" / „−2,3" na srpskom.
+        abs(evaluation) < 0.05 -> locDecimal(0.0)
+        evaluation > 0 -> locDecimal(evaluation, signed = true)
+        else -> locDecimal(evaluation)
     }
 
     // White is on the bottom in standard orientation (unless flipped)

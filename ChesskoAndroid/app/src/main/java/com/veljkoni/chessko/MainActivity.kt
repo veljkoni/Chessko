@@ -456,7 +456,7 @@ class MainActivity : ComponentActivity() {
                     AlertDialog(
                         onDismissRequest = { showResetConfirm = false },
                         title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
-                        text = { Text(text = loc("Da li ste sigurni? Trenutna partija će biti izgubljena."), color = DS.inkMuted) },
+                        text = { Text(text = loc("Da li ste sigurni? Trenutna partija će biti izgubljena."), color = DS.ink) },
                         confirmButton = {
                             TextButton(onClick = {
                                 gameViewModel.resetGame()
@@ -467,7 +467,8 @@ class MainActivity : ComponentActivity() {
                         },
                         dismissButton = {
                             TextButton(onClick = { showResetConfirm = false }) {
-                                Text(text = loc("Otkaži"), color = DS.inkMuted)
+                                // spec § 3: sporedna radnja je tekst-dugme u `accent`, nikad `inkMuted`.
+                                Text(text = loc("Otkaži"), color = DS.accent)
                             }
                         },
                         containerColor = DS.surface,
@@ -479,7 +480,7 @@ class MainActivity : ComponentActivity() {
                     AlertDialog(
                         onDismissRequest = { showResignConfirm = false },
                         title = { Text(text = loc("Predaja partije"), color = DS.ink, fontWeight = FontWeight.Bold) },
-                        text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.inkMuted) },
+                        text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.ink) },
                         confirmButton = {
                             TextButton(onClick = {
                                 gameViewModel.resign()
@@ -490,7 +491,7 @@ class MainActivity : ComponentActivity() {
                         },
                         dismissButton = {
                             TextButton(onClick = { showResignConfirm = false }) {
-                                Text(text = loc("Nastavi igru"), color = DS.inkMuted)
+                                Text(text = loc("Nastavi igru"), color = DS.accent)
                             }
                         },
                         containerColor = DS.surface,
@@ -511,7 +512,8 @@ class MainActivity : ComponentActivity() {
                         onDismissRequest = { dismissGameOverOverlay = true }
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(20.dp),
+                            // spec § 3: dijalog = `surface` + `Radius.l` (bilo 20.dp).
+                            shape = RoundedCornerShape(DS.Radius.l),
                             color = DS.surface,
                             tonalElevation = 8.dp,
                             modifier = Modifier

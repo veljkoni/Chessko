@@ -111,7 +111,7 @@ struct MoveHistoryView: View {
 
         HStack(spacing: 0) {
             Text("\(pair.number).")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DS.inkMuted)
                 .frame(width: 26, alignment: .trailing)
 
             Button {
@@ -119,7 +119,7 @@ struct MoveHistoryView: View {
             } label: {
                 Text(pair.white)
                     .fontWeight(whiteSelected ? .bold : .regular)
-                    .foregroundStyle(whiteSelected ? DS.accent : Color.primary.opacity(0.85))
+                    .foregroundStyle(whiteSelected ? DS.accent : DS.ink)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
                     .background(whiteSelected ? DS.accent.opacity(0.18) : Color.clear)
@@ -136,7 +136,7 @@ struct MoveHistoryView: View {
                     } label: {
                         Text(black)
                             .fontWeight(blackSelected ? .bold : .regular)
-                            .foregroundStyle(blackSelected ? DS.accent : Color.primary.opacity(0.85))
+                            .foregroundStyle(blackSelected ? DS.accent : DS.ink)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 2)
                             .background(blackSelected ? DS.accent.opacity(0.18) : Color.clear)
@@ -144,7 +144,7 @@ struct MoveHistoryView: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Text("").foregroundStyle(.secondary)
+                    Text("").foregroundStyle(DS.inkMuted)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

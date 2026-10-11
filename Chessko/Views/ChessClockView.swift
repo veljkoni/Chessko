@@ -86,7 +86,7 @@ struct ChessClockView: View {
     var body: some View {
         ZStack {
             // Background
-            Color(uiColor: .systemBackground)
+            DS.ground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -479,6 +479,7 @@ struct ChessClockInfoView: View {
                 }
                 .padding(20)
             }
+            .background(DS.ground) // spec § 3: nijedna sistemska podloga
             .navigationTitle(Loc("Objašnjenje vremenskih kontrola"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -503,11 +504,11 @@ struct ChessClockInfoView: View {
                         Text(name)
                             .font(.headline.weight(.bold))
                             .frame(width: 100, alignment: .leading)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(DS.ink)
 
                         Text(Loc(description))
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(DS.ink) // spec § 3: opis je dugi tekst
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(12)

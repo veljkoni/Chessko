@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.ButtonShape
 import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -134,7 +135,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                 fontWeight = FontWeight.Bold
             )
             Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                Button(
+                Button(shape = ButtonShape, 
                     onClick = { viewModel.undo() },
                     enabled = viewModel.canUndo,
                     colors = ButtonDefaults.buttonColors(
@@ -173,7 +174,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                     )
                 }
                 if (viewModel.canResign) {
-                    Button(
+                    Button(shape = ButtonShape, 
                         onClick = { showResignConfirm = true },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent,
@@ -191,11 +192,12 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                         )
                     }
                 }
-                Button(
+                Button(shape = ButtonShape, 
                     onClick = onClose,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
-                        contentColor = DS.inkMuted
+                        // spec § 3: „Zatvori" nikad u `inkMuted` — tekst-dugme u `accent`.
+                        contentColor = DS.accent
                     )
                 ) {
                     Text(text = loc("Zatvori"))
@@ -265,7 +267,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
             // ovo bas telo/supporting tekst dijaloga -- isti M3 slot
             // (`DialogTokens.SupportingTextColor`) koji `Theme.kt` vec mapira na
             // `onSurfaceVariant` = `inkMuted` po podrazumevanoj vrednosti.
-            text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.inkMuted) },
+            text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.ink) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.resign()
@@ -276,7 +278,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
             },
             dismissButton = {
                 TextButton(onClick = { showResignConfirm = false }) {
-                    Text(text = loc("Nastavi igru"), color = DS.inkMuted)
+                    // spec § 3: sporedna radnja u `accent`, nikad `inkMuted`.
+                    Text(text = loc("Nastavi igru"), color = DS.accent)
                 }
             },
             containerColor = DS.surface,
@@ -358,7 +361,7 @@ private fun StepGameFooter(
             // Korak je vec upisan kao zavrsen (vidi komentar na mestu poziva) --
             // ovo dugme je cisto dodatna informacija, ne uslov za nastavak Puta.
             AnalysisButton(viewModel = viewModel, onClick = onAnalyze)
-            Button(
+            Button(shape = ButtonShape, 
                 onClick = onClose,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)

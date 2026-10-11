@@ -57,7 +57,7 @@ struct StepGameView: View {
         }
         .navigationTitle(Loc("Partija"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.appBackground, for: .navigationBar)
+        .toolbarBackground(DS.ground, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 // Predaja je jedini izlaz iz partije koja se ne moze dobiti.
@@ -212,7 +212,7 @@ struct StepGameView: View {
         .padding(.horizontal, DS.Space.m)
         .padding(.vertical, DS.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.m))
+        .dsCard(radius: DS.Radius.m) // spec § 3: surface + 1 pt line
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.m).strokeBorder(DS.line, lineWidth: 1))
         .accessibilityElement(children: .combine)
     }

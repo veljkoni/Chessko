@@ -203,7 +203,7 @@ struct LessonStaticBoard: View {
             if !caption.isEmpty {
                 Text(caption)
                     .font(.dsCaption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -254,10 +254,10 @@ struct LessonPieceExplorer: View {
                                 .foregroundStyle(DS.warning)
                             Text(Loc("Specijalna pravila"))
                                 .font(.dsBody.weight(.semibold))
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(DS.ink)
                             Text(Loc("— izaberi i istraži na tabli"))
                                 .font(.dsCaption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(DS.inkMuted)
                         }
                         HStack(spacing: 10) {
                             ForEach(scenarios, id: \.self) { s in
@@ -275,7 +275,7 @@ struct LessonPieceExplorer: View {
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.8)
                                     }
-                                    .foregroundStyle(active ? DS.inkFixed : Color.primary)
+                                    .foregroundStyle(active ? DS.inkFixed : DS.ink)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 9)
                                     .background(
@@ -306,7 +306,7 @@ struct LessonPieceExplorer: View {
                     Image(systemName: "hand.point.up.left").font(.appFont(.caption2))  // van skale — caption2 nema DS ekvivalent
                     Text(Loc("Tapni figuru da je promeniš · Tapni polje da je premestiš")).font(.dsCaption)
                 }
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DS.inkMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 16).padding(.bottom, 24)
@@ -328,7 +328,7 @@ struct LessonPieceExplorer: View {
                             .frame(width: 28, height: 28)
                         Text(piece.srbName)
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(sel ? Color.primary : Color.secondary)
+                            .foregroundStyle(sel ? DS.ink : DS.inkMuted)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
@@ -362,7 +362,7 @@ struct L_SectionHeader: View {
                 .foregroundStyle(color)
             Text(title)
                 .font(.dsBody.weight(.bold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(DS.ink)
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 10)
@@ -392,7 +392,7 @@ struct L_Para: View {
     var body: some View {
         mdText(text)
             .font(.dsBody)
-            .foregroundStyle(.primary.opacity(0.85))
+            .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -413,10 +413,10 @@ struct L_Bullet: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.dsBody.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(DS.ink)
                 mdText(text)
                     .font(.dsBody)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -444,7 +444,7 @@ struct L_Box: View {
             }
             mdText(text)
                 .font(.dsBody)
-                .foregroundStyle(.primary.opacity(0.85))
+                .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -467,11 +467,11 @@ struct L_PieceRow: View {
                 .frame(width: 32, height: 32)
             Text(name)
                 .font(.dsBody.weight(.bold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(DS.ink)
             Spacer()
             Text(count)
                 .font(.dsCaption.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DS.inkMuted)
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(Color.primary.opacity(0.06), in: Capsule())
         }
@@ -497,10 +497,10 @@ struct L_NumberedRule: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.dsBody.weight(.bold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(DS.ink)
                 mdText(text)
                     .font(.dsBody)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -535,14 +535,14 @@ struct L_PieceValueTable: View {
                     }
                     Text(row.name)
                         .font(.dsBody)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DS.ink)
                     Spacer()
                     // `valueLabel` je vec preveden (dolazi iz JSON-a na tom jeziku).
                     // Fallback sklapa srpsku mnozinu i trazi je u katalogu — radi
                     // samo za 1/3/5/9/∞, pa ga nove lekcije zaobilaze.
                     Text(row.valueLabel ?? Loc(row.value == "∞" ? "∞" : "\(row.value) bod\(row.value == "1" ? "" : row.value == "9" ? "ova" : "a")"))
                         .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(row.value == "∞" ? DS.accent : .primary)
+                        .foregroundStyle(row.value == "∞" ? DS.accent : DS.ink)
                 }
                 .padding(.vertical, 9)
                 .padding(.horizontal, 14)
@@ -608,7 +608,7 @@ struct MatePuzzleCard: View {
                     HStack(spacing: 6) {
                         Text(vm.line.name)
                             .font(.dsBody.weight(.semibold))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(DS.ink)
                         Text(LocF("Mat u %lld", mateIn))
                             .font(.appFont(.caption2).weight(.bold))  // van skale — caption2 nema DS ekvivalent
                             .foregroundStyle(vm.line.accentColor)
@@ -617,7 +617,7 @@ struct MatePuzzleCard: View {
                     }
                     Text(vm.line.hint)
                         .font(.dsCaption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DS.inkMuted)
                         .lineLimit(2)
                 }
                 Spacer(minLength: 0)
@@ -661,7 +661,7 @@ struct MatePuzzleCard: View {
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
                         .font(.dsCaption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DS.inkMuted)
                         .padding(.horizontal, 10).padding(.vertical, 5)
                         .background(Color.primary.opacity(0.06), in: Capsule())
                 }
@@ -682,7 +682,7 @@ struct MatePuzzleCard: View {
         switch vm.phase {
         case .solved:    return DS.success
         case .wrongMove: return DS.danger
-        case .playing:   return .secondary
+        case .playing:   return DS.inkMuted
         }
     }
 
@@ -724,10 +724,10 @@ struct OpeningExerciseCard: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(line.name)
                         .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DS.ink)
                     Text(line.hint)
                         .font(.dsCaption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DS.inkMuted)
                         .lineLimit(2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -785,7 +785,7 @@ struct OpeningExerciseCard: View {
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
                         .font(.dsCaption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DS.inkMuted)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(Color.primary.opacity(0.06), in: Capsule())
@@ -806,7 +806,7 @@ struct OpeningExerciseCard: View {
         switch vm.phase {
         case .solved:    return DS.success
         case .wrongMove: return DS.danger
-        case .playing:   return .secondary
+        case .playing:   return DS.inkMuted
         }
     }
 
@@ -856,10 +856,10 @@ struct MateExerciseCard: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
                         .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DS.ink)
                     Text(hint)
                         .font(.dsCaption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DS.inkMuted)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Spacer(minLength: 0)
@@ -907,7 +907,7 @@ struct MateExerciseCard: View {
                 } label: {
                     Label("Ponovo", systemImage: "arrow.counterclockwise")
                         .font(.dsCaption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DS.inkMuted)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(Color.primary.opacity(0.06), in: Capsule())
@@ -929,7 +929,7 @@ struct MateExerciseCard: View {
         if case .draw = vm.gameState.status { return DS.warning }
         if case .checkmate(let c) = vm.gameState.status, c == .white { return DS.danger }
         if case .check = vm.gameState.status { return DS.warning }
-        return .secondary
+        return DS.inkMuted
     }
 
     private var borderColor: Color {

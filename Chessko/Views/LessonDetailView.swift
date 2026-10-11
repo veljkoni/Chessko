@@ -77,7 +77,7 @@ struct LessonDetailView: View {
             ? (document?.title ?? "")
             : (lessonNumber.map { LocF("Lekcija %lld", $0) } ?? (document?.title ?? "")))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.appBackground, for: .navigationBar)
+        .toolbarBackground(DS.ground, for: .navigationBar)
     }
 
     // MARK: - Zavrsetak koraka Puta
@@ -138,10 +138,10 @@ struct LessonDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(document.title)
                     .font(.dsHeading.weight(.bold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(DS.ink)
                 Text(document.subtitle)
                     .font(.dsBody)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.inkMuted)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Spacer()

@@ -1,5 +1,7 @@
 package com.veljkoni.chessko.logic
 
+import java.text.NumberFormat
+
 object Loc {
     private var currentLanguage: String = "sr"
 
@@ -40,6 +42,50 @@ object Loc {
     /// unapred, pa bi propustio bas one koji se naknadno dodaju.
     internal val dictionaryForTests: Map<String, Map<String, String>> get() = dictionary
 
+    /**
+     * Mnozina (dizajnerski pregled, spec § 3): kategoriju bira `PluralRules`
+     * (`LocalFormat.kt`) po jeziku aplikacije, tekst je ovde. Jezik bez neke
+     * kategorije pada na svoju `OTHER` formu, pa na srpski. Tekst moze, ali ne
+     * mora, da sadrzi `%d` (oznaka uz zaseban veliki broj, npr. „dana zaredom",
+     * ga nema). Isti kljucevi i iste forme kao iOS katalog
+     * (`<osnova>#one|few|many|other`).
+     */
+    fun plural(key: String, n: Int): String {
+        val forms = pluralDictionary[key] ?: return key
+        val byLang = forms[currentLanguage] ?: forms["en"] ?: forms["sr"] ?: return key
+        val pattern = byLang[PluralRules.category(currentLanguage, n)]
+            ?: byLang[PluralCategory.OTHER] ?: return key
+        return if (pattern.contains("%")) {
+            try { String.format(LocalNumber.locale(currentLanguage), pattern, n) } catch (e: Exception) { pattern }
+        } else pattern
+    }
+
+    internal val pluralDictionaryForTests: Map<String, Map<String, Map<PluralCategory, String>>>
+        get() = pluralDictionary
+
+    private val pluralDictionary: Map<String, Map<String, Map<PluralCategory, String>>> = mapOf(
+        "dana zaredom" to mapOf(
+            "sr" to mapOf(PluralCategory.ONE to "dan zaredom", PluralCategory.FEW to "dana zaredom", PluralCategory.OTHER to "dana zaredom"),
+            "en" to mapOf(PluralCategory.ONE to "day in a row", PluralCategory.OTHER to "days in a row"),
+            "fr" to mapOf(PluralCategory.ONE to "jour d'affilée", PluralCategory.OTHER to "jours d'affilée"),
+            "de" to mapOf(PluralCategory.ONE to "Tag in Folge", PluralCategory.OTHER to "Tage in Folge"),
+            "it" to mapOf(PluralCategory.ONE to "giorno di fila", PluralCategory.OTHER to "giorni di fila"),
+            "ru" to mapOf(PluralCategory.ONE to "день подряд", PluralCategory.FEW to "дня подряд", PluralCategory.MANY to "дней подряд", PluralCategory.OTHER to "дня подряд"),
+            "zh-Hans" to mapOf(PluralCategory.OTHER to "连续天数"),
+            "hi" to mapOf(PluralCategory.ONE to "लगातार दिन", PluralCategory.OTHER to "लगातार दिन")
+        ),
+        "%d mogućih poteza" to mapOf(
+            "sr" to mapOf(PluralCategory.ONE to "%d mogući potez", PluralCategory.FEW to "%d moguća poteza", PluralCategory.OTHER to "%d mogućih poteza"),
+            "en" to mapOf(PluralCategory.ONE to "%d legal move", PluralCategory.OTHER to "%d legal moves"),
+            "fr" to mapOf(PluralCategory.ONE to "%d coup possible", PluralCategory.OTHER to "%d coups possibles"),
+            "de" to mapOf(PluralCategory.ONE to "%d möglicher Zug", PluralCategory.OTHER to "%d mögliche Züge"),
+            "it" to mapOf(PluralCategory.ONE to "%d mossa possibile", PluralCategory.OTHER to "%d mosse possibili"),
+            "ru" to mapOf(PluralCategory.ONE to "%d возможный ход", PluralCategory.FEW to "%d возможных хода", PluralCategory.MANY to "%d возможных ходов", PluralCategory.OTHER to "%d возможного хода"),
+            "zh-Hans" to mapOf(PluralCategory.OTHER to "%d 个可走位置"),
+            "hi" to mapOf(PluralCategory.ONE to "%d संभव चाल", PluralCategory.OTHER to "%d संभव चालें")
+        )
+    )
+
     private val dictionary: Map<String, Map<String, String>> = mapOf(
         "Igraj protiv veštačke inteligencije sa izborom boje" to mapOf("sr" to "Igraj protiv veštačke inteligencije sa izborom boje", "en" to "Play against artificial intelligence with color selection", "fr" to "Jouez contre l'intelligence artificielle avec choix de couleur", "de" to "Spielen Sie gegen künstliche Intelligenz mit Farbauswahl", "it" to "Gioca contro l'intelligenza artificiale con scelta del colore", "ru" to "Играть против искусственного интеллекта с выбором цвета", "zh-Hans" to "选择颜色与人工智能对战", "hi" to "रंग चयन के साथ आर्टिफिशियल इंटेलिजेंस के खिलाफ खेलें"),
         "Lokalna igra na istom telefonu sa rotiranjem table" to mapOf("sr" to "Lokalna igra na istom telefonu sa rotiranjem table", "en" to "Local game on the same phone with board rotation", "fr" to "Jeu local sur le même téléphone avec rotation de l'échiquier", "de" to "Lokales Spiel auf demselben Telefon mit Brettdrehung", "it" to "Gioco locale sullo stesso telefono con rotazione della scacchiera", "ru" to "Локальная игра на одном телефоне с поворотом доски", "zh-Hans" to "同屏双人对战（支持棋盘旋转）", "hi" to "बोर्ड रोटेशन के साथ एक ही फोन पर स्थानीय खेल"),
@@ -68,10 +114,8 @@ object Loc {
         "Reset" to mapOf("en" to "Reset", "fr" to "Réinitialiser", "de" to "Neustart", "it" to "Reimposta", "ru" to "Сброс", "zh-Hans" to "重置", "hi" to "रीसेट", "sr" to "Reset"),
         "Nema odigranih poteza" to mapOf("en" to "No moves played yet", "fr" to "Aucun coup joué", "de" to "Noch keine Züge gespielt", "it" to "Nessuna mossa giocata", "ru" to "Ходов еще нет", "zh-Hans" to "暂无棋局记录", "hi" to "अभी तक कोई चाल नहीं चली गई", "sr" to "Nema odigranih poteza"),
         "Prijatelj" to mapOf("en" to "Friend", "fr" to "Ami", "de" to "Freund", "it" to "Amico", "ru" to "Друг", "zh-Hans" to "好友", "hi" to "मित्र", "sr" to "Prijatelj"),
-        "%d mogućih poteza" to mapOf("de" to "%d mögliche Züge", "en" to "%d legal moves", "fr" to "%d coups possibles", "hi" to "%d संभव चालें", "it" to "%d mosse possibili", "ru" to "Возможных ходов: %d", "sr" to "%d mogućih poteza", "zh-Hans" to "%d 个可走位置"),
         "%d/%d poteza" to mapOf("de" to "%d/%d Züge", "en" to "%d/%d moves", "fr" to "%d/%d coups", "hi" to "%d/%d चालें", "it" to "%d/%d mosse", "ru" to "%d/%d ходов", "sr" to "%d/%d poteza", "zh-Hans" to "%d/%d 步"),
         "1 bod" to mapOf("de" to "1 Punkt", "en" to "1 point", "fr" to "1 point", "hi" to "1 अंक", "it" to "1 punto", "ru" to "1 очко", "sr" to "1 bod", "zh-Hans" to "1 分"),
-        "1 mogući potez" to mapOf("de" to "1 möglicher Zug", "en" to "1 legal move", "fr" to "1 coup possible", "hi" to "1 संभव चाल", "it" to "1 mossa possibile", "ru" to "1 возможный ход", "sr" to "1 mogući potez", "zh-Hans" to "1 个可走位置"),
         "1.e4 c5 2.Sf3 d6 3.d4 cxd4 4.Sxd4 — asimetrična borba" to mapOf("de" to "1.e4 c5 2.Sf3 d6 3.d4 cxd4 4.Sxd4 — ein asymmetrischer Kampf", "en" to "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 — an asymmetrical fight", "fr" to "1.e4 c5 2.Cf3 d6 3.d4 cxd4 4.Cxd4 — un combat asymétrique", "hi" to "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 — असममित संघर्ष", "it" to "1.e4 c5 2.Cf3 d6 3.d4 cxd4 4.Cxd4 — una lotta asimmetrica", "ru" to "1.e4 c5 2.Кf3 d6 3.d4 cxd4 4.К:d4 — асимметричная борьба", "sr" to "1.e4 c5 2.Sf3 d6 3.d4 cxd4 4.Sxd4 — asimetrična borba", "zh-Hans" to "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 — 不对称的较量"),
         "1.e4 e5 2.Sf3 Sc6 3.Lb5 — Kapablankova omiljena" to mapOf("de" to "1.e4 e5 2.Sf3 Sc6 3.Lb5 — Capablancas Liebling", "en" to "1.e4 e5 2.Nf3 Nc6 3.Bb5 — Capablanca’s favourite", "fr" to "1.e4 e5 2.Cf3 Cc6 3.Fb5 — la préférée de Capablanca", "hi" to "1.e4 e5 2.Nf3 Nc6 3.Bb5 — कापाब्लांका की पसंदीदा", "it" to "1.e4 e5 2.Cf3 Cc6 3.Ab5 — la preferita di Capablanca", "ru" to "1.e4 e5 2.Кf3 Кc6 3.Сb5 — любимая Капабланки", "sr" to "1.e4 e5 2.Sf3 Sc6 3.Lb5 — Kapablankova omiljena", "zh-Hans" to "1.e4 e5 2.Nf3 Nc6 3.Bb5 — 卡帕布兰卡的最爱"),
         "1.e4 e5 2.Sf3 Sc6 3.Lc4 — lovac nišani tačku f7" to mapOf("de" to "1.e4 e5 2.Sf3 Sc6 3.Lc4 — der Läufer zielt auf f7", "en" to "1.e4 e5 2.Nf3 Nc6 3.Bc4 — the bishop targets f7", "fr" to "1.e4 e5 2.Cf3 Cc6 3.Fc4 — le fou vise f7", "hi" to "1.e4 e5 2.Nf3 Nc6 3.Bc4 — ऊँट f7 को निशाना बनाता है", "it" to "1.e4 e5 2.Cf3 Cc6 3.Ac4 — l’alfiere punta f7", "ru" to "1.e4 e5 2.Кf3 Кc6 3.Сc4 — слон нацелен на f7", "sr" to "1.e4 e5 2.Sf3 Sc6 3.Lc4 — lovac nišani tačku f7", "zh-Hans" to "1.e4 e5 2.Nf3 Nc6 3.Bc4 — 象瞄准 f7"),
@@ -568,7 +612,6 @@ object Loc {
         // Faza 7, Task 1: zamenio "Niz: %d dana" (mnozina se lomila na sr/en/ru
         // za streak 1). Broj i oznaka su sada dva odvojena Text-a u
         // PathHeader() -- prevodi prepisani doslovno iz Chessko/Localizable.xcstrings.
-        "Dana zaredom" to mapOf("sr" to "Dana zaredom", "en" to "Day streak", "fr" to "Jours d'affilée", "de" to "Tage in Folge", "it" to "Giorni di fila", "ru" to "Дней подряд", "zh-Hans" to "连续天数", "hi" to "लगातार दिन"),
         "Cilj za danas je ispunjen" to mapOf("sr" to "Cilj za danas je ispunjen", "en" to "Today's goal met", "fr" to "Objectif du jour atteint", "de" to "Tagesziel erreicht", "it" to "Obiettivo di oggi raggiunto", "ru" to "Цель на сегодня выполнена", "zh-Hans" to "今日目标已完成", "hi" to "आज का लक्ष्य पूरा"),
         "Cilj za danas nije ispunjen" to mapOf("sr" to "Cilj za danas nije ispunjen", "en" to "Today's goal not met yet", "fr" to "Objectif du jour non atteint", "de" to "Tagesziel noch nicht erreicht", "it" to "Obiettivo di oggi non ancora raggiunto", "ru" to "Цель на сегодня ещё не выполнена", "zh-Hans" to "今日目标尚未完成", "hi" to "आज का लक्ष्य अभी पूरा नहीं हुआ"),
         "Završi korak" to mapOf("sr" to "Završi korak", "en" to "Finish step", "fr" to "Terminer l'étape", "de" to "Schritt abschließen", "it" to "Completa il passo", "ru" to "Завершить шаг", "zh-Hans" to "完成此步", "hi" to "चरण पूरा करें"),
@@ -614,3 +657,9 @@ object Loc {
 
 fun loc(key: String): String = Loc.get(key)
 fun locF(key: String, vararg args: Any): String = Loc.format(key, *args)
+fun locPlural(key: String, n: Int): String = Loc.plural(key, n)
+fun locInteger(n: Int): String = NumberFormat.getIntegerInstance(LocalNumber.locale(Loc.fileLanguageCode())).format(n)
+fun locDecimal(value: Double, fractionDigits: Int = 1, signed: Boolean = false): String =
+    LocalNumber.decimal(value, fractionDigits, signed, Loc.fileLanguageCode())
+fun locPercent(value0to100: Double, fractionDigits: Int = 1): String =
+    LocalNumber.percent(value0to100, fractionDigits, Loc.fileLanguageCode())

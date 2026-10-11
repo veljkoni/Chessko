@@ -22,6 +22,8 @@ import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.StepState
 import com.veljkoni.chessko.logic.Loc
 import com.veljkoni.chessko.logic.loc
+import com.veljkoni.chessko.logic.locInteger
+import com.veljkoni.chessko.logic.locPlural
 import com.veljkoni.chessko.logic.locF
 import com.veljkoni.chessko.models.CurriculumStep
 import com.veljkoni.chessko.models.StepKind
@@ -170,7 +172,7 @@ private fun PathHeader(
             // pobedjuje pa je parametar na redu mrtav.
             Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
                 Text(
-                    text = streak.toString(),
+                    text = locInteger(streak),
                     color = DS.ink,
                     // iOS: `.dsTitle` (`Chessko/Views/PathView.swift:288`).
                     style = Type.title,
@@ -178,7 +180,8 @@ private fun PathHeader(
                     modifier = Modifier.alignByBaseline()
                 )
                 Text(
-                    text = loc("Dana zaredom"),
+                    // Mnozina po broju (spec § 3): „1 dan zaredom", „5 dana zaredom".
+                    text = locPlural("dana zaredom", streak),
                     color = DS.inkMuted,
                     // iOS: `.dsBody` (`Chessko/Views/PathView.swift:291`).
                     style = Type.body,

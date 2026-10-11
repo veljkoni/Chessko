@@ -237,7 +237,7 @@ struct PathView: View {
             }
             .padding(DS.Space.l)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.l))
+            .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
         }
     }
@@ -287,7 +287,8 @@ struct PathView: View {
                 Text(store.currentStreak.formatted(.number.locale(LocalizationManager.shared.locale)))
                     .font(.dsTitle)
                     .foregroundStyle(DS.ink)
-                Text(Loc("Dana zaredom"))
+                // Množina po broju (spec § 3): „1 dan zaredom", „2 dana zaredom".
+                Text(LocPlural("dana zaredom", store.currentStreak))
                     .font(.dsBody)
                     .foregroundStyle(DS.inkMuted)
                 Spacer(minLength: 0)
@@ -301,7 +302,7 @@ struct PathView: View {
         }
         .padding(DS.Space.l)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.l))
+        .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
         .accessibilityElement(children: .combine)
     }
@@ -344,7 +345,7 @@ struct PathView: View {
                     stepRow(step, state: states[step.id] ?? .locked)
                 }
             }
-            .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.l))
+            .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
         }
     }
@@ -440,7 +441,7 @@ struct PathView: View {
             .foregroundStyle(DS.inkMuted)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(DS.Space.l)
-            .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.l))
+            .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
     }
 }

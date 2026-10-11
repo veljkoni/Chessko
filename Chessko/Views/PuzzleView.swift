@@ -94,7 +94,7 @@ struct PuzzleView: View {
             }
             .navigationTitle(Loc("Zadaci"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarBackground(DS.ground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -116,7 +116,7 @@ struct PuzzleView: View {
                             HStack(spacing: 5) {
                                 Image(systemName: "calendar")
                                     .font(.dsCaption)
-                                    .foregroundStyle(Color.secondary)
+                                    .foregroundStyle(DS.inkMuted)
                                     .symbolEffect(.bounce, value: bounceCalendar)
                                 Text(dateTitle)
                                     .font(.dsCaption.weight(.semibold))
@@ -210,6 +210,7 @@ struct PuzzleView: View {
                 }
                 .padding(.bottom, 32)
             }
+            .background(DS.ground) // spec § 3: nijedna sistemska podloga
             .navigationTitle(Loc("Izaberi dan"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -236,8 +237,8 @@ struct PuzzleView: View {
         return AnyView(
             VStack(alignment: .leading, spacing: 10) {
                 Text(Loc("Rešeni zadaci"))
-                    .font(.dsHeading)
-                    .foregroundStyle(.secondary)
+                    .font(.dsSectionHeading) // spec § 3: naslov sekcije bold `ink`
+                    .foregroundStyle(DS.ink)
 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7),
                           spacing: 8) {
@@ -261,7 +262,7 @@ struct PuzzleView: View {
                                 in: RoundedRectangle(cornerRadius: 8)
                             )
                         }
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DS.ink)
                     }
                 }
             }
@@ -324,7 +325,7 @@ struct PuzzleView: View {
             ForEach(Array(themes.enumerated()), id: \.offset) { _, label in
                 Text(label)
                     .font(.dsCaption)
-                    .foregroundStyle(Color.secondary)
+                    .foregroundStyle(DS.inkMuted)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
                     .background(Color.primary.opacity(0.06), in: Capsule())
@@ -372,7 +373,7 @@ struct PuzzleView: View {
         case .wrongMove:       return DS.danger
         case .solved:          return DS.success
         case .showingSolution: return DS.warning
-        default:               return Color.primary.opacity(0.9)
+        default:               return DS.ink
         }
     }
 
@@ -387,7 +388,7 @@ struct PuzzleView: View {
             } label: {
                 Label("Prikaži rešenje", systemImage: "eye")
                     .font(.dsBody.weight(.medium))
-                    .foregroundStyle(Color.primary.opacity(0.8))
+                    .foregroundStyle(DS.ink)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
@@ -420,7 +421,7 @@ struct PuzzleView: View {
                         } label: {
                             Label("Sledeći dan", systemImage: "chevron.right")
                                 .font(.dsBody.weight(.medium))
-                                .foregroundStyle(Color.primary.opacity(0.8))
+                                .foregroundStyle(DS.ink)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                                 .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
@@ -432,7 +433,7 @@ struct PuzzleView: View {
                                 .foregroundStyle(DS.warning)
                             Text(Loc("Završio si zadatak za danas!"))
                                 .font(.dsBody.weight(.medium))
-                                .foregroundStyle(Color.primary.opacity(0.85))
+                                .foregroundStyle(DS.ink)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -453,7 +454,7 @@ struct PuzzleView: View {
                 .tint(.primary)
                 .scaleEffect(1.4)
             Text(Loc("Učitavam zadatak..."))
-                .foregroundStyle(Color.secondary)
+                .foregroundStyle(DS.inkMuted)
                 .font(.dsBody)
         }
     }
@@ -462,7 +463,7 @@ struct PuzzleView: View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 48))
-                .foregroundStyle(Color.secondary)
+                .foregroundStyle(DS.inkMuted)
             Text(message)
                 .foregroundStyle(Color.primary)
                 .font(.dsBody)
@@ -474,9 +475,9 @@ struct PuzzleView: View {
                     .font(.dsBody.weight(.medium))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color.primary)
-                    .foregroundStyle(Color(uiColor: .systemBackground))
-                    .clipShape(Capsule())
+                    .background(DS.accent) // spec § 3: primarno dugme `accent` + `onAccent`
+                    .foregroundStyle(DS.onAccent)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m)) // spec § 3: nigde „stadion"
             }
         }
         .padding(32)

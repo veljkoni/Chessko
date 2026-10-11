@@ -7,14 +7,6 @@ extension Color {
     static let squareLight     = Color(hex: "#e9ebde")
     static let squareDark      = Color(hex: "#8592af")
 
-    /// Pozadina aplikacije — prilagođava se svetloj/tamnoj temi.
-    /// Svetla: topla svetlo-plava (#edf0f7). Tamna: duboki tamno-plavi (#0e1528).
-    static let appBackground = Color(UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(red: 0.055, green: 0.082, blue: 0.157, alpha: 1)  // #0e1528
-            : UIColor(red: 0.929, green: 0.941, blue: 0.969, alpha: 1)  // #edf0f7
-    })
-
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
@@ -28,11 +20,13 @@ extension Color {
 
 // MARK: - App Background (MeshGradient)
 
-/// Suptilni višetačkasti gradijent koji prati temu sistema i izabranu temu table.
-/// Suptilna pozadina koja prati sistemsku temu.
+/// Podloga svakog ekrana — `DS.ground` (spec § 3). Do dizajnerskog pregleda je
+/// ovde stajao `systemGroupedBackground` (#F2F2F7 / čisto crno), pa se podloga
+/// razlikovala od kartica i trake tabova na iPad-u. Ime je zadržano jer ga zove
+/// šest ekrana.
 struct AppBackgroundView: View {
     var body: some View {
-        Color(uiColor: .systemGroupedBackground)
+        DS.ground
             .ignoresSafeArea()
     }
 }

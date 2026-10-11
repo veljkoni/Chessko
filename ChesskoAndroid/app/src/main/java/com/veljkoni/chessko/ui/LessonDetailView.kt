@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.ButtonShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -215,7 +216,7 @@ fun LessonDetailView(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         HorizontalDivider(color = DS.line)
-                        Button(
+                        Button(shape = ButtonShape, 
                             onClick = onComplete,
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = accent)

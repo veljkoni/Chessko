@@ -86,7 +86,8 @@ struct AnalysisView: View {
             Text(title)
                 .font(.dsCaption)
                 .foregroundStyle(DS.inkMuted)
-            Text(verbatim: String(format: "%.1f%%", value))
+            // Lokalni format jezika aplikacije (spec § 3): „41,9 %" na srpskom.
+            Text(verbatim: LocPercent(value))
                 .font(.dsTitle)
                 .foregroundStyle(DS.ink)
             Text(Loc("Tačnost"))
@@ -95,7 +96,7 @@ struct AnalysisView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(DS.Space.m)
-        .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.m))
+        .dsCard(radius: DS.Radius.m) // spec § 3: surface + 1 pt line
     }
 
     // MARK: - Prelomni potez
@@ -115,7 +116,7 @@ struct AnalysisView: View {
             Spacer()
         }
         .padding(DS.Space.m)
-        .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.m))
+        .dsCard(radius: DS.Radius.m) // spec § 3: surface + 1 pt line
         .contentShape(Rectangle())
         .onTapGesture { open(move) }
         .accessibilityElement(children: .combine)

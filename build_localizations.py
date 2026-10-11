@@ -25,6 +25,18 @@ T = {}
 def add(sr, en, fr, de, it, ru, zh, hi):
     T[sr] = {"en": en, "fr": fr, "de": de, "it": it, "ru": ru, "zh-Hans": zh, "hi": hi}
 
+# Množine (dizajnerski pregled, spec § 3). Kategorija se bira u kodu
+# (`PluralRules`, `Chessko/Logic/LocalFormat.swift`), a svaka kategorija je
+# običan ključ `<osnova>#one|few|many|other`. Jezik bez neke kategorije dobija
+# vrednost svoje `other` forme, pa svaki ključ ima svih 8 jezika.
+PLURAL_CATS = ["one", "few", "many", "other"]
+
+def add_plural(base, forms):
+    for c in PLURAL_CATS:
+        vals = {l: f.get(c, f["other"]) for l, f in forms.items()}
+        add(f"{base}#{c}", vals["en"], vals["fr"], vals["de"], vals["it"], vals["ru"], vals["zh-Hans"], vals["hi"])
+        T[f"{base}#{c}"]["__sr"] = vals["sr"]
+
 # ── Piece names (PieceType.srbName / value table / piece rows) ───────────────
 add("Kralj", "King", "Roi", "König", "Re", "Король", "国王", "राजा")
 add("Dama", "Queen", "Dame", "Dame", "Donna", "Ферзь", "皇后", "वज़ीर")
@@ -173,8 +185,6 @@ add("%lld lekcije od osnova do završnice", "%lld lessons from basics to the end
 add("Rokada", "Castling", "Roque", "Rochade", "Arrocco", "Рокировка", "王车易位", "कैसलिंग")
 add("Promocija", "Promotion", "Promotion", "Umwandlung", "Promozione", "Превращение", "升变", "प्रमोशन")
 add("Nema mogućih poteza", "No legal moves", "Aucun coup possible", "Keine möglichen Züge", "Nessuna mossa possibile", "Нет возможных ходов", "无可走的棋", "कोई संभव चाल नहीं")
-add("1 mogući potez", "1 legal move", "1 coup possible", "1 möglicher Zug", "1 mossa possibile", "1 возможный ход", "1 个可走位置", "1 संभव चाल")
-add("%lld mogućih poteza", "%lld legal moves", "%lld coups possibles", "%lld mögliche Züge", "%lld mosse possibili", "Возможных ходов: %lld", "%lld 个可走位置", "%lld संभव चालें")
 
 # ── Mate-exercise (Lesson 1) status ─────────────────────────────────────────
 add("Bravo! Mat! 🎉", "Bravo! Checkmate! 🎉", "Bravo ! Échec et mat ! 🎉", "Bravo! Schachmatt! 🎉", "Bravo! Scacco matto! 🎉", "Браво! Мат! 🎉", "太棒了！将死！🎉", "शाबाश! शहमात! 🎉")
@@ -425,7 +435,6 @@ add("Partija", "Game", "Partie", "Partie", "Partita", "Партия", "对局", 
 add("Test", "Test", "Test", "Test", "Test", "Тест", "测验", "परीक्षा")
 add("Vežba · %lld", "Practice · %lld", "Entraînement · %lld", "Übung · %lld", "Esercizio · %lld", "Практика · %lld", "练习 · %lld", "अभ्यास · %lld")
 add("Test · %lld", "Test · %lld", "Test · %lld", "Test · %lld", "Test · %lld", "Тест · %lld", "测验 · %lld", "परीक्षा · %lld")
-add("Dana zaredom", "Day streak", "Jours d'affilée", "Tage in Folge", "Giorni di fila", "Дней подряд", "连续天数", "लगातार दिन")
 add("Cilj za danas ispunjen", "Today's goal met", "Objectif du jour atteint", "Tagesziel erreicht", "Obiettivo di oggi raggiunto", "Цель на сегодня выполнена", "今日目标已完成", "आज का लक्ष्य पूरा")
 add("Cilj za danas nije ispunjen", "Today's goal not met yet", "Objectif du jour non atteint", "Tagesziel noch nicht erreicht", "Obiettivo di oggi non ancora raggiunto", "Цель на сегодня ещё не выполнена", "今日目标尚未完成", "आज का लक्ष्य अभी पूरा नहीं हुआ")
 add("Prešao si ceo put!", "You finished the whole path!", "Tu as terminé tout le parcours !", "Du hast den ganzen Pfad geschafft!", "Hai completato tutto il percorso!", "Вы прошли весь путь!", "你走完了整条路径！", "आपने पूरा पथ पूरा किया!")
@@ -475,11 +484,18 @@ add("Analiza nije dostupna — motor nije pronađen.", "Analysis unavailable —
 add("Nema dovoljno poteza za analizu.", "Not enough moves to analyse.", "Pas assez de coups à analyser.", "Nicht genug Züge für die Analyse.", "Non ci sono abbastanza mosse da analizzare.", "Недостаточно ходов для анализа.", "棋步不足，无法分析。", "विश्लेषण के लिए पर्याप्त चालें नहीं।")
 
 
+# ── Množine (dizajnerski pregled, Task 2, spec § 3) ─────────────────────────
+add_plural("dana zaredom", {"sr": {"one": "dan zaredom", "few": "dana zaredom", "other": "dana zaredom"}, "en": {"one": "day in a row", "other": "days in a row"}, "fr": {"one": "jour d'affilée", "other": "jours d'affilée"}, "de": {"one": "Tag in Folge", "other": "Tage in Folge"}, "it": {"one": "giorno di fila", "other": "giorni di fila"}, "ru": {"one": "день подряд", "few": "дня подряд", "many": "дней подряд", "other": "дня подряд"}, "zh-Hans": {"other": "连续天数"}, "hi": {"one": "लगातार दिन", "other": "लगातार दिन"}})
+add_plural("%lld mogućih poteza", {"sr": {"one": "%lld mogući potez", "few": "%lld moguća poteza", "other": "%lld mogućih poteza"}, "en": {"one": "%lld legal move", "other": "%lld legal moves"}, "fr": {"one": "%lld coup possible", "other": "%lld coups possibles"}, "de": {"one": "%lld möglicher Zug", "other": "%lld mögliche Züge"}, "it": {"one": "%lld mossa possibile", "other": "%lld mosse possibili"}, "ru": {"one": "%lld возможный ход", "few": "%lld возможных хода", "many": "%lld возможных ходов", "other": "%lld возможного хода"}, "zh-Hans": {"other": "%lld 个可走位置"}, "hi": {"one": "%lld संभव चाल", "other": "%lld संभव चालें"}})
+
+
 def build():
     entries = {}
     for sr, trans in T.items():
-        locs = {"sr": {"stringUnit": {"state": "translated", "value": sr}}}
+        locs = {"sr": {"stringUnit": {"state": "translated", "value": trans.get("__sr", sr)}}}
         for lang, val in trans.items():
+            if lang == "__sr":
+                continue
             locs[lang] = {"stringUnit": {"state": "translated", "value": val}}
         entries[sr] = {"extractionState": "manual", "localizations": locs}
     catalog = {"sourceLanguage": "sr", "strings": entries, "version": "1.0"}

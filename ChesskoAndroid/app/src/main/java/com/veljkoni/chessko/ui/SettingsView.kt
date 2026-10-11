@@ -1,5 +1,11 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.DSCardGroup
+import com.veljkoni.chessko.ui.theme.DSRowDivider
+import com.veljkoni.chessko.ui.theme.DSSectionHeader
+import com.veljkoni.chessko.ui.theme.dsCard
+
+import com.veljkoni.chessko.logic.locPercent
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -100,19 +106,15 @@ fun SettingsView(
                 .weight(1f)
                 .verticalScroll(scrollState)
                 .padding(DS.Space.l),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            // spec § 3: `Space.xl` izmedju grupa (bilo 20.dp).
+            verticalArrangement = Arrangement.spacedBy(DS.Space.xl)
         ) {
             // Language Selection Section
             SettingsSection(title = loc("Jezik")) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(DS.Radius.m))
-                        // Nijedan par u paleti ne daje vidljivu ivicu (`line/fill` 1,067,
-                        // `line/surface` 1,285 — vidi `ContrastTest.nonTextPairsOverFillAreDistinguishable`).
-                        // Kartica se od `DS.ground` odvaja SAMO bojom podloge, kao iOS-ova
-                        // nativna grouped lista (vidi `settingsCardsSeparateFromGround`).
-                        .background(DS.surface)
+                        .dsCard() // spec § 3: kartica = surface + 1 dp line
                 ) {
                     val languages = listOf(
                         "sr" to "Srpski",
@@ -168,7 +170,7 @@ fun SettingsView(
                 AlertDialog(
                     onDismissRequest = { showResetStatsConfirm = false },
                     title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
-                    text = { Text(text = loc("Da li želite da resetujete sve statistike?"), color = DS.inkMuted) },
+                    text = { Text(text = loc("Da li želite da resetujete sve statistike?"), color = DS.ink) },
                     confirmButton = {
                         TextButton(onClick = {
                             stats.resetStats()
@@ -179,7 +181,8 @@ fun SettingsView(
                     },
                     dismissButton = {
                         TextButton(onClick = { showResetStatsConfirm = false }) {
-                            Text(text = loc("Otkaži"), color = DS.inkMuted)
+                            // spec § 3: sporedna radnja u `accent`, nikad `inkMuted`.
+                            Text(text = loc("Otkaži"), color = DS.accent)
                         }
                     },
                     containerColor = DS.surface,
@@ -204,10 +207,7 @@ fun SettingsView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(DS.Radius.m))
-                        // Ivica uklonjena — `line/surface` daje 1,285, nevidljivo (vidi
-                        // komentar uz karticu jezika iznad).
-                        .background(DS.surface)
+                        .dsCard() // spec § 3: kartica = surface + 1 dp line
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                 ) {
@@ -229,15 +229,15 @@ fun SettingsView(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        StatItem(label = loc("Uspešnost"), value = "${stats.winRate}%", color = DS.accent)
+                        StatItem(label = loc("Uspešnost"), value = locPercent(stats.winRate.toDouble(), fractionDigits = 0), color = DS.ink)
                         StatItem(label = loc("Najbolji niz"), value = "${stats.bestWinStreak} 🔥", color = DS.warning)
-                        StatItem(label = loc("Rešeno zadataka"), value = "${stats.puzzlesSolved} 🧩", color = DS.accent)
+                        StatItem(label = loc("Rešeno zadataka"), value = "${stats.puzzlesSolved} 🧩", color = DS.ink)
                         // Rejting igraca BIRA zadatke (`PuzzleRating.practiceWindow`),
                         // pa mora da se vidi — inace se tesina vezbanja menja bez
                         // ijednog vidljivog razloga. („Rejting" u zaglavlju
                         // Zadataka je rejting ZADATKA, ne igraca.) iOS ovo ima
                         // na istom mestu, u istom redu.
-                        StatItem(label = loc("Rejting zadataka"), value = "${stats.puzzleRating}", color = DS.accent)
+                        StatItem(label = loc("Rejting zadataka"), value = "${stats.puzzleRating}", color = DS.ink)
                     }
 
                     if (stats.gamesPlayed > 0 || stats.puzzlesSolved > 0) {
@@ -268,9 +268,7 @@ fun SettingsView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(DS.Radius.m))
-                        // Ivica uklonjena — vidi komentar uz karticu jezika iznad.
-                        .background(DS.surface)
+                        .dsCard() // spec § 3: kartica = surface + 1 dp line
                 ) {
                     val difficulties = listOf(
                         GameDifficulty.BEGINNER,
@@ -357,33 +355,35 @@ fun SettingsView(
 
                     Spacer(modifier = Modifier.height(DS.Space.xs))
 
+                    DSCardGroup {
                     SettingsToggle(
                         label = loc("Prikaži koordinate"),
                         icon = Icons.Default.GridOn,
                         checked = settings.showCoordinates,
                         onCheckedChange = { settings.updateShowCoordinates(it) }
                     )
-
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Prikaži poslednji potez"),
                         icon = Icons.Default.History,
                         checked = settings.showLastMoveHighlight,
                         onCheckedChange = { settings.updateShowLastMoveHighlight(it) }
                     )
-
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Prikaži moguća polja"),
                         icon = Icons.Default.RadioButtonChecked,
                         checked = settings.showLegalMoves,
                         onCheckedChange = { settings.updateShowLegalMoves(it) }
                     )
-
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Prevlačenje levo/desno (menja temu)"),
                         icon = Icons.Default.SwapHoriz,
                         checked = settings.swipeToChangeBoardTheme,
                         onCheckedChange = { settings.updateSwipeToChangeBoardTheme(it) }
                     )
+                    }
                 }
             }
 
@@ -462,32 +462,34 @@ fun SettingsView(
 
                     Spacer(modifier = Modifier.height(DS.Space.xs))
 
+                    DSCardGroup {
                     SettingsToggle(
                         label = loc("Zadrži pa prevuci gore/dole (menja stil)"),
                         icon = Icons.Default.SwapVert,
                         checked = settings.swipeToChangePieceStyle,
                         onCheckedChange = { settings.updateSwipeToChangePieceStyle(it) }
                     )
+                    }
                 }
             }
 
             // 4. Gameplay & Rules
             SettingsSection(title = loc("Igra i pravila")) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                DSCardGroup {
                     SettingsToggle(
                         label = loc("Automatska promocija u damu"),
                         icon = Icons.Default.Upgrade,
                         checked = settings.autoPromoteToQueen,
                         onCheckedChange = { settings.updateAutoPromoteToQueen(it) }
                     )
-
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Rotiraj tablu u lokalnoj igri"),
                         icon = Icons.Default.ScreenRotation,
                         checked = settings.rotateBoardInLocalPlay,
                         onCheckedChange = { settings.updateRotateBoardInLocalPlay(it) }
                     )
-
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Evaluaciona traka (Eval Bar)"),
                         icon = Icons.Default.SwapVert,
@@ -531,14 +533,14 @@ fun SettingsView(
 
             // 6. Sound & Haptics
             SettingsSection(title = loc("Efekti")) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                DSCardGroup {
                     SettingsToggle(
                         label = loc("Zvučni efekti"),
                         icon = if (settings.soundEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
                         checked = settings.soundEnabled,
                         onCheckedChange = { settings.updateSoundEnabled(it) }
                     )
-
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Vibracija (Taktilni odziv)"),
                         icon = Icons.Default.Vibration,
@@ -553,9 +555,7 @@ fun SettingsView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(DS.Radius.m))
-                        // Ivica uklonjena — vidi komentar uz karticu jezika iznad.
-                        .background(DS.surface)
+                        .dsCard() // spec § 3: kartica = surface + 1 dp line
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                 ) {
@@ -655,16 +655,9 @@ fun SettingsSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(DS.Space.s)
     ) {
-        Text(
-            text = title,
-            color = DS.accent,
-            // Naslov sekcije NAMERNO na `body`, ne `heading`: redovi ispod njega su
-            // takodje `body`, a razlikuju se tezinom i bojom -- tacno odnos koji je
-            // ovde vec postojao (13 bold accent nad 13 medium ink). Sa `caption`-om
-            // bi naslov postao MANJI od sopstvenih redova.
-            style = Type.body,
-            fontWeight = FontWeight.Bold
-        )
+        // spec § 3: naslov sekcije je `Type.heading` bold u `DS.ink`, ne `accent`
+        // (accent je samo za ono sto se tapa ili je izabrano).
+        DSSectionHeader(text = title)
         content()
     }
 }
@@ -679,8 +672,7 @@ fun SettingsToggle(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(DS.fill)
+            // spec § 3: `fill` nije kartica — red sedi u `DSCardGroup` (`surface` + `line`).
             .padding(horizontal = DS.Space.m, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

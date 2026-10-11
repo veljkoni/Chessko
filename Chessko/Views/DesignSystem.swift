@@ -31,12 +31,12 @@ enum DS {
     static let fill     = Color.adaptive(light: "#E7EAF1", dark: "#1E2740")
     static let line     = Color.adaptive(light: "#DFE3EC", dark: "#232C46")
     static let ink      = Color.adaptive(light: "#161A22", dark: "#EEF1F7")
-    static let inkMuted = Color.adaptive(light: "#6B7280", dark: "#8B93A7")
+    static let inkMuted = Color.adaptive(light: "#5E6573", dark: "#8B93A7")
 
     /// Semantičke boje — nose značenje, nisu ukras. Ostaju u boji i u
     /// dizajnu koji je inače neutralan.
     static let success = Color.adaptive(light: "#2F7D4F", dark: "#6FCF97")
-    static let warning = Color.adaptive(light: "#B07D2B", dark: "#E0B252")
+    static let warning = Color.adaptive(light: "#865F21", dark: "#E0B252")
     static let danger  = Color.adaptive(light: "#B3261E", dark: "#F2857A")
 
     /// Zatamnjenje ispod modalnih preklopa (promocija, izbor boje, kraj
@@ -98,4 +98,44 @@ extension Font {
     /// Monospaced cifre malog obima — trenutno rejting bedž na ekranu Zadaci.
     /// Sat, eval traka i istorija poteza imaju sopstvene fontove, ne ovaj.
     static var dsMono: Font { .system(.footnote, design: .monospaced) }
+}
+
+extension Font {
+    /// Najsitniji tekst (11 pt = `caption2`) — Android `Type.label`. Labela ispod
+    /// ikone, segmenti, oznaka „FIDE" (spec § 0 skala).
+    static var dsLabel: Font { .appFont(.caption2) }
+    /// Naslov sekcije: `Type.heading` BOLD (spec § 3). `dsHeading` je semibold.
+    static var dsSectionHeading: Font { .appFont(.headline).weight(.bold) }
+}
+
+// MARK: - Globalna pravila upotrebe (dizajnerski pregled, spec § 3)
+//
+// Jedno mesto za karticu i naslov sekcije. Android ima iste u
+// `ChesskoAndroid/.../ui/theme/Components.kt` (`Modifier.dsCard()`, `DSSectionHeader`).
+
+extension View {
+    /// Kartica = `DS.surface` + ivica 1 pt `DS.line`, u obe teme (spec § 3).
+    /// `line` nad `ground` je 1,16 / 1,32 — ivica je dekorativna; kartica se
+    /// prepoznaje po sadržaju. `DS.fill` NIJE kartica.
+    func dsCard(radius: CGFloat = DS.Radius.m) -> some View {
+        self
+            .background(DS.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(DS.line, lineWidth: 1)
+            )
+    }
+}
+
+/// Naslov sekcije: `Type.heading` bold, `DS.ink` (15,72 / 16,15) — spec § 3.
+/// U `List` sekciji zamenjuje sistemski sivi naslov (`#85858B`, 3,29 ✕).
+struct DSSectionHeader: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View {
+        Text(text)
+            .font(.dsSectionHeading)
+            .foregroundStyle(DS.ink)
+            .textCase(nil)
+    }
 }

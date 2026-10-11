@@ -130,3 +130,34 @@ func LocF(_ key: String, _ args: CVarArg...) -> String {
     String(format: Bundle.main.localizedString(forKey: key, value: key, table: nil),
            arguments: args)
 }
+
+/// Množina po jeziku aplikacije (spec § 3): bira CLDR kategoriju za `n`
+/// (`PluralRules`, `Logic/LocalFormat.swift`) i čita ključ `<base>#<kategorija>`
+/// iz kataloga. Tekst može, ali ne mora, da sadrži `%lld` (oznaka uz zaseban
+/// veliki broj, npr. „dana zaredom", ga nema). Pad: `#other`, pa sama osnova.
+@MainActor
+func LocPlural(_ base: String, _ n: Int) -> String {
+    let category = PluralRules.category(languageCode: LocalizationManager.shared.effectiveCode, n: n)
+    var key = PluralRules.key(base, category)
+    var format = Loc(key)
+    if format == key {
+        key = PluralRules.key(base, .other)
+        format = Loc(key)
+        if format == key { format = base }
+    }
+    return format.contains("%") ? String(format: format, locale: LocalizationManager.shared.locale, n) : format
+}
+
+/// Decimalni broj u formatu jezika aplikacije („−2,3" / „-2.3").
+@MainActor
+func LocDecimal(_ value: Double, fractionDigits: Int = 1, signed: Bool = false) -> String {
+    LocalNumber.decimal(value, fractionDigits: fractionDigits, signed: signed,
+                        languageCode: LocalizationManager.shared.effectiveCode)
+}
+
+/// Procenat (vrednost 0…100) u formatu jezika aplikacije („41,9 %" / „41.9%").
+@MainActor
+func LocPercent(_ value0to100: Double, fractionDigits: Int = 1) -> String {
+    LocalNumber.percent(value0to100, fractionDigits: fractionDigits,
+                        languageCode: LocalizationManager.shared.effectiveCode)
+}

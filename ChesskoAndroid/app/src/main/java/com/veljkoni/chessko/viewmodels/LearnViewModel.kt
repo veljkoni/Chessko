@@ -1,7 +1,7 @@
 package com.veljkoni.chessko.viewmodels
 
 import com.veljkoni.chessko.logic.loc
-import com.veljkoni.chessko.logic.locF
+import com.veljkoni.chessko.logic.locPlural
 
 import androidx.compose.runtime.*
 import com.veljkoni.chessko.logic.MoveGenerator
@@ -102,8 +102,8 @@ class LearnViewModel {
             val n = legalMoves.size
             return when (n) {
                 0 -> loc("Nema mogućih poteza")
-                1 -> loc("1 mogući potez")
-                else -> locF("%d mogućih poteza", n)
+                // Mnozina po broju (spec § 3): „2 moguća poteza", „5 mogućih poteza".
+                else -> locPlural("%d mogućih poteza", n)
             }
         }
 

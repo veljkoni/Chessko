@@ -135,8 +135,8 @@ final class LearnViewModel {
         let n = legalMoves.count
         switch n {
         case 0:  return Loc("Nema mogućih poteza")
-        case 1:  return Loc("1 mogući potez")
-        default: return LocF("%lld mogućih poteza", n)
+        // Množina po broju (spec § 3): „2 moguća poteza", „5 mogućih poteza".
+        default: return LocPlural("%lld mogućih poteza", n)
         }
     }
 

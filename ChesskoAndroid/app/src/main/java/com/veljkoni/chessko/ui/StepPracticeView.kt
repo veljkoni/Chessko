@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.ButtonShape
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -91,11 +92,12 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                 style = Type.heading,
                 fontWeight = FontWeight.Bold
             )
-            Button(
+            Button(shape = ButtonShape, 
                 onClick = onClose,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent,
-                    contentColor = DS.inkMuted
+                    // spec § 3: „Zatvori" nikad u `inkMuted` — tekst-dugme u `accent`.
+                    contentColor = DS.accent
                 )
             ) {
                 Text(text = loc("Zatvori"))
@@ -261,7 +263,7 @@ private fun StepFooter(progress: Pair<Int, Int>, stepFailed: Boolean, onClose: (
             )
             Text(text = loc("Korak je završen"), color = DS.ink, fontWeight = FontWeight.SemiBold)
         }
-        Button(
+        Button(shape = ButtonShape, 
             onClick = onClose,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)

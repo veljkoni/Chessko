@@ -1,5 +1,7 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.ButtonShape
+import com.veljkoni.chessko.logic.locDecimal
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -104,7 +106,8 @@ fun PlayerHeaderCard(
                 if (materialAdvantage > 0) {
                     Text(
                         text = "+$materialAdvantage",
-                        color = DS.accent.copy(alpha = 0.85f),
+                        // spec § 3: statican broj nije `accent` (iOS: `inkMuted`).
+                        color = DS.inkMuted,
                         // iOS: `.caption.weight(.medium)` (`Chessko/Views/GameView.swift:423`),
                         // dakle `caption`. Tezina ostaje Bold -- to je razlika u izgledu
                         // koju ovaj task ne resava.
@@ -132,12 +135,12 @@ fun PlayerHeaderCard(
                     else null
                 }
                 color == PieceColor.WHITE -> {
-                    if (evaluationScore >= 0.1) String.format(java.util.Locale.US, "+%.1f", evaluationScore)
-                    else if (kotlin.math.abs(evaluationScore) < 0.1) "0.0"
+                    if (evaluationScore >= 0.1) locDecimal(evaluationScore, signed = true)
+                    else if (kotlin.math.abs(evaluationScore) < 0.1) locDecimal(0.0)
                     else null
                 }
                 else -> {
-                    if (evaluationScore <= -0.1) String.format(java.util.Locale.US, "+%.1f", kotlin.math.abs(evaluationScore))
+                    if (evaluationScore <= -0.1) locDecimal(kotlin.math.abs(evaluationScore), signed = true)
                     else null
                 }
             }
@@ -254,7 +257,7 @@ fun RowScope.BottomNavItem(
 ) {
     val contentColor = if (isSelected) DS.accent else DS.inkMuted
 
-    Button(
+    Button(shape = ButtonShape, 
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,

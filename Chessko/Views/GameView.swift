@@ -79,7 +79,7 @@ struct GameView: View {
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text(Loc("Potezi"))
                                             .font(.subheadline.weight(.semibold))
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(DS.inkMuted)
                                             .padding(.leading, 4)
                                         MoveHistoryView(
                                             notations: viewModel.gameState.moveNotations,
@@ -148,7 +148,7 @@ struct GameView: View {
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text(Loc("Potezi"))
                                             .font(.subheadline.weight(.semibold))
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(DS.inkMuted)
                                             .padding(.leading, 4)
                                         MoveHistoryView(
                                             notations: viewModel.gameState.moveNotations,
@@ -226,7 +226,7 @@ struct GameView: View {
                 }
             }
             .background(AppBackgroundView())
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarBackground(DS.ground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .overlay(gameOverOverlay)
             .overlay(promotionOverlay)
@@ -421,7 +421,7 @@ struct GameView: View {
                     if matAdv > 0 {
                         Text("+\(matAdv)")
                             .font(.caption.weight(.medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(DS.inkMuted)
                     }
                     Spacer()
                     // Turn / thinking indicator (right-aligned)
@@ -587,7 +587,7 @@ struct GameView: View {
                                 .padding(.vertical, 10)
                                 .background(DS.onScrim.opacity(0.15))
                                 .foregroundStyle(DS.onScrim)
-                                .clipShape(Capsule())
+                                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m)) // spec § 3: nigde „stadion"
                         }
 
                         Button {
@@ -599,7 +599,7 @@ struct GameView: View {
                                 .padding(.vertical, 10)
                                 .background(DS.onScrim)
                                 .foregroundStyle(DS.inkFixed)
-                                .clipShape(Capsule())
+                                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m))
                         }
                     }
                 }

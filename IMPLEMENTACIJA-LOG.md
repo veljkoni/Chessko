@@ -340,7 +340,120 @@ Opšti rizici:
 
 ## Task 2 — Tokeni i globalna pravila (§ 2, § 3)
 
-_(popunjava Task 2)_
+### Urađeno po stavkama
+
+**§ 2 Tokeni (obe)**
+- [x] `inkMuted` svetla `#6B7280 → #5E6573`, `warning` svetla `#B07D2B → #865F21` —
+  `iOS/Views/DesignSystem.swift`, `AND/ui/theme/DesignSystem.kt`. Tamna tema netaknuta.
+- [x] `ContrastTest` (svesno izmenjen, ne ugašen): `knownSubAAPairsDoNotGetWorse` sada drži samo
+  `success/fill` (4,184…, jedini preostali sub-AA par); pet parova koji su prešli AA
+  (inkMuted/ground 5,28, inkMuted/fill 4,86, warning/surface 5,72, warning/fill 4,75,
+  warning/ground 5,16) tvrdi nov test `designReviewTokensLiftFormerSubAAPairsAboveAA` (prag 4,5,
+  obe teme, plus „bela na warning" i dve tačne vrednosti iz spec tabele). Pin
+  `lessonBoxIconTint…` 2,936 → prag 3,0 (sada ~4,52 nad ground-tintom). Svetla `warning/ground`
+  dodata u `lessonBoxStylesMeetAA`. ContrastTest 18 → 19.
+- [ ] „Izvedene boje" (kutija pravila `warning` 10 % preko `surface`, izabran red `accent` 12/16 %)
+  — primena je u ekranskim taskovima (§ 9 Task 8, § 5/§ 6 Task 4/6).
+
+**§ 3 Globalna pravila**
+- [x] **Podloga `DS.ground` (iOS).** Koren R1: `AppBackgroundView` (`iOS/Views/SquareView.swift`)
+  sada crta `DS.ground` (6 ekrana: Igra, Zadaci, Lekcija, Put, koraci partija/vežba). R2:
+  `Color.appBackground` (#EDF0F7) **obrisan**, 5 `.toolbarBackground` poziva → `DS.ground`.
+  Sat koren `systemBackground` → `DS.ground`. Podešavanja: `.scrollContentBackground(.hidden)` +
+  `.background(DS.ground)` + `.listRowBackground(DS.surface)` + `.listRowSeparatorTint(DS.line)`
+  na svakoj sekciji + nav bar `DS.ground`. Info ekran sata i kalendar Zadataka (sheet-ovi bez
+  pozadine) → `.background(DS.ground)`. Grep posle: 0 `systemBackground`/`systemGroupedBackground`
+  u `iOS/`. iPad (crni sadržaj ispod trake) rešen istim korenom.
+- [x] **Kartica = `surface` + 1 pt `line`.** Nova komponenta na obe: iOS `View.dsCard(radius:)`
+  (`DesignSystem.swift`), Android `Modifier.dsCard(radius)` + `DSCardGroup` + `DSRowDivider`
+  (`AND/ui/theme/Components.kt`, nov fajl). Primenjeno na sve postojeće ad hoc `surface` kartice:
+  iOS `AnalysisView` (2), `PathView` (4), `StepGameView` (1); Android `SettingsView` (4 kartice).
+  Komentari „ivica uklonjena (1,285)" iz 6d-2 su obrisani — spec tu presudu obrće (ivica je
+  dekorativna, 1,16/1,32 nad ground, i namerno ne prelazi 3:1). iOS `List` sekcije u Podešavanjima
+  su `surface` redovi bez ivice (inset grouped lista ne prima stroke) → Task 10.
+- [x] **`fill` nije kartica** — Android prekidači u Podešavanjima više nemaju `fill` podlogu; sedam
+  `SettingsToggle` redova je u `DSCardGroup` grupama sa `line` razdelnikom (izgled table, stil
+  figura, igra i pravila, efekti). **Neurađeno ovde (ekranski taskovi):** opcije „Nova igra"
+  (`AND/MainActivity.kt` ~213/240/267 — redovi su već unutar `surface` dijaloga, Task 4), lista
+  poteza (`AND/ui/MoveHistoryView.kt:78` — zamena na `surface` bi ubila pruge neparnih redova koje
+  su `surface`, Task 4 je redizajnira), objašnjenje kontrola sata (`AND/ui/ChessClockView.kt:819`,
+  iOS `ChessClockView.swift:516`, Task 9).
+- [x] **Grupe:** Android Podešavanja `spacedBy(20.dp)` → `DS.Space.xl`; naslov → grupa `Space.s`
+  (već bilo). iOS `List` razmaci → Task 10.
+- [x] **`accent` samo za tapabilno/izabrano** (u meri globalnog pravila): statični brojevi u
+  statistici (Uspešnost, Rešeno zadataka, Rejting) `accent → ink` na obe; Android „+N" materijalna
+  prednost `accent@85% → inkMuted` (iOS već `inkMuted`). Ostali `accent` naslovi/vrednosti su po
+  ekranima (Analiza, Put… — Task 6/7).
+- [x] **Naslovi sekcija `Type.heading` bold `ink`.** iOS `DSSectionHeader` + `Font.dsSectionHeading`
+  (= headline bold; `dsHeading` ostaje semibold); Android `DSSectionHeader` (`Type.heading` +
+  `FontWeight.Bold`). Primenjeno: iOS Podešavanja (svih 8 `Section(Loc(…))` → `header:`
+  `DSSectionHeader`, `textCase(nil)`), iOS kalendar „Rešeni zadaci" (`secondary → ink bold`);
+  Android `SettingsSection` (bio `accent` body) i naslov kategorije u info dijalogu sata
+  (`accent → ink`). Odluka: token `Type.heading`/`dsHeading` NIJE promenjen na bold (koristi se i
+  za naslove kartica) — bold se dodaje na mestu naslova sekcije.
+- [x] **Dugi tekst `ink`.** iOS: `L_Para`, telo `L_Box`, telo bullet-a i `L_NumberedRule`
+  (`LessonRenderer.swift`, bili `.primary.opacity(0.85)`/`.secondary`), opis vremenske kontrole u
+  info ekranu sata, tekst sporednih dugmadi u Zadacima i lista poteza (`primary.opacity(0.8–0.9)`).
+  Svaki preostali `.secondary` tekst u `iOS/Views/` (meta: podnaslovi, natpisi, hint, status „u
+  toku") → `DS.inkMuted`, svaki `.primary` tekst → `DS.ink` — iOS `Views/` više nema sistemsku boju
+  teksta. Android: tekst u telu dijaloga (napusti/predaj/reset statistike, 4 mesta) `inkMuted → ink`.
+- [ ] **Status ne izgleda kao dugme/polje** — ekranski (§ 5 Task 4, § 7 Task 5).
+- [x] **Dijalozi.** Android: svih 6 `AlertDialog`/`Dialog` na `surface` + `Radius.l` (kraj partije
+  bio `RoundedCornerShape(20.dp)`); „Otkaži"/„Nastavi igru" (4) i „Zatvori" u koracima (2)
+  `inkMuted → accent`. **Nigde „stadion":** M3 `Button` je podrazumevano `CornerFull` (nije iz
+  `MaterialTheme.shapes`), pa je 14 `Button`-a bez sopstvenog oblika dobilo `shape = ButtonShape`
+  (`Radius.m`); 20 je već imalo eksplicitan oblik (10.dp/`Radius.m`/`Radius.s` — ekranski taskovi).
+  Pomoćnici `DialogShape`, `ButtonShape`, `dsPrimaryButtonColors`, `dsSecondaryButtonColors` u
+  `Components.kt` (za Task 4+). iOS: sistemski `.alert` ostaje (odluka kontrolora) — sve četiri
+  imaju `.destructive` + `.cancel` uloge (provereno); `Capsule()` dugmad → `Radius.m`
+  (kraj partije ×2, „Pokušaj ponovo" na grešci učitavanja, koji je uz to sa `primary` +
+  `systemBackground` prešao na `accent` + `onAccent`). Sopstveni preklop kraja partije
+  (scrim, ne `surface`) je Task 4.
+- [x] **Brojevi kroz lokalni format.** Nov `LocalFormat` na obe (`iOS/Logic/LocalFormat.swift`,
+  `AND/logic/LocalFormat.kt`): `LocalNumber.decimal/percent` po jeziku APLIKACIJE (srpski →
+  `sr-Latn`); omotači iOS `LocDecimal/LocPercent`, Android `locDecimal/locPercent/locInteger`.
+  Primenjeno: tačnost u Analizi (obe; Android je imao `Locale.US` namerno — spec to obrće, „0,0 %"),
+  uspešnost u statistici (obe), ocena u eval traci i pilulama igrača (Android; iOS nema tekstualnu
+  ocenu), broj niza na Putu (Android; iOS je već formatirao).
+- [x] **Množine.** Nov mehanizam na obe, ista pravila (`PluralRules.category`, CLDR celobrojno:
+  sr/ru one-few-other/many, en/de/it one-other, fr/hi 0–1 one, zh other). iOS `LocPlural(base, n)`
+  čita ključ `<osnova>#one|few|many|other` iz kataloga; Android `locPlural(key, n)` čita
+  `Loc.pluralDictionary`. Migrirano: niz na Putu („1 Dana zaredom" — upravo primer iz spec-a →
+  „1 dan zaredom / 2 dana / 5 dana") i broj mogućih poteza u istraživaču figura („2 mogućih poteza"
+  → „2 moguća poteza"). Stari ključevi `Dana zaredom`, `1 mogući potez`, `%lld/%d mogućih poteza`
+  obrisani (katalog, `build_localizations.py`, `Loc.kt`). Ostali `%lld` ključevi nisu broj+imenica
+  sa slaganjem („Korak %lld", „Zadatak %lld od %lld", „Poteza: %d" kao natpis) ili nemaju pozivaoca
+  (`%lld lekcije od osnova…`, `%lld/%lld poteza` — iOS `progressLabel` se nigde ne prikazuje).
+
+### Odluke
+- **Množine: sopstvena pravila, ne String Catalog plural varijante / `.stringsdict`.** Razlog:
+  `Loc()` ide kroz zamenjen `Bundle.main` (`LocalizationManager`); da li `.stringsdict` proksi
+  preživi taj put i da li `String(format:)` bez lokala bira varijantu ne može se dokazati bez
+  simulatora (zabranjen do Task-a 13). Ovako je izbor kategorije čista funkcija pokrivena testovima
+  na obe platforme, a ključevi su obični stringovi (8 jezika, `LocalFormatTests` proverava da
+  svaka osnova ima sva 4 ključa). `build_localizations.py` dobio `add_plural()`; katalog je
+  dopunjen hirurški (8 unosa), bez regeneracije (izbegnut diff od ~28.000 linija) — generator i
+  katalog daju iste vrednosti (provereno skriptom).
+- `Font.dsLabel` (11 pt, `caption2`) uveden na iOS-u (Task 1, 1.1) — još bez pozivnih mesta.
+- `Type.heading` ostaje semibold kao token; bold je na naslovu sekcije (`DSSectionHeader`).
+- `Color.appBackground` obrisan umesto da postane alias — jedno ime za jednu boju.
+
+### Novi stringovi (prevod nesiguran)
+- `dana zaredom#…` — `zh-Hans` zadržan postojeći „连续天数" za sve kategorije (kineski nema množinu;
+  uz broj ispred čita se „5 连续天数", isto kao do sada); `hi` „लगातार दिन" za one i other (imenica
+  se ne menja). Nove forme za fr/de/it/en („jour/jours d'affilée", „Tag/Tage in Folge", „giorno/
+  giorni di fila", „day/days in a row") i ru („день/дня/дней подряд") — gramatički sigurne, ali bez
+  izvornog govornika.
+- `%lld mogućih poteza#…` — ru few/many („возможных хода/ходов") nove.
+
+### Neurađeno / za kasnije taskove
+- iOS Podešavanja: ivica `line` oko `List` grupa, razmaci grupa, ivice pločica tema/stilova
+  (`Color.primary.opacity(0.12/0.10)`) → Task 10.
+- `Color.primary.opacity(…)` kao PODLOGA (tabela 1.2: `GameView`, `MoveHistoryView`,
+  `LessonRenderer`, `ChessClockView`, `PuzzleView`) — ekranski taskovi 4/5/8/9, nisu dirani.
+- Android sat „Poteza: $moves" (`AND/ui/ChessClockView.kt:361`) nije kroz `loc` — nađeno usput,
+  Task 9 (iOS ima ključ „Poteza: %d").
+- Tekst dijaloga „Da li ste sigurni…" (obraćanje „Vi") — § 16, Task 13.
 
 ## Task 3 — Navigacija i hrom (§ 4) + ikone (§ 10)
 

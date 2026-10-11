@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.logic.locPercent
 import com.veljkoni.chessko.logic.loc
 
 import androidx.compose.foundation.background
@@ -257,12 +258,10 @@ private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modif
         // (`Chessko/Views/AnalysisView.swift:87`, `:90`, `:93`).
         Text(text = title, color = DS.inkMuted, style = Type.caption, fontWeight = FontWeight.Medium)
         Text(
-            // `Locale.US` NIJE kozmetika: `String.format` bez njega uzima
-            // SISTEMSKI jezik, pa bi na nemackom ili ruskom uredjaju pisalo
-            // „41,9%" iako je jezik aplikacije biran u njenim podesavanjima
-            // (`Loc`, ne sistem). iOS uvek daje tacku. Isti obrazac vec koristi
-            // traka ocene (`UiComponents.kt:131`).
-            text = String.format(java.util.Locale.US, "%.1f%%", value),
+            // Lokalni format JEZIKA APLIKACIJE (spec § 3: „0,0 %" na srpskom), ne
+            // sistemskog jezika uredjaja — `locPercent` cita `Loc`, ne sistem.
+            // Do dizajnerskog pregleda je ovde stajao `Locale.US` (uvek tacka).
+            text = locPercent(value),
             color = DS.ink,
             style = Type.title,
             fontWeight = FontWeight.Bold

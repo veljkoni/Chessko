@@ -100,7 +100,7 @@ struct SettingsSheet: View {
         NavigationStack {
             List {
                 // ── Statistics Section ───────────────────────────────────────
-                Section(Loc("Statistika igranja")) {
+                Section {
                     let stats = StatsManager.shared
                     VStack(spacing: 12) {
                         HStack {
@@ -116,13 +116,13 @@ struct SettingsSheet: View {
                         Divider()
 
                         HStack {
-                            StatBox(label: Loc("Uspešnost"), value: "\(stats.winRate)%", color: DS.accent)
+                            StatBox(label: Loc("Uspešnost"), value: LocPercent(Double(stats.winRate), fractionDigits: 0), color: DS.ink)
                             Spacer()
                             StatBox(label: Loc("Najbolji niz"), value: "\(stats.bestWinStreak) 🔥", color: DS.warning)
                             Spacer()
-                            StatBox(label: Loc("Rešeno zadataka"), value: "\(stats.puzzlesSolved) 🧩", color: DS.accent)
+                            StatBox(label: Loc("Rešeno zadataka"), value: "\(stats.puzzlesSolved) 🧩", color: DS.ink)
                             Spacer()
-                            StatBox(label: Loc("Rejting zadataka"), value: "\(stats.puzzleRating)", color: DS.accent)
+                            StatBox(label: Loc("Rejting zadataka"), value: "\(stats.puzzleRating)", color: DS.ink)
                         }
 
                         if stats.gamesPlayed > 0 || stats.puzzlesSolved > 0 {
@@ -137,10 +137,14 @@ struct SettingsSheet: View {
                         }
                     }
                     .padding(.vertical, 4)
+                } header: {
+                    DSSectionHeader(Loc("Statistika igranja"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── Difficulty Section ───────────────────────────────────────
-                Section(Loc("Težina protivnika (AI)")) {
+                Section {
                     ForEach(GameDifficulty.allCases, id: \.self) { diff in
                         Button {
                             gameViewModel.setDifficulty(diff)
@@ -166,10 +170,14 @@ struct SettingsSheet: View {
                             }
                         }
                     }
+                } header: {
+                    DSSectionHeader(Loc("Težina protivnika (AI)"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── Board Customization ──────────────────────────────────────
-                Section(Loc("Izgled table")) {
+                Section {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(Loc("Tema table"))
                             .font(.subheadline)
@@ -231,10 +239,14 @@ struct SettingsSheet: View {
                     Toggle(isOn: $swipeToChangeBoardTheme) {
                         Label(Loc("Prevlačenje levo/desno"), systemImage: "arrow.left.and.right")
                     }
+                } header: {
+                    DSSectionHeader(Loc("Izgled table"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── Piece Customization ──────────────────────────────────────
-                Section(Loc("Stil figura")) {
+                Section {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(Loc("Stil"))
                             .font(.subheadline)
@@ -281,10 +293,14 @@ struct SettingsSheet: View {
                     Toggle(isOn: $swipeToChangePieceStyle) {
                         Label(Loc("Prevlačenje gore/dole"), systemImage: "arrow.up.and.down")
                     }
+                } header: {
+                    DSSectionHeader(Loc("Stil figura"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── Gameplay & Rules ─────────────────────────────────────────
-                Section(Loc("Igra i pravila")) {
+                Section {
                     Toggle(isOn: $autoPromoteToQueen) {
                         Label(Loc("Automatska promocija u damu"), systemImage: "crown")
                     }
@@ -297,7 +313,11 @@ struct SettingsSheet: View {
                     .onChange(of: showEvalBar) { _, _ in
                         gameViewModel.updateEvaluation()
                     }
+                } header: {
+                    DSSectionHeader(Loc("Igra i pravila"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── Language (collapsible DisclosureGroup) ──────────────────
                 Section {
@@ -321,26 +341,36 @@ struct SettingsSheet: View {
                         }
                     }
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── Appearance ───────────────────────────────────────────────
-                Section(Loc("Izgled")) {
+                Section {
                     themeRow(Loc("Sistem"), value: "system", icon: "circle.lefthalf.filled")
                     themeRow(Loc("Svetla"), value: "light",  icon: "sun.max")
                     themeRow(Loc("Tamna"),  value: "dark",   icon: "moon")
+                } header: {
+                    DSSectionHeader(Loc("Izgled"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── Sound & Haptics (Other) ──────────────────────────────────
-                Section(Loc("Ostalo")) {
+                Section {
                     Toggle(isOn: $soundEnabled) {
                         Label(Loc("Zvuk"), systemImage: soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                     }
                     Toggle(isOn: $hapticsEnabled) {
                         Label(Loc("Vibracija"), systemImage: hapticsEnabled ? "iphone.radiowaves.left.and.right" : "iphone.slash")
                     }
+                } header: {
+                    DSSectionHeader(Loc("Ostalo"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
 
                 // ── About App & Licenses ─────────────────────────────────────
-                Section(Loc("O aplikaciji")) {
+                Section {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Chessko")
                             .font(.headline)
@@ -373,9 +403,18 @@ struct SettingsSheet: View {
                         .padding(.top, 2)
                     }
                     .padding(.vertical, 4)
+                } header: {
+                    DSSectionHeader(Loc("O aplikaciji"))
                 }
+                .listRowBackground(DS.surface)
+                .listRowSeparatorTint(DS.line)
             }
             .listSectionSpacing(.compact)
+            // spec § 3: podloga ekrana je `DS.ground`, redovi `DS.surface` — nijedna
+            // sistemska boja. Bez `.hidden` lista crta sopstvenu grouped pozadinu.
+            .scrollContentBackground(.hidden)
+            .background(DS.ground)
+            .toolbarBackground(DS.ground, for: .navigationBar)
             .navigationTitle(Loc("Podešavanja"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -409,7 +448,7 @@ struct SettingsSheet: View {
                     .foregroundStyle(color)
                 Text(label)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DS.inkMuted)
             }
         }
     }

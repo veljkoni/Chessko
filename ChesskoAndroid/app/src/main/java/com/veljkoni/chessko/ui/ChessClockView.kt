@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.ButtonShape
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -780,7 +781,7 @@ fun InfoDialog(onDismiss: () -> Unit) {
                     )
                 }
 
-                Button(
+                Button(shape = ButtonShape, 
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = DS.accent),
                     modifier = Modifier.fillMaxWidth()
@@ -800,7 +801,8 @@ fun InfoCategorySection(
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
             text = title,
-            color = DS.accent,
+            // spec § 3: naslov sekcije je `ink`, ne `accent`.
+            color = DS.ink,
             // IZUZETAK od „14 -> body/caption": ovo je naslov sekcije u dijalogu i
             // ispod njega stoje dva nivoa (naziv 13, opis 12) koja moraju ostati
             // ispod njega. iOS: `.title3.weight(.bold)` = 20

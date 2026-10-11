@@ -64,7 +64,7 @@ struct StepPracticeView: View {
         }
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.appBackground, for: .navigationBar)
+        .toolbarBackground(DS.ground, for: .navigationBar)
         .onAppear {
             guard !started else { return }
             started = true
