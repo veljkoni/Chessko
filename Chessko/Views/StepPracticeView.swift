@@ -38,24 +38,21 @@ struct StepPracticeView: View {
 
             GeometryReader { geo in
                 ScrollView {
-                    // Spacer-i na oba kraja + `minHeight`: kratak sadrzaj se
-                    // centrira po visini, dug normalno skroluje. Bez
-                    // `minHeight`-a ovo ne radi nista — `ScrollView` predlaze
-                    // neogranicenu visinu (isti obrazac kao na tabu Zadaci).
-                    VStack(spacing: 0) {
-                        Spacer(minLength: 0)
-                        VStack(spacing: DS.Space.m) {
-                            progressHeader
-                            statusCard
-                            board(side: boardSide(in: geo.size))
-                            footer
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, DS.Space.l)
-                        .padding(.vertical, DS.Space.m)
-                        Spacer(minLength: 0)
+                    // spec § 7: sadržaj od vrha — `Space.l` ispod zaglavlja,
+                    // ništa centrirano po visini.
+                    VStack(spacing: DS.Space.m) {
+                        progressHeader
+                        DSInstructionBox(
+                            text: viewModel.statusMessage,
+                            sideToMove: viewModel.phase.isSolving ? viewModel.playerColor : nil,
+                            tone: viewModel.phase.instructionTone
+                        )
+                        board(side: boardSide(in: geo.size))
+                        footer
                     }
-                    .frame(minHeight: geo.size.height)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, DS.Space.l)
+                    .padding(.vertical, DS.Space.l)
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .safeAreaPadding(.bottom, 24)
@@ -65,6 +62,7 @@ struct StepPracticeView: View {
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(DS.ground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .onAppear {
             guard !started else { return }
             started = true
@@ -121,10 +119,11 @@ struct StepPracticeView: View {
 
             // Po jedna pilula za svaki zadatak u redu — isti obrazac kao vezbe
             // otvaranja u lekcijama.
+            // spec § 7: rešeni `accent`, tekući `accent` 40 %, nerešeni `fill`.
             HStack(spacing: DS.Space.xs) {
                 ForEach(0..<total, id: \.self) { index in
                     Capsule()
-                        .fill(index < progress.solved ? DS.accent : DS.fill)
+                        .fill(segmentColor(index: index, solved: progress.solved))
                         .frame(height: 6)
                 }
             }
@@ -139,45 +138,10 @@ struct StepPracticeView: View {
         .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Status
-
-    private var statusCard: some View {
-        HStack(spacing: DS.Space.s) {
-            Image(systemName: statusIcon)
-                .font(.dsBody)
-                .foregroundStyle(statusColor)
-            Text(viewModel.statusMessage)
-                .font(.dsBody)
-                .foregroundStyle(statusColor)
-                .animation(.default, value: viewModel.statusMessage)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, DS.Space.m)
-        .padding(.vertical, DS.Space.m)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(statusColor.opacity(0.12), in: RoundedRectangle(cornerRadius: DS.Radius.m))
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.m)
-            .strokeBorder(statusColor.opacity(0.3), lineWidth: 1))
-    }
-
-    private var statusIcon: String {
-        switch viewModel.phase {
-        case .loading:         return "arrow.clockwise"
-        case .unavailable:     return "exclamationmark.triangle"
-        case .playing:         return "lightbulb"
-        case .wrongMove:       return "xmark.circle.fill"
-        case .solved:          return "checkmark.seal.fill"
-        case .showingSolution: return "eye.fill"
-        }
-    }
-
-    private var statusColor: Color {
-        switch viewModel.phase {
-        case .wrongMove:   return DS.danger
-        case .solved:      return DS.success
-        case .unavailable: return DS.warning
-        default:           return DS.ink
-        }
+    private func segmentColor(index: Int, solved: Int) -> Color {
+        if index < solved { return DS.accent }
+        if index == solved && !isStepFinished { return DS.accent.opacity(0.4) }
+        return DS.fill
     }
 
     // MARK: - Zavrsetak koraka
@@ -210,13 +174,8 @@ struct StepPracticeView: View {
                     dismiss()
                 } label: {
                     Text(Loc("Nazad na Put"))
-                        .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(DS.onAccent)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, DS.Space.m)
-                        .background(DS.accent, in: RoundedRectangle(cornerRadius: DS.Radius.m))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(DSPrimaryButtonStyle())
             }
             .padding(.top, DS.Space.s)
         }

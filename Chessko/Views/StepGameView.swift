@@ -58,6 +58,7 @@ struct StepGameView: View {
         .navigationTitle(Loc("Partija"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(DS.ground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 // Predaja je jedini izlaz iz partije koja se ne moze dobiti.
@@ -84,13 +85,12 @@ struct StepGameView: View {
             }
         }
         .overlay(promotionOverlay)
+        // spec § 5: „Predati partiju?" · „Nastavi" · „Predaj" — isto kao ekran Igra.
         .alert(Loc("Predati partiju?"), isPresented: $showResignConfirm) {
+            Button(Loc("Nastavi"), role: .cancel) {}
             Button(Loc("Predaj"), role: .destructive) {
                 viewModel?.resign()
             }
-            Button(Loc("Otkaži"), role: .cancel) {}
-        } message: {
-            Text(Loc("Da li ste sigurni da želite da predate trenutnu partiju?"))
         }
         .sheet(isPresented: $showAnalysis) {
             if let viewModel {
@@ -142,23 +142,18 @@ struct StepGameView: View {
     private func content(_ viewModel: GameViewModel) -> some View {
         GeometryReader { geo in
             ScrollView {
-                // Spacer-i na oba kraja + `minHeight`: kratak sadrzaj se
-                // centrira po visini, dug normalno skroluje (isti obrazac kao
-                // `StepPracticeView`).
-                VStack(spacing: 0) {
-                    Spacer(minLength: 0)
-                    VStack(spacing: DS.Space.m) {
-                        opponentCard(viewModel)
-                        statusCard(viewModel)
-                        board(viewModel, side: boardSide(in: geo.size))
-                        footer(viewModel)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, DS.Space.l)
-                    .padding(.vertical, DS.Space.m)
-                    Spacer(minLength: 0)
+                // spec § 7: sadržaj od vrha (`Space.l` ispod zaglavlja), iste
+                // komponente kao Igra — kartica protivnika, tabla, kartica igrača
+                // („Na potezu" umesto posebnog reda „Tvoj potez"), pa napomena.
+                VStack(spacing: DS.Space.m) {
+                    opponentCard(viewModel)
+                    board(viewModel, side: boardSide(in: geo.size))
+                    playerCard(viewModel)
+                    footer(viewModel)
                 }
-                .frame(minHeight: geo.size.height)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, DS.Space.l)
+                .padding(.vertical, DS.Space.l)
             }
             .scrollBounceBehavior(.basedOnSize)
             .safeAreaPadding(.bottom, 24)
@@ -191,69 +186,64 @@ struct StepGameView: View {
         .frame(width: side, height: side)
     }
 
-    // MARK: - Protivnik
+    // MARK: - Kartice (spec § 7: iste komponente kao Igra)
 
+    private var computerColor: PieceColor {
+        viewModel?.playerColor == .white ? .black : .white
+    }
+
+    private func isInCheck(_ viewModel: GameViewModel, _ color: PieceColor) -> Bool {
+        if case .check(let c) = viewModel.gameState.status { return c == color }
+        return false
+    }
+
+    private func isActive(_ viewModel: GameViewModel, _ color: PieceColor) -> Bool {
+        viewModel.gameState.currentTurn == color && !viewModel.isGameOver
+    }
+
+    private func captured(_ viewModel: GameViewModel, by color: PieceColor) -> [ChessPiece] {
+        color == .white ? viewModel.gameState.capturedByWhite : viewModel.gameState.capturedByBlack
+    }
+
+    private func materialAdvantage(_ viewModel: GameViewModel, for color: PieceColor) -> Int {
+        let w = viewModel.gameState.capturedByWhite.reduce(0) { $0 + $1.type.materialValue / 100 }
+        let b = viewModel.gameState.capturedByBlack.reduce(0) { $0 + $1.type.materialValue / 100 }
+        return max(0, color == .white ? w - b : b - w)
+    }
+
+    /// Kartica protivnika „Računar · Početnik" — bez strelice: korak sam
+    /// zadaje protivnika i nivo, pa nema šta da se bira.
     private func opponentCard(_ viewModel: GameViewModel) -> some View {
-        HStack(spacing: DS.Space.s) {
-            Image(systemName: "cpu")
-                .font(.dsBody)
-                .foregroundStyle(DS.accent)
-            Text(Loc("Računar"))
-                .font(.dsBody)
-                .foregroundStyle(DS.ink)
-            Text(viewModel.difficulty.label)
-                .font(.dsCaption)
-                .foregroundStyle(DS.inkMuted)
-            Spacer(minLength: 0)
-            if viewModel.isThinking {
-                ThinkingIndicator(isActive: true)
-            }
-        }
-        .padding(.horizontal, DS.Space.m)
-        .padding(.vertical, DS.Space.m)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dsCard(radius: DS.Radius.m) // spec § 3: surface + 1 pt line
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.m).strokeBorder(DS.line, lineWidth: 1))
-        .accessibilityElement(children: .combine)
+        let color = computerColor
+        return DSPlayerCard(
+            color: color,
+            name: Loc("Računar"),
+            subtitle: viewModel.difficulty.label,
+            status: isActive(viewModel, color) && viewModel.isThinking ? .thinking : nil,
+            isActive: isActive(viewModel, color),
+            materialAdvantage: materialAdvantage(viewModel, for: color),
+            capturedPieces: captured(viewModel, by: color),
+            flyingCapture: viewModel.flyingCapture
+        )
     }
 
-    // MARK: - Status
-
-    private func statusCard(_ viewModel: GameViewModel) -> some View {
-        let style = statusStyle(viewModel)
-        return HStack(spacing: DS.Space.s) {
-            Image(systemName: style.icon)
-                .font(.dsBody)
-                .foregroundStyle(style.color)
-            Text(viewModel.statusMessage)
-                .font(.dsBody)
-                .foregroundStyle(style.color)
-                .animation(.default, value: viewModel.statusMessage)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, DS.Space.m)
-        .padding(.vertical, DS.Space.m)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(style.color.opacity(0.12), in: RoundedRectangle(cornerRadius: DS.Radius.m))
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.m)
-            .strokeBorder(style.color.opacity(0.3), lineWidth: 1))
-    }
-
-    /// Boja nosi ISHOD, ne ukras: zeleno kad je korisnik dobio, crveno kad je
-    /// izgubio ili predao, zuto za remi i sah.
-    private func statusStyle(_ viewModel: GameViewModel) -> (icon: String, color: Color) {
-        switch viewModel.gameState.status {
-        case .playing:
-            return ("info.circle", DS.ink)
-        case .check:
-            return ("exclamationmark.triangle.fill", DS.warning)
-        case .draw:
-            return ("equal.circle.fill", DS.warning)
-        case .checkmate(let loser), .resigned(let loser):
-            return loser == viewModel.playerColor
-                ? ("xmark.circle.fill", DS.danger)
-                : ("checkmark.seal.fill", DS.success)
-        }
+    /// Kartica igrača: „Na potezu" (+ „· Šah"), kraj partije kao `Type.body`.
+    private func playerCard(_ viewModel: GameViewModel) -> some View {
+        let color = viewModel.playerColor
+        let status: PlayerCardStatus? = {
+            if viewModel.isGameOver { return .result(viewModel.statusMessage) }
+            guard isActive(viewModel, color) else { return nil }
+            return .toMove(inCheck: isInCheck(viewModel, color))
+        }()
+        return DSPlayerCard(
+            color: color,
+            name: Loc("Ti"),
+            status: status,
+            isActive: isActive(viewModel, color),
+            materialAdvantage: materialAdvantage(viewModel, for: color),
+            capturedPieces: captured(viewModel, by: color),
+            flyingCapture: viewModel.flyingCapture
+        )
     }
 
     // MARK: - Zavrsetak koraka
@@ -274,13 +264,8 @@ struct StepGameView: View {
                     dismiss()
                 } label: {
                     Text(Loc("Nazad na Put"))
-                        .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(DS.onAccent)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, DS.Space.m)
-                        .background(DS.accent, in: RoundedRectangle(cornerRadius: DS.Radius.m))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(DSPrimaryButtonStyle())
             }
             .padding(.top, DS.Space.s)
         } else {

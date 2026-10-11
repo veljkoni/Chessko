@@ -757,7 +757,101 @@ it „Al tratto"; fr „Au trait"; zh „轮到走棋". Ostalo standardna šahov
 
 ## Task 5 — Zadaci i koraci Puta (§ 7)
 
-_(popunjava Task 5)_
+### Urađeno po stavkama § 7 — Zadaci
+
+- [x] **iOS raspored na obe.** Android dobio zaglavlje „Zadaci" (`Type.heading` semibold) + „‹ Danas ›"
+  (`PuzzleHeaderRow`): strelice `IconButton` 44 × 44 u `accent`, nedostupna desna (danas) na mestu sa
+  38 %; sredina = kalendar ikona (`inkMuted`) + „Danas"/„Juče"/kratak datum (`dMMM` po jeziku
+  aplikacije, `sr` → `sr-Latn`) + kvačica rešenosti (`success`, opisna). Bivša `fill` pilula sa
+  punim datumom („23. septembar 2026.") uklonjena. iOS toolbar: strelice iz `Color.primary` u
+  `accent`, okvir 44 × 44, nedostupno 38 % (bilo 25 %), `accessibilityLabel` na strelicama.
+- [x] **Uputstvo je okvir:** `DSInstructionBox` / `InstructionBox` (Task 4) ugrađen u Zadatke (obe
+  orijentacije, obe platforme) — Android puno `accent` dugme (`PuzzleStatusBanner`) i iOS
+  `statusCard` (tint + ivica) uklonjeni. Krug strane na potezu samo dok igrač rešava.
+- [x] **Samo „Prikaži rešenje"** (sporedno, `fill` + `ink`, 48, `Radius.m`, pun red). „Pokušaj ponovo"
+  uklonjen iz Android reda radnji tokom rešavanja; ostaje na ekranu greške pri učitavanju (jedini
+  izlaz iz tog stanja, oba ekrana). Posle rešenja: „Sledeći zadatak" (primarno) i, za dnevni zadatak,
+  „Sledeći dan" (sporedno) ili „Završio si zadatak za danas!" — Android sada isto kao iOS (ranije
+  je posle rešenja nudio onemogućeno „Prikaži rešenje" + „Pokušaj ponovo").
+- [x] **Tagovi u tokenima:** čipovi `fill`, `Radius.s`, bez ivice; teme `inkMuted`; rejting = zvezdica
+  `warning` + broj `ink`, „1503" (iOS `Text(verbatim:)` — interpolacija u `Text` je davala
+  lokalni „1.503"; Android `toString()`). Android ranije nije prikazivao teme — dobio isti 21 ključ
+  kao iOS `localizeTheme` (`localizePuzzleTheme`).
+- [x] **Težina neutralna:** čip `fill` + `ink` uz 1–3 crtice (`ink` / `ink` 20 %), isti pragovi kao
+  `difficultyLabel` (< 1200 / < 1600 / ostalo). Android `danger/warning/success` pilula uklonjena;
+  iOS nije imao čip težine (rejting je bio obojen po težini) — dodat radi pariteta, rejting više
+  nije obojen.
+- [x] **Raspored od vrha:** datum (zaglavlje) → tagovi → uputstvo → tabla → radnja (`Space.l` ispod
+  table). iOS: uklonjeni `Spacer`-i + `minHeight` centriranje; Android: uklonjeni
+  `Arrangement.SpaceBetween` i `weight(1f)` oko table (tabla je bila centrirana, radnje prikovane za
+  dno). Pejzaž: tabla levo, desno kolona od vrha (`Alignment.Top`). Centrirano ostaje samo stanje
+  celog ekrana (učitavanje, greška).
+- [ ] **P3 „Zadatak 1940" / „Tvoj Elo 800"** — nije urađeno: rejting je sad čip sa zvezdicom (iOS
+  oblik) bez reči „Rejting", a igračev Elo se prikazuje u Podešavanjima (statistika). Dodavanje
+  reda „Tvoj Elo" na ekran bi bio nov element i nov string — ostavljeno.
+
+### Urađeno po stavkama § 7 — Koraci Puta
+
+- [x] **iOS podloga `ground` — koren proveren.** Snimci 74–82 (`#F2F2F7` / `#000000`) su dolazili iz
+  `AppBackgroundView` = `systemGroupedBackground` (inventar R1); Task 2 ga je promenio u
+  `DS.ground`, pa oba ekrana koraka već crtaju `ground`. Ovde dodato `.toolbarBackground(.visible)`
+  na `StepPracticeView`/`StepGameView`, da nav bar pri klizanju ostane `ground` umesto sistemskog
+  materijala (kao Zadaci).
+- [x] **Isti uputni okvir** u vežbi/testu (obe) — `StatusBanner` (Android) i iOS `statusCard` uklonjeni.
+  Novo: `DSInstructionTone` / `InstructionTone` (hint/wrong/solved/solution) — okvir ostaje `fill` +
+  `ink`, menja se samo ikona (sijalica `inkMuted`, `xmark`/`Cancel` `danger`, `checkmark.seal`/
+  `Verified` `success`, oko `warning`), da ishod ostane vidljiv bez obojene podloge. Kontrast ikona
+  na `fill` izračunat: 4,86/4,81 · 5,43/5,93 · 4,18/7,78 · 4,75/7,51 (≥ 3 : 1).
+- [x] **Partija: kartice kao u Igri.** `DSPlayerCard` / `PlayerCard`: protivnik „Računar" + drugi red
+  nivo („Početnik"), bez strelice (nivo zadaje korak), „razmišlja" tačke; igrač „Ti" sa „Na potezu"
+  (+ „· Šah"), kraj partije u kartici (`Type.body`), uzete figure i +materijal. Red „Tvoj potez"
+  uklonjen. Raspored: protivnik → tabla → igrač → napomena.
+- [x] **Sadržaj od vrha:** `Space.l` ispod zaglavlja na obe; iOS bez `Spacer` centriranja, Android bez
+  `weight(1f)` + `Center` oko table (skrol kolona od vrha).
+- [x] **Napomena „Korak se završava kad partija dođe do kraja."** — ispod kartice igrača (koja stoji
+  odmah ispod table, kao u Igri), centrirana na obe. Odluka: spec kaže „odmah ispod table", ali
+  kartica igrača ispod table je deo „istih komponenti kao Igra"; napomena između table i kartice bi
+  razdvojila tablu od igrača. Razlika je jedan red.
+- [x] **Tekst testa u `warning`** na `ground` (5,16 / 9,27): iOS već bio; Android tonirana podloga +
+  `ink` zamenjena čistim `warning` tekstom. Skriva se kad je korak završen (obe).
+- [x] **Traka napretka:** rešeni `accent`, tekući `accent` 40 %, nerešeni `fill` (obe; Android bio
+  `success` za rešene, iOS bez tekućeg). „Zadatak N od M" `inkMuted`.
+- [x] **„Zatvori" tekst-dugme `accent`** (Android, zajedničko zaglavlje `StepHeader`, `TextButton`,
+  `Type.body` semibold). iOS koraci nemaju „Zatvori" (sistemsko nazad u nav baru).
+- [x] Dijalog predaje u koraku uskladjen sa § 5 (obe): „Predati partiju?" · „Nastavi" · „Predaj";
+  iOS rečenica na „Vi" i „Otkaži" uklonjeni, Android „Predaja partije" / „Nastavi igru" isto.
+- [x] „Nazad na Put": `DSPrimaryButtonStyle` (iOS), 48 + `body` semibold (Android).
+
+### Odluke
+
+- **Jedna vrednost table po ekranu** (za Task 11): iOS `PuzzleView.boardSide(in:isLandscape:)`,
+  `StepPracticeView.boardSide(in:)`, `StepGameView.boardSide(in:)`; Android `puzzleBoardSide(...)`
+  (`PuzzleView.kt`) i `stepBoardSide(...)` (`StepPracticeView.kt`, deli ga `StepGameView`). Telo je
+  zatečena logika (širina do 560; koraci uz rezervu po visini 220, isto kao iOS).
+- `BoardWidthCapTest.everyPlayerBoardIsWidthCapped` svesno izmenjen: ekran prolazi ako nosi
+  `DS.maxBoardSide` **ili** poziva `stepBoardSide(`, a test posebno tvrdi da telo `stepBoardSide`
+  nosi `DS.maxBoardSide` (zaštita nije oslabljena, samo premeštena na jedno mesto).
+- Android Zadaci u vežbovnom režimu: zaglavlje ostaje „Zadaci", traka datuma se ne prikazuje (kao
+  ranije). iOS toolbar i dalje prikazuje datum u oba režima (zatečeno, nije dirano).
+- Android nema kalendar (iOS ima sheet na tap datuma) — nije dodavan; datum u zaglavlju nije
+  dugme.
+- Zajednički `StepHeader` (Android) za oba ekrana koraka; undo/predaja kao `IconButton` u zaglavlju.
+
+### Neurađeno / za kasnije
+
+- P3 „Zadatak 1940" / „Tvoj Elo" (vidi gore).
+- Neiskorišćeni ključevi posle ovog taska (za Task 13): Android „Rejting: ", „Predaja partije",
+  „Da li ste sigurni da želite da predate partiju?", „Nastavi igru" (grep: 0 pozivalaca);
+  iOS „Da li ste sigurni da želite da predate trenutnu partiju?". Android `StatusBanner`
+  (`UiComponents.kt`) više nema pozivaoca.
+- Vizuelno neprovereno (bez simulatora/emulatora): širina zaglavlja Zadataka na Androidu na uskim
+  ekranima sa dugim nazivom datuma (npr. ru), horizontalni skrol reda tagova.
+
+### Novi stringovi
+
+Android `Loc.kt`: „Napad na damu", „Napad na kralja" (teme zadataka) — prevodi preuzeti iz iOS
+kataloga (postojeći ključevi). iOS: nijedan nov ključ.
+
 
 ## Task 6 — Analiza partije (§ 6, § 17 tačnost)
 

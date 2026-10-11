@@ -16,6 +16,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -73,131 +78,148 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
     // ziv (nije slucaj danas), red se ponovo puni za novi korak.
     LaunchedEffect(step.id) { viewModel.startStepPractice(step) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(DS.Space.l),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = stepTitle(step),
-                color = DS.ink,
-                // Zaglavlje ekrana koraka -> `Type.heading`. Ne `title`: 22 nosi
-                // naslov aplikacije (`MainActivity`), a ovaj red je nivo ispod.
-                style = Type.heading,
-                fontWeight = FontWeight.Bold
-            )
-            Button(
-                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-                onClick = onClose,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    // spec § 3: „Zatvori" nikad u `inkMuted` — tekst-dugme u `accent`.
-                    contentColor = DS.accent
-                )
-            ) {
-                Text(text = loc("Zatvori"))
-            }
-        }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val side = stepBoardSide(maxWidth, maxHeight)
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = DS.Space.l)) {
+            StepHeader(title = stepTitle(step), onClose = onClose)
 
-        when (viewModel.phase) {
-            PuzzlePhase.LOADING -> Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = DS.accent)
-            }
-            PuzzlePhase.NETWORK_ERROR -> Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Faza 8, Task 3: isti obrazac kao `PuzzleView.kt` (ista
-                    // ikona, ista podloga `DS.ground` — ekran koraka sedi u
-                    // istom `Box` iz `MainActivity.kt`), i isto dekorativna:
-                    // poruka o gresci stoji odmah ispod ikone.
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = DS.warning,
-                        modifier = Modifier.size(40.dp)
-                    )
-                    Spacer(modifier = Modifier.height(DS.Space.s))
-                    Text(
-                        text = viewModel.networkErrorMessage,
-                        color = DS.ink,
-                        // Poruka u recenici, ne oznaka -> `body`.
-                        style = Type.body,
-                        textAlign = TextAlign.Center
-                    )
+            when (viewModel.phase) {
+                PuzzlePhase.LOADING -> Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = DS.accent)
                 }
-            }
-            else -> {
-                ProgressHeader(
-                    progress = viewModel.stepProgress,
-                    requiresFlawless = viewModel.stepRequiresFlawless
-                )
-
-                StatusBanner(message = viewModel.statusMessage)
-
-                val settings = remember { SettingsManager.getInstance(context) }
-                val activeTheme = remember(settings.boardTheme) {
-                    BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
+                PuzzlePhase.NETWORK_ERROR -> Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Dekorativna: poruka o gresci stoji odmah ispod ikone.
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = DS.warning,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(DS.Space.s))
+                        Text(
+                            text = viewModel.networkErrorMessage,
+                            color = DS.ink,
+                            style = Type.body,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-                val activeStyle = remember(settings.pieceStyle) {
-                    PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
-                }
+                else -> {
+                    val settings = remember { SettingsManager.getInstance(context) }
+                    val activeTheme = remember(settings.boardTheme) {
+                        BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
+                    }
+                    val activeStyle = remember(settings.pieceStyle) {
+                        PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
+                    }
+                    // spec § 7: sadrzaj od vrha (`Space.l` ispod zaglavlja) — ranije
+                    // je tabla bila centrirana u `weight(1f)` pa je iznad nje ostajalo
+                    // ~300 dp praznog.
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(top = DS.Space.l, bottom = DS.Space.l),
+                        verticalArrangement = Arrangement.spacedBy(DS.Space.m),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ProgressHeader(
+                            progress = viewModel.stepProgress,
+                            requiresFlawless = viewModel.stepRequiresFlawless,
+                            finished = isStepFinished(viewModel.stepProgress, viewModel.stepFailed)
+                        )
 
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    BoardView(
-                        board = viewModel.gameState.board,
-                        isFlipped = viewModel.isFlipped,
-                        selectedPosition = viewModel.selectedPosition,
-                        legalMoves = viewModel.legalMovesForSelected,
-                        lastMove = viewModel.lastMove,
-                        gameStatus = viewModel.gameState.status,
-                        boardTheme = activeTheme,
-                        pieceStyle = activeStyle,
-                        showCoordinates = settings.showCoordinates,
-                        showLastMoveHighlight = settings.showLastMoveHighlight,
-                        showLegalMoves = settings.showLegalMoves,
-                        onTap = { pos -> viewModel.tap(pos) },
-                        modifier = Modifier.widthIn(max = DS.maxBoardSide)
-                    )
-                }
+                        // Isti uputni okvir kao Zadaci (spec § 7).
+                        PuzzleInstruction(viewModel)
 
-                StepFooter(progress = viewModel.stepProgress, stepFailed = viewModel.stepFailed, onClose = onClose)
+                        BoardView(
+                            board = viewModel.gameState.board,
+                            isFlipped = viewModel.isFlipped,
+                            selectedPosition = viewModel.selectedPosition,
+                            legalMoves = viewModel.legalMovesForSelected,
+                            lastMove = viewModel.lastMove,
+                            gameStatus = viewModel.gameState.status,
+                            boardTheme = activeTheme,
+                            pieceStyle = activeStyle,
+                            showCoordinates = settings.showCoordinates,
+                            showLastMoveHighlight = settings.showLastMoveHighlight,
+                            showLegalMoves = settings.showLegalMoves,
+                            onTap = { pos -> viewModel.tap(pos) },
+                            modifier = Modifier.size(side)
+                        )
+
+                        StepFooter(progress = viewModel.stepProgress, stepFailed = viewModel.stepFailed, onClose = onClose)
+                    }
+                }
             }
         }
     }
 }
 
+/**
+ * Jedna vrednost strane table za ekrane koraka (Task 11 menja samo telo, spec § 13).
+ * Sirina do `DS.maxBoardSide`, uz granicu po visini da tabla u pejzazu ne proguta
+ * ceo ekran (isti racun kao iOS `boardSide(in:)`, rezerva 220).
+ */
+internal fun stepBoardSide(width: Dp, height: Dp): Dp {
+    val byWidth = width - DS.Space.l * 2
+    val byHeight = height - 220.dp
+    return max(200.dp, min(min(byWidth, byHeight), DS.maxBoardSide))
+}
+
+/**
+ * Zaglavlje ekrana koraka: naslov + „Zatvori" kao tekst-dugme u `accent`
+ * (spec § 7, § 3 — nikad `inkMuted`). Deli ga i `StepGameView`.
+ */
 @Composable
-private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) {
+internal fun StepHeader(title: String, onClose: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+    ) {
+        Text(
+            text = title,
+            color = DS.ink,
+            style = Type.heading,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f)
+        )
+        actions()
+        TextButton(onClick = onClose, shape = ButtonShape) {
+            Text(text = loc("Zatvori"), color = DS.accent, style = Type.body, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+private fun isStepFinished(progress: Pair<Int, Int>, stepFailed: Boolean): Boolean =
+    !stepFailed && progress.second > 0 && progress.first >= progress.second
+
+@Composable
+private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean, finished: Boolean) {
     // Pre nego sto se red napuni total je 0; brojac tada ne sme da kaze
     // "Zadatak 1 od 0".
     val total = maxOf(progress.second, 1)
     val current = minOf(progress.first + 1, total)
 
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s), modifier = Modifier.fillMaxWidth()) {
         Text(
             text = locF("Zadatak %d od %d", current, total),
+            // spec § 7: `inkMuted` (5,28 / 5,94 na `ground`).
             color = DS.inkMuted,
-            // iOS crta bas `.dsCaption.weight(.semibold)`
-            // (`Chessko/Views/StepPracticeView.swift:116`).
             style = Type.caption,
             fontWeight = FontWeight.SemiBold
         )
 
-        // Po jedna pilula za svaki zadatak u redu: reseno -> success, tekuce
-        // (index == progress.first, upravo se resava) -> accent, jos
-        // neodigrano -> fill. Ranije su "reseno" i "tekuce" delili istu
-        // (accent) boju -- tri stanja sad se stvarno razlikuju.
+        // spec § 7: reseni segmenti `accent` (7,69 / 7,03), tekuci `accent` 40 %,
+        // nereseni `fill` — isto kao iOS. (Ranije je reseno bilo `success`.)
         Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs), modifier = Modifier.fillMaxWidth()) {
             for (index in 0 until total) {
                 Box(
@@ -207,8 +229,8 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
                         .clip(RoundedCornerShape(3.dp))
                         .background(
                             when {
-                                index < progress.first -> DS.success
-                                index == progress.first -> DS.accent
+                                index < progress.first -> DS.accent
+                                index == progress.first && !finished -> DS.accent.copy(alpha = 0.4f)
                                 else -> DS.fill
                             }
                         )
@@ -216,24 +238,14 @@ private fun ProgressHeader(progress: Pair<Int, Int>, requiresFlawless: Boolean) 
             }
         }
 
-        if (requiresFlawless) {
-            // `DS.warning` tekst direktno na `DS.ground` (ovaj red nema Card ni
-            // background omotac) pada na 3,26:1 u svetloj temi -- gore od vec
-            // poznatog `warning/surface` para (3,61) i van svih ContrastTest
-            // provera. Standardan obrazac trake upozorenja: tonirana `DS.warning`
-            // podloga (providnost je ovde NAMERNA, deo tog obrasca -- ne pokusaj
-            // da se nadoknadi providnost izgubljena pri prevodjenju) + `DS.ink`
-            // tekst. Izracunato: DS.ink na (DS.warning @15% preko DS.ground) =
-            // 13,47 svetla / 12,30 tamna -- daleko iznad AA u obe teme.
+        if (requiresFlawless && !finished) {
+            // spec § 7: tekst testa u `warning` direktno na `ground` — posle
+            // promene tokena (§ 2) 5,16 / 9,27, preko AA, pa tonirana podloga
+            // vise nije potrebna. Isto kao iOS.
             Text(
                 text = loc("Test mora biti rešen bez greške"),
-                color = DS.ink,
-                // iOS: `.dsCaption` (`Chessko/Views/StepPracticeView.swift:134`).
-                style = Type.caption,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(DS.warning.copy(alpha = 0.15f))
-                    .padding(horizontal = DS.Space.s, vertical = DS.Space.xs)
+                color = DS.warning,
+                style = Type.caption
             )
         }
     }
@@ -250,8 +262,7 @@ private fun StepFooter(progress: Pair<Int, Int>, stepFailed: Boolean, onClose: (
     // gasi na izvoru: pao test NIJE zavrsen korak, ma koliko zadataka bilo
     // reseno pre restarta. Bez ovoga bi ekran napisao "Korak je zavrsen" dok
     // Put isti korak jos vodi kao nezavrsen.
-    val finished = !stepFailed && progress.second > 0 && progress.first >= progress.second
-    if (!finished) return
+    if (!isStepFinished(progress, stepFailed)) return
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -267,10 +278,10 @@ private fun StepFooter(progress: Pair<Int, Int>, stepFailed: Boolean, onClose: (
         Button(
             shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
             onClick = onClose,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)
+            colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
         ) {
-            Text(text = loc("Nazad na Put"), fontWeight = FontWeight.Bold)
+            Text(text = loc("Nazad na Put"), style = Type.body, fontWeight = FontWeight.SemiBold)
         }
     }
 }

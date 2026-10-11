@@ -12,6 +12,9 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -242,6 +245,28 @@ private fun EvaluationChip(evaluation: Evaluation) {
 // ── Okvir uputstva ────────────────────────────────────────────────────────────
 
 /**
+ * Ton okvira uputstva. Okvir ostaje isti (`fill`, tekst `ink`) — menja se samo
+ * ikona i njena boja, da ishod (greska / reseno / resenje) bude vidljiv a da okvir
+ * ne pocne da lici na dugme (spec § 3). Ikone na `fill`: `inkMuted` 4,86 / 4,81,
+ * `danger` 5,43 / 5,93, `success` 4,18 / 7,78 (>= 3 : 1 za ikone), `warning`
+ * 4,75 / 7,51. Isto kao iOS `DSInstructionTone`.
+ */
+enum class InstructionTone(val icon: ImageVector) {
+    HINT(Icons.Outlined.Lightbulb),
+    WRONG(Icons.Filled.Cancel),
+    SOLVED(Icons.Filled.Verified),
+    SOLUTION(Icons.Filled.Visibility);
+
+    val tint: Color
+        @Composable get() = when (this) {
+            HINT -> DS.inkMuted
+            WRONG -> DS.danger
+            SOLVED -> DS.success
+            SOLUTION -> DS.warning
+        }
+}
+
+/**
  * Okvir uputstva (spec § 7): `fill`, bez ivice, `Radius.m`; sijalica `inkMuted`
  * (4,86 / 4,81); tekst `Type.body` `ink` (14,47 / 13,08); uz krug strane na potezu.
  * Status — ne dugme i ne polje za unos.
@@ -250,7 +275,8 @@ private fun EvaluationChip(evaluation: Evaluation) {
 fun InstructionBox(
     text: String,
     modifier: Modifier = Modifier,
-    sideToMove: PieceColor? = null
+    sideToMove: PieceColor? = null,
+    tone: InstructionTone = InstructionTone.HINT
 ) {
     Row(
         modifier = modifier
@@ -262,9 +288,9 @@ fun InstructionBox(
         verticalAlignment = Alignment.Top
     ) {
         Icon(
-            imageVector = Icons.Outlined.Lightbulb,
+            imageVector = tone.icon,
             contentDescription = null,
-            tint = DS.inkMuted,
+            tint = tone.tint,
             modifier = Modifier.size(20.dp)
         )
         Text(text = text, color = DS.ink, style = Type.body, modifier = Modifier.weight(1f))

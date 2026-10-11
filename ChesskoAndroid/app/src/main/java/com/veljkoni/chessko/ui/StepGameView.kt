@@ -1,16 +1,13 @@
 package com.veljkoni.chessko.ui
 
 import com.veljkoni.chessko.ui.theme.DialogShape
-import com.veljkoni.chessko.ui.theme.dsCard
 import com.veljkoni.chessko.ui.theme.ButtonShape
 import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -18,22 +15,25 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.veljkoni.chessko.models.GameStatus
+import com.veljkoni.chessko.models.PieceColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.veljkoni.chessko.logic.GameDifficulty
 import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.SettingsManager
@@ -120,131 +120,87 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(DS.Space.l),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = loc("Partija"),
-                color = DS.ink,
-                // Zaglavlje ekrana koraka -> `heading`, isto kao `StepPracticeView`.
-                style = Type.heading,
-                fontWeight = FontWeight.Bold
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                Button(
-                    shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
+    val settings = remember { SettingsManager.getInstance(context) }
+    val activeTheme = remember(settings.boardTheme) {
+        BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
+    }
+    val activeStyle = remember(settings.pieceStyle) {
+        PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val side = stepBoardSide(maxWidth, maxHeight)
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = DS.Space.l)) {
+            StepHeader(title = loc("Partija"), onClose = onClose) {
+                IconButton(
                     onClick = { viewModel.undo() },
                     enabled = viewModel.canUndo,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
+                    colors = IconButtonDefaults.iconButtonColors(
                         contentColor = DS.ink,
-                        // `disabledContainerColor` se NE sme izostaviti: M3
-                        // podrazumevano daje `onSurface` @12%, pa afordansa cita
-                        // naopako — onemoguceno dugme postane popunjena siva pilula,
-                        // a omoguceno goli glif.
-                        disabledContainerColor = Color.Transparent,
-                        // Ranije je i ovo bilo `DS.inkMuted`, identicno sa
-                        // `contentColor` — dugme je izgledalo isto u oba stanja.
-                        // Ostatak grane razlikuje stanja bas ovim parom
-                        // (`MainActivity.kt:1239-1241`, `:1275-1277`,
-                        // `PuzzleView.kt:454-457`): `DS.ink` ukljuceno, `DS.inkMuted`
-                        // iskljuceno. Podloga je `DS.ground`; izmereno
-                        // `ink`/`ground` = 15,72 (svetla) / 16,15 (tamna),
-                        // `inkMuted`/`ground` = 4,36 / 5,94.
+                        // `ink` ukljuceno / `inkMuted` iskljuceno na `ground`
+                        // (15,72 / 16,15 naspram 5,28 / 5,94).
                         disabledContentColor = DS.inkMuted
                     )
                 ) {
-                    // Faza 8, talas ispravki: `Text("↩︎")` -> `Icon`. Glif je
-                    // prezivEO celu fazu jer je provera obima grepovala samo
-                    // emoji blokove (`1F300–1FAFF`, `2600–27BF`, `2B00–2BFF`),
-                    // a `U+21A9` je u bloku strelica. Dugme nema tekst — ikona
-                    // stoji SAMA, pa dobija opis; isti kljuc i ista radnja kao
-                    // `Undo` u `MainActivity.kt` (gde je dekorativna, jer je
-                    // tamo uz vidljiv `Text`). `AutoMirrored` je bitan: glif
-                    // se u RTL rasporedu mora okrenuti, sto goli `Text` nije
-                    // radio. Boja se nasledjuje iz `ButtonDefaults` iznad
-                    // (`DS.ink` / `DS.inkMuted`), par vec izmeren u komentaru.
+                    // Ikona stoji SAMA, pa dobija opis. `AutoMirrored` zbog RTL-a.
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Undo,
                         contentDescription = loc("Vrati potez"),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
                 if (viewModel.canResign) {
-                    Button(
-                        shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-                        onClick = { showResignConfirm = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Transparent,
-                            contentColor = DS.danger
-                        )
-                    ) {
-                        // Faza 8, Task 3: emoji -> Icon. Dugme nema tekst pored
-                        // sebe (za razliku od "Zatvori" odmah desno) — opis je
-                        // neophodan. Isti kljuc kao `Flag` u `MainActivity.kt`
-                        // (Faza 8, Task 2), ista radnja.
+                    IconButton(onClick = { showResignConfirm = true }) {
                         Icon(
                             imageVector = Icons.Default.Flag,
                             contentDescription = loc("Predaj partiju"),
-                            modifier = Modifier.size(20.dp)
+                            tint = DS.danger,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
-                Button(
-                    shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-                    onClick = onClose,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        // spec § 3: „Zatvori" nikad u `inkMuted` — tekst-dugme u `accent`.
-                        contentColor = DS.accent
-                    )
-                ) {
-                    Text(text = loc("Zatvori"))
-                }
+            }
+
+            // spec § 7: sadrzaj od vrha, iste komponente kao Igra — kartica
+            // protivnika („Računar · Početnik"), tabla, kartica igraca („Na potezu"
+            // umesto posebnog reda „Tvoj potez"), pa napomena.
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = DS.Space.l, bottom = DS.Space.l),
+                verticalArrangement = Arrangement.spacedBy(DS.Space.m),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                StepOpponentCard(viewModel, activeTheme, activeStyle)
+
+                BoardView(
+                    board = viewModel.gameState.board,
+                    isFlipped = viewModel.isFlipped,
+                    selectedPosition = viewModel.selectedPosition,
+                    legalMoves = viewModel.legalMovesForSelected,
+                    lastMove = viewModel.lastMove,
+                    gameStatus = viewModel.gameState.status,
+                    boardTheme = activeTheme,
+                    pieceStyle = activeStyle,
+                    showCoordinates = settings.showCoordinates,
+                    showLastMoveHighlight = settings.showLastMoveHighlight,
+                    showLegalMoves = settings.showLegalMoves,
+                    onTap = { pos -> viewModel.tap(pos) },
+                    modifier = Modifier.size(side)
+                )
+
+                StepPlayerCard(viewModel, activeTheme, activeStyle)
+
+                StepGameFooter(
+                    viewModel = viewModel,
+                    isGameOver = viewModel.isGameOver,
+                    onClose = onClose,
+                    onAnalyze = { showAnalysis = true }
+                )
             }
         }
-
-        OpponentCard(viewModel)
-        StatusCard(message = getStatusMessage(viewModel))
-
-        val settings = remember { SettingsManager.getInstance(context) }
-        val activeTheme = remember(settings.boardTheme) {
-            BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
-        }
-        val activeStyle = remember(settings.pieceStyle) {
-            PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
-        }
-
-        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            BoardView(
-                board = viewModel.gameState.board,
-                isFlipped = viewModel.isFlipped,
-                selectedPosition = viewModel.selectedPosition,
-                legalMoves = viewModel.legalMovesForSelected,
-                lastMove = viewModel.lastMove,
-                gameStatus = viewModel.gameState.status,
-                boardTheme = activeTheme,
-                pieceStyle = activeStyle,
-                showCoordinates = settings.showCoordinates,
-                showLastMoveHighlight = settings.showLastMoveHighlight,
-                showLegalMoves = settings.showLegalMoves,
-                onTap = { pos -> viewModel.tap(pos) },
-                modifier = Modifier.widthIn(max = DS.maxBoardSide)
-            )
-        }
-
-        StepGameFooter(
-            viewModel = viewModel,
-            isGameOver = viewModel.isGameOver,
-            onClose = onClose,
-            onAnalyze = { showAnalysis = true }
-        )
     }
 
     if (viewModel.showPromotion) {
@@ -263,14 +219,11 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
     }
 
     if (showResignConfirm) {
+        // spec § 5: „Predati partiju?" · „Nastavi" (accent) · „Predaj" (danger) — isto
+        // kao ekran Igra (Task 4), bez recenice na „Vi".
         AlertDialog(
             onDismissRequest = { showResignConfirm = false },
-            title = { Text(text = loc("Predaja partije"), color = DS.ink, fontWeight = FontWeight.Bold) },
-            // 0.8f je van tacnog opsega inkMuted (0.5-0.75f) iz tabele, ali je
-            // ovo bas telo/supporting tekst dijaloga -- isti M3 slot
-            // (`DialogTokens.SupportingTextColor`) koji `Theme.kt` vec mapira na
-            // `onSurfaceVariant` = `inkMuted` po podrazumevanoj vrednosti.
-            text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.ink) },
+            title = { Text(text = loc("Predati partiju?"), color = DS.ink, fontWeight = FontWeight.Bold) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.resign()
@@ -281,8 +234,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
             },
             dismissButton = {
                 TextButton(onClick = { showResignConfirm = false }) {
-                    // spec § 3: sporedna radnja u `accent`, nikad `inkMuted`.
-                    Text(text = loc("Nastavi igru"), color = DS.accent)
+                    Text(text = loc("Nastavi"), color = DS.accent)
                 }
             },
             containerColor = DS.surface,
@@ -291,58 +243,52 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
     }
 }
 
+private fun stepActive(viewModel: GameViewModel, color: PieceColor): Boolean =
+    viewModel.gameState.currentTurn == color && !viewModel.isGameOver
+
+private fun stepCaptured(viewModel: GameViewModel, color: PieceColor) =
+    if (color == PieceColor.WHITE) viewModel.gameState.capturedByWhite else viewModel.gameState.capturedByBlack
+
+/** Kartica protivnika „Računar · Početnik" — bez strelice: nivo zadaje korak. */
 @Composable
-private fun OpponentCard(viewModel: GameViewModel) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
-        modifier = Modifier
-            .fillMaxWidth()
-            // spec § 3: `fill` nije kartica — surface + 1 dp line (iOS `opponentCard` `.dsCard()`).
-            // `StatusCard` ispod ostaje `fill`: to je okvir uputstva (§ 7, Task 5).
-            .dsCard()
-            .padding(horizontal = 14.dp, vertical = DS.Space.m)
-    ) {
-        // Faza 8, Task 3: emoji -> Icon. Ikona stoji NEPOSREDNO uz vidljiv
-        // `Text(loc("Računar"))` -- isti obrazac kao `Computer`/`People` u
-        // `MainActivity.kt` (Faza 8, Task 2, ispravljeno u progress.md nakon
-        // sto je prvobitni kljuc "Protivnik računar" bio dodeljen ovom istom
-        // slucaju): dekorativna, BEZ kljuca (ne samo `null` opis vec i BEZ
-        // dodatog `Loc.kt` unosa) -- ovaj korak, za razliku od slobodne
-        // partije na tabu Igra, nema prekidac Racunar/Prijatelj, pa se ikona
-        // ovde nikad ne menja u `People`.
-        Icon(
-            imageVector = Icons.Default.Computer,
-            contentDescription = null,
-            tint = DS.ink,
-            modifier = Modifier.size(16.dp)
-        )
-        // Kartica protivnika je paritet sa iOS-om
-        // (`Chessko/Views/StepGameView.swift:199-205`): naziv `.dsBody`, tezina
-        // `.dsCaption`. `fontWeight = Medium` ostaje -- iOS ga nema, ali brisanje
-        // bi bila promena izgleda koju ovaj task ne trazi.
-        Text(text = loc("Računar"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
-        Text(text = viewModel.difficulty.label, color = DS.inkMuted, style = Type.caption)
-        Spacer(modifier = Modifier.weight(1f))
-        if (viewModel.isThinking) {
-            Text(text = loc("Računar razmišlja..."), color = DS.inkMuted, style = Type.caption)
-        }
-    }
+private fun StepOpponentCard(viewModel: GameViewModel, boardTheme: BoardTheme, pieceStyle: PieceStyle) {
+    val color = if (viewModel.playerColor == PieceColor.WHITE) PieceColor.BLACK else PieceColor.WHITE
+    val active = stepActive(viewModel, color)
+    PlayerCard(
+        color = color,
+        name = loc("Računar"),
+        boardTheme = boardTheme,
+        pieceStyle = pieceStyle,
+        subtitle = viewModel.difficulty.label,
+        status = if (active && viewModel.isThinking) PlayerCardStatus.Thinking else null,
+        isActive = active,
+        materialAdvantage = getMaterialAdvantage(viewModel.gameState, color),
+        capturedPieces = stepCaptured(viewModel, color)
+    )
 }
 
+/** Kartica igraca: „Na potezu" (+ „· Šah"), kraj partije kao `Type.body`. */
 @Composable
-private fun StatusCard(message: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.fill)
-            .padding(horizontal = 14.dp, vertical = DS.Space.m)
-    ) {
-        // iOS: `.dsBody` (`Chessko/Views/StepGameView.swift:229`).
-        Text(text = message, color = DS.ink, style = Type.body)
+private fun StepPlayerCard(viewModel: GameViewModel, boardTheme: BoardTheme, pieceStyle: PieceStyle) {
+    val color = viewModel.playerColor
+    val active = stepActive(viewModel, color)
+    val status: PlayerCardStatus? = when {
+        viewModel.isGameOver -> PlayerCardStatus.Result(getStatusMessage(viewModel))
+        !active -> null
+        else -> PlayerCardStatus.ToMove(
+            inCheck = (viewModel.gameState.status as? GameStatus.Check)?.color == color
+        )
     }
+    PlayerCard(
+        color = color,
+        name = loc("Ti"),
+        boardTheme = boardTheme,
+        pieceStyle = pieceStyle,
+        status = status,
+        isActive = active,
+        materialAdvantage = getMaterialAdvantage(viewModel.gameState, color),
+        capturedPieces = stepCaptured(viewModel, color)
+    )
 }
 
 @Composable
@@ -371,7 +317,7 @@ private fun StepGameFooter(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)
             ) {
-                Text(text = loc("Nazad na Put"), fontWeight = FontWeight.Bold)
+                Text(text = loc("Nazad na Put"), style = Type.body, fontWeight = FontWeight.SemiBold)
             }
         }
     } else {
@@ -380,6 +326,7 @@ private fun StepGameFooter(
             color = DS.inkMuted,
             // iOS: `.dsCaption` (`Chessko/Views/StepGameView.swift:290`).
             style = Type.caption,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
     }

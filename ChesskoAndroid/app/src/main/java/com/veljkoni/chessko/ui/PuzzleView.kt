@@ -1,47 +1,56 @@
 package com.veljkoni.chessko.ui
 
 import com.veljkoni.chessko.ui.theme.ButtonShape
+import com.veljkoni.chessko.ui.theme.dsPrimaryButtonColors
 import com.veljkoni.chessko.logic.Loc
 import com.veljkoni.chessko.logic.loc
-import com.veljkoni.chessko.logic.locF
 
-import android.app.Application
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import android.content.res.Configuration
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.PuzzlePhase
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// spec § 7 (dizajnerski pregled): iOS raspored na obe platforme — zaglavlje sa
+// „‹ Danas ›", red tagova, okvir uputstva, tabla, jedna radnja. Sadrzaj od vrha:
+// nista centrirano po visini, nista prikovano za dno. „Pokušaj ponovo" je uklonjen
+// iz rešavanja; ostaje samo na ekranu greske pri ucitavanju (jedini izlaz iz tog
+// stanja).
 @Composable
 fun PuzzleView(
     viewModel: PuzzleViewModel,
@@ -53,264 +62,162 @@ fun PuzzleView(
     // statistiku". Osvezava se SAMO kes, ne i zadatak: `loadDailyPuzzle()` bi
     // restartovao zadatak u toku, sto je vec jednom bio bug.
     LaunchedEffect(Unit) { viewModel.refreshPersistedProgress() }
-    val context = LocalContext.current
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    if (isLandscape) {
-        Row(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(DS.Space.s),
-            horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Left Side: Board
-            Box(
+    val busy = viewModel.phase == PuzzlePhase.LOADING || viewModel.phase == PuzzlePhase.NETWORK_ERROR
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
+        val side = puzzleBoardSide(maxWidth, maxHeight, isLandscape)
+
+        if (isLandscape) {
+            Row(
                 modifier = Modifier
-                    // Strana se racuna iz VISINE (fillMaxHeight + aspectRatio), pa
-                    // granica ide na obe ose. Ovde stoji na CVORU, ne na vrednosti, jer
-                    // velicinu table ne cita niko drugi; u MainActivity je od Task-a 5b
-                    // na vrednosti, jer je eval traka cita pored table.
-                    .sizeIn(maxWidth = DS.maxBoardSide, maxHeight = DS.maxBoardSide)
-                    .fillMaxHeight()
-                    .aspectRatio(1f),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(horizontal = DS.Space.l),
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.xl),
+                verticalAlignment = Alignment.Top
             ) {
-                when (viewModel.phase) {
-                    PuzzlePhase.LOADING -> {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            CircularProgressIndicator(color = DS.accent)
-                            Spacer(modifier = Modifier.height(DS.Space.m))
-                            Text(
-                                text = loc("Učitavam zadatak..."),
-                                color = DS.inkMuted,
-                                // iOS: `.dsBody` (`Chessko/Views/PuzzleView.swift:457`).
-                                style = Type.body
-                            )
-                        }
-                    }
-                    PuzzlePhase.NETWORK_ERROR -> {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(DS.Space.l)
-                        ) {
-                            // Faza 8, Task 3: emoji -> Icon. Podloga je `DS.ground`
-                            // (isti ekran, obe orijentacije — vidi ContrastTest).
-                            // DEKORATIVNA: tekst ODMAH ispod vec kaze „Greška pri
-                            // učitavanju zadatka", pa bi opis naterao citac ekrana
-                            // da istu stvar kaze dvaput. Prvi prelaz je ovde imao
-                            // kljuc "Greška" (zadat unapred, iz izgleda ikone); taj
-                            // kljuc vise ne postoji.
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = DS.warning,
-                                modifier = Modifier.size(36.dp)
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = loc("Greška pri učitavanju zadatka"),
-                                color = DS.ink,
-                                // Isti string, dve velicine u istom fajlu (pejzaz 14,
-                                // portret 16) -- tacno drift koji Task 2 opisuje.
-                                // Obe grane sada idu na `heading`.
-                                style = Type.heading,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(DS.Space.m))
-                            Button(
-                                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-                                onClick = { viewModel.loadDailyPuzzle() },
-                                colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
-                            ) {
-                                Text(text = loc("Pokušaj ponovo"), color = DS.onAccent)
-                            }
-                        }
-                    }
-                    else -> {
-                        val settings = remember { SettingsManager.getInstance(context) }
-                        val activeTheme = remember(settings.boardTheme) {
-                            BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
-                        }
-                        val activeStyle = remember(settings.pieceStyle) {
-                            PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
-                        }
-
-                        BoardView(
-                            board = viewModel.gameState.board,
-                            isFlipped = viewModel.isFlipped,
-                            selectedPosition = viewModel.selectedPosition,
-                            legalMoves = viewModel.legalMovesForSelected,
-                            lastMove = viewModel.lastMove,
-                            gameStatus = viewModel.gameState.status,
-                            boardTheme = activeTheme,
-                            pieceStyle = activeStyle,
-                            showCoordinates = settings.showCoordinates,
-                            showLastMoveHighlight = settings.showLastMoveHighlight,
-                            showLegalMoves = settings.showLegalMoves,
-                            onTap = { pos -> viewModel.tap(pos) },
-                            modifier = Modifier.fillMaxSize()
-                        )
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = DS.Space.l)
+                        .size(side),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (busy) PuzzleLoadState(viewModel) else PuzzleBoard(viewModel, Modifier.fillMaxSize())
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
+                        .padding(vertical = DS.Space.l),
+                    verticalArrangement = Arrangement.spacedBy(DS.Space.m)
+                ) {
+                    PuzzleHeaderRow(viewModel)
+                    if (!busy) {
+                        PuzzleTagsRow(viewModel)
+                        PuzzleInstruction(viewModel)
+                        Spacer(modifier = Modifier.height(DS.Space.l - DS.Space.m))
+                        PuzzleActionsRow(viewModel)
                     }
                 }
             }
-
-            // Right Side: Toolbar, Metadata & Controls
+        } else {
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .verticalScroll(rememberScrollState())
-                    .padding(end = DS.Space.s),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = DS.Space.l)
             ) {
-                // Vezi se za KONKRETAN datum — u vezbovnom rezimu bi tvrdila
-                // neistinu (zadatak nije zadatak dana za prikazani datum).
-                if (viewModel.mode == PuzzleViewModel.PuzzleMode.DAILY) {
-                    DateNavigationRow(viewModel)
-                }
-
-                if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
-                    PuzzleMetadataHeader(viewModel)
-                    PuzzleStatusBanner(phase = viewModel.phase, message = viewModel.statusMessage)
-                    Spacer(modifier = Modifier.height(DS.Space.s))
-                    PuzzleActionsRow(viewModel)
+                Box(modifier = Modifier.padding(vertical = DS.Space.s)) { PuzzleHeaderRow(viewModel) }
+                if (busy) {
+                    // Stanje celog ekrana (ucitavanje / greska) — tu centriranje
+                    // jeste namera: nema sadrzaja koji bi se citao od vrha.
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) { PuzzleLoadState(viewModel) }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(top = DS.Space.s, bottom = DS.Space.l),
+                        verticalArrangement = Arrangement.spacedBy(DS.Space.m),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        PuzzleTagsRow(viewModel)
+                        PuzzleInstruction(viewModel)
+                        PuzzleBoard(viewModel, Modifier.size(side))
+                        Spacer(modifier = Modifier.height(DS.Space.l - DS.Space.m))
+                        PuzzleActionsRow(viewModel)
+                    }
                 }
             }
         }
-    } else {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(DS.Space.l),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // 1. Date Navigation Toolbar — vezi se za KONKRETAN datum, pa se
-            // gasi u vezbovnom rezimu (ne tvrdi neistinu o zadatku dana).
-            if (viewModel.mode == PuzzleViewModel.PuzzleMode.DAILY) {
-                DateNavigationRow(viewModel)
-            }
+    }
+}
 
-            Spacer(modifier = Modifier.height(10.dp))
+/**
+ * Jedna vrednost strane table po ekranu (Task 11 menja samo telo, spec § 13).
+ * Portret: sirina; pejzaz: visina — obe do `DS.maxBoardSide`.
+ */
+internal fun puzzleBoardSide(width: Dp, height: Dp, isLandscape: Boolean): Dp {
+    val available = if (isLandscape) height - DS.Space.l * 2 else width - DS.Space.l * 2
+    return max(200.dp, min(available, DS.maxBoardSide))
+}
 
-            // 2. Puzzle Metadata Header
-            if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
-                PuzzleMetadataHeader(viewModel)
-            }
+@Composable
+private fun PuzzleBoard(viewModel: PuzzleViewModel, modifier: Modifier) {
+    val context = LocalContext.current
+    val settings = remember { SettingsManager.getInstance(context) }
+    val activeTheme = remember(settings.boardTheme) {
+        BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
+    }
+    val activeStyle = remember(settings.pieceStyle) {
+        PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
+    }
+    BoardView(
+        board = viewModel.gameState.board,
+        isFlipped = viewModel.isFlipped,
+        selectedPosition = viewModel.selectedPosition,
+        legalMoves = viewModel.legalMovesForSelected,
+        lastMove = viewModel.lastMove,
+        gameStatus = viewModel.gameState.status,
+        boardTheme = activeTheme,
+        pieceStyle = activeStyle,
+        showCoordinates = settings.showCoordinates,
+        showLastMoveHighlight = settings.showLastMoveHighlight,
+        showLegalMoves = settings.showLegalMoves,
+        onTap = { pos -> viewModel.tap(pos) },
+        modifier = modifier
+    )
+}
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 3. Main Content (Chessboard or Loading/Error)
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                when (viewModel.phase) {
-                    PuzzlePhase.LOADING -> {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            CircularProgressIndicator(color = DS.accent)
-                            Spacer(modifier = Modifier.height(DS.Space.m))
-                            Text(
-                                text = loc("Učitavam zadatak..."),
-                                color = DS.inkMuted,
-                                // iOS: `.dsBody` (`Chessko/Views/PuzzleView.swift:457`).
-                                style = Type.body
-                            )
-                        }
-                    }
-                    PuzzlePhase.NETWORK_ERROR -> {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(DS.Space.xl)
-                        ) {
-                            // Faza 8, Task 3: isti obrazac kao pejzazna grana iznad
-                            // (ista ikona, ista podloga `DS.ground`, isto
-                            // dekorativna — naslov greske stoji odmah ispod nje).
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = DS.warning,
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Spacer(modifier = Modifier.height(DS.Space.s))
-                            Text(
-                                text = loc("Greška pri učitavanju zadatka"),
-                                color = DS.ink,
-                                style = Type.heading,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = viewModel.networkErrorMessage,
-                                color = DS.inkMuted,
-                                // Sama poruka o gresci -- iOS: `.dsBody`
-                                // (`Chessko/Views/PuzzleView.swift:468`).
-                                style = Type.body,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(DS.Space.l))
-                            Button(
-                                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-                                onClick = { viewModel.loadDailyPuzzle() },
-                                colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
-                            ) {
-                                Text(text = loc("Pokušaj ponovo"), color = DS.onAccent)
-                            }
-                        }
-                    }
-                    else -> {
-                        val settings = remember { SettingsManager.getInstance(context) }
-                        val activeTheme = remember(settings.boardTheme) {
-                            BoardTheme.values().find { it.rawValue == settings.boardTheme } ?: BoardTheme.CLASSIC
-                        }
-                        val activeStyle = remember(settings.pieceStyle) {
-                            PieceStyle.values().find { it.rawValue == settings.pieceStyle } ?: PieceStyle.CLASSIC
-                        }
-
-                        BoardView(
-                            board = viewModel.gameState.board,
-                            isFlipped = viewModel.isFlipped,
-                            selectedPosition = viewModel.selectedPosition,
-                            legalMoves = viewModel.legalMovesForSelected,
-                            lastMove = viewModel.lastMove,
-                            gameStatus = viewModel.gameState.status,
-                            boardTheme = activeTheme,
-                            pieceStyle = activeStyle,
-                            showCoordinates = settings.showCoordinates,
-                            showLastMoveHighlight = settings.showLastMoveHighlight,
-                            showLegalMoves = settings.showLegalMoves,
-                            onTap = { pos -> viewModel.tap(pos) },
-                            modifier = Modifier.widthIn(max = DS.maxBoardSide)
-                        )
-                    }
-                }
-            }
-
+/** Ucitavanje ili greska pri ucitavanju — jedino mesto gde ostaje „Pokušaj ponovo". */
+@Composable
+private fun PuzzleLoadState(viewModel: PuzzleViewModel) {
+    if (viewModel.phase == PuzzlePhase.LOADING) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator(color = DS.accent)
             Spacer(modifier = Modifier.height(DS.Space.m))
-
-            // 4. Status banner
-            if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
-                PuzzleStatusBanner(phase = viewModel.phase, message = viewModel.statusMessage)
-            }
-
-            Spacer(modifier = Modifier.height(DS.Space.l))
-
-            // 5. Actions row
-            if (viewModel.phase != PuzzlePhase.LOADING && viewModel.phase != PuzzlePhase.NETWORK_ERROR) {
-                PuzzleActionsRow(viewModel)
-            }
+            Text(text = loc("Učitavam zadatak..."), color = DS.inkMuted, style = Type.body)
+        }
+        return
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(DS.Space.xl)
+    ) {
+        // Dekorativna: naslov greske stoji odmah ispod ikone.
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+            tint = DS.warning,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(DS.Space.s))
+        Text(
+            text = loc("Greška pri učitavanju zadatka"),
+            color = DS.ink,
+            style = Type.heading,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = viewModel.networkErrorMessage,
+            color = DS.inkMuted,
+            style = Type.body,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(DS.Space.l))
+        Button(
+            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
+            onClick = { viewModel.loadDailyPuzzle() },
+            colors = dsPrimaryButtonColors()
+        ) {
+            Text(text = loc("Pokušaj ponovo"))
         }
     }
 }
@@ -337,275 +244,290 @@ internal fun localeForDateFormatting(languageCode: String): Locale =
         else -> Locale.forLanguageTag(languageCode)
     }
 
-@Composable
-fun DateNavigationRow(viewModel: PuzzleViewModel) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(DS.fill)
-            .padding(horizontal = DS.Space.s, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Prev button
-        Button(
-            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-            onClick = { viewModel.goToPrevious() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = DS.ink
-            ),
-            contentPadding = PaddingValues(horizontal = DS.Space.s)
-        ) {
-            // Faza 8, Task 3: emoji -> Icon. Dugme nema tekst pored sebe —
-            // strelica STOJI SAMA, pa joj treba opis (za razliku od ikona koje
-            // stoje uz vidljiv tekst istog znacenja). Boja se nasledjuje iz
-            // `ButtonDefaults` iznad (`DS.ink`) — isti par kao ostatak dugmadi
-            // ove trake, vec pokriven `textOnFillMeetsAA`.
-            Icon(
-                imageVector = Icons.Default.ChevronLeft,
-                contentDescription = loc("Prethodni dan"),
-                modifier = Modifier.size(16.dp)
-            )
-        }
-
-        // Date Display
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            val dateStr = viewModel.selectedDate.format(
-                DateTimeFormatter.ofPattern("d. MMMM yyyy.", localeForDateFormatting(Loc.getLanguage()))
-            )
-            Text(
-                text = dateStr,
-                color = DS.ink,
-                // Oznaka u traci datuma -> `body`. iOS tu crta
-                // `.system(size: 16, weight: .bold)` (`Chessko/Views/PuzzleView.swift:106`,
-                // `:139`), dakle i on je na tom mestu van svoje skale.
-                style = Type.body,
-                fontWeight = FontWeight.SemiBold
-            )
-            // Kvacica resenosti: Faza 8, Task 3 zamenila je emoji (✅) sa
-            // `Icons.Default.CheckCircle`. Raniji oblik ovog komentara je
-            // objasnjavao da emoji glif nosi SOPSTVENU boju, pa boje nije ni
-            // bilo u kodu — to vise nije tacno: ikona treba tint i on se BIRA,
-            // `DS.success`. Ovo NIJE dekorativna ikona (za razliku od
-            // strelica koje stoje u istom redu): datum levo od nje ne kaze
-            // "resen", pa ikona nosi informaciju koju tekst ne ponavlja —
-            // otud pravi `contentDescription`. Podloga je `DS.fill` (cela
-            // `DateNavigationRow`); par `success/fill` je izmeren u
-            // `ContrastTest.puzzleSolvedCheckmarkIsReadableOnDateRow`.
-            if (viewModel.isSolved(viewModel.selectedDate)) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = loc("Rešeno"),
-                    tint = DS.success,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-
-        // Next button
-        Button(
-            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-            onClick = { viewModel.goToNext() },
-            enabled = viewModel.canGoNext,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = DS.ink,
-                disabledContainerColor = Color.Transparent,
-                disabledContentColor = DS.inkMuted
-            ),
-            contentPadding = PaddingValues(horizontal = DS.Space.s)
-        ) {
-            // Isti obrazac kao "Prethodni dan" iznad — sama, bez teksta pored
-            // sebe. `disabledContentColor = DS.inkMuted` kad `!canGoNext`;
-            // par vec pokriven `nonTextPairsOverFillAreDistinguishable`.
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = loc("Sledeći dan"),
-                modifier = Modifier.size(16.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun PuzzleMetadataHeader(viewModel: PuzzleViewModel) {
-    val puzzle = viewModel.currentPuzzle ?: return
-    
-    val diffColor = when (puzzle.difficultyColor) {
-        "green" -> DS.success
-        "yellow" -> DS.warning
-        else -> DS.danger
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = DS.Space.xs),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Left: Rating indicator
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = loc("Rejting: "),
-                color = DS.inkMuted,
-                // iOS: `.dsCaption` (`Chessko/Views/PuzzleView.swift:314`); vrednost
-                // pored vec stoji na `Type.mono`, kao iOS `.dsMono.weight(.semibold)`.
-                style = Type.caption
-            )
-            Text(
-                text = puzzle.rating.toString(),
-                style = Type.mono,
-                color = DS.ink,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        // Right: Difficulty Pill
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(6.dp))
-                .background(diffColor.copy(alpha = 0.15f))
-                .border(1.dp, diffColor.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                .padding(horizontal = DS.Space.s, vertical = 3.dp)
-        ) {
-            Text(
-                text = puzzle.difficultyLabel,
-                color = diffColor,
-                // Bedz, ne recenica -> `label`. iOS pilulu tezine nema uopste
-                // (`grep -rn difficultyLabel Chessko/Views` je prazan).
-                style = Type.label,
-                fontWeight = FontWeight.Bold
-            )
+/** Naslov u traci datuma: „Danas" / „Juče" / kratak datum u jeziku aplikacije (kao iOS `dateTitle`). */
+private fun puzzleDateTitle(date: LocalDate): String {
+    val today = LocalDate.now()
+    return when (date) {
+        today -> loc("Danas")
+        today.minusDays(1) -> loc("Juče")
+        else -> {
+            val locale = localeForDateFormatting(Loc.getLanguage())
+            val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "dMMM")
+            date.format(DateTimeFormatter.ofPattern(pattern, locale))
         }
     }
 }
 
 /**
- * Statusna kartica specificna za tab Zadaci — menja podlogu po ishodu
- * (reseno/pogresan potez/u toku), za razliku od generickog `StatusBanner`-a
- * (`UiComponents.kt`) koji ostaje neutralan i koriste ga tab Igra i
- * `StepPracticeView`. Tekst je uvek `DS.onAccent`: `accent`/`success`/`danger`
- * dele isti obrazac tamno<->svetlo izmedju tema (tamna nijansa u svetloj temi,
- * pastelna u tamnoj), pa `onAccent` (bela u svetloj, `inkFixed` u tamnoj) daje
- * >=4.5:1 kontrast na sve tri podloge u obe teme -- provereno racunski, vidi
- * task-4-report.md.
+ * Zaglavlje (spec § 7): naslov „Zadaci" levo, „‹ Danas ›" desno. Strelice su
+ * ikone-dugmad 44 × 44 u `accent` (7,69 / 7,03 na `ground`); nedostupna strelica
+ * (danas → desno) ostaje na mestu sa 38 %. U vezbovnom rezimu se traka datuma ne
+ * prikazuje — tvrdila bi neistinu (zadatak nije zadatak dana za prikazani datum).
  */
 @Composable
-fun PuzzleStatusBanner(phase: PuzzlePhase, message: String) {
-    val backgroundColor = when (phase) {
-        PuzzlePhase.SOLVED -> DS.success
-        PuzzlePhase.WRONG_MOVE -> DS.danger
-        else -> DS.accent
-    }
-    Box(
+fun PuzzleHeaderRow(viewModel: PuzzleViewModel) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.s))
-            .background(backgroundColor)
-            .padding(vertical = 10.dp, horizontal = DS.Space.m),
-        contentAlignment = Alignment.Center
+            .heightIn(min = 44.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = message,
-            color = DS.onAccent,
-            // iOS status kartica: `.dsBody` (`Chessko/Views/PuzzleView.swift:345`).
-            style = Type.body,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
+            text = loc("Zadaci"),
+            color = DS.ink,
+            // spec § 4 (P3): naslov zaglavlja `Type.heading` semibold.
+            style = Type.heading,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
         )
+        if (viewModel.mode == PuzzleViewModel.PuzzleMode.DAILY) {
+            val loading = viewModel.phase == PuzzlePhase.LOADING
+            val canPrev = viewModel.canGoPrevious && !loading
+            val canNext = viewModel.canGoNext && !loading
+            IconButton(
+                onClick = { viewModel.goToPrevious() },
+                enabled = canPrev,
+                modifier = Modifier.size(44.dp).alpha(if (canPrev) 1f else 0.38f)
+            ) {
+                // Strelica stoji SAMA, pa joj treba opis.
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = loc("Prethodni dan"),
+                    tint = DS.accent
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = null,
+                    tint = DS.inkMuted,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = puzzleDateTitle(viewModel.selectedDate),
+                    color = DS.ink,
+                    style = Type.caption,
+                    fontWeight = FontWeight.SemiBold
+                )
+                // Nije dekorativna: datum levo od nje ne kaze „reseno". Par
+                // `success/ground` 4,54 / 9,61 (>= 3 : 1 za ikonu).
+                if (viewModel.isSolved(viewModel.selectedDate)) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = loc("Rešeno"),
+                        tint = DS.success,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+            IconButton(
+                onClick = { viewModel.goToNext() },
+                enabled = canNext,
+                modifier = Modifier.size(44.dp).alpha(if (canNext) 1f else 0.38f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = loc("Sledeći dan"),
+                    // Ista boja u oba stanja — nedostupnost nosi 38 % (spec § 7),
+                    // ne promena boje.
+                    tint = DS.accent
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Red tagova (spec § 7): rejting (zvezdica `warning`, broj `ink`, bez tacke
+ * hiljada — „1503"), tezina kao neutralan cip (`fill` + `ink` uz 1–3 crtice;
+ * „Teško" nije greska, „Lako" nije uspeh) i do dve teme (`fill` + `inkMuted`).
+ */
+@Composable
+fun PuzzleTagsRow(viewModel: PuzzleViewModel) {
+    val puzzle = viewModel.currentPuzzle ?: return
+    val themes = puzzle.themeList.map { localizePuzzleTheme(it) }.filter { it.isNotEmpty() }.take(2)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PuzzleTag(modifier = Modifier.semantics(mergeDescendants = true) {}) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = null,
+                tint = DS.warning,
+                modifier = Modifier.size(12.dp)
+            )
+            Text(
+                // `toString()`, ne lokalni format: spec trazi „1503", ne „1.503".
+                text = puzzle.rating.toString(),
+                color = DS.ink,
+                style = Type.mono,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        val level = when {
+            puzzle.rating < 1200 -> 1
+            puzzle.rating < 1600 -> 2
+            else -> 3
+        }
+        PuzzleTag(modifier = Modifier.clearAndSetSemantics { contentDescription = puzzle.difficultyLabel }) {
+            Text(text = puzzle.difficultyLabel, color = DS.ink, style = Type.caption, fontWeight = FontWeight.Medium)
+            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                for (i in 0 until 3) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 8.dp, height = 3.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (i < level) DS.ink else DS.ink.copy(alpha = 0.2f))
+                    )
+                }
+            }
+        }
+        for (label in themes) {
+            PuzzleTag {
+                Text(text = label, color = DS.inkMuted, style = Type.caption)
+            }
+        }
     }
 }
 
 @Composable
-fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(DS.Space.s)
-    ) {
-        // Vezbanje bez kraja: uvek dostupno kad je zadatak resen, u OBA rezima
-        // (dnevni i vezbovni) — iznad ostalih kontrola, kao primarna akcija.
-        if (viewModel.phase == PuzzlePhase.SOLVED) {
-            Button(
-                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-                onClick = { viewModel.nextPuzzle() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = loc("Sledeći zadatak"), fontWeight = FontWeight.SemiBold)
-            }
-        }
+private fun PuzzleTag(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(DS.Radius.s))
+            .background(DS.fill)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content
+    )
+}
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Solution Button
+/** Teme zadatka — isti 21 kljuc kao iOS `localizeTheme`; nepoznata tema se ne prikazuje. */
+private fun localizePuzzleTheme(theme: String): String = when (theme) {
+    "opening" -> loc("Otvaranje")
+    "middlegame" -> loc("Srednja igra")
+    "endgame" -> loc("Završnica")
+    "mate" -> loc("Mat")
+    "mateIn1" -> loc("Mat u 1")
+    "mateIn2" -> loc("Mat u 2")
+    "mateIn3" -> loc("Mat u 3")
+    "fork" -> loc("Vilica")
+    "pin" -> loc("Vezivanje")
+    "skewer" -> loc("Nabijanje")
+    "sacrifice" -> loc("Žrtva")
+    "discoveredAttack" -> loc("Otkriveni napad")
+    "deflection" -> loc("Odvlačenje")
+    "advantage" -> loc("Prednost")
+    "crushing" -> loc("Odlučujuće")
+    "short" -> loc("Kratko")
+    "long" -> loc("Dugo")
+    "oneMove" -> loc("Jedan potez")
+    "defensiveMove" -> loc("Odbrana")
+    "queensideAttack" -> loc("Napad na damu")
+    "kingsideAttack" -> loc("Napad na kralja")
+    else -> ""
+}
+
+/** Faza zadatka → ton okvira uputstva (deli se sa `StepPracticeView`). */
+internal fun PuzzlePhase.instructionTone(): InstructionTone = when (this) {
+    PuzzlePhase.WRONG_MOVE -> InstructionTone.WRONG
+    PuzzlePhase.SOLVED -> InstructionTone.SOLVED
+    PuzzlePhase.SHOWING_SOLUTION -> InstructionTone.SOLUTION
+    else -> InstructionTone.HINT
+}
+
+internal val PuzzlePhase.isSolving: Boolean
+    get() = this == PuzzlePhase.PLAYING || this == PuzzlePhase.WRONG_MOVE
+
+/** spec § 7: uputstvo je okvir (`InstructionBox`), ne dugme — bivse puno `accent` dugme. */
+@Composable
+fun PuzzleInstruction(viewModel: PuzzleViewModel) {
+    InstructionBox(
+        text = viewModel.statusMessage,
+        sideToMove = if (viewModel.phase.isSolving) viewModel.playerColor else null,
+        tone = viewModel.phase.instructionTone()
+    )
+}
+
+/**
+ * Jedna radnja (spec § 7). Tokom resavanja samo „Prikaži rešenje" (sporedno
+ * dugme, `fill` + `ink`); „Pokušaj ponovo" je uklonjen. Posle resenja „Sledeći
+ * zadatak" (primarno) i, za dnevni zadatak, „Sledeći dan" ili poruka da je
+ * danasnji zadatak zavrsen — isto kao iOS.
+ */
+@Composable
+fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
+    when (viewModel.phase) {
+        PuzzlePhase.PLAYING, PuzzlePhase.WRONG_MOVE -> {
+            // `isPlayerTurn` je NUZAN deo uslova: `showSolution()` je iznutra
+            // gejtovan na `!awaitingOpponent`, pa bi bez ovoga dugme tokom 600 ms
+            // cekanja na protivnicki odgovor izgledalo pritisno a ne bi radilo nista.
+            val enabled = viewModel.isPlayerTurn
             Button(
                 onClick = { viewModel.showSolution() },
-                // `isPlayerTurn` je NUZAN deo uslova: `showSolution()` je iznutra
-                // gejtovan na `!awaitingOpponent`, pa bi bez ovoga dugme tokom
-                // 600 ms cekanja na protivnicki odgovor izgledalo pritisno a ne
-                // bi radilo nista — dodir se tiho proguta.
-                enabled = viewModel.isPlayerTurn &&
-                    (viewModel.phase == PuzzlePhase.PLAYING || viewModel.phase == PuzzlePhase.WRONG_MOVE),
+                enabled = enabled,
+                shape = ButtonShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = DS.fill,
                     contentColor = DS.ink,
                     disabledContainerColor = DS.fill,
-                    disabledContentColor = DS.inkMuted
+                    disabledContentColor = DS.ink
                 ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .alpha(if (enabled) 1f else 0.38f)
             ) {
-                // Faza 8, Task 3: emoji -> Icon. DEKORATIVNA, i to najociglednije
-                // na grani: tekst pored ikone je RECJU ZA REC ista fraza koju je
-                // prvi prelaz stavio u `contentDescription` — citac ekrana bi
-                // izgovorio „Prikaži rešenje, Prikaži rešenje, dugme". Boja se
-                // nasledjuje iz `ButtonDefaults` (`DS.ink`/`DS.inkMuted`), isti
-                // par kao ostatak dugmadi ovog reda.
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                    Icon(
-                        imageVector = Icons.Default.Lightbulb,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    // Tekst uz ikonu na zbijenom dugmetu (dva dugmeta dele red) ->
-                    // `Type.label`, ista uloga kao `ActionsRow` na ekranu Igra.
-                    Text(text = loc("Prikaži rešenje"), style = Type.label, fontWeight = FontWeight.SemiBold)
-                }
+                // Dekorativna — tekst pored kaze isto.
+                Icon(imageVector = Icons.Outlined.Visibility, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(DS.Space.s))
+                Text(text = loc("Prikaži rešenje"), style = Type.body, fontWeight = FontWeight.SemiBold)
             }
-
-            // Restart / Retry Button
+        }
+        PuzzlePhase.SOLVED -> Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(DS.Space.s)
+        ) {
             Button(
-                onClick = { viewModel.loadDailyPuzzle() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DS.fill,
-                    contentColor = DS.ink
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 10.dp)
+                shape = ButtonShape,
+                onClick = { viewModel.nextPuzzle() },
+                colors = dsPrimaryButtonColors(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) {
-                // Isti slucaj kao dugme iznad: vidljiv tekst je identican frazi
-                // koju je prvi prelaz stavio u `contentDescription` („Pokušaj
-                // ponovo"), pa je ikona dekorativna. Kljuc ostaje u recniku —
-                // ovde je i dalje VIDLJIV tekst dugmeta, samo vise nije opis.
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(text = loc("Pokušaj ponovo"), style = Type.label, fontWeight = FontWeight.SemiBold)
+                Text(text = loc("Sledeći zadatak"), style = Type.body, fontWeight = FontWeight.SemiBold)
+            }
+            // Vezano za DNEVNI zadatak: u vezbovnom rezimu bi „Sledeći dan" tiho
+            // izbacio korisnika iz vezbanja, a poruka o danasnjem zadatku bi lagala.
+            if (viewModel.mode == PuzzleViewModel.PuzzleMode.DAILY) {
+                if (viewModel.canGoNext) {
+                    Button(
+                        shape = ButtonShape,
+                        onClick = { viewModel.goToNext() },
+                        colors = ButtonDefaults.buttonColors(containerColor = DS.fill, contentColor = DS.ink),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    ) {
+                        Text(text = loc("Sledeći dan"), style = Type.body, fontWeight = FontWeight.SemiBold)
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = DS.Space.m),
+                        horizontalArrangement = Arrangement.spacedBy(DS.Space.s, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = DS.warning, modifier = Modifier.size(18.dp))
+                        Text(text = loc("Završio si zadatak za danas!"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
+                    }
                 }
             }
         }
+        else -> Unit
     }
 }

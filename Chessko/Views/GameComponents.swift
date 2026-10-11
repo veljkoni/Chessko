@@ -242,24 +242,53 @@ private struct EvaluationChip: View {
 
 // MARK: - Okvir uputstva
 
+/// Ton okvira uputstva. Okvir ostaje isti (`fill`, tekst `ink`) — menja se samo
+/// ikona i njena boja, da ishod (greška / rešeno / rešenje) bude vidljiv a da
+/// okvir ne počne da liči na dugme (spec § 3 „status nikad ne izgleda kao dugme").
+/// Ikone na `fill`: `inkMuted` 4,86 / 4,81, `danger` 5,43 / 5,93, `success`
+/// 4,18 / 7,78 (≥ 3 : 1 za ikone), `warning` 4,75 / 7,51.
+enum DSInstructionTone: Equatable {
+    case hint, wrong, solved, solution
+
+    var systemImage: String {
+        switch self {
+        case .hint:     return "lightbulb"
+        case .wrong:    return "xmark.circle.fill"
+        case .solved:   return "checkmark.seal.fill"
+        case .solution: return "eye.fill"
+        }
+    }
+
+    var iconColor: Color {
+        switch self {
+        case .hint:     return DS.inkMuted
+        case .wrong:    return DS.danger
+        case .solved:   return DS.success
+        case .solution: return DS.warning
+        }
+    }
+}
+
 /// Okvir uputstva (spec § 7): `fill`, bez ivice, `Radius.m`; sijalica `inkMuted`
 /// (4,86 / 4,81); tekst `Type.body` `ink` (14,47 / 13,08); uz krug strane na
 /// potezu. Status — ne dugme i ne polje za unos.
 struct DSInstructionBox: View {
     let text: String
     var sideToMove: PieceColor? = nil
+    var tone: DSInstructionTone = .hint
 
     var body: some View {
         HStack(alignment: .top, spacing: DS.Space.s) {
-            Image(systemName: "lightbulb")
+            Image(systemName: tone.systemImage)
                 .font(.dsBody)
-                .foregroundStyle(DS.inkMuted)
+                .foregroundStyle(tone.iconColor)
                 .accessibilityHidden(true)
             Text(text)
                 .font(.dsBody)
                 .foregroundStyle(DS.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .animation(.default, value: text)
             if let side = sideToMove {
                 Circle()
                     .fill(side == .white ? Color.white : Color.black)

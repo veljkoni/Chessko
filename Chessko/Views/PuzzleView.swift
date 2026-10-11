@@ -19,6 +19,7 @@ struct PuzzleView: View {
 
                 GeometryReader { geo in
                     let isLandscape = geo.size.width > geo.size.height
+                    let side = boardSide(in: geo.size, isLandscape: isLandscape)
 
                     if case .loading = viewModel.phase {
                         VStack {
@@ -36,54 +37,29 @@ struct PuzzleView: View {
                         .frame(width: geo.size.width, height: geo.size.height)
                     } else {
                         if isLandscape {
-                            HStack(alignment: .top, spacing: 20) {
-                                // Left side: Board
-                                BoardView(
-                                    board:            viewModel.gameState.board,
-                                    isFlipped:        viewModel.isFlipped,
-                                    selectedPosition: viewModel.selectedPosition,
-                                    legalMoves:       viewModel.legalMovesForSelected,
-                                    lastMove:         viewModel.lastMove,
-                                    animatingPiece:   viewModel.animatingPiece,
-                                    flyingCapture:    viewModel.flyingCapture,
-                                    playerColor:      viewModel.playerColor,
-                                    isPlayerTurn:     viewModel.isPlayerTurn,
-                                    gameStatus:       viewModel.gameState.status,
-                                    onTap:            { viewModel.tap(position: $0) }
-                                )
-                                .aspectRatio(1, contentMode: .fit)
-                                .frame(maxHeight: .infinity)
-                                .padding(.vertical, 8)
+                            // spec § 7: od vrha — tabla levo, desno tagovi →
+                            // uputstvo → radnja; ništa centrirano po visini.
+                            HStack(alignment: .top, spacing: DS.Space.xl) {
+                                board(side: side)
 
-                                // Right side: info, status, action buttons
                                 ScrollView {
-                                    VStack(spacing: 14) {
+                                    VStack(alignment: .leading, spacing: DS.Space.m) {
                                         if let puzzle = viewModel.currentPuzzle {
                                             puzzleHeader(puzzle: puzzle)
                                         }
-
-                                        statusCard
-
+                                        instructionBox
                                         actionButtons
+                                            .padding(.top, DS.Space.xs)
                                     }
-                                    .padding(.trailing, 8)
-                                    .padding(.vertical, 8)
+                                    .padding(.vertical, DS.Space.l)
                                 }
                                 .scrollBounceBehavior(.basedOnSize)
                             }
-                            .padding(.horizontal, 16)
-                            .frame(width: geo.size.width, height: geo.size.height)
+                            .padding(.horizontal, DS.Space.l)
+                            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
                         } else {
                             ScrollView {
-                                // Spacer-i na oba kraja + minHeight: kratak sadrzaj se
-                                // centrira po visini, dug normalno skroluje. Bez minHeight-a
-                                // ovo ne radi nista — ScrollView predlaze neogranicenu visinu.
-                                VStack(spacing: 0) {
-                                    Spacer(minLength: 0)
-                                    puzzleContent
-                                    Spacer(minLength: 0)
-                                }
-                                .frame(minHeight: geo.size.height)
+                                puzzleContent(boardSide: side)
                             }
                             .scrollBounceBehavior(.basedOnSize)
                             .safeAreaPadding(.bottom, 24)
@@ -98,16 +74,27 @@ struct PuzzleView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 8) {
+                    // spec § 7: „‹ Danas ›" — strelice kao ikone-dugmad 44 × 44 u
+                    // `accent`; nedostupna strelica (danas → desno) ostaje na
+                    // mestu sa 38 %.
+                    let loading = viewModel.phase == .loading
+                    let canPrev = viewModel.canGoPrevious && !loading
+                    let canNext = viewModel.canGoNext && !loading
+                    HStack(spacing: 0) {
                         Button {
                             viewModel.goToPrevious()
                         } label: {
                             Image(systemName: "chevron.left")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(viewModel.canGoPrevious && viewModel.phase != .loading ? Color.primary : Color.primary.opacity(0.25))
+                                .font(.dsBody.weight(.semibold))
+                                .foregroundStyle(DS.accent)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                                .opacity(canPrev ? 1 : 0.38)
                                 .symbolEffect(.bounce, value: bounceLeft)
                         }
-                        .disabled(!viewModel.canGoPrevious || viewModel.phase == .loading)
+                        .buttonStyle(DSPressableButtonStyle())
+                        .disabled(!canPrev)
+                        .accessibilityLabel(Loc("Prethodni dan"))
 
                         Button {
                             calendarDate = viewModel.selectedDate
@@ -120,27 +107,33 @@ struct PuzzleView: View {
                                     .symbolEffect(.bounce, value: bounceCalendar)
                                 Text(dateTitle)
                                     .font(.dsCaption.weight(.semibold))
-                                    .foregroundStyle(Color.primary)
+                                    .foregroundStyle(DS.ink)
                                 if viewModel.isSolved(viewModel.selectedDate) {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.dsCaption)
                                         .foregroundStyle(DS.success)
                                         .symbolEffect(.bounce, value: bounceCheckmark)
+                                        .accessibilityLabel(Loc("Rešeno"))
                                 }
                             }
-                            .padding(.vertical, 6)
+                            .frame(minHeight: 44)
                         }
-                        .disabled(viewModel.phase == .loading)
+                        .disabled(loading)
 
                         Button {
                             viewModel.goToNext()
                         } label: {
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(viewModel.canGoNext && viewModel.phase != .loading ? Color.primary : Color.primary.opacity(0.25))
+                                .font(.dsBody.weight(.semibold))
+                                .foregroundStyle(DS.accent)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                                .opacity(canNext ? 1 : 0.38)
                                 .symbolEffect(.bounce, value: bounceRight)
                         }
-                        .disabled(!viewModel.canGoNext || viewModel.phase == .loading)
+                        .buttonStyle(DSPressableButtonStyle())
+                        .disabled(!canNext)
+                        .accessibilityLabel(Loc("Sledeći dan"))
                     }
                 }
             }
@@ -271,114 +264,104 @@ struct PuzzleView: View {
 
     // MARK: - Main Content
 
-    private var puzzleContent: some View {
-        VStack(spacing: 14) {
+    /// Jedna vrednost strane table po ekranu (Task 11 menja samo telo).
+    /// Portret: širina (do `DS.maxBoardSide`); pejzaž: visina.
+    private func boardSide(in size: CGSize, isLandscape: Bool) -> CGFloat {
+        let available = isLandscape
+            ? size.height - 2 * DS.Space.l
+            : size.width - 2 * DS.Space.l
+        return max(200, min(available, DS.maxBoardSide))
+    }
 
+    private func board(side: CGFloat) -> some View {
+        BoardView(
+            board:            viewModel.gameState.board,
+            isFlipped:        viewModel.isFlipped,
+            selectedPosition: viewModel.selectedPosition,
+            legalMoves:       viewModel.legalMovesForSelected,
+            lastMove:         viewModel.lastMove,
+            animatingPiece:   viewModel.animatingPiece,
+            flyingCapture:    viewModel.flyingCapture,
+            playerColor:      viewModel.playerColor,
+            isPlayerTurn:     viewModel.isPlayerTurn,
+            gameStatus:       viewModel.gameState.status,
+            onTap:            { viewModel.tap(position: $0) }
+        )
+        .frame(width: side, height: side)
+    }
+
+    /// spec § 7: od vrha — tagovi → uputstvo → tabla → radnja (`Space.l`).
+    /// Ništa nije centrirano po visini, ništa nije prikovano za dno.
+    private func puzzleContent(boardSide side: CGFloat) -> some View {
+        VStack(spacing: DS.Space.m) {
             if let puzzle = viewModel.currentPuzzle {
                 puzzleHeader(puzzle: puzzle)
             }
-            
-            statusCard
 
-            BoardView(
-                board:            viewModel.gameState.board,
-                isFlipped:        viewModel.isFlipped,
-                selectedPosition: viewModel.selectedPosition,
-                legalMoves:       viewModel.legalMovesForSelected,
-                lastMove:         viewModel.lastMove,
-                animatingPiece:   viewModel.animatingPiece,
-                flyingCapture:    viewModel.flyingCapture,
-                playerColor:      viewModel.playerColor,
-                isPlayerTurn:     viewModel.isPlayerTurn,
-                gameStatus:       viewModel.gameState.status,
-                onTap:            { viewModel.tap(position: $0) }
-            )
-            .aspectRatio(1, contentMode: .fit)
-            .frame(maxWidth: DS.maxBoardSide)
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 4)
+            instructionBox
 
-            
+            board(side: side)
+                .frame(maxWidth: .infinity)
 
             actionButtons
+                .padding(.top, DS.Space.l - DS.Space.m)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, DS.Space.l)
+        .padding(.top, DS.Space.l)
         .padding(.bottom, DS.Space.l)
     }
 
     // MARK: - Puzzle Header
 
+    /// Red tagova (spec § 7): rejting (zvezdica `warning`, broj `ink`, bez
+    /// tačke hiljada), teme (`fill` + `inkMuted`) i težina kao neutralan čip
+    /// (`fill` + `ink` uz 1–3 crtice — „Teško" nije greška, „Lako" nije uspeh).
     private func puzzleHeader(puzzle: ChessPuzzle) -> some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 4) {
-                Image(systemName: "star.fill")
-                    .font(.dsCaption)
-                Text("\(puzzle.rating)")
-                    .font(.dsMono.weight(.semibold))
-            }
-            .foregroundStyle(ratingColor(puzzle.rating))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(ratingColor(puzzle.rating).opacity(0.18), in: Capsule())
+        let themes = Array(puzzle.themeList.map(localizeTheme).filter { !$0.isEmpty }.prefix(2))
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: DS.Space.s) {
+                HStack(spacing: DS.Space.xs) {
+                    Image(systemName: "star.fill")
+                        .font(.dsCaption)
+                        .foregroundStyle(DS.warning)
+                        .accessibilityHidden(true)
+                    // `verbatim`: interpolacija u `Text` ide kroz lokalni format
+                    // i daje „1.503" — spec traži „1503".
+                    Text(verbatim: String(puzzle.rating))
+                        .font(.dsMono.weight(.semibold))
+                        .foregroundStyle(DS.ink)
+                }
+                .modifier(PuzzleTagStyle())
+                .accessibilityElement(children: .combine)
 
-            let themes = Array(puzzle.themeList.map(localizeTheme).filter { !$0.isEmpty }.prefix(2))
-            ForEach(Array(themes.enumerated()), id: \.offset) { _, label in
-                Text(label)
-                    .font(.dsCaption)
-                    .foregroundStyle(DS.inkMuted)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(Color.primary.opacity(0.06), in: Capsule())
-            }
+                DifficultyChip(label: puzzle.difficultyLabel, level: difficultyLevel(puzzle.rating))
 
-            Spacer()
+                ForEach(Array(themes.enumerated()), id: \.offset) { _, label in
+                    Text(label)
+                        .font(.dsCaption)
+                        .foregroundStyle(DS.inkMuted)
+                        .modifier(PuzzleTagStyle())
+                }
+            }
         }
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
     }
 
-    // MARK: - Status Card
+    // MARK: - Uputstvo
 
-    private var statusCard: some View {
-        HStack(spacing: 10) {
-            Image(systemName: statusIcon)
-                .font(.dsBody)
-                .foregroundStyle(statusColor)
-            Text(viewModel.statusMessage)
-                .font(.dsBody)
-                .foregroundStyle(statusColor)
-                .animation(.default, value: viewModel.statusMessage)
-            Spacer()
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(statusColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(statusColor.opacity(0.3), lineWidth: 1)
+    /// spec § 7: uputstvo je okvir (`DSInstructionBox`), ne dugme ni polje.
+    private var instructionBox: some View {
+        DSInstructionBox(
+            text: viewModel.statusMessage,
+            sideToMove: viewModel.phase.isSolving ? viewModel.playerColor : nil,
+            tone: viewModel.phase.instructionTone
         )
-    }
-
-    private var statusIcon: String {
-        switch viewModel.phase {
-        case .loading:         return "arrow.clockwise"
-        case .unavailable:     return "exclamationmark.triangle"
-        case .playing:         return "lightbulb"
-        case .wrongMove:       return "xmark.circle.fill"
-        case .solved:          return "checkmark.seal.fill"
-        case .showingSolution: return "eye.fill"
-        }
-    }
-
-    private var statusColor: Color {
-        switch viewModel.phase {
-        case .wrongMove:       return DS.danger
-        case .solved:          return DS.success
-        case .showingSolution: return DS.warning
-        default:               return DS.ink
-        }
     }
 
     // MARK: - Action Buttons
 
+    /// spec § 7: jedna radnja. Tokom rešavanja samo „Prikaži rešenje"
+    /// (sporedno dugme); posle rešenja „Sledeći zadatak" (primarno).
     @ViewBuilder
     private var actionButtons: some View {
         switch viewModel.phase {
@@ -386,28 +369,18 @@ struct PuzzleView: View {
             Button {
                 viewModel.showSolution()
             } label: {
-                Label("Prikaži rešenje", systemImage: "eye")
-                    .font(.dsBody.weight(.medium))
-                    .foregroundStyle(DS.ink)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+                Label(Loc("Prikaži rešenje"), systemImage: "eye")
             }
+            .buttonStyle(DSSecondaryButtonStyle())
 
         case .solved:
-            VStack(spacing: 10) {
-                // Primarna akcija: nastavi da vezbaš bez dnevnog ograničenja
-                // (Task 5) — dostupna i posle dnevnog i posle vežbovnog zadatka.
+            VStack(spacing: DS.Space.s) {
                 Button {
                     viewModel.nextPuzzle()
                 } label: {
-                    Label("Sledeći zadatak", systemImage: "arrow.triangle.2.circlepath")
-                        .font(.dsBody.weight(.medium))
-                        .foregroundStyle(DS.onAccent)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(DS.accent, in: RoundedRectangle(cornerRadius: 12))
+                    Label(Loc("Sledeći zadatak"), systemImage: "arrow.triangle.2.circlepath")
                 }
+                .buttonStyle(DSPrimaryButtonStyle())
 
                 // Sve ispod je vezano za DNEVNI zadatak. U `.practice` rezimu
                 // "Sledeći dan" bi korisnika tiho izbacio iz vezbanja u tudji
@@ -419,16 +392,11 @@ struct PuzzleView: View {
                         Button {
                             viewModel.goToNext()
                         } label: {
-                            Label("Sledeći dan", systemImage: "chevron.right")
-                                .font(.dsBody.weight(.medium))
-                                .foregroundStyle(DS.ink)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+                            Label(Loc("Sledeći dan"), systemImage: "chevron.right")
                         }
+                        .buttonStyle(DSSecondaryButtonStyle())
                     } else {
-                        // Today's puzzle solved — show completion
-                        HStack(spacing: 8) {
+                        HStack(spacing: DS.Space.s) {
                             Image(systemName: "star.fill")
                                 .foregroundStyle(DS.warning)
                             Text(Loc("Završio si zadatak za danas!"))
@@ -436,7 +404,7 @@ struct PuzzleView: View {
                                 .foregroundStyle(DS.ink)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, DS.Space.m)
                     }
                 }
             }
@@ -451,7 +419,7 @@ struct PuzzleView: View {
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
-                .tint(.primary)
+                .tint(DS.inkMuted)
                 .scaleEffect(1.4)
             Text(Loc("Učitavam zadatak..."))
                 .foregroundStyle(DS.inkMuted)
@@ -465,13 +433,15 @@ struct PuzzleView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(DS.inkMuted)
             Text(message)
-                .foregroundStyle(Color.primary)
+                .foregroundStyle(DS.ink)
                 .font(.dsBody)
                 .multilineTextAlignment(.center)
             Button {
                 viewModel.loadDailyPuzzle()
             } label: {
-                Label("Pokušaj ponovo", systemImage: "arrow.clockwise")
+                // Ostaje: jedini izlaz iz stanja greške pri učitavanju (spec § 7
+                // uklanja „Pokušaj ponovo" samo iz rešavanja).
+                Label(Loc("Pokušaj ponovo"), systemImage: "arrow.clockwise")
                     .font(.dsBody.weight(.medium))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
@@ -523,11 +493,12 @@ struct PuzzleView: View {
         return dates
     }
 
-    private func ratingColor(_ rating: Int) -> Color {
+    /// 1–3 crtice uz težinu — isti pragovi kao `ChessPuzzle.difficultyLabel`.
+    private func difficultyLevel(_ rating: Int) -> Int {
         switch rating {
-        case ..<1200: return DS.success
-        case 1200..<1600: return DS.warning
-        default: return DS.danger
+        case ..<1200: return 1
+        case 1200..<1600: return 2
+        default: return 3
         }
     }
 
@@ -560,6 +531,63 @@ struct PuzzleView: View {
         // nijedan ne ostaje bez ijednog cipa, a samo 184 dobijaju jedan
         // umesto dva. Prosirivanje mape nema merljivu korist.
         default:                 return ""
+        }
+    }
+}
+
+// MARK: - Tagovi
+
+/// Čip u redu tagova: `fill`, `Radius.s`, bez ivice (spec § 7 „tagovi u tokenima").
+private struct PuzzleTagStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous))
+    }
+}
+
+/// Težina kao neutralan čip: `fill` + `ink` uz 1–3 crtice (spec § 7).
+private struct DifficultyChip: View {
+    let label: String
+    let level: Int
+
+    var body: some View {
+        HStack(spacing: DS.Space.s) {
+            Text(label)
+                .font(.dsCaption.weight(.medium))
+                .foregroundStyle(DS.ink)
+            HStack(spacing: 2) {
+                ForEach(0..<3, id: \.self) { i in
+                    Capsule()
+                        .fill(i < level ? DS.ink : DS.ink.opacity(0.2))
+                        .frame(width: 8, height: 3)
+                }
+            }
+            .accessibilityHidden(true)
+        }
+        .modifier(PuzzleTagStyle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - Faza → okvir uputstva (deli se sa `StepPracticeView`)
+
+extension PuzzlePhase {
+    /// Igrač je na potezu u zadatku (krug strane se prikazuje samo tad).
+    var isSolving: Bool {
+        switch self {
+        case .playing, .wrongMove: return true
+        default: return false
+        }
+    }
+
+    var instructionTone: DSInstructionTone {
+        switch self {
+        case .wrongMove:       return .wrong
+        case .solved:          return .solved
+        case .showingSolution: return .solution
+        default:               return .hint
         }
     }
 }

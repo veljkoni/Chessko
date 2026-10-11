@@ -42,11 +42,19 @@ class BoardWidthCapTest {
     fun everyPlayerBoardIsWidthCapped() {
         for (path in playerScreens) {
             val src = read(path)
+            // Task 5 (dizajnerski pregled): koraci Puta dele JEDNU funkciju strane
+            // table (`stepBoardSide`, definisana u `StepPracticeView.kt`), da je
+            // Task 11 menja na jednom mestu. `StepGameView` je zato poziva umesto
+            // da sam nosi `DS.maxBoardSide`; sama funkcija mora da je nosi (ispod).
             assertTrue(
-                "$path crta tablu, pa mora da koristi DS.maxBoardSide",
-                "DS.maxBoardSide" in src
+                "$path crta tablu, pa mora da koristi DS.maxBoardSide (ili deljeni stepBoardSide)",
+                "DS.maxBoardSide" in src || "stepBoardSide(" in src
             )
         }
+        val helper = read("src/main/java/com/veljkoni/chessko/ui/StepPracticeView.kt")
+            .substringAfter("fun stepBoardSide(", "")
+            .substringBefore("\n}")
+        assertTrue("stepBoardSide mora da ogranici tablu sa DS.maxBoardSide", "DS.maxBoardSide" in helper)
     }
 
     @Test
