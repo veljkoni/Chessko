@@ -13,6 +13,15 @@ class SettingsManager private constructor(context: Context) {
         private set
 
     init {
+        // „Sistem" (spec § 15) se razresava iz jezika uredjaja po prioritetu.
+        Loc.systemLanguageTags = { android.os.LocaleList.getDefault().toLanguageTags().split(',').filter { it.isNotBlank() } }
+        Loc.setLanguage(languageCode)
+    }
+
+    /// Ponovo primenjuje sacuvan jezik. Za „Sistem" to znaci novo razresavanje — poziva
+    /// se iz `MainActivity.onCreate`, pa promena jezika uredjaja (koja rekreira aktivnost)
+    /// stigne i do `Loc`-a, iako ovaj singleton prezivi rekreaciju.
+    fun reapplyLanguage() {
         Loc.setLanguage(languageCode)
     }
 

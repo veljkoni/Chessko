@@ -102,6 +102,9 @@ class MainActivity : ComponentActivity() {
         // Initialize Stockfish engine in the background
         StockfishEngine.start(applicationContext, "nn-1c0000000000.nnue", "nn-37f18f62d772.nnue")
 
+        // spec § 15: jezik „Sistem" se razresava pri svakom (re)kreiranju aktivnosti.
+        SettingsManager.getInstance(applicationContext).reapplyLanguage()
+
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current

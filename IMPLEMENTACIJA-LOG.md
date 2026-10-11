@@ -1268,7 +1268,73 @@ iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; And
 
 ## Task 10 — Podešavanja (§ 15)
 
-_(popunjava Task 10)_
+### Urađeno po stavkama § 15 (obe platforme, obe teme)
+- [x] **Grupisane `surface` liste sa `line` razdelnicima.** iOS: inset-grouped `List` ne prima
+  okvir (Task 2), pa je zamenjen sa `ScrollView` + `VStack(spacing: Space.xl)` i privatnom
+  `SettingsGroup` komponentom (`DSSectionHeader` + `VStack` redova u `.dsCard()` = `surface` +
+  1 pt `line`), razdelnik `SettingsRowDivider` (1 pt `line`), red `Space.l`/`Space.m`, min 44 pt.
+  Android: sve grupe u `DSCardGroup` + `DSRowDivider` (mreže tema/stilova su sada UNUTAR iste
+  grupe sa prekidačima, ne iznad nje na `ground`). Ikone redova `inkMuted` na obe (iOS bile
+  `tint`/accent kroz `Label`, Android `accent`).
+- [x] **Jedan naslov po grupi** — uklonjeni unutrašnji „Tema table" i „Stil" na obe.
+- [x] **Redosled grupa kao iOS:** Statistika, Težina, Izgled table, Stil figura, Igra i pravila,
+  Jezik (jedan red), Izgled, Ostalo, O aplikaciji. Android je imao Jezik na vrhu sa 8 otvorenih
+  redova; naslovi „Izgled aplikacije"/„Efekti" → iOS „Izgled"/„Ostalo" (ključevi postojali u
+  `Loc.kt`; stari ključevi ostaju bez pozivaoca — Task 13 može da ih ukloni).
+- [x] **Adaptivna mreža 88:** iOS `LazyVGrid([GridItem(.adaptive(minimum: 88))])`; Android
+  `AdaptiveTileGrid` (broj kolona iz `BoxWithConstraints`, `max(1, (w+s)/(88+s))`). Obe mreže
+  iteriraju `BoardTheme`/`PieceStyle` enum — Task 12 menja samo enum.
+- [x] **Labele:** `Type.caption`, najviše 2 reda, rezervisana visina 2 reda. iOS `lineLimit(2,
+  reservesSpace: true)` + `minimumScaleFactor(0.9)`. Android `Hyphens.None` + `LineBreak.Heading`,
+  `heightIn(min = caption.lineHeight × 2)`; ako NAJDUŽA reč na `caption` ne staje u širinu kolone
+  (mereno `rememberTextMeasurer`), labela prelazi na `Type.label`. Neizabrana labela `ink`
+  (Android bila `inkMuted`), izabrana `accent` + bold/semibold. Neizabrana ivica pločice
+  `DS.line` (iOS bila `primary@12/10 %`), podloga pločice stila `DS.fill` (iOS bila `primary@4 %`).
+- [x] **Statistika:** „Remi" `warning → ink` na obe. Pobede/Porazi/Najbolji niz nepromenjeni.
+- [x] **Jezik:** jedan red „🌐 Jezik · Srpski ›" (SF `globe` / Material `Language`, `inkMuted`
+  ikona i vrednost, chevron) u šestoj grupi, bez naslova grupe (naslov „Jezik" iznad reda „Jezik"
+  bio bi dupli — § 15 „jedan naslov"). Otvara listu: iOS `NavigationLink` → `LanguageListView`,
+  Android ugnežđen `FullScreenDestination` → `LanguageListScreen` (nazad: strelica + „Podešavanja"
+  u `accent`; sistemsko „nazad" zatvara samo listu). Redosled na obe, fiksan:
+  Sistem, Deutsch, English, Français, Italiano, Srpski, Русский, हिन्दी, 中文 (简体) — iOS
+  `AppLanguage.all` preuređen (bio `localizedCompare` po lokalu), Android `APP_LANGUAGES`.
+  Ispod „Sistem" `caption` `inkMuted` endonim jezika.
+
+### Odluke
+- **Android „Sistem" bez `appcompat`-a (presuda kontrolora).** Sačuvana vrednost `"system"` u
+  postojećem ključu `languageCode`; `Loc.setLanguage("system")` je razrešava kroz
+  `Loc.resolveSystemLanguage` — isto pravilo kao iOS `systemFallback`: prvi podržan jezik uređaja
+  (ceo tag pa osnova), `zh*` → `zh-Hans`, inače engleski, srpski iz sistema nikad. Jezici uređaja:
+  `LocaleList.getDefault()` (postavlja `SettingsManager`). `MainActivity.onCreate` zove
+  `SettingsManager.reapplyLanguage()`, pa promena jezika uređaja (rekreira aktivnost; manifest
+  nema `configChanges`) stiže do `Loc` iako singleton preživi. Podrazumevana vrednost za novu
+  instalaciju ostaje `"sr"` (ponašanje se ne menja). Dva nova JVM testa u `LocTest`.
+- **`locales_config.xml` NIJE dodat.** Ne traži zavisnost, ali bi na Androidu 13+ u sistemskim
+  podešavanjima ponudio izbor jezika koji ide kroz `LocaleManager` — a aplikacija jezik čita iz
+  sopstvenog `Loc`, pa bi taj izbor bio bez efekta (lažna kontrola).
+- **Šta stoji ispod „Sistem":** jezik u koji se „Sistem" na uređaju razrešava (iOS
+  `LocalizationManager.systemFallback()` — skinut `private`; Android `resolveSystemLanguage`), ne
+  trenutno izabran jezik. Kad je „Sistem" izabran, to su isto; kad je izabran npr. Srpski, prikaz
+  „Srpski" ispod „Sistem" bi lagao šta će izbor „Sistem" dati.
+- **Vrednost u redu „Jezik":** „Sistem" kad je sistem izabran, inače endonim (iOS ponašanje zadržano).
+- **Android mreža nije `LazyVerticalGrid`:** stoji u `verticalScroll` koloni; lenja mreža u
+  istosmernom skroleru dobija beskonačnu visinu i pada. Ne-lenja adaptivna mreža daje isti raspored.
+- **Android „Izgled" (Sistem/Svetla/Tamna):** tri `fill` dugmeta na `ground` → redovi sa ikonom i
+  kvačicom u `surface` grupi, kao iOS (§ 3 „fill nije kartica"). Ključ `colorScheme` i vrednosti
+  nepromenjeni.
+- Izbor jezika i dalje zatvara Podešavanja na obe platforme (Android `key(languageKey)` pravi novo
+  stablo, iOS `.id(refreshID)`) — zatečeno ponašanje, nije menjano.
+- Svi ključevi podešavanja i njihova perzistencija nepromenjeni (iOS `@AppStorage`, Android
+  `chessko_settings`).
+
+### Neurađeno / TODO
+- Nema `TODO(design § 15)`. Vizuelna provera prelamanja u ru/de/hi nije moguća bez emulatora —
+  ostaje za Task 13 / vlasnika.
+- iOS nema garanciju „bez loma usred reči" osim `minimumScaleFactor(0.9)` (SwiftUI nema
+  `Hyphens`/`LineBreak` ekvivalent za `Text`); spec traži baš to, primenjeno doslovno.
+
+### Novi stringovi
+- Nijedan. Korišćeni postojeći ključevi („Jezik", „Sistem", „Izgled", „Ostalo", „Podešavanja").
 
 ## Task 11 — Tablet (§ 13, § 17 avatar)
 

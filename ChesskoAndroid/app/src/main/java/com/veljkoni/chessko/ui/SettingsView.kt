@@ -16,11 +16,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +29,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.BrightnessMedium
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.LightMode
+import com.veljkoni.chessko.logic.Loc
+import kotlin.math.max
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.ChessPiece
 import com.veljkoni.chessko.models.PieceColor
@@ -61,6 +73,34 @@ import com.veljkoni.chessko.logic.StatsManager
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
 
+/**
+ * Jezici u listi, ISTIM redom kao iOS (`AppLanguage.all` u
+ * `Chessko/Logic/LocalizationManager.swift`, spec § 15): posle „Sistem" latinicni
+ * endonimi abecedno, pa Русский, हिन्दी, 中文. Fiksno, ne sortirano po lokalu.
+ * Kod je onaj koji se cuva u `SettingsManager.languageCode` (kineski kao „zh",
+ * zatecen kljuc; `Loc.setLanguage` ga prevodi u „zh-Hans").
+ */
+internal val APP_LANGUAGES = listOf(
+    "de" to "Deutsch",
+    "en" to "English",
+    "fr" to "Français",
+    "it" to "Italiano",
+    "sr" to "Srpski",
+    "ru" to "Русский",
+    "hi" to "हिन्दी",
+    "zh" to "中文 (简体)"
+)
+
+/** Endonim za kod iz `Loc` („zh-Hans" ili „zh" → 中文). */
+private fun endonymFor(code: String): String {
+    val normalized = if (code == "zh-Hans") "zh" else code
+    return APP_LANGUAGES.firstOrNull { it.first == normalized }?.second ?: normalized
+}
+
+// spec § 15: grupisane `surface` liste sa `line` razdelnicima, jedan naslov po grupi,
+// redosled grupa kao na iOS-u (`Chessko/Views/SettingsSheet.swift`): Statistika,
+// Tezina, Izgled table, Stil figura, Igra i pravila, Jezik (jedan red, bez naslova),
+// Izgled, Ostalo, O aplikaciji.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsView(
@@ -73,7 +113,44 @@ fun SettingsView(
     val settings = remember { SettingsManager.getInstance(context) }
     val stats = remember { StatsManager.getInstance(context) }
     var showResetStatsConfirm by remember { mutableStateOf(false) }
+    var showLanguageList by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+
+    // Lista jezika je sledece celoekransko odrediste (iOS: `NavigationLink`); sistemsko
+    // „nazad" zatvara samo nju (`FullScreenDestination` zatvara gornje odrediste).
+    if (showLanguageList) {
+        FullScreenDestination(onDismiss = { showLanguageList = false }) {
+            LanguageListScreen(
+                settings = settings,
+                onBack = { showLanguageList = false },
+                onLanguageChanged = onLanguageChanged
+            )
+        }
+    }
+
+    if (showResetStatsConfirm) {
+        AlertDialog(
+            onDismissRequest = { showResetStatsConfirm = false },
+            title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
+            text = { Text(text = loc("Da li želite da resetujete sve statistike?"), color = DS.ink) },
+            confirmButton = {
+                TextButton(onClick = {
+                    stats.resetStats()
+                    showResetStatsConfirm = false
+                }) {
+                    Text(text = loc("Potvrdi"), color = DS.danger, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetStatsConfirm = false }) {
+                    // spec § 3: sporedna radnja u `accent`, nikad `inkMuted`.
+                    Text(text = loc("Otkaži"), color = DS.accent)
+                }
+            },
+            containerColor = DS.surface,
+            shape = DialogShape
+        )
+    }
 
     Column(
         modifier = modifier
@@ -107,112 +184,18 @@ fun SettingsView(
                 .weight(1f)
                 .verticalScroll(scrollState)
                 .padding(DS.Space.l),
-            // spec § 3: `Space.xl` izmedju grupa (bilo 20.dp).
+            // spec § 3: `Space.xl` izmedju grupa.
             verticalArrangement = Arrangement.spacedBy(DS.Space.xl)
         ) {
-            // Language Selection Section
-            SettingsSection(title = loc("Jezik")) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .dsCard() // spec § 3: kartica = surface + 1 dp line
-                ) {
-                    val languages = listOf(
-                        "sr" to "Srpski",
-                        "en" to "English",
-                        "fr" to "Français",
-                        "de" to "Deutsch",
-                        "it" to "Italiano",
-                        "ru" to "Русский",
-                        "zh-Hans" to "中文 (简体)",
-                        "hi" to "हिन्दी"
-                    )
-                    
-                    languages.forEachIndexed { index, (code, endonym) ->
-                        val isSelected = settings.languageCode == code || (code == "zh-Hans" && settings.languageCode == "zh")
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { 
-                                    val newCode = if (code == "zh-Hans") "zh" else code
-                                    settings.updateLanguageCode(newCode)
-                                    onLanguageChanged(newCode)
-                                }
-                                .padding(vertical = DS.Space.m, horizontal = DS.Space.l),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = endonym,
-                                color = if (isSelected) DS.accent else DS.ink,
-                                // Red liste -> `body`; iOS ekvivalentne redove crta
-                                // `.subheadline` (`Chessko/Views/SettingsSheet.swift:151`).
-                                style = Type.body,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                modifier = Modifier.weight(1f)
-                            )
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = DS.accent,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                        if (index < languages.size - 1) {
-                            HorizontalDivider(color = DS.line)
-                        }
-                    }
-                }
-            }
-
-            // 0. Statistics Section
-            if (showResetStatsConfirm) {
-                AlertDialog(
-                    onDismissRequest = { showResetStatsConfirm = false },
-                    title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
-                    text = { Text(text = loc("Da li želite da resetujete sve statistike?"), color = DS.ink) },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            stats.resetStats()
-                            showResetStatsConfirm = false
-                        }) {
-                            Text(text = loc("Potvrdi"), color = DS.danger, fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showResetStatsConfirm = false }) {
-                            // spec § 3: sporedna radnja u `accent`, nikad `inkMuted`.
-                            Text(text = loc("Otkaži"), color = DS.accent)
-                        }
-                    },
-                    containerColor = DS.surface,
-                    shape = DialogShape
-                )
-            }
-
-            // JEDINA kartica na ovom ekranu koja nosi SEMANTICKI obojen tekst
-            // (`success`/`danger`/`warning`/`accent` brojeve), pa je jedina koja
-            // ide na `DS.surface` umesto na `DS.fill` kao ostale.
-            //
-            // Nad `DS.fill` je izmereno: `warning` 3,00 i `success` 4,18 u svetloj
-            // temi — oba ispod AA (17sp Bold NIJE „large text" po WCAG-u, prag je
-            // 4,5). Nad `DS.surface`: `success` 5,04 i `inkMuted` labela 4,83 —
-            // oboje preko praga; `warning` ostaje 3,61, sto je TACNO isti par koji
-            // iOS `StatBox` ima na istom mestu (`SettingsSheet.swift:399-415`, broj
-            // u boji na `systemBackground`) i koji je vec upisan u „Poznata
-            // ogranicenja". Popravka same boje bi znacila razlaz sa iOS paletom;
-            // popravka podloge ne znaci nista osim da kartica koristi token koji
-            // tabela preslikavanja ionako propisuje za ispunu kartice.
+            // 1. Statistika
             SettingsSection(title = loc("Statistika igranja")) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .dsCard() // spec § 3: kartica = surface + 1 dp line
-                        .padding(14.dp),
+                        .padding(DS.Space.l),
                     verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                 ) {
-                    // Row 1: Main Counters
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
@@ -220,12 +203,12 @@ fun SettingsView(
                         StatItem(label = loc("Odigrano"), value = "${stats.gamesPlayed}", color = DS.ink)
                         StatItem(label = loc("Pobede"), value = "${stats.gamesWon}", color = DS.success)
                         StatItem(label = loc("Porazi"), value = "${stats.gamesLost}", color = DS.danger)
-                        StatItem(label = loc("Remi"), value = "${stats.gamesDrawn}", color = DS.warning)
+                        // spec § 15: „Remi" nije upozorenje — `ink`.
+                        StatItem(label = loc("Remi"), value = "${stats.gamesDrawn}", color = DS.ink)
                     }
 
                     HorizontalDivider(color = DS.line)
 
-                    // Row 2: Win Rate & Streaks
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
@@ -234,10 +217,7 @@ fun SettingsView(
                         StatItem(label = loc("Najbolji niz"), value = "${stats.bestWinStreak} 🔥", color = DS.warning)
                         StatItem(label = loc("Rešeno zadataka"), value = "${stats.puzzlesSolved} 🧩", color = DS.ink)
                         // Rejting igraca BIRA zadatke (`PuzzleRating.practiceWindow`),
-                        // pa mora da se vidi — inace se tesina vezbanja menja bez
-                        // ijednog vidljivog razloga. („Rejting" u zaglavlju
-                        // Zadataka je rejting ZADATKA, ne igraca.) iOS ovo ima
-                        // na istom mestu, u istom redu.
+                        // pa mora da se vidi. iOS ovo ima na istom mestu, u istom redu.
                         StatItem(label = loc("Rejting zadataka"), value = "${stats.puzzleRating}", color = DS.ink)
                     }
 
@@ -254,7 +234,6 @@ fun SettingsView(
                                 Text(
                                     text = loc("Resetuj statistiku"),
                                     color = DS.danger,
-                                    // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:134`).
                                     style = Type.caption,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -264,99 +243,59 @@ fun SettingsView(
                 }
             }
 
-            // 1. Difficulty Section
+            // 2. Tezina
             SettingsSection(title = loc("Težina protivnika (AI)")) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .dsCard() // spec § 3: kartica = surface + 1 dp line
-                ) {
-                    val difficulties = listOf(
-                        GameDifficulty.BEGINNER,
-                        GameDifficulty.EASY,
-                        GameDifficulty.MEDIUM,
-                        GameDifficulty.HARD,
-                        GameDifficulty.STOCKFISH
-                    )
-
+                DSCardGroup {
+                    val difficulties = GameDifficulty.values().toList()
                     difficulties.forEachIndexed { index, diff ->
+                        if (index > 0) DSRowDivider()
                         DifficultyOptionRow(
                             label = diff.title,
                             subtitle = diff.subtitle,
                             isSelected = gameViewModel.difficulty == diff,
                             onClick = { gameViewModel.difficulty = diff }
                         )
-                        if (index < difficulties.size - 1) {
-                            HorizontalDivider(color = DS.line)
-                        }
                     }
                 }
             }
 
-            // 2. Board Themes Customization
+            // 3. Izgled table — spec § 15: jedan naslov (bez unutrasnjeg „Tema table"),
+            // mreza tema u istoj `surface` grupi kao prekidaci.
             SettingsSection(title = loc("Izgled table")) {
-                Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
-                    Text(
-                        text = loc("Tema table"),
-                        color = DS.inkMuted,
-                        // iOS: `.subheadline` (`Chessko/Views/SettingsSheet.swift:175`).
-                        style = Type.body,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    // LazyRow for Board Themes
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(BoardTheme.values()) { theme ->
-                            val isSelected = settings.boardTheme == theme.rawValue
+                DSCardGroup {
+                    // Podaci iz `BoardTheme.values()` — brisanje/dodavanje teme je izmena enum-a.
+                    AdaptiveTileGrid(
+                        items = BoardTheme.values().toList(),
+                        modifier = Modifier.padding(DS.Space.l)
+                    ) { theme ->
+                        val isSelected = settings.boardTheme == theme.rawValue
+                        SettingsTile(
+                            label = loc(theme.label),
+                            isSelected = isSelected,
+                            onClick = { settings.updateBoardTheme(theme.rawValue) }
+                        ) {
                             Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier
-                                    .clickable { settings.updateBoardTheme(theme.rawValue) }
-                                    .width(65.dp)
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(DS.Radius.s))
+                                    .border(
+                                        width = if (isSelected) 2.5.dp else 1.dp,
+                                        color = if (isSelected) DS.accent else DS.line,
+                                        shape = RoundedCornerShape(DS.Radius.s)
+                                    )
                             ) {
-                                // 2x2 board preview
-                                Column(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(RoundedCornerShape(DS.Radius.s))
-                                        .border(
-                                            width = if (isSelected) 2.5.dp else 1.dp,
-                                            color = if (isSelected) DS.accent else DS.line,
-                                            shape = RoundedCornerShape(DS.Radius.s)
-                                        )
-                                ) {
-                                    Row(modifier = Modifier.weight(1f)) {
-                                        Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.lightColor))
-                                        Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.darkColor))
-                                    }
-                                    Row(modifier = Modifier.weight(1f)) {
-                                        Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.darkColor))
-                                        Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.lightColor))
-                                    }
+                                Row(modifier = Modifier.weight(1f)) {
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.lightColor))
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.darkColor))
                                 }
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Text(
-                                    text = loc(theme.label),
-                                    color = if (isSelected) DS.accent else DS.inkMuted,
-                                    // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:207`).
-                                    // Oznaka ispod uzorka -- ista uloga i za stilove
-                                    // figura ispod, koji su stajali na 10. Dve
-                                    // vrednosti za jednu ulogu su bile drift.
-                                    style = Type.caption,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                )
+                                Row(modifier = Modifier.weight(1f)) {
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.darkColor))
+                                    Box(modifier = Modifier.weight(1f).fillMaxHeight().background(theme.lightColor))
+                                }
                             }
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(DS.Space.xs))
-
-                    DSCardGroup {
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Prikaži koordinate"),
                         icon = Icons.Default.GridOn,
@@ -384,97 +323,59 @@ fun SettingsView(
                         checked = settings.swipeToChangeBoardTheme,
                         onCheckedChange = { settings.updateSwipeToChangeBoardTheme(it) }
                     )
-                    }
                 }
             }
 
-            // 3. Piece Styles Customization
+            // 4. Stil figura — spec § 15: bez unutrasnjeg „Stil", ista adaptivna mreza.
             SettingsSection(title = loc("Stil figura")) {
-                Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
-                    Text(
-                        text = loc("Stil"),
-                        color = DS.inkMuted,
-                        // iOS: `.subheadline` (`Chessko/Views/SettingsSheet.swift:240`).
-                        style = Type.body,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    // Grid layout of 4 columns for Piece Styles
-                    val styles = PieceStyle.values()
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        for (i in styles.indices step 4) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                DSCardGroup {
+                    // Podaci iz `PieceStyle.values()` — brisanje/dodavanje stila je izmena enum-a.
+                    AdaptiveTileGrid(
+                        items = PieceStyle.values().toList(),
+                        modifier = Modifier.padding(DS.Space.l)
+                    ) { style ->
+                        val isSelected = settings.pieceStyle == style.rawValue
+                        SettingsTile(
+                            label = loc(style.label),
+                            isSelected = isSelected,
+                            onClick = { settings.updatePieceStyle(style.rawValue) }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(DS.Radius.s))
+                                    .background(DS.fill)
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) DS.accent else DS.line,
+                                        shape = RoundedCornerShape(DS.Radius.s)
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
-                                for (j in 0 until 4) {
-                                    val index = i + j
-                                    if (index < styles.size) {
-                                        val style = styles[index]
-                                        val isSelected = settings.pieceStyle == style.rawValue
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clickable { settings.updatePieceStyle(style.rawValue) }
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(46.dp)
-                                                    .clip(RoundedCornerShape(DS.Radius.s))
-                                                    .background(DS.fill)
-                                                    .border(
-                                                        width = if (isSelected) 2.dp else 1.dp,
-                                                        color = if (isSelected) DS.accent else DS.line,
-                                                        shape = RoundedCornerShape(DS.Radius.s)
-                                                    ),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                val pieceAsset = getAssetName(
-                                                    ChessPiece(PieceType.KNIGHT, PieceColor.WHITE),
-                                                    style,
-                                                    BoardTheme.CLASSIC
-                                                )
-                                                AsyncImage(
-                                                    model = "file:///android_asset/pieces/$pieceAsset.svg",
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(30.dp)
-                                                )
-                                            }
-
-                                            Spacer(modifier = Modifier.height(DS.Space.xs))
-
-                                            Text(
-                                                text = loc(style.label),
-                                                color = if (isSelected) DS.accent else DS.inkMuted,
-                                                // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:268`),
-                                                // isto kao oznaka teme table iznad.
-                                                style = Type.caption,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                            )
-                                        }
-                                    } else {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
-                                }
+                                val pieceAsset = getAssetName(
+                                    ChessPiece(PieceType.KNIGHT, PieceColor.WHITE),
+                                    style,
+                                    BoardTheme.CLASSIC
+                                )
+                                AsyncImage(
+                                    model = "file:///android_asset/pieces/$pieceAsset.svg",
+                                    contentDescription = null,
+                                    modifier = Modifier.size(30.dp)
+                                )
                             }
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(DS.Space.xs))
-
-                    DSCardGroup {
+                    DSRowDivider()
                     SettingsToggle(
                         label = loc("Zadrži pa prevuci gore/dole (menja stil)"),
                         icon = Icons.Default.SwapVert,
                         checked = settings.swipeToChangePieceStyle,
                         onCheckedChange = { settings.updateSwipeToChangePieceStyle(it) }
                     )
-                    }
                 }
             }
 
-            // 4. Gameplay & Rules
+            // 5. Igra i pravila
             SettingsSection(title = loc("Igra i pravila")) {
                 DSCardGroup {
                     SettingsToggle(
@@ -503,37 +404,68 @@ fun SettingsView(
                 }
             }
 
-            // 5. Appearance (Theme)
-            SettingsSection(title = loc("Izgled aplikacije")) {
+            // 6. Jezik — spec § 15: JEDAN red „Jezik · Srpski ›" sa globusom, bez naslova
+            // grupe (naslov „Jezik" iznad reda „Jezik" bio bi dupli).
+            DSCardGroup {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showLanguageList = true }
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
                 ) {
-                    val themes = listOf(
-                        "system" to loc("Sistem"),
-                        "light" to loc("Svetla"),
-                        "dark" to loc("Tamna")
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = null,
+                        tint = DS.inkMuted,
+                        modifier = Modifier.size(20.dp)
                     )
+                    Text(
+                        text = loc("Jezik"),
+                        color = DS.ink,
+                        style = Type.body,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = if (settings.languageCode == Loc.SYSTEM) loc("Sistem") else endonymFor(settings.languageCode),
+                        color = DS.inkMuted,
+                        style = Type.body,
+                        maxLines = 1
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = DS.inkMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
-                    themes.forEach { (value, label) ->
-                        val isSelected = settings.colorScheme == value
-                        Button(
-                            onClick = { settings.updateColorScheme(value) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) DS.accent else DS.fill,
-                                contentColor = if (isSelected) DS.onAccent else DS.ink
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(text = label, style = Type.caption, fontWeight = FontWeight.Bold)
-                        }
+            // 7. Izgled — iOS ima redove sa kvacicom (bilo: tri `fill` dugmeta na ground).
+            SettingsSection(title = loc("Izgled")) {
+                DSCardGroup {
+                    val themes = listOf(
+                        Triple("system", loc("Sistem"), Icons.Default.BrightnessMedium),
+                        Triple("light", loc("Svetla"), Icons.Default.LightMode),
+                        Triple("dark", loc("Tamna"), Icons.Default.DarkMode)
+                    )
+                    themes.forEachIndexed { index, (value, label, icon) ->
+                        if (index > 0) DSRowDivider()
+                        SelectableRow(
+                            label = label,
+                            icon = icon,
+                            isSelected = settings.colorScheme == value,
+                            onClick = { settings.updateColorScheme(value) }
+                        )
                     }
                 }
             }
 
-            // 6. Sound & Haptics
-            SettingsSection(title = loc("Efekti")) {
+            // 8. Ostalo (zvuk i vibracija)
+            SettingsSection(title = loc("Ostalo")) {
                 DSCardGroup {
                     SettingsToggle(
                         label = loc("Zvučni efekti"),
@@ -551,17 +483,15 @@ fun SettingsView(
                 }
             }
 
-            // 7. About Application
+            // 9. O aplikaciji
             SettingsSection(title = loc("O aplikaciji")) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .dsCard() // spec § 3: kartica = surface + 1 dp line
-                        .padding(14.dp),
+                        .padding(DS.Space.l),
                     verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                 ) {
-                    // iOS: `.headline` pa `.subheadline`
-                    // (`Chessko/Views/SettingsSheet.swift:346`, `:349`).
                     Text(text = loc("Chessko"), color = DS.ink, style = Type.heading, fontWeight = FontWeight.Bold)
                     Text(text = loc("Verzija 1.0.0"), color = DS.inkMuted, style = Type.body)
 
@@ -570,8 +500,6 @@ fun SettingsView(
                     Text(
                         text = loc("Ova aplikacija je otvorenog koda, koristi Stockfish šahovski pokretač pod GPLv3 licencom i preuzima šahovske zadatke iz slobodne Lichess baze."),
                         color = DS.inkMuted,
-                        // iOS: `.caption` (`Chessko/Views/SettingsSheet.swift:356`).
-                        // `Type.caption` nosi i `lineHeight`, pa on odlazi sa velicinom.
                         style = Type.caption
                     )
 
@@ -581,69 +509,267 @@ fun SettingsView(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
                     ) {
-                        Button(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://stockfishchess.org"))
-                                context.startActivity(intent)
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = DS.fill,
-                                contentColor = DS.ink
-                            ),
-                            shape = RoundedCornerShape(DS.Radius.s),
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(vertical = 6.dp)
-                        ) {
-                            // Faza 8, Task 4: emoji -> Material ikona. Znak je bio
-                            // zalepljen na tekst dugmeta ("🌐 " + loc(...)); ikona je
-                            // dekorativna jer je "Stockfish" odmah uz nju CEO vidljiv
-                            // sadrzaj dugmeta -- opis bi citaocu ekrana rekao
-                            // "spoljni link, Stockfish" umesto samo "Stockfish".
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Public,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                // iOS: `.caption.weight(.semibold)` (`Chessko/Views/SettingsSheet.swift:364`).
-                                Text(text = loc("Stockfish"), style = Type.caption, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        Button(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://lichess.org"))
-                                context.startActivity(intent)
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = DS.fill,
-                                contentColor = DS.ink
-                            ),
-                            shape = RoundedCornerShape(DS.Radius.s),
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(vertical = 6.dp)
-                        ) {
-                            // Isti obrazac kao dugme "Stockfish" iznad -- dekorativna
-                            // ikona, tekst dugmeta nosi ceo vidljiv sadrzaj.
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Public,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Text(text = loc("Lichess"), style = Type.caption, fontWeight = FontWeight.Bold)
-                            }
-                        }
+                        LinkButton(label = loc("Stockfish"), url = "https://stockfishchess.org", modifier = Modifier.weight(1f))
+                        LinkButton(label = loc("Lichess"), url = "https://lichess.org", modifier = Modifier.weight(1f))
                     }
                 }
             }
         }
+    }
+}
+
+/** Dugme-link u kartici „O aplikaciji": `fill` + `ink` (sporedno dugme sa ispunom, spec § 3). */
+@Composable
+private fun LinkButton(label: String, url: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Button(
+        onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
+        colors = ButtonDefaults.buttonColors(containerColor = DS.fill, contentColor = DS.ink),
+        shape = RoundedCornerShape(DS.Radius.s),
+        modifier = modifier,
+        contentPadding = PaddingValues(vertical = 6.dp)
+    ) {
+        // Dekorativna ikona — tekst dugmeta nosi ceo vidljiv sadrzaj (Faza 8).
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Public,
+                contentDescription = null,
+                tint = DS.ink,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(text = label, color = DS.ink, style = Type.caption, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+/**
+ * Lista jezika (spec § 15): Sistem, pa `APP_LANGUAGES` istim redom kao iOS. Ispod
+ * „Sistem" sitno (`inkMuted`) jezik u koji se „Sistem" na ovom uredjaju razresava
+ * (`Loc.resolveSystemLanguage`, isto pravilo kao iOS `systemFallback`).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LanguageListScreen(
+    settings: SettingsManager,
+    onBack: () -> Unit,
+    onLanguageChanged: (String) -> Unit
+) {
+    fun select(code: String) {
+        settings.updateLanguageCode(code)
+        onLanguageChanged(code)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DS.ground)
+    ) {
+        CenterAlignedTopAppBar(
+            title = {
+                Text(text = loc("Jezik"), color = DS.ink, style = Type.heading, fontWeight = FontWeight.Bold)
+            },
+            navigationIcon = {
+                TextButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        tint = DS.accent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(DS.Space.xs))
+                    Text(text = loc("Podešavanja"), color = DS.accent, style = Type.body, maxLines = 1)
+                }
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = DS.ground)
+        )
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(DS.Space.l)
+        ) {
+            DSCardGroup {
+                LanguageRow(
+                    name = loc("Sistem"),
+                    detail = endonymFor(Loc.resolveSystemLanguage(Loc.systemLanguageTags())),
+                    isSelected = settings.languageCode == Loc.SYSTEM,
+                    onClick = { select(Loc.SYSTEM) }
+                )
+                APP_LANGUAGES.forEach { (code, endonym) ->
+                    DSRowDivider()
+                    LanguageRow(
+                        name = endonym,
+                        detail = null,
+                        // „zh-Hans" je mogao biti sacuvan i u tom obliku (Loc ga prima).
+                        isSelected = settings.languageCode == code ||
+                            (code == "zh" && settings.languageCode == "zh-Hans"),
+                        onClick = { select(code) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguageRow(name: String, detail: String?, isSelected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = 48.dp)
+            .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                color = if (isSelected) DS.accent else DS.ink,
+                style = Type.body,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
+            if (detail != null) {
+                Text(text = detail, color = DS.inkMuted, style = Type.caption)
+            }
+        }
+        if (isSelected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = DS.accent,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+/** Red sa ikonom i kvacicom za izabranu vrednost (Izgled: Sistem/Svetla/Tamna). */
+@Composable
+private fun SelectableRow(label: String, icon: ImageVector, isSelected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = 48.dp)
+            .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = DS.inkMuted, modifier = Modifier.size(20.dp))
+        Text(
+            text = label,
+            color = DS.ink,
+            style = Type.body,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        if (isSelected) {
+            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = DS.accent, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+/**
+ * Adaptivna mreza (spec § 15): kolona najmanje [minCellWidth] (88), broj kolona iz
+ * sirine. Ekvivalent `LazyVerticalGrid(GridCells.Adaptive(88.dp))` — ali NE lenja:
+ * mreza stoji u `verticalScroll` koloni, a lenja mreza u istosmernom skroleru dobija
+ * beskonacnu visinu i pada. Za 8 (posle Task-a 12: 6/5) plocica lenjost ne donosi nista.
+ */
+@Composable
+private fun <T> AdaptiveTileGrid(
+    items: List<T>,
+    modifier: Modifier = Modifier,
+    minCellWidth: Dp = 88.dp,
+    spacing: Dp = DS.Space.s,
+    tile: @Composable (T) -> Unit
+) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val columns = max(1, ((maxWidth + spacing) / (minCellWidth + spacing)).toInt())
+        Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
+            items.chunked(columns).forEach { rowItems ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing)
+                ) {
+                    rowItems.forEach { item ->
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.TopCenter) {
+                            tile(item)
+                        }
+                    }
+                    repeat(columns - rowItems.size) { Spacer(modifier = Modifier.weight(1f)) }
+                }
+            }
+        }
+    }
+}
+
+/** Plocica teme/stila: uzorak + labela; ceo stub je meta dodira. */
+@Composable
+private fun SettingsTile(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    preview: @Composable () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(DS.Radius.s))
+            .clickable(onClick = onClick)
+            .semantics { selected = isSelected }
+    ) {
+        preview()
+        Spacer(modifier = Modifier.height(6.dp))
+        SettingsTileLabel(text = label, isSelected = isSelected)
+    }
+}
+
+/**
+ * Labela ispod plocice (spec § 15): `Type.caption`, najvise 2 reda, rezervisana visina
+ * dva reda (`caption` lineHeight × 2) da se mreza ne pomera. Bez loma usred reci:
+ * `Hyphens.None` + `LineBreak.Heading`; ako NAJDUZA rec na `caption` ne staje u
+ * sirinu kolone („Классическая", „Игровая"), cela labela prelazi na `Type.label`.
+ */
+@Composable
+private fun SettingsTileLabel(text: String, isSelected: Boolean) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val weight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+    val captionStyle = Type.caption.copy(
+        fontWeight = weight,
+        textAlign = TextAlign.Center,
+        hyphens = Hyphens.None,
+        lineBreak = LineBreak.Heading
+    )
+    val reservedHeight = with(density) { (Type.caption.lineHeight * 2).toDp() }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val maxPx = constraints.maxWidth
+        val wordsFit = remember(text, maxPx, weight) {
+            !constraints.hasBoundedWidth ||
+                text.split(' ', ' ').filter { it.isNotEmpty() }.all { word ->
+                    measurer.measure(word, captionStyle, maxLines = 1, softWrap = false).size.width <= maxPx
+                }
+        }
+        val style = if (wordsFit) captionStyle else captionStyle.copy(
+            fontSize = Type.label.fontSize,
+            lineHeight = Type.label.lineHeight
+        )
+        Text(
+            text = text,
+            color = if (isSelected) DS.accent else DS.ink,
+            style = style,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = reservedHeight)
+        )
     }
 }
 
@@ -689,7 +815,8 @@ fun SettingsToggle(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = DS.accent,
+                // spec § 15: ikone u redovima su `inkMuted` (5,86 / 5,43), ne `accent`.
+                tint = DS.inkMuted,
                 modifier = Modifier.size(20.dp)
             )
             Text(text = label, color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)

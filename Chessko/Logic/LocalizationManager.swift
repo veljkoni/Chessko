@@ -46,16 +46,19 @@ struct AppLanguage: Identifiable, Hashable, Sendable {
     let endonym: String   // displayed in its own language
     var id: String { code }
 
-    /// Order shown in the settings sheet. Must match Localizable.xcstrings locales.
+    /// Order shown in the settings language list (spec § 15 — the SAME fixed order on
+    /// Android, `SettingsView.kt` `APP_LANGUAGES`): after „Sistem", Latin endonyms
+    /// alphabetically, then Русский, हिन्दी, 中文. Fixed, not `localizedCompare`, so it
+    /// doesn't depend on the current locale. Must match Localizable.xcstrings locales.
     static let all: [AppLanguage] = [
-        AppLanguage(code: "sr",      endonym: "Srpski"),
+        AppLanguage(code: "de",      endonym: "Deutsch"),
         AppLanguage(code: "en",      endonym: "English"),
         AppLanguage(code: "fr",      endonym: "Français"),
-        AppLanguage(code: "de",      endonym: "Deutsch"),
         AppLanguage(code: "it",      endonym: "Italiano"),
+        AppLanguage(code: "sr",      endonym: "Srpski"),
         AppLanguage(code: "ru",      endonym: "Русский"),
-        AppLanguage(code: "zh-Hans", endonym: "中文 (简体)"),
         AppLanguage(code: "hi",      endonym: "हिन्दी"),
+        AppLanguage(code: "zh-Hans", endonym: "中文 (简体)"),
     ]
 }
 
@@ -85,7 +88,9 @@ final class LocalizationManager {
 
     /// Best supported language for the current device, or "en" if none match.
     /// Serbian is intentionally excluded — it's offered only on explicit request.
-    private static func systemFallback() -> String {
+    /// Not private: the language list shows it under „Sistem" (spec § 15). Android
+    /// mirrors this rule in `Loc.resolveSystemLanguage`.
+    static func systemFallback() -> String {
         let supported = Set(AppLanguage.all.map(\.code)).subtracting(["sr"])
         for pref in Locale.preferredLanguages {
             if pref.hasPrefix("zh"), supported.contains("zh-Hans") { return "zh-Hans" }

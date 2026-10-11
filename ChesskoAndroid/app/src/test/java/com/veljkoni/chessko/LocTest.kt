@@ -94,4 +94,37 @@ class LocTest {
         }
         Loc.setLanguage("sr")
     }
+
+    // spec § 15: „Sistem" bez `appcompat`-a — isto pravilo kao iOS `systemFallback`.
+    @Test
+    fun systemLanguageResolvesLikeIos() {
+        assertEquals("de", Loc.resolveSystemLanguage(listOf("de-DE")))
+        assertEquals("fr", Loc.resolveSystemLanguage(listOf("pt-BR", "fr-FR")))
+        assertEquals("zh-Hans", Loc.resolveSystemLanguage(listOf("zh-Hant-TW")))
+        assertEquals("hi", Loc.resolveSystemLanguage(listOf("hi_IN")))
+        // Srpski se iz sistema nikad ne bira — ni kao prvi jezik uredjaja.
+        assertEquals("en", Loc.resolveSystemLanguage(listOf("sr-Latn-RS")))
+        assertEquals("ru", Loc.resolveSystemLanguage(listOf("sr-RS", "ru-RU")))
+        assertEquals("en", Loc.resolveSystemLanguage(listOf("pt-BR")))
+        assertEquals("en", Loc.resolveSystemLanguage(emptyList()))
+    }
+
+    @Test
+    fun systemSettingFollowsDeviceLanguage() {
+        val previous = Loc.systemLanguageTags
+        try {
+            Loc.systemLanguageTags = { listOf("it-IT") }
+            Loc.setLanguage(Loc.SYSTEM)
+            assertEquals("it", Loc.fileLanguageCode())
+            assertEquals("Facile", loc("Lako"))
+
+            Loc.systemLanguageTags = { listOf("zh-CN") }
+            Loc.setLanguage(Loc.SYSTEM)
+            assertEquals("zh-Hans", Loc.fileLanguageCode())
+            assertEquals("zh", Loc.getLanguage())
+        } finally {
+            Loc.systemLanguageTags = previous
+            Loc.setLanguage("sr")
+        }
+    }
 }

@@ -5,12 +5,36 @@ import java.text.NumberFormat
 object Loc {
     private var currentLanguage: String = "sr"
 
-    fun setLanguage(code: String) {
-        currentLanguage = code
-        // For Chinese, we support zh-Hans as stored in xcstrings
-        if (code == "zh") {
-            currentLanguage = "zh-Hans"
+    /// Sacuvana vrednost za opciju „Sistem" (spec § 15). Bez `appcompat`-a (nova
+    /// zavisnost je zabranjena): „Sistem" se razresava OVDE, iz jezika uredjaja.
+    const val SYSTEM = "system"
+
+    /// Jezici koje aplikacija nosi (kodovi u obliku `currentLanguage`).
+    private val SUPPORTED = setOf("sr", "en", "fr", "de", "it", "ru", "zh-Hans", "hi")
+
+    /// Jezici uredjaja po prioritetu (BCP 47). `SettingsManager` ga postavlja na
+    /// `LocaleList.getDefault()`; podrazumevano (JVM testovi) `Locale.getDefault()`.
+    var systemLanguageTags: () -> List<String> = { listOf(java.util.Locale.getDefault().toLanguageTag()) }
+
+    /// Isto pravilo kao iOS `LocalizationManager.systemFallback`: prvi podrzan jezik
+    /// uredjaja (ceo tag, pa osnova), `zh*` → „zh-Hans", inace engleski. Srpski se iz
+    /// sistema NIKAD ne bira — samo izricitim izborom.
+    fun resolveSystemLanguage(tags: List<String>): String {
+        val supported = SUPPORTED - "sr"
+        for (raw in tags) {
+            val tag = raw.replace('_', '-')
+            if (tag.startsWith("zh")) return "zh-Hans"
+            if (tag in supported) return tag
+            val base = tag.substringBefore('-')
+            if (base in supported) return base
         }
+        return "en"
+    }
+
+    fun setLanguage(code: String) {
+        val resolved = if (code == SYSTEM) resolveSystemLanguage(systemLanguageTags()) else code
+        // For Chinese, we support zh-Hans as stored in xcstrings
+        currentLanguage = if (resolved == "zh") "zh-Hans" else resolved
     }
 
     fun getLanguage(): String {
