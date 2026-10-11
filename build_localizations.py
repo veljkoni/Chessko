@@ -418,6 +418,7 @@ add("Nova partija", "New game", "Nouvelle partie", "Neue Partie", "Nuova partita
 add("Analiza", "Analysis", "Analyse", "Analyse", "Analisi", "Анализ", "分析", "विश्लेषण")
 add("Podeli", "Share", "Partager", "Teilen", "Condividi", "Поделиться", "分享", "साझा करें")
 add("Vrati", "Undo", "Retour", "Zurück", "Indietro", "Назад", "悔棋", "पूर्ववत")
+add("Šah", "Check", "Échec", "Schach", "Scacco", "Шах", "将军", "शह")
 add("Na potezu", "To move", "Au trait", "Am Zug", "Al tratto", "Ходит", "轮到走棋", "चाल की बारी")
 add("Potezi će se pojaviti ovde", "Moves will appear here", "Les coups apparaîtront ici", "Züge erscheinen hier", "Le mosse appariranno qui", "Ходы появятся здесь", "着法将显示在这里", "चालें यहाँ दिखेंगी")
 add("igra crnima", "plays Black", "joue les Noirs", "spielt Schwarz", "gioca con il Nero", "играет чёрными", "执黑", "काले मोहरों से")

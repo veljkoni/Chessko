@@ -72,3 +72,27 @@ object LocalNumber {
         return f.format(value0to100 / 100.0)
     }
 }
+
+/**
+ * Procena u kartici igraca (dizajnerski pregled, spec § 5): „0,0" / „+1,2" / „M1" /
+ * „−M2". Znak nosi stranu (+ beli, − crni). Ispod 0,05 piona je „0,0" (bez znaka).
+ * Mat nosi tipografski minus U+2212 za crnog. iOS: `EvaluationLabel` u
+ * `Chessko/Logic/LocalFormat.swift` — isti slucajevi u testovima obe platforme.
+ */
+data class EvaluationLabel(val text: String, val isMate: Boolean) {
+    companion object {
+        fun of(score: Double, mateIn: Int?, languageCode: String = Loc.fileLanguageCode()): EvaluationLabel {
+            if (mateIn != null) {
+                return EvaluationLabel((if (mateIn < 0) "\u2212" else "") + "M${kotlin.math.abs(mateIn)}", isMate = true)
+            }
+            // Zaokruzivanje na desetinku „od nule" PRE formatiranja — isto kao iOS, gde
+            // `NumberFormatter` zaokruzuje na parno (0,05 bi dalo „+0,0").
+            val tenths = kotlin.math.floor(kotlin.math.abs(score) * 10 + 0.5) / 10
+            if (tenths == 0.0) return EvaluationLabel(LocalNumber.decimal(0.0, languageCode = languageCode), isMate = false)
+            return EvaluationLabel(
+                LocalNumber.decimal(if (score < 0) -tenths else tenths, signed = true, languageCode = languageCode),
+                isMate = false
+            )
+        }
+    }
+}

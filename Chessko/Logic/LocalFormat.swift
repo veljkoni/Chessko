@@ -83,3 +83,28 @@ enum LocalNumber {
         return f.string(from: NSNumber(value: value0to100 / 100)) ?? "\(value0to100)%"
     }
 }
+
+// MARK: - Procena pozicije (dizajnerski pregled, spec § 5)
+
+/// Procena u kartici igrača: „0,0" / „+1,2" / „M1" / „−M2". Znak nosi stranu
+/// (+ beli, − crni). Ispod 0,05 piona je „0,0" (bez znaka). Mat nosi tipografski
+/// minus U+2212 za crnog. Android: `EvaluationLabel` u `logic/LocalFormat.kt`.
+struct EvaluationLabel: Equatable, Sendable {
+    let text: String
+    let isMate: Bool
+
+    static func make(score: Double, mateIn: Int?, languageCode: String) -> EvaluationLabel {
+        if let mate = mateIn {
+            return EvaluationLabel(text: (mate < 0 ? "\u{2212}" : "") + "M\(abs(mate))", isMate: true)
+        }
+        // Zaokruživanje na desetinku „od nule" (isto na Androidu) PRE formatiranja:
+        // `NumberFormatter` zaokružuje na parno, pa bi 0,05 dalo „+0,0".
+        let tenths = (abs(score) * 10 + 0.5).rounded(.down) / 10
+        if tenths == 0 {
+            return EvaluationLabel(text: LocalNumber.decimal(0, languageCode: languageCode), isMate: false)
+        }
+        return EvaluationLabel(text: LocalNumber.decimal(score < 0 ? -tenths : tenths, signed: true,
+                                                         languageCode: languageCode),
+                               isMate: false)
+    }
+}

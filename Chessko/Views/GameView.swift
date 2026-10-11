@@ -15,6 +15,8 @@ struct GameView: View {
     /// Visina dela iznad liste poteza (kartice, tabla, akcije) u portretu —
     /// lista dobija ostatak visine ekrana (spec § 5).
     @State private var portraitFixedHeight: CGFloat = 0
+    /// Isto za panel u pejzažu — panel skroluje ako gornji deo ne staje.
+    @State private var landscapeFixedHeight: CGFloat = 0
 
     enum PendingSelection {
         case computer
@@ -184,16 +186,26 @@ struct GameView: View {
         HStack(alignment: .top, spacing: DS.Space.l) {
             boardRow(side: side)
 
-            VStack(spacing: DS.Space.s) {
-                opponentCard
-                playerCard
-                actionBar(compact: false)
-                if viewModel.totalReviewMoves > 0 {
-                    reviewControlsView
+            // Lista dobija ostatak visine panela (do dna table); kad gornji deo ne
+            // staje (nizak telefon, traka pregleda), panel skroluje umesto da seče.
+            let listHeight = max(Self.minMoveListHeight, side - landscapeFixedHeight - DS.Space.s)
+            ScrollView {
+                VStack(spacing: DS.Space.s) {
+                    VStack(spacing: DS.Space.s) {
+                        opponentCard
+                        playerCard
+                        actionBar(compact: false)
+                        if viewModel.totalReviewMoves > 0 {
+                            reviewControlsView
+                        }
+                    }
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { landscapeFixedHeight = $0 }
+
+                    moveList
+                        .frame(height: listHeight)
                 }
-                moveList
-                    .frame(minHeight: MoveHistoryView.rowHeight, maxHeight: .infinity)
             }
+            .scrollBounceBehavior(.basedOnSize)
             .frame(width: panelWidth, height: side)
         }
         .padding(.vertical, DS.Space.s)
@@ -354,6 +366,12 @@ struct GameView: View {
         viewModel.gameState.currentTurn == color && !viewModel.isGameOver
     }
 
+    /// Strana `color` je u šahu (spec § 5: šah se kaže u kartici, ne u posebnom redu).
+    private func isInCheck(_ color: PieceColor) -> Bool {
+        if case .check(let c) = viewModel.gameState.status { return c == color }
+        return false
+    }
+
     private func isComputer(_ color: PieceColor) -> Bool {
         viewModel.gameMode == .vsComputer && color != viewModel.playerColor
     }
@@ -365,7 +383,7 @@ struct GameView: View {
         let status: PlayerCardStatus? = {
             guard isActive(color) else { return nil }
             if isComputer(color) { return viewModel.isThinking ? .thinking : nil }
-            return .toMove
+            return .toMove(inCheck: isInCheck(color))
         }()
         return Menu {
             opponentMenu
@@ -456,7 +474,7 @@ struct GameView: View {
             if viewModel.isGameOver { return .result(viewModel.statusMessage) }
             guard isActive(color) else { return nil }
             if isComputer(color) { return viewModel.isThinking ? .thinking : nil }
-            return .toMove
+            return .toMove(inCheck: isInCheck(color))
         }()
         return DSPlayerCard(
             color: color,

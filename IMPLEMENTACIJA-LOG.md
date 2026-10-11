@@ -731,6 +731,30 @@ Nesigurni prevodi: ru „Ходит" za „Na potezu" (kratko, neutralno; altern
 neutralna za oba igrača); hi „काले मोहरों से" / „सफ़ेद मोहरों से" (bez glagola, da izbegne rod);
 it „Al tratto"; fr „Au trait"; zh „轮到走棋". Ostalo standardna šahovska terminologija.
 
+### Fix runda 1 (pregled Task-a 4)
+
+- **„Nova partija" na Androidu nije pokretala računar** kad igrač igra crnima: `resetGame()` ne
+  zove AI. Sada `newGame(gameMode, playerColor)` — i u meniju „Više" i u rezervnoj grani potvrde —
+  isto kao iOS `.restart`.
+- **Šah se ponovo kaže tekstom:** `PlayerCardStatus.toMove(inCheck:)` / `ToMove(inCheck)` →
+  „Na potezu · Šah" (šah u `danger`) u kartici strane koja je na potezu i u šahu; deo labele
+  kartice za čitač ekrana (iOS `.combine`, Android `semantics(mergeDescendants = true)`). Ključ
+  „Šah" postojao na Androidu, dodat u iOS katalog (8 jezika, prevodi iz `Loc.kt`).
+- Android meni protivnika dobio izbor Stockfish nivoa (kad je izabran Stockfish) — paritet sa iOS-om.
+- **Panel u pejzažu skroluje** na obe platforme: gornji deo se meri, lista dobija ostatak visine
+  table (najmanje 3 reda), a kad gornji deo ne staje, panel skroluje umesto da seče.
+- `selectionTint` (Android) čita `ChesskoColors.isDark` (nov flag na paleti, `DarkColors` = true)
+  umesto poređenja akcenta.
+- **Procena izdvojena u testiranu logiku:** `EvaluationLabel` u `Logic/LocalFormat.swift` (iOS, u
+  SwiftPM paketu) i `logic/LocalFormat.kt` (Android); `DSEvaluation`/`Evaluation` su alias-i.
+  Testovi: 3 `swift test` (`evaluationLabel*` u `LocalFormatTests.swift`) i 3 JVM
+  (`EvaluationLabelTest`) — znak, prag nule, mat. Testovi su našli pravu grešku: iOS
+  `NumberFormatter` zaokružuje na parno, pa bi 0,05 dalo „+0,0" (Android „+0,1"). Sada se na obe
+  zaokružuje na desetinku „od nule" pre formatiranja.
+- **iOS čip procene = Android:** podloga `fill` + ivica `line` + `ink`; mat `#FFD700` na `#1E293B`
+  sa ivicom `white@18%`. Fiksne hex vrednosti su dozvoljene jer preslikavaju § 0 fiksni element
+  („zlatna oznaka mata", Android `EvaluationChip`). Android ivica ne-mat čipa vraćena na `line`.
+
 ## Task 5 — Zadaci i koraci Puta (§ 7)
 
 _(popunjava Task 5)_

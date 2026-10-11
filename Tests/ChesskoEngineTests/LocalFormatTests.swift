@@ -85,3 +85,27 @@ private func pluralBasesInSource() throws -> Set<String> {
     }
     return bases
 }
+
+// MARK: - Procena u kartici igrača (spec § 5) — isti slučajevi kao Android `EvaluationLabelTest`
+
+@Test func evaluationLabelSignCarriesSide() {
+    let white = EvaluationLabel.make(score: 1.24, mateIn: nil, languageCode: "en")
+    #expect(white == EvaluationLabel(text: "+1.2", isMate: false))
+    let black = EvaluationLabel.make(score: -2.3, mateIn: nil, languageCode: "en")
+    #expect(black.text == "-2.3")
+    #expect(!black.isMate)
+    #expect(EvaluationLabel.make(score: 1.24, mateIn: nil, languageCode: "sr").text == "+1,2")
+}
+
+@Test func evaluationLabelZeroThresholdHasNoSign() {
+    #expect(EvaluationLabel.make(score: 0.04, mateIn: nil, languageCode: "en").text == "0.0")
+    #expect(EvaluationLabel.make(score: -0.049, mateIn: nil, languageCode: "en").text == "0.0")
+    #expect(EvaluationLabel.make(score: 0.05, mateIn: nil, languageCode: "en").text == "+0.1")
+    #expect(EvaluationLabel.make(score: -0.05, mateIn: nil, languageCode: "en").text == "-0.1")
+    #expect(EvaluationLabel.make(score: 0, mateIn: nil, languageCode: "sr").text == "0,0")
+}
+
+@Test func evaluationLabelMate() {
+    #expect(EvaluationLabel.make(score: 0, mateIn: 1, languageCode: "en") == EvaluationLabel(text: "M1", isMate: true))
+    #expect(EvaluationLabel.make(score: 99, mateIn: -2, languageCode: "en") == EvaluationLabel(text: "\u{2212}M2", isMate: true))
+}

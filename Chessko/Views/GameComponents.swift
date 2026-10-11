@@ -85,27 +85,22 @@ struct DSPressableButtonStyle: ButtonStyle {
 /// stanje partije živi ovde.
 enum PlayerCardStatus: Equatable {
     /// „Na potezu" (`Type.caption` medium, `ink`) + tačka `success` (5,04 / 8,78).
-    case toMove
+    /// `inCheck`: strana na potezu je u šahu → „Na potezu · Šah" (šah u `danger`),
+    /// deo labele kartice za čitač ekrana.
+    case toMove(inCheck: Bool)
     /// Računar razmišlja — tri tačke.
     case thinking
     /// Kraj partije (mat, predaja, remi) — `Type.body`, `ink`.
     case result(String)
 }
 
-/// Procena pozicije u kartici igrača (spec § 5): „0,0" / „+1,2" / „M1".
-/// Znak nosi stranu (+ beli, − crni).
-struct DSEvaluation: Equatable {
-    let text: String
-    let isMate: Bool
+/// Procena pozicije u kartici igrača (spec § 5) — logika je u `EvaluationLabel`
+/// (`Logic/LocalFormat.swift`, pokrivena `swift test`-om); ovde samo jezik aplikacije.
+typealias DSEvaluation = EvaluationLabel
 
-    @MainActor static func make(score: Double, mateIn: Int?) -> DSEvaluation {
-        if let mate = mateIn {
-            return DSEvaluation(text: (mate < 0 ? "\u{2212}" : "") + "M\(abs(mate))", isMate: true)
-        }
-        if abs(score) < 0.05 {
-            return DSEvaluation(text: LocDecimal(0), isMate: false)
-        }
-        return DSEvaluation(text: LocDecimal(score, signed: true), isMate: false)
+extension EvaluationLabel {
+    @MainActor static func make(score: Double, mateIn: Int?) -> EvaluationLabel {
+        make(score: score, mateIn: mateIn, languageCode: LocalizationManager.shared.effectiveCode)
     }
 }
 
@@ -195,7 +190,7 @@ struct DSPlayerCard: View {
     @ViewBuilder
     private var statusView: some View {
         switch status {
-        case .toMove:
+        case .toMove(let inCheck):
             HStack(spacing: 6) {
                 Circle()
                     .fill(DS.success)
@@ -204,6 +199,11 @@ struct DSPlayerCard: View {
                 Text(Loc("Na potezu"))
                     .font(.dsCaption.weight(.medium))
                     .foregroundStyle(DS.ink)
+                if inCheck {
+                    Text("· " + Loc("Šah"))
+                        .font(.dsCaption.weight(.semibold))
+                        .foregroundStyle(DS.danger)
+                }
             }
         case .thinking:
             ThinkingIndicator(isActive: true)
@@ -220,23 +220,23 @@ struct DSPlayerCard: View {
     }
 }
 
-/// Procena u kartici: `fill` + `ink`; mat nosi zlatnu oznaku na fiksnoj tamnoj
-/// podlozi — isti fiksni element kao Android (`UiComponents.kt`, § 0 „zlatna
-/// oznaka mata"), da obe platforme crtaju isto.
+/// Procena u kartici: `fill` + ivica `line` + `ink`; mat nosi zlatnu oznaku
+/// (`#FFD700`) na fiksnoj tamnoj podlozi `#1E293B` sa ivicom `white@18%` —
+/// preslikan Android fiksni element (§ 0 „zlatna oznaka mata", `GameComponents.kt`
+/// `EvaluationChip`), pa su fiksne hex vrednosti ovde dozvoljene.
 private struct EvaluationChip: View {
     let evaluation: DSEvaluation
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
         Text(evaluation.text)
             .font(.dsCaption.weight(.bold))
             .monospacedDigit()
             .foregroundStyle(evaluation.isMate ? Color(hex: "#FFD700") : DS.ink)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
-            .background(
-                evaluation.isMate ? Color(hex: "#1E293B") : DS.fill,
-                in: RoundedRectangle(cornerRadius: 6, style: .continuous)
-            )
+            .background(evaluation.isMate ? Color(hex: "#1E293B") : DS.fill, in: shape)
+            .overlay(shape.strokeBorder(evaluation.isMate ? Color.white.opacity(0.18) : DS.line, lineWidth: 1))
     }
 }
 

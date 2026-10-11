@@ -44,7 +44,9 @@ data class ChesskoColors(
      * `#7EA0E8`) daje 2,6:1 — ispod AA (CLAUDE.md, Faza 2 changelog).
      * Cuva ga `ContrastTest.plainWhiteWouldFailOnTheDarkAccent`.
      */
-    val onAccent: Color
+    val onAccent: Color,
+    /** Tamna paleta? Signal teme za izvedene boje (npr. `selectionTint` 12 % / 16 %). */
+    val isDark: Boolean = false
 )
 
 val LightColors = ChesskoColors(
@@ -80,7 +82,8 @@ val DarkColors = ChesskoColors(
     scrim    = Color(0x8C000000),
     onScrim  = Color(0xFFFFFFFF),
     inkFixed = Color(0xFF161A22),
-    onAccent = Color(0xFF161A22)
+    onAccent = Color(0xFF161A22),
+    isDark   = true
 )
 
 /**

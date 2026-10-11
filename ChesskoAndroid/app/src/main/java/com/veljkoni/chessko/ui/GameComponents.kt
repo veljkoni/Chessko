@@ -33,14 +33,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.logic.loc
-import com.veljkoni.chessko.logic.locDecimal
+import com.veljkoni.chessko.logic.EvaluationLabel
 import com.veljkoni.chessko.models.ChessPiece
 import com.veljkoni.chessko.models.MoveClass
 import com.veljkoni.chessko.models.PieceColor
 import com.veljkoni.chessko.models.PieceType
 import com.veljkoni.chessko.ui.theme.ButtonShape
 import com.veljkoni.chessko.ui.theme.DS
-import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.DialogShape
 import com.veljkoni.chessko.ui.theme.LocalChesskoColors
 import com.veljkoni.chessko.ui.theme.Type
@@ -64,31 +63,27 @@ import kotlin.math.abs
  * (spec § 2 „Izvedene boje" — nije nov token). Tekst na njoj je `accent`.
  */
 val selectionTint: Color
-    @Composable get() {
-        val isDark = LocalChesskoColors.current.accent == DarkColors.accent
-        return DS.accent.copy(alpha = if (isDark) 0.16f else 0.12f)
-    }
+    @Composable get() = DS.accent.copy(alpha = if (LocalChesskoColors.current.isDark) 0.16f else 0.12f)
 
 // ── Kartica igraca ────────────────────────────────────────────────────────────
 
 /** Status u kartici igraca (spec § 5). Poseban red „Tvoj potez" ne postoji. */
 sealed interface PlayerCardStatus {
-    /** „Na potezu" (`Type.caption` medium, `ink`) + tacka `success`. */
-    data object ToMove : PlayerCardStatus
+    /**
+     * „Na potezu" (`Type.caption` medium, `ink`) + tacka `success`. `inCheck`: strana na
+     * potezu je u sahu → „Na potezu · Šah" (sah u `danger`), deo labele kartice.
+     */
+    data class ToMove(val inCheck: Boolean = false) : PlayerCardStatus
     /** Racunar razmislja — tri tacke. */
     data object Thinking : PlayerCardStatus
     /** Kraj partije (mat, predaja, remi) — `Type.body`, `ink`. */
     data class Result(val text: String) : PlayerCardStatus
 }
 
-/** Procena u kartici igraca: „0,0" / „+1,2" / „M1". Znak nosi stranu (+ beli, − crni). */
-data class Evaluation(val text: String, val isMate: Boolean)
+/** Procena u kartici igraca — logika i testovi: `EvaluationLabel` (`logic/LocalFormat.kt`). */
+typealias Evaluation = EvaluationLabel
 
-fun evaluationOf(score: Double, mateIn: Int?): Evaluation = when {
-    mateIn != null -> Evaluation((if (mateIn < 0) "−" else "") + "M${abs(mateIn)}", isMate = true)
-    abs(score) < 0.05 -> Evaluation(locDecimal(0.0), isMate = false)
-    else -> Evaluation(locDecimal(score, signed = true), isMate = false)
-}
+fun evaluationOf(score: Double, mateIn: Int?): Evaluation = EvaluationLabel.of(score, mateIn)
 
 /**
  * Kartica igraca / protivnika (spec § 5): `surface` + ivica (`line` 1 dp, aktivna
@@ -121,6 +116,8 @@ fun PlayerCard(
             .background(DS.surface)
             .border(if (isActive) 2.dp else 1.dp, if (isActive) DS.accent else DS.line, shape)
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            // Jedna labela za citac ekrana: ime, nivo, status (ukljucujuci „Šah"), procena.
+            .semantics(mergeDescendants = true) { }
             .padding(horizontal = DS.Space.m, vertical = DS.Space.s),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
@@ -176,12 +173,15 @@ fun PlayerCard(
                 )
             }
             when (status) {
-                PlayerCardStatus.ToMove -> Row(
+                is PlayerCardStatus.ToMove -> Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(DS.success))
                     Text(text = loc("Na potezu"), color = DS.ink, style = Type.caption, fontWeight = FontWeight.Medium)
+                    if (status.inCheck) {
+                        Text(text = "· " + loc("Šah"), color = DS.danger, style = Type.caption, fontWeight = FontWeight.SemiBold)
+                    }
                 }
                 PlayerCardStatus.Thinking -> Box(
                     modifier = Modifier
@@ -226,7 +226,7 @@ private fun EvaluationChip(evaluation: Evaluation) {
         modifier = Modifier
             .clip(shape)
             .background(if (evaluation.isMate) mateBadgeBackground else DS.fill)
-            .border(1.dp, if (evaluation.isMate) mateBadgeBorder else DS.fill, shape)
+            .border(1.dp, if (evaluation.isMate) mateBadgeBorder else DS.line, shape)
             .padding(horizontal = 7.dp, vertical = 3.dp),
         contentAlignment = Alignment.Center
     ) {

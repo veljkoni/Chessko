@@ -430,7 +430,7 @@ class MainActivity : ComponentActivity() {
                         text = { Text(text = loc("Partija je u toku. Sigurno želiš da počneš iznova?"), color = DS.ink) },
                         confirmButton = {
                             TextButton(onClick = {
-                                val action = pendingNewGame ?: { gameViewModel.resetGame() }
+                                val action = pendingNewGame ?: { gameViewModel.newGame(gameViewModel.gameMode, gameViewModel.playerColor) }
                                 dismiss()
                                 action()
                             }) {
@@ -723,7 +723,9 @@ class MainActivity : ComponentActivity() {
                                                 context.startActivity(Intent.createChooser(sendIntent, loc("Podeli partiju")))
                                             },
                                             MoreMenuItem(label = loc("Nova partija"), icon = Icons.Default.Refresh) {
-                                                requestNewGame { gameViewModel.resetGame() }
+                                                // Isto kao iOS `.restart`: `newGame` (ne `resetGame`), jer samo
+                                                // on pokrece racunar kad igrac igra crnima.
+                                                requestNewGame { gameViewModel.newGame(gameViewModel.gameMode, gameViewModel.playerColor) }
                                             },
                                             MoreMenuItem(
                                                 label = loc("Analiza"),
@@ -798,20 +800,36 @@ class MainActivity : ComponentActivity() {
                                             verticalAlignment = Alignment.Top
                                         ) {
                                             board(boardSize)
+                                            // Lista dobija ostatak visine panela (do dna table); kad
+                                            // gornji deo ne staje (nizak telefon, traka pregleda),
+                                            // panel skroluje umesto da sece.
+                                            val density = LocalDensity.current
+                                            var panelFixedPx by remember { mutableIntStateOf(0) }
+                                            val panelFixed = with(density) { panelFixedPx.toDp() }
+                                            val panelListHeight = (boardSize - panelFixed - DS.Space.s)
+                                                .coerceAtLeast(GameMinMoveListHeight)
                                             Column(
                                                 modifier = Modifier
                                                     .width(panelWidth)
-                                                    .height(boardSize),
+                                                    .height(boardSize)
+                                                    .verticalScroll(rememberScrollState()),
                                                 verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                                             ) {
-                                                header()
-                                                opponentCard()
-                                                playerCard()
-                                                actionBar(false)
-                                                if (gameViewModel.totalReviewMoves > 0) {
-                                                    ReviewControlsRow(viewModel = gameViewModel, modifier = Modifier.fillMaxWidth())
+                                                Column(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .onSizeChanged { panelFixedPx = it.height },
+                                                    verticalArrangement = Arrangement.spacedBy(DS.Space.s)
+                                                ) {
+                                                    header()
+                                                    opponentCard()
+                                                    playerCard()
+                                                    actionBar(false)
+                                                    if (gameViewModel.totalReviewMoves > 0) {
+                                                        ReviewControlsRow(viewModel = gameViewModel, modifier = Modifier.fillMaxWidth())
+                                                    }
                                                 }
-                                                moveList(Modifier.weight(1f).heightIn(min = MoveRowHeight))
+                                                moveList(Modifier.height(panelListHeight))
                                             }
                                         }
                                     }
@@ -1046,6 +1064,10 @@ private fun GameHeaderRow(onNewGame: () -> Unit, onSettings: () -> Unit) {
 private fun isComputerSide(viewModel: GameViewModel, color: PieceColor): Boolean =
     viewModel.gameMode == GameMode.VS_COMPUTER && color != viewModel.playerColor
 
+/** Strana `color` je u sahu (spec § 5: sah se kaze u kartici, ne u posebnom redu). */
+private fun isSideInCheck(viewModel: GameViewModel, color: PieceColor): Boolean =
+    (viewModel.gameState.status as? GameStatus.Check)?.color == color
+
 private fun isActiveSide(viewModel: GameViewModel, color: PieceColor): Boolean =
     viewModel.gameState.currentTurn == color && !viewModel.isGameOver
 
@@ -1086,7 +1108,7 @@ private fun GameOpponentCard(
     val status: PlayerCardStatus? = when {
         !active -> null
         computer -> if (viewModel.isThinking) PlayerCardStatus.Thinking else null
-        else -> PlayerCardStatus.ToMove
+        else -> PlayerCardStatus.ToMove(inCheck = isSideInCheck(viewModel, color))
     }
     val subtitle = if (computer) {
         listOfNotNull(
@@ -1143,6 +1165,31 @@ private fun GameOpponentCard(
                         colors = itemColors
                     )
                 }
+                // Stockfish nivo, kad je izabran Stockfish (paritet sa iOS menijem).
+                if (viewModel.difficulty == GameDifficulty.STOCKFISH) {
+                    DSRowDivider()
+                    StockfishLevel.values().forEach { level ->
+                        val selected = viewModel.stockfishLevel == level
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = loc(level.label),
+                                    style = Type.body,
+                                    color = if (selected) DS.accent else DS.ink,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            },
+                            trailingIcon = if (selected) {
+                                { Icon(imageVector = Icons.Default.Check, contentDescription = null) }
+                            } else null,
+                            onClick = {
+                                viewModel.stockfishLevel = level
+                                menuOpen = false
+                            },
+                            colors = itemColors
+                        )
+                    }
+                }
                 DSRowDivider()
                 DropdownMenuItem(
                     text = { Text(text = loc("Igraj sa prijateljem"), style = Type.body) },
@@ -1186,7 +1233,7 @@ private fun GamePlayerCard(
         viewModel.isGameOver -> PlayerCardStatus.Result(getStatusMessage(viewModel))
         !active -> null
         computer -> if (viewModel.isThinking) PlayerCardStatus.Thinking else null
-        else -> PlayerCardStatus.ToMove
+        else -> PlayerCardStatus.ToMove(inCheck = isSideInCheck(viewModel, color))
     }
     PlayerCard(
         color = color,
