@@ -65,6 +65,26 @@ object Loc {
         get() = pluralDictionary
 
     private val pluralDictionary: Map<String, Map<String, Map<PluralCategory, String>>> = mapOf(
+        "Beli gubi oko %d piona prednosti." to mapOf(
+            "sr" to mapOf(PluralCategory.ONE to "Beli gubi oko %d piona prednosti.", PluralCategory.FEW to "Beli gubi oko %d piona prednosti.", PluralCategory.OTHER to "Beli gubi oko %d piona prednosti."),
+            "en" to mapOf(PluralCategory.ONE to "White loses about %d pawn of advantage.", PluralCategory.OTHER to "White loses about %d pawns of advantage."),
+            "fr" to mapOf(PluralCategory.ONE to "Les Blancs perdent environ %d pion d'avantage.", PluralCategory.OTHER to "Les Blancs perdent environ %d pions d'avantage."),
+            "de" to mapOf(PluralCategory.ONE to "Weiß verliert etwa %d Bauern Vorteil.", PluralCategory.OTHER to "Weiß verliert etwa %d Bauern Vorteil."),
+            "it" to mapOf(PluralCategory.ONE to "Il Bianco perde circa %d pedone di vantaggio.", PluralCategory.OTHER to "Il Bianco perde circa %d pedoni di vantaggio."),
+            "ru" to mapOf(PluralCategory.ONE to "Белые теряют преимущество примерно в %d пешку.", PluralCategory.FEW to "Белые теряют преимущество примерно в %d пешки.", PluralCategory.MANY to "Белые теряют преимущество примерно в %d пешек.", PluralCategory.OTHER to "Белые теряют преимущество примерно в %d пешки."),
+            "zh-Hans" to mapOf(PluralCategory.OTHER to "白方损失约%d个兵的优势。"),
+            "hi" to mapOf(PluralCategory.ONE to "सफ़ेद लगभग %d प्यादे की बढ़त गंवाता है।", PluralCategory.OTHER to "सफ़ेद लगभग %d प्यादों की बढ़त गंवाता है।")
+        ),
+        "Crni gubi oko %d piona prednosti." to mapOf(
+            "sr" to mapOf(PluralCategory.ONE to "Crni gubi oko %d piona prednosti.", PluralCategory.FEW to "Crni gubi oko %d piona prednosti.", PluralCategory.OTHER to "Crni gubi oko %d piona prednosti."),
+            "en" to mapOf(PluralCategory.ONE to "Black loses about %d pawn of advantage.", PluralCategory.OTHER to "Black loses about %d pawns of advantage."),
+            "fr" to mapOf(PluralCategory.ONE to "Les Noirs perdent environ %d pion d'avantage.", PluralCategory.OTHER to "Les Noirs perdent environ %d pions d'avantage."),
+            "de" to mapOf(PluralCategory.ONE to "Schwarz verliert etwa %d Bauern Vorteil.", PluralCategory.OTHER to "Schwarz verliert etwa %d Bauern Vorteil."),
+            "it" to mapOf(PluralCategory.ONE to "Il Nero perde circa %d pedone di vantaggio.", PluralCategory.OTHER to "Il Nero perde circa %d pedoni di vantaggio."),
+            "ru" to mapOf(PluralCategory.ONE to "Чёрные теряют преимущество примерно в %d пешку.", PluralCategory.FEW to "Чёрные теряют преимущество примерно в %d пешки.", PluralCategory.MANY to "Чёрные теряют преимущество примерно в %d пешек.", PluralCategory.OTHER to "Чёрные теряют преимущество примерно в %d пешки."),
+            "zh-Hans" to mapOf(PluralCategory.OTHER to "黑方损失约%d个兵的优势。"),
+            "hi" to mapOf(PluralCategory.ONE to "काला लगभग %d प्यादे की बढ़त गंवाता है।", PluralCategory.OTHER to "काला लगभग %d प्यादों की बढ़त गंवाता है।")
+        ),
         "dana zaredom" to mapOf(
             "sr" to mapOf(PluralCategory.ONE to "dan zaredom", PluralCategory.FEW to "dana zaredom", PluralCategory.OTHER to "dana zaredom"),
             "en" to mapOf(PluralCategory.ONE to "day in a row", PluralCategory.OTHER to "days in a row"),
@@ -88,6 +108,12 @@ object Loc {
     )
 
     private val dictionary: Map<String, Map<String, String>> = mapOf(
+        // Task 6 dizajnerskog pregleda (spec § 6): analiza partije — tačnost i rečenica prelomnog poteza.
+        "Premalo poteza za procenu tačnosti." to mapOf("sr" to "Premalo poteza za procenu tačnosti.", "en" to "Too few moves to estimate accuracy.", "fr" to "Trop peu de coups pour estimer la précision.", "de" to "Zu wenige Züge, um die Genauigkeit zu schätzen.", "it" to "Troppe poche mosse per stimare la precisione.", "ru" to "Слишком мало ходов для оценки точности.", "zh-Hans" to "着法太少，无法评估准确率。", "hi" to "सटीकता का अनुमान लगाने के लिए बहुत कम चालें।"),
+        "Beli propušta mat." to mapOf("sr" to "Beli propušta mat.", "en" to "White misses a mate.", "fr" to "Les Blancs manquent un mat.", "de" to "Weiß verpasst ein Matt.", "it" to "Il Bianco si lascia sfuggire il matto.", "ru" to "Белые упускают мат.", "zh-Hans" to "白方错过了将杀。", "hi" to "सफ़ेद मात देने का मौका चूक जाता है।"),
+        "Crni propušta mat." to mapOf("sr" to "Crni propušta mat.", "en" to "Black misses a mate.", "fr" to "Les Noirs manquent un mat.", "de" to "Schwarz verpasst ein Matt.", "it" to "Il Nero si lascia sfuggire il matto.", "ru" to "Чёрные упускают мат.", "zh-Hans" to "黑方错过了将杀。", "hi" to "काला मात देने का मौका चूक जाता है।"),
+        "Beli dozvoljava mat." to mapOf("sr" to "Beli dozvoljava mat.", "en" to "White allows a mate.", "fr" to "Les Blancs permettent un mat.", "de" to "Weiß lässt ein Matt zu.", "it" to "Il Bianco concede il matto.", "ru" to "Белые допускают мат.", "zh-Hans" to "白方让对手可以将杀。", "hi" to "सफ़ेद मात होने देता है।"),
+        "Crni dozvoljava mat." to mapOf("sr" to "Crni dozvoljava mat.", "en" to "Black allows a mate.", "fr" to "Les Noirs permettent un mat.", "de" to "Schwarz lässt ein Matt zu.", "it" to "Il Nero concede il matto.", "ru" to "Чёрные допускают мат.", "zh-Hans" to "黑方让对手可以将杀。", "hi" to "काला मात होने देता है।"),
         // Task 4 dizajnerskog pregleda (spec § 5): Igra — akciona traka, kartica igraca, kraj partije.
         "Više" to mapOf("sr" to "Više", "en" to "More", "fr" to "Plus", "de" to "Mehr", "it" to "Altro", "ru" to "Ещё", "zh-Hans" to "更多", "hi" to "और"),
         "Nova partija" to mapOf("sr" to "Nova partija", "en" to "New game", "fr" to "Nouvelle partie", "de" to "Neue Partie", "it" to "Nuova partita", "ru" to "Новая партия", "zh-Hans" to "新对局", "hi" to "नई बाज़ी"),

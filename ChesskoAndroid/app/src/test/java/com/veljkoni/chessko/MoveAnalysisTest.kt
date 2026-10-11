@@ -1,6 +1,8 @@
 package com.veljkoni.chessko
 
+import com.veljkoni.chessko.logic.EvaluationLabel
 import com.veljkoni.chessko.models.AnalyzedMove
+import com.veljkoni.chessko.models.BeginnerExplanation
 import com.veljkoni.chessko.models.EngineScore
 import com.veljkoni.chessko.models.GameAnalysis
 import com.veljkoni.chessko.models.MoveClass
@@ -103,7 +105,7 @@ class MoveAnalysisTest {
         assertEquals(MoveClass.BEST, MoveClass.classify(900, true))
     }
 
-    // MARK: - Procenat tacnosti (formula doslovno iz spec-a)
+    // MARK: - Procenat tacnosti (formula doslovno iz spec-a, nad gubitkom procenta pobede)
 
     @Test
     fun accuracyMatchesSpecFormula() {
@@ -325,5 +327,88 @@ class MoveAnalysisTest {
         )
         assertTrue(analysis.moves.isEmpty())
         assertEquals(100.0, analysis.whiteAccuracy, 0.0)
+    }
+
+    // MARK: - Dizajnerski pregled § 6 / § 17: tacnost „0,0 %" posle 8–9 poteza
+
+    /** Ocene iz zadatih gubitaka: `loss_i = s[i] + s[i+1]` (isto kao iOS test). */
+    private fun scoresFrom(start: Int, losses: List<Int>): List<EngineScore> {
+        val s = mutableListOf(start)
+        for (loss in losses) s.add(loss - s.last())
+        return s.map { EngineScore.Cp(it) }
+    }
+
+    /**
+     * Reprodukcija snimaka 52, 64, 71 (iOS `shortGameWithOneBlunderDoesNotCollapseAccuracyToZero`):
+     * partija od 9 poteza, crni igra solidno i ostavi damu jednom. Do popravke je
+     * crni dobijao tacno 0,0 % — Lichess formula (konstante za gubitak PROCENTA
+     * POBEDE) primenjivana je na prosecan gubitak u CENTIPIONIMA.
+     */
+    @Test
+    fun shortGameWithOneBlunderDoesNotCollapseAccuracyToZero() {
+        val losses = listOf(0, 10, 0, 0, 0, 5, 5, 0, 0, 900, 0, 0, 10, 10, 0, 0, 0, 5)
+        val analysis = GameAnalysis.build(
+            notations = losses.indices.map { "m$it" },
+            scores = scoresFrom(20, losses),
+            engineBestMatched = losses.map { false }
+        )
+        assertEquals(MoveClass.BLUNDER, analysis.moves[9].moveClass)
+        assertTrue("crni ${analysis.blackAccuracy}", analysis.blackAccuracy != 0.0)
+        assertTrue("crni ${analysis.blackAccuracy}", analysis.blackAccuracy > 50.0)
+        assertTrue(analysis.blackAccuracy < analysis.whiteAccuracy)
+        assertTrue(analysis.whiteAccuracy > 90.0)
+    }
+
+    /** Promasaj u izgubljenoj poziciji kosta manje nego u izjednacenoj (procenat pobede). */
+    @Test
+    fun accuracyWeighsLossByWinningChancesNotRawCentipawns() {
+        val even = GameAnalysis.winPercentLoss(EngineScore.Cp(0), EngineScore.Cp(300))
+        val alreadyLost = GameAnalysis.winPercentLoss(EngineScore.Cp(-900), EngineScore.Cp(1200))
+        assertTrue(even > alreadyLost)
+        assertEquals(0.0, GameAnalysis.winPercentLoss(EngineScore.Cp(50), EngineScore.Cp(-50)), 0.0)
+    }
+
+    @Test
+    fun winPercentIsFiftyAtEqualAndMonotone() {
+        assertEquals(50.0, GameAnalysis.winPercent(0), 1e-9)
+        assertTrue(GameAnalysis.winPercent(300) > GameAnalysis.winPercent(100))
+        assertTrue(GameAnalysis.winPercent(100_000) < 100.0)
+        assertTrue(GameAnalysis.winPercent(-100_000) > 0.0)
+    }
+
+    /** Ispod praga poteza po strani tacnost se ne prikazuje („—"). */
+    @Test
+    fun accuracyIsWithheldBelowMoveThreshold() {
+        val n = GameAnalysis.MIN_MOVES_FOR_ACCURACY
+        val losses = List(2 * n - 1) { 0 }
+        val analysis = GameAnalysis.build(
+            notations = losses.indices.map { "m$it" },
+            scores = scoresFrom(0, losses),
+            engineBestMatched = losses.map { true }
+        )
+        assertTrue(analysis.reliableAccuracy(white = true) != null)
+        assertNull(analysis.reliableAccuracy(white = false))
+    }
+
+    // MARK: - Objasnjenje prelomnog poteza za pocetnike (§ 6)
+
+    @Test
+    fun beginnerExplanationRoundsPawnsAndDetectsMates() {
+        fun move(before: EngineScore, after: EngineScore): AnalyzedMove =
+            GameAnalysis.build(listOf("g4"), listOf(before, after), listOf(false)).moves[0]
+        assertEquals(BeginnerExplanation.PawnsLost(2), move(EngineScore.Cp(0), EngineScore.Cp(233)).beginnerExplanation)
+        assertEquals(BeginnerExplanation.PawnsLost(3), move(EngineScore.Cp(0), EngineScore.Cp(260)).beginnerExplanation)
+        assertEquals(BeginnerExplanation.PawnsLost(1), move(EngineScore.Cp(0), EngineScore.Cp(110)).beginnerExplanation)
+        assertEquals(BeginnerExplanation.AllowedMate, move(EngineScore.Cp(0), EngineScore.Mate(2)).beginnerExplanation)
+        assertEquals(BeginnerExplanation.MissedMate, move(EngineScore.Mate(1), EngineScore.Cp(0)).beginnerExplanation)
+        // Vec matiran i dalje matiran: nije „dozvolio mat".
+        assertTrue(move(EngineScore.Mate(-3), EngineScore.Mate(2)).beginnerExplanation != BeginnerExplanation.AllowedMate)
+    }
+
+    @Test
+    fun lossLabelUsesLocalDecimalAndTypographicMinus() {
+        assertEquals("\u22122,3", EvaluationLabel.loss(233, "sr"))
+        assertEquals("\u22122.3", EvaluationLabel.loss(233, "en"))
+        assertEquals("\u221210,0", EvaluationLabel.loss(1000, "sr"))
     }
 }

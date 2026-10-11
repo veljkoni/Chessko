@@ -65,26 +65,26 @@ import Testing
     #expect(MoveClass.classify(cpLoss: 15, playedEngineBest: true) == .best)
 }
 
-// MARK: - Procenat tacnosti (formula doslovno iz spec-a)
+// MARK: - Procenat tacnosti (formula doslovno iz spec-a, nad gubitkom procenta pobede)
 
 @Test func accuracyMatchesSpecFormula() {
     // 103.1668 * exp(-0.04354 * x) - 3.1669
-    #expect(abs(GameAnalysis.accuracy(avgCpLoss: 0) - 99.9999) < 0.01)
-    #expect(abs(GameAnalysis.accuracy(avgCpLoss: 10) - 63.5) < 0.5)
-    #expect(abs(GameAnalysis.accuracy(avgCpLoss: 50) - 8.5) < 0.5)
+    #expect(abs(GameAnalysis.accuracy(winPercentLoss: 0) - 99.9999) < 0.01)
+    #expect(abs(GameAnalysis.accuracy(winPercentLoss: 10) - 63.5) < 0.5)
+    #expect(abs(GameAnalysis.accuracy(winPercentLoss: 50) - 8.5) < 0.5)
 }
 
 @Test func accuracyIsClampedToZeroAndHundred() {
     // Formula za veliko x ide ispod nule (-3.1669 u limitu).
-    #expect(GameAnalysis.accuracy(avgCpLoss: 1000) == 0)
-    #expect(GameAnalysis.accuracy(avgCpLoss: 0) <= 100)
-    #expect(GameAnalysis.accuracy(avgCpLoss: -5) == 100)
+    #expect(GameAnalysis.accuracy(winPercentLoss: 1000) == 0)
+    #expect(GameAnalysis.accuracy(winPercentLoss: 0) <= 100)
+    #expect(GameAnalysis.accuracy(winPercentLoss: -5) == 100)
 }
 
 @Test func accuracyFallsAsAverageLossRises() {
-    let a = GameAnalysis.accuracy(avgCpLoss: 5)
-    let b = GameAnalysis.accuracy(avgCpLoss: 25)
-    let c = GameAnalysis.accuracy(avgCpLoss: 80)
+    let a = GameAnalysis.accuracy(winPercentLoss: 5)
+    let b = GameAnalysis.accuracy(winPercentLoss: 25)
+    let c = GameAnalysis.accuracy(winPercentLoss: 80)
     #expect(a > b)
     #expect(b > c)
 }
@@ -251,4 +251,85 @@ import Testing
 @Test func returnsNilWhenScoreBlockCarriesNeitherCpNorMate() {
     // `<score>` postoji ali odmah sledi drugi tag — nema sta da se procita.
     #expect(UCIScoreParser.score(from: "<info> <score> <nodes> 4000") == nil)
+}
+
+// MARK: - Dizajnerski pregled § 6 / § 17: tačnost „0,0 %" posle 8–9 poteza
+
+/// Ocene iz zadatih gubitaka: `loss_i = s[i] + s[i+1]`, pa `s[i+1] = loss_i - s[i]`.
+/// Tako test zadaje gubitke kakve bi motor stvarno dao (ne izmišlja ocene).
+private func scores(start: Int, losses: [Int]) -> [EngineScore] {
+    var s = [start]
+    for loss in losses { s.append(loss - s.last!) }
+    return s.map { .cp($0) }
+}
+
+/// Reprodukcija snimaka 52, 64, 71: partija od 9 poteza, crni igra solidno i
+/// napravi JEDAN promašaj (ostavi damu). Do popravke je crni dobijao tačno 0,0 %,
+/// jer je formula, čije su konstante Lichess-ove za GUBITAK PROCENTA POBEDE,
+/// primenjivana na PROSEČAN GUBITAK U CENTIPIONIMA: već prosek od ~80 cp daje 0.
+@Test func shortGameWithOneBlunderDoesNotCollapseAccuracyToZero() {
+    // beli / crni naizmenično; crni: 10, 0, 5, 0, 900 (promašaj), 0, 10, 0, 5
+    let losses = [0, 10, 0, 0, 0, 5, 5, 0, 0, 900, 0, 0, 10, 10, 0, 0, 0, 5]
+    let analysis = GameAnalysis.build(
+        notations: losses.indices.map { "m\($0)" },
+        scores: scores(start: 20, losses: losses),
+        engineBestMatched: losses.map { _ in false }
+    )
+    #expect(analysis.moves[9].moveClass == .blunder)
+    #expect(analysis.blackAccuracy != 0)
+    // Strana koja je odigrala osam dobrih poteza i jedan loš nije „0 % tačna".
+    #expect(analysis.blackAccuracy > 50)
+    #expect(analysis.blackAccuracy < analysis.whiteAccuracy)
+    #expect(analysis.whiteAccuracy > 90)
+}
+
+/// Promašaj u izgubljenoj poziciji košta manje od istog promašaja u izjednačenoj —
+/// tako radi procenat pobede (Lichess), a prosečan gubitak u centipionima ne.
+@Test func accuracyWeighsLossByWinningChancesNotRawCentipawns() {
+    let even = GameAnalysis.winPercentLoss(before: .cp(0), after: .cp(300))
+    let alreadyLost = GameAnalysis.winPercentLoss(before: .cp(-900), after: .cp(1200))
+    #expect(even > alreadyLost)
+    #expect(GameAnalysis.winPercentLoss(before: .cp(50), after: .cp(-50)) == 0)
+}
+
+@Test func winPercentIsFiftyAtEqualAndMonotone() {
+    #expect(abs(GameAnalysis.winPercent(centipawns: 0) - 50) < 1e-9)
+    #expect(GameAnalysis.winPercent(centipawns: 300) > GameAnalysis.winPercent(centipawns: 100))
+    #expect(GameAnalysis.winPercent(centipawns: 100_000) < 100)
+    #expect(GameAnalysis.winPercent(centipawns: -100_000) > 0)
+}
+
+/// Ispod praga poteza po strani tačnost se ne prikazuje („—").
+@Test func accuracyIsWithheldBelowMoveThreshold() {
+    let n = GameAnalysis.minMovesForAccuracy
+    // 2n − 1 poluteza: beli ima n poteza, crni n − 1.
+    let losses = Array(repeating: 0, count: 2 * n - 1)
+    let analysis = GameAnalysis.build(
+        notations: losses.indices.map { "m\($0)" },
+        scores: scores(start: 0, losses: losses),
+        engineBestMatched: losses.map { _ in true }
+    )
+    #expect(analysis.reliableAccuracy(white: true) != nil)
+    #expect(analysis.reliableAccuracy(white: false) == nil)
+}
+
+// MARK: - Objašnjenje prelomnog poteza za početnike (§ 6)
+
+@Test func beginnerExplanationRoundsPawnsAndDetectsMates() {
+    func move(_ before: EngineScore, _ after: EngineScore) -> AnalyzedMove {
+        GameAnalysis.build(notations: ["g4"], scores: [before, after], engineBestMatched: [false]).moves[0]
+    }
+    #expect(move(.cp(0), .cp(233)).beginnerExplanation == .pawnsLost(2))
+    #expect(move(.cp(0), .cp(260)).beginnerExplanation == .pawnsLost(3))
+    #expect(move(.cp(0), .cp(110)).beginnerExplanation == .pawnsLost(1))
+    #expect(move(.cp(0), .mate(2)).beginnerExplanation == .allowedMate)
+    #expect(move(.mate(1), .cp(0)).beginnerExplanation == .missedMate)
+    // Već matiran i dalje matiran: nije „dozvolio mat".
+    #expect(move(.mate(-3), .mate(2)).beginnerExplanation != .allowedMate)
+}
+
+@Test func lossLabelUsesLocalDecimalAndTypographicMinus() {
+    #expect(EvaluationLabel.loss(cpLoss: 233, languageCode: "sr") == "\u{2212}2,3")
+    #expect(EvaluationLabel.loss(cpLoss: 233, languageCode: "en") == "\u{2212}2.3")
+    #expect(EvaluationLabel.loss(cpLoss: 1000, languageCode: "sr") == "\u{2212}10,0")
 }

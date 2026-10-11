@@ -85,6 +85,33 @@ data class AnalyzedMove(
     /** „17.Lc4" ili „17…Lc4" — oblik iz spec-a za prelomni potez. */
     val displayNotation: String
         get() = if (byWhite) "$moveNumber.$notation" else "$moveNumber…$notation"
+
+    /**
+     * Sta potez znaci za pocetnika (dizajnerski pregled § 6): umesto „(−233)"
+     * ekran kaze „Beli gubi oko dva piona prednosti.". Mat se kaze recima, jer je
+     * gubitak koji ga nosi vestacki (`MAX_CP_LOSS`). iOS: `AnalyzedMove.beginnerExplanation`.
+     */
+    val beginnerExplanation: BeginnerExplanation
+        get() {
+            // Posle poteza je na potezu protivnik: `Mate(n > 0)` = protivnik matira.
+            val opponentMatesAfter = scoreAfter is EngineScore.Mate && scoreAfter.n > 0
+            val moverMatedBefore = scoreBefore is EngineScore.Mate && scoreBefore.n <= 0
+            val moverMatesBefore = scoreBefore is EngineScore.Mate && scoreBefore.n > 0
+            val moverStillMatesAfter = scoreAfter is EngineScore.Mate && scoreAfter.n < 0
+            if (moverMatesBefore && !moverStillMatesAfter) return BeginnerExplanation.MissedMate
+            if (opponentMatesAfter && !moverMatedBefore) return BeginnerExplanation.AllowedMate
+            return BeginnerExplanation.PawnsLost(Math.round(cpLoss / 100.0).toInt())
+        }
+}
+
+/** Recenica ispod prelomnog poteza (§ 6). Tekst bira prikaz (8 jezika, mnozine). */
+sealed interface BeginnerExplanation {
+    /** Gubi oko N piona prednosti (zaokruzeno na ceo pion). */
+    data class PawnsLost(val pawns: Int) : BeginnerExplanation
+    /** Imao je mat, a potez ga je propustio. */
+    data object MissedMate : BeginnerExplanation
+    /** Potez dozvoljava protivniku mat. */
+    data object AllowedMate : BeginnerExplanation
 }
 
 data class GameAnalysis(
@@ -103,10 +130,11 @@ data class GameAnalysis(
         /**
          * Gornja granica gubitka po potezu.
          *
-         * Propusten mat daje razliku od ~20.000 centipiona. Bez ove granice bi
-         * jedan takav potez sam odredio prosek cele partije i tacnost bi pala na
-         * ~0 iako je ostatak partije bio solidan. 1000 je trostruko iznad praga
-         * za promasaj (300), pa ne sakriva nijednu gresku.
+         * Propusten mat daje razliku od ~20.000 centipiona. Granica drzi broj u
+         * prelomnoj kartici citljivim („−10,0", ne „−199,9"). Tacnost od § 17
+         * dizajnerskog pregleda vise ne zavisi od `cpLoss` (racuna se iz procenta
+         * pobede), pa granica sada utice samo na klasu i prelomni potez. 1000 je
+         * trostruko iznad praga za promasaj (300), pa ne sakriva nijednu gresku.
          */
         const val MAX_CP_LOSS = 1000
 
@@ -124,9 +152,42 @@ data class GameAnalysis(
             return max(0, min(MAX_CP_LOSS, raw))
         }
 
-        /** Lichess formula iz spec-a 5.5, ogranicena na 0…100. */
-        fun accuracy(avgCpLoss: Double): Double {
-            val raw = 103.1668 * exp(-0.04354 * avgCpLoss) - 3.1669
+        /**
+         * Ispod ovoliko SOPSTVENIH poteza strana nema prikazanu tacnost („—" i
+         * „Premalo poteza za procenu tačnosti."). Tacnost je prosek po potezu, pa
+         * je kod 4 poteza jedan potez cetvrtina rezultata, a prvi potezi su skoro
+         * uvek otvaranje sa gubitkom ~0. Od 5 poteza nijedan ne nosi vise od 20 %.
+         */
+        const val MIN_MOVES_FOR_ACCURACY = 5
+
+        /**
+         * Procenat pobede (0…100) iz centipiona, Lichess `WinPercent.fromCentiPawns`:
+         * `50 + 50 · (2 / (1 + e^(−0,00368208 · cp)) − 1)`, cp ogranicen na ±1000.
+         */
+        fun winPercent(centipawns: Int): Double {
+            val cp = centipawns.coerceIn(-1000, 1000).toDouble()
+            return 50 + 50 * (2 / (1 + exp(-0.00368208 * cp)) - 1)
+        }
+
+        /**
+         * Koliko je procenata pobede potez odneo igracu koji ga je odigrao (≥ 0).
+         * `after` je iz ugla protivnika (vidi `cpLoss`), pa je igracev procenat
+         * posle poteza `winPercent(−after)`.
+         */
+        fun winPercentLoss(before: EngineScore, after: EngineScore): Double =
+            max(0.0, winPercent(before.centipawns) - winPercent(-after.centipawns))
+
+        /**
+         * Tacnost JEDNOG poteza — Lichess formula iz spec-a 5.5, ogranicena na 0…100.
+         *
+         * Ulaz je GUBITAK PROCENTA POBEDE, ne centipioni. Konstante su Lichess-ove i
+         * kalibrisane za procenat pobede; do dizajnerskog pregleda (§ 17) formula je
+         * primenjivana na prosecan gubitak u centipionima, pa je prosek od ~80 cp vec
+         * davao 0 % — jedna ostavljena figura u kratkoj partiji obarala je stranu na
+         * „0,0 %". iOS: `GameAnalysis.accuracy(winPercentLoss:)`.
+         */
+        fun accuracy(winPercentLoss: Double): Double {
+            val raw = 103.1668 * exp(-0.04354 * winPercentLoss) - 3.1669
             return min(100.0, max(0.0, raw))
         }
 
@@ -170,11 +231,14 @@ data class GameAnalysis(
                 )
             }
 
+            // Tacnost strane = prosek tacnosti njenih poteza (svaki iz gubitka
+            // procenta pobede). Lichess uz to mesa harmonijsku sredinu i tezine po
+            // nestabilnosti pozicije; aritmeticka sredina je namerno jednostavnija
+            // i blaza prema jednom promasaju, a ista je na obe platforme.
             fun accuracyFor(white: Boolean): Double {
                 val side = moves.filter { it.byWhite == white }
                 if (side.isEmpty()) return 100.0
-                val avg = side.sumOf { it.cpLoss }.toDouble() / side.size
-                return accuracy(avg)
+                return side.sumOf { accuracy(winPercentLoss(it.scoreBefore, it.scoreAfter)) } / side.size
             }
 
             return GameAnalysis(
@@ -194,6 +258,18 @@ data class GameAnalysis(
      * oboji akcentom, kao najbolji potez u partiji. Potez koji bi i motor
      * odigrao nije prelomni potez, ma sta merenje reklo.
      */
+    /** Broj poteza jedne strane. */
+    fun moveCount(white: Boolean): Int = moves.count { it.byWhite == white }
+
+    /**
+     * Tacnost za prikaz: `null` kad strana ima manje od `MIN_MOVES_FOR_ACCURACY`
+     * sopstvenih poteza (ekran tada pokazuje „—").
+     */
+    fun reliableAccuracy(white: Boolean): Double? {
+        if (moveCount(white) < MIN_MOVES_FOR_ACCURACY) return null
+        return if (white) whiteAccuracy else blackAccuracy
+    }
+
     val turningPoint: AnalyzedMove?
         get() {
             val worst = moves.filter { it.moveClass != MoveClass.BEST }

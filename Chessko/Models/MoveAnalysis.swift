@@ -73,6 +73,30 @@ struct AnalyzedMove: Sendable, Identifiable, Equatable {
     var displayNotation: String {
         byWhite ? "\(moveNumber).\(notation)" : "\(moveNumber)…\(notation)"
     }
+
+    /// Šta potez znači za početnika (dizajnerski pregled § 6): umesto „(−233)"
+    /// ekran kaže „Beli gubi oko dva piona prednosti.". Mat se kaže rečima, jer
+    /// gubitak koji ga nosi je veštački (`maxCpLoss`), ne „deset piona".
+    var beginnerExplanation: BeginnerExplanation {
+        // Posle poteza je na potezu protivnik: `.mate(n > 0)` = protivnik matira.
+        let opponentMatesAfter: Bool = { if case .mate(let n) = scoreAfter { return n > 0 } else { return false } }()
+        let moverMatedBefore: Bool = { if case .mate(let n) = scoreBefore { return n <= 0 } else { return false } }()
+        let moverMatesBefore: Bool = { if case .mate(let n) = scoreBefore { return n > 0 } else { return false } }()
+        let moverStillMatesAfter: Bool = { if case .mate(let n) = scoreAfter { return n < 0 } else { return false } }()
+        if moverMatesBefore && !moverStillMatesAfter { return .missedMate }
+        if opponentMatesAfter && !moverMatedBefore { return .allowedMate }
+        return .pawnsLost(Int((Double(cpLoss) / 100).rounded()))
+    }
+}
+
+/// Rečenica ispod prelomnog poteza (§ 6). Tekst bira prikaz (8 jezika, množine).
+enum BeginnerExplanation: Equatable, Sendable {
+    /// Gubi oko N piona prednosti (zaokruženo na ceo pion).
+    case pawnsLost(Int)
+    /// Imao je mat, a potez ga je propustio.
+    case missedMate
+    /// Potez dozvoljava protivniku mat.
+    case allowedMate
 }
 
 struct GameAnalysis: Sendable, Equatable {
@@ -87,11 +111,22 @@ struct GameAnalysis: Sendable, Equatable {
 
     /// Gornja granica gubitka po potezu.
     ///
-    /// Propusten mat daje razliku od ~20.000 centipiona. Bez ove granice bi
-    /// jedan takav potez sam odredio prosek cele partije i tacnost bi pala na
-    /// ~0 iako je ostatak partije bio solidan. 1000 je trostruko iznad praga
-    /// za promasaj (300), pa ne sakriva nijednu gresku.
+    /// Propusten mat daje razliku od ~20.000 centipiona. Granica drzi broj u
+    /// prelomnoj kartici citljivim („−10,0", ne „−199,9"). Tacnost od § 17
+    /// dizajnerskog pregleda vise ne zavisi od `cpLoss` (racuna se iz procenta
+    /// pobede), pa granica sada utice samo na klasu i prelomni potez. 1000 je
+    /// trostruko iznad praga za promasaj (300), pa ne sakriva nijednu gresku.
     static let maxCpLoss = 1000
+
+    /// Broj poteza jedne strane.
+    func moveCount(white: Bool) -> Int { moves.filter { $0.byWhite == white }.count }
+
+    /// Tačnost za prikaz: `nil` kad strana ima manje od `minMovesForAccuracy`
+    /// sopstvenih poteza (ekran tada pokazuje „—").
+    func reliableAccuracy(white: Bool) -> Double? {
+        guard moveCount(white: white) >= Self.minMovesForAccuracy else { return nil }
+        return white ? whiteAccuracy : blackAccuracy
+    }
 
     var turningPoint: AnalyzedMove? {
         // `.best` se ISKLJUCUJE. `classify` daje `.best` cim je odigran potez
@@ -119,9 +154,35 @@ struct GameAnalysis: Sendable, Equatable {
         return max(0, min(maxCpLoss, raw))
     }
 
-    /// Lichess formula iz spec-a 5.5, ogranicena na 0…100.
-    static func accuracy(avgCpLoss: Double) -> Double {
-        let raw = 103.1668 * exp(-0.04354 * avgCpLoss) - 3.1669
+    /// Ispod ovoliko SOPSTVENIH poteza strana nema prikazanu tačnost („—" i
+    /// „Premalo poteza za procenu tačnosti."). Tačnost je prosek po potezu, pa je
+    /// kod 4 poteza jedan potez četvrtina rezultata, a prvi potezi su skoro uvek
+    /// otvaranje sa gubitkom ~0. Od 5 poteza nijedan potez ne nosi više od 20 %.
+    static let minMovesForAccuracy = 5
+
+    /// Procenat pobede (0…100) iz centipiona, Lichess `WinPercent.fromCentiPawns`:
+    /// `50 + 50 · (2 / (1 + e^(−0,00368208 · cp)) − 1)`, cp ograničen na ±1000.
+    static func winPercent(centipawns: Int) -> Double {
+        let cp = Double(max(-1000, min(1000, centipawns)))
+        return 50 + 50 * (2 / (1 + exp(-0.00368208 * cp)) - 1)
+    }
+
+    /// Koliko je procenata pobede potez odneo igraču koji ga je odigrao (≥ 0).
+    /// `after` je iz ugla protivnika (vidi `cpLoss`), pa je igračev procenat
+    /// posle poteza `winPercent(−after)`.
+    static func winPercentLoss(before: EngineScore, after: EngineScore) -> Double {
+        max(0, winPercent(centipawns: before.centipawns) - winPercent(centipawns: -after.centipawns))
+    }
+
+    /// Tačnost JEDNOG poteza — Lichess formula iz spec-a 5.5, ograničena na 0…100.
+    ///
+    /// Ulaz je GUBITAK PROCENTA POBEDE, ne centipioni. Konstante (103,1668 /
+    /// 0,04354 / 3,1669) su Lichess-ove i kalibrisane su za procenat pobede; do
+    /// dizajnerskog pregleda (§ 17) formula je primenjivana na prosečan gubitak u
+    /// centipionima, pa je prosek od ~80 cp već davao 0 % — jedan ostavljen
+    /// lovac ili dama u kratkoj partiji obarao je celu stranu na „0,0 %".
+    static func accuracy(winPercentLoss: Double) -> Double {
+        let raw = 103.1668 * exp(-0.04354 * winPercentLoss) - 3.1669
         return min(100, max(0, raw))
     }
 
@@ -161,11 +222,17 @@ struct GameAnalysis: Sendable, Equatable {
             ))
         }
 
+        // Tačnost strane = prosek tačnosti njenih poteza (svaki iz gubitka
+        // procenta pobede). Lichess uz to meša harmonijsku sredinu i težine po
+        // nestabilnosti pozicije; aritmetička sredina je namerno jednostavnija i
+        // blaža prema jednom promašaju, a ista je na obe platforme.
         func accuracyFor(white: Bool) -> Double {
             let side = moves.filter { $0.byWhite == white }
             guard !side.isEmpty else { return 100 }
-            let avg = Double(side.reduce(0) { $0 + $1.cpLoss }) / Double(side.count)
-            return accuracy(avgCpLoss: avg)
+            let sum = side.reduce(0.0) {
+                $0 + accuracy(winPercentLoss: winPercentLoss(before: $1.scoreBefore, after: $1.scoreAfter))
+            }
+            return sum / Double(side.count)
         }
 
         return GameAnalysis(

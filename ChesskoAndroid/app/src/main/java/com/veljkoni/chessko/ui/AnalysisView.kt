@@ -3,12 +3,18 @@ package com.veljkoni.chessko.ui
 import com.veljkoni.chessko.ui.theme.dsCard
 import com.veljkoni.chessko.logic.locPercent
 import com.veljkoni.chessko.logic.loc
+import com.veljkoni.chessko.logic.locPlural
+import com.veljkoni.chessko.logic.EvaluationLabel
+import com.veljkoni.chessko.models.BeginnerExplanation
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,14 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.veljkoni.chessko.models.AnalyzedMove
 import com.veljkoni.chessko.models.GameAnalysis
-import com.veljkoni.chessko.models.MoveClass
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
 import com.veljkoni.chessko.viewmodels.AnalysisError
@@ -49,8 +53,9 @@ import kotlin.math.max
 //
 // **Sopstveni `AnalysisViewModel`, ne deljen.** Pravi se preko `remember`,
 // NE preko `viewModel()`/`ViewModelStoreOwner` — ovaj ekran se otvara kao
-// puni `Dialog` (nema NavHost-a u projektu, vidi `PathView.kt`), pa bi
-// `viewModel()` vezao zivotni vek za Activity, a ne za sam dijalog:
+// celoekransko odrediste (`FullScreenDestination`, `FullScreen.kt`; nema
+// NavHost-a u projektu), pa bi `viewModel()` vezao zivotni vek za Activity, a
+// ne za sam ekran:
 // `onCleared()` se tada ne bi izvrsio dok korisnik ne zatvori CELU
 // aplikaciju. `DisposableEffect` ispod zove `cancel()` eksplicitno pri
 // zatvaranju ekrana — isti razlog zasto `AnalysisViewModel`-ova doc-komentar
@@ -59,39 +64,16 @@ import kotlin.math.max
 // cekao da se svih ~N pretraga zavrsi pre nego sto AI odigra prvi potez —
 // `StockfishEngine` je `object` sa JEDNIM `searchMutex`-om.
 //
-// **Preslikavanje klase u boju — sest klasa u CETIRI boje, isto kao iOS**
-// (`Chessko/Views/AnalysisView.swift:153-160`; CLAUDE.md, „Analiza partije":
-// „Sest klasa poteza preslikava se u cetiri boje"). `BEST` dobija sopstveni
-// `DS.accent`, ODVOJENO od `EXCELLENT`/`GOOD` (`DS.success`); `INACCURACY` i
-// `MISTAKE` dele `DS.warning`; `BLUNDER` je sam na `DS.danger`. Samo DVA para
-// klasa deli boju (excellent+good, inaccuracy+mistake) — to je zapisano
-// ogranicenje iOS-a, ne previd, i ovaj ekran ga prenosi doslovno, ne
-// pojednostavljuje ga dalje. `BEST` znaci „odigran je potez motora" i mora
-// ostati vizuelno razlicit od „solidno" (`good`): to je jedina klasa koja
-// nosi drugaciju vrstu dobre vesti, i jedina zbog koje igrac uopste gleda
-// traku dvaput. `DS.accent` je vec boja `turningPoint` kartice — ali
-// `turningPoint` ISKLJUCUJE `BEST` (vidi `GameAnalysis.turningPoint`), pa se
-// akcent u praksi nikad ne pojavljuje na obe stvari istovremeno; sudara nema.
-// Naziv klase ostaje i u `contentDescription` na svakom potezu i u prelomnoj
-// kartici, pa VoiceOver/TalkBack ekvivalent razlikuje svih 6 i kad se boja
-// od dve deli.
-//
-// **Kontrast — nijedan nov par.** Svi parovi koje ovaj ekran crta su vec
-// pokriveni postojecim `ContrastTest`-om: `ink/ground` i `ink/surface`
-// (naslovi, vrednosti tacnosti), `inkMuted/ground` i `inkMuted/surface`
-// (natpisi), `success/surface` i `danger/surface` (tacke klasa i ikonica
-// prelomnog poteza, `textOnBackgroundsMeetsAA`), `accent/ground` i
-// `accent/surface` (dugme „Zatvori" I tacka klase `BEST`, koja sedi na
-// `DS.surface` u `MoveChip` — isti par, `accentTextOnSurfaceAndGroundMeetsAA`,
-// izmereno 8,53 svetla / 6,43 tamna, daleko iznad AA praga 4,5 u obe teme —
-// ne samo iznad laksem ne-tekstualnom pragu 3:1 koji bi tacki od 8dp i onako
-// bio dovoljan), `accent/fill` (traka napretka, `textOnFillMeetsAA`).
-// `warning/surface` (tacka klasa NETACNOST/GRESKA) NIJE nov potrosac — isti
-// par vec crta `StatItem` u `SettingsView.kt` (kartica statistike, `DS.warning`
-// tekst na `DS.surface`) i vec je upisan u `ContrastTest.knownSubAAPairsDoNotGetWorse`
-// (3,61 u svetloj temi, ispod AA za TEKST — ovde je upotreba jos blaza,
-// obojena tacka od 8dp, ne tekst, pa vazi laksi ne-tekstualni prag 3:1 koji
-// prolazi u obe teme).
+// **Dizajnerski pregled § 6.** Klasa poteza je simbol + ispuna
+// (`MoveClassBadge`, `GameComponents.kt`; boja = porodica: success / inkMuted /
+// warning / danger) — `DS.accent` se za klasu NE koristi, jer u istoj listi znaci
+// „izabran potez". Lista poteza je ista komponenta kao u Igri (`MoveHistoryView`,
+// broj · beli · crni). Prelomni potez nosi `warning` ikonu, gubitak u pionima
+// („−2,3", `EvaluationLabel.loss`) i recenicu za pocetnika. Tacnost ispod
+// `GameAnalysis.MIN_MOVES_FOR_ACCURACY` sopstvenih poteza je „—" uz napomenu.
+// Svi parovi boja su postojeci (§ 2 tabela: success/warning/danger/inkMuted na
+// surface, inkMuted na ground) i pokriveni `ContrastTest`-om. iOS:
+// `Chessko/Views/AnalysisView.swift`, ista pravila.
 
 @Composable
 fun AnalysisView(viewModel: GameViewModel, onClose: () -> Unit) {
@@ -152,11 +134,18 @@ fun AnalysisView(viewModel: GameViewModel, onClose: () -> Unit) {
             when {
                 error != null -> ErrorMessage(error)
                 analysis != null -> {
-                    AccuracyRow(analysis)
+                    AccuracySection(analysis)
                     analysis.turningPoint?.let { tp ->
                         TurningPointCard(move = tp) { open(viewModel, tp, onClose) }
                     }
-                    MoveStrip(analysis) { move -> open(viewModel, move, onClose) }
+                    AnalysisMoveList(
+                        analysis = analysis,
+                        selectedMoveIndex = viewModel.viewingMoveIndex,
+                        onSelectMove = { index -> // broj odigranih poluteza (ply + 1)
+                            viewModel.goToMove(index)
+                            onClose()
+                        }
+                    )
                 }
                 else -> {
                     val done = (analysisViewModel.progress * total).toInt().coerceIn(0, total)
@@ -226,42 +215,54 @@ private fun errorText(error: AnalysisError): String = when (error) {
 
 // MARK: - Tacnost
 
+/** § 6 / § 17: ispod praga poteza strana dobija „—" i napomenu (`inkMuted` na `ground`). */
 @Composable
-private fun AccuracyRow(result: GameAnalysis) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(DS.Space.l)
-    ) {
-        AccuracyBox(
-            title = loc("beli").replaceFirstChar { it.uppercase() },
-            value = result.whiteAccuracy,
-            modifier = Modifier.weight(1f)
-        )
-        AccuracyBox(
-            title = loc("crni").replaceFirstChar { it.uppercase() },
-            value = result.blackAccuracy,
-            modifier = Modifier.weight(1f)
-        )
+private fun AccuracySection(result: GameAnalysis) {
+    val white = result.reliableAccuracy(white = true)
+    val black = result.reliableAccuracy(white = false)
+    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.l)
+        ) {
+            AccuracyBox(
+                title = loc("beli").replaceFirstChar { it.uppercase() },
+                value = white,
+                modifier = Modifier.weight(1f)
+            )
+            AccuracyBox(
+                title = loc("crni").replaceFirstChar { it.uppercase() },
+                value = black,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        if (white == null || black == null) {
+            Text(
+                text = loc("Premalo poteza za procenu tačnosti."),
+                color = DS.inkMuted,
+                style = Type.caption,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
 @Composable
-private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modifier) {
+private fun AccuracyBox(title: String, value: Double?, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .dsCard() // spec § 3: surface + 1 dp line (iOS `.dsCard()`)
-            .padding(DS.Space.m),
+            .padding(DS.Space.m)
+            .semantics(mergeDescendants = true) {},
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        // Cela kartica je paritet: naslov i oznaka `.dsCaption`, vrednost `.dsTitle`
-        // (`Chessko/Views/AnalysisView.swift:87`, `:90`, `:93`).
         Text(text = title, color = DS.inkMuted, style = Type.caption, fontWeight = FontWeight.Medium)
         Text(
-            // Lokalni format JEZIKA APLIKACIJE (spec § 3: „0,0 %" na srpskom), ne
-            // sistemskog jezika uredjaja — `locPercent` cita `Loc`, ne sistem.
-            // Do dizajnerskog pregleda je ovde stajao `Locale.US` (uvek tacka).
-            text = locPercent(value),
+            // Lokalni format JEZIKA APLIKACIJE (spec § 3: „0,0 %" na srpskom);
+            // ispod praga poteza „—" (§ 6).
+            text = value?.let { locPercent(it) } ?: "\u2014",
             color = DS.ink,
             style = Type.title,
             fontWeight = FontWeight.Bold
@@ -272,122 +273,77 @@ private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modif
 
 // MARK: - Prelomni potez
 
+/** Recenica za pocetnika (§ 6). Strana je ona koja je odigrala potez. */
+private fun explanation(move: AnalyzedMove): String = when (val e = move.beginnerExplanation) {
+    is BeginnerExplanation.PawnsLost ->
+        if (move.byWhite) locPlural("Beli gubi oko %d piona prednosti.", e.pawns)
+        else locPlural("Crni gubi oko %d piona prednosti.", e.pawns)
+    BeginnerExplanation.MissedMate -> if (move.byWhite) loc("Beli propušta mat.") else loc("Crni propušta mat.")
+    BeginnerExplanation.AllowedMate -> if (move.byWhite) loc("Beli dozvoljava mat.") else loc("Crni dozvoljava mat.")
+}
+
+/** § 6: ikona `warning`, „2.g4  −2,3" i recenica umesto „2.g4 (−233)". */
 @Composable
 private fun TurningPointCard(move: AnalyzedMove, onClick: () -> Unit) {
-    val description = "${loc("Prelomni potez")}: ${move.displayNotation}, −${move.cpLoss}"
+    val loss = EvaluationLabel.loss(move.cpLoss)
+    val sentence = explanation(move)
+    val description = "${loc("Prelomni potez")}, ${move.moveClass.accessibilityName}, " +
+        "${move.displayNotation}, $loss. $sentence"
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .dsCard() // spec § 3: surface + 1 dp line (iOS `.dsCard()`)
             .clickable(onClick = onClick)
-            .padding(14.dp)
-            .semantics(mergeDescendants = true) { contentDescription = description },
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(DS.Space.m)
+            .clearAndSetSemantics {
+                contentDescription = description
+                role = Role.Button
+            },
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
     ) {
         Icon(
             imageVector = Icons.Default.Warning,
             contentDescription = null,
-            tint = colorFor(move.moveClass),
+            tint = DS.warning,
             modifier = Modifier.size(22.dp)
         )
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            // iOS: `.dsCaption` pa `.dsHeading`
-            // (`Chessko/Views/AnalysisView.swift:109`, `:112`).
+        Column(verticalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
             Text(text = loc("Prelomni potez"), color = DS.inkMuted, style = Type.caption, fontWeight = FontWeight.Medium)
-            Text(
-                text = "${move.displayNotation}  (−${move.cpLoss})",
-                color = DS.ink,
-                style = Type.heading,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-// MARK: - Traka poteza
-//
-// Manuelna mreza (chunked po redovima), NE `LazyVerticalGrid`: ekran je vec
-// unutar `verticalScroll`-a, a lazy mreza bez fiksne visine unutar drugog
-// skrola puca (beskonacna visina). Broj poteza u partiji je u praksi mali
-// (par desetina), pa obicna, ne-lenja mreza ne kosta nista vidljivo.
-
-@Composable
-private fun MoveStrip(result: GameAnalysis, onClick: (AnalyzedMove) -> Unit) {
-    val itemMinWidth = 96.dp
-    // Imenovan razmak, ne dimenzija: ide pravo u `Arrangement.spacedBy` dva
-    // reda nize. Zato token, iako nije zapisan unutar `spacedBy(...)`.
-    val spacing = DS.Space.s
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val columns = max(1, ((maxWidth + spacing) / (itemMinWidth + spacing)).toInt())
-        Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
-            result.moves.chunked(columns).forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(spacing)
-                ) {
-                    row.forEach { move ->
-                        MoveChip(move = move, modifier = Modifier.weight(1f)) { onClick(move) }
-                    }
-                    // Poravnanje poslednjeg, nepopunjenog reda.
-                    repeat(columns - row.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+            ) {
+                MoveClassBadge(move.moveClass)
+                Text(text = move.displayNotation, color = DS.ink, style = Type.heading, fontWeight = FontWeight.Bold)
+                Text(text = loss, color = DS.ink, style = Type.heading, fontWeight = FontWeight.Bold)
             }
+            Text(text = sentence, color = DS.ink, style = Type.body)
         }
     }
 }
 
+// MARK: - Lista poteza
+//
+// § 6: ista lista kao u Igri (broj · beli · crni), oznaka klase ispred poteza,
+// izabran red na accent tinti. Izabran je potez koji je korisnik vec otvorio u
+// pregledu partije (isti `viewingMoveIndex` kao u Igri); tap otvara potez na tabli.
+// Ekran vec skroluje, pa lista dobija punu visinu (svi redovi, bez unutrasnjeg skrola).
+
 @Composable
-private fun MoveChip(move: AnalyzedMove, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val description = "${move.displayNotation}, ${classLabel(move.moveClass)}"
-    Row(
-        modifier = modifier
-            .dsCard(radius = DS.Radius.s) // spec § 3: surface + 1 dp line (iOS isto)
-            .clickable(onClick = onClick)
-            .padding(horizontal = DS.Space.s, vertical = 6.dp)
-            .semantics(mergeDescendants = true) { contentDescription = description },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(colorFor(move.moveClass))
-        )
-        Text(
-            text = move.displayNotation,
-            color = DS.ink,
-            // iOS: `.dsMono` (`Chessko/Views/AnalysisView.swift:137`). `fontFamily`
-            // je obrisan jer ga `Type.mono` vec nosi -- brisanje je bez posledica
-            // samo zato sto se poklapa sa stilom.
-            style = Type.mono
-        )
-    }
-}
-
-// MARK: - Klase
-
-/**
- * Sest klasa u cetiri boje, isto kao iOS (vidi doc-komentar fajla). `BEST`
- * je ODVOJEN od `EXCELLENT`/`GOOD` — jedini spoj je excellent+good i
- * inaccuracy+mistake.
- */
-@Composable
-private fun colorFor(c: MoveClass): Color = when (c) {
-    MoveClass.BEST -> DS.accent
-    MoveClass.EXCELLENT, MoveClass.GOOD -> DS.success
-    MoveClass.INACCURACY, MoveClass.MISTAKE -> DS.warning
-    MoveClass.BLUNDER -> DS.danger
-}
-
-private fun classLabel(c: MoveClass): String = when (c) {
-    MoveClass.BEST -> loc("najbolji")
-    MoveClass.EXCELLENT -> loc("odličan")
-    MoveClass.GOOD -> loc("dobar")
-    MoveClass.INACCURACY -> loc("netačnost")
-    MoveClass.MISTAKE -> loc("greška")
-    MoveClass.BLUNDER -> loc("promašaj")
+private fun AnalysisMoveList(
+    analysis: GameAnalysis,
+    selectedMoveIndex: Int?,
+    onSelectMove: (Int) -> Unit
+) {
+    val classes = remember(analysis) { analysis.moves.associate { it.ply to it.moveClass } }
+    val rows = (analysis.moves.size + 1) / 2
+    MoveHistoryView(
+        notations = analysis.moves.map { it.notation },
+        modifier = Modifier.height(MoveRowHeight * rows + DS.Space.xs * 2),
+        selectedMoveIndex = selectedMoveIndex,
+        highlightsLastMoveWhenLive = false,
+        moveClass = { classes[it] },
+        onSelectMove = onSelectMove
+    )
 }

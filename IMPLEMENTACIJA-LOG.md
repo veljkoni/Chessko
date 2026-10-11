@@ -878,7 +878,112 @@ Ispravljeno u fix rundi 1.)
 
 ## Task 6 — Analiza partije (§ 6, § 17 tačnost)
 
-_(popunjava Task 6)_
+### Urađeno po stavkama § 6
+
+- [x] **P1 · Android — preko celog prozora.** Već urađeno u Task-u 3 (`FullScreenDestination`);
+  zadržano. Zastareo komentar u `AND/ui/AnalysisView.kt` („otvara se kao puni `Dialog`") ispravljen.
+- [x] **P1 · obe — klase poteza simbolom i ispunom.** Analiza sada crta `MoveClassBadge` (Task 4,
+  ★ ! ✓ ?! ? ??, boja = porodica, ispuna = klasa) — u listi poteza i u kartici prelomnog poteza.
+  Stare tačke u boji i funkcije `color(for:)` (iOS) / `colorFor` + `classLabel` (Android), koje su
+  „najbolji" bojile u `accent`, **obrisane** — `accent` se na ekranu Analize više ne koristi za
+  klasu (ostaje samo „Zatvori", traka napretka i izabran red). Čitač ekrana: „Promašaj, 2. g4"
+  (iz `MoveHistoryView`), u kartici „Prelomni potez, promašaj, 2.g4, −2,3. Beli gubi…".
+- [x] **P2 · obe — ikona prelomnog poteza `warning`** (iOS `exclamationmark.triangle.fill`, Android
+  `Icons.Default.Warning`); ranije boja klase (`danger` za promašaj).
+- [x] **P2 · obe — tačnost** (vidi „§ 17 — dijagnoza" ispod): formula popravljena na obe platforme;
+  ispod praga strana dobija „—" (U+2014) u kartici, a ispod kartica napomena „Premalo poteza za
+  procenu tačnosti." (`Type.caption`, `inkMuted` na `ground` — 5,28 / 5,94).
+- [x] **P2 · obe — procena za početnike.** Kartica prelomnog poteza: oznaka klase · „2.g4" · „−2,3"
+  (`Type.heading`), ispod rečenica `Type.body` `ink`. Broj: `EvaluationLabel.loss(cpLoss:)`
+  (lokalni decimalni zarez, uvek U+2212, zaokruživanje „od nule" kao u `EvaluationLabel.make`).
+  Rečenica iz `AnalyzedMove.beginnerExplanation` (čista funkcija u modelu, testirana):
+  `pawnsLost(n)` → „Beli/Crni gubi oko N piona prednosti." (množina, `LocPlural`/`locPlural`,
+  N = gubitak zaokružen na ceo pion); `missedMate` → „Beli/Crni propušta mat." (pre poteza je imao
+  mat, posle nema); `allowedMate` → „Beli/Crni dozvoljava mat." (posle poteza protivnik matira, a
+  pre nije bio već matiran). Mat se kaže rečima jer je gubitak koji ga nosi veštački (granica 1000
+  cp → „−10,0" bi zvučalo kao „deset piona").
+- [x] **P2 · obe — lista poteza kao u Igri.** `MoveHistoryView` (broj · beli · crni, red 36,
+  `Type.mono`) sa `moveClass` zatvaranjem → oznaka ispred poteza. Izabran red = `viewingMoveIndex`
+  igre (isti izvor kao u Igri): ako je korisnik već otvorio potez u pregledu partije pa se vratio u
+  Analizu, taj potez je na accent tinti; inače ništa nije izabrano (`highlightsLastMoveWhenLive =
+  false`). Tap, kao i do sada, otvara potez na tabli (`goToMove` + zatvaranje). Ekran već skroluje,
+  pa lista dobija punu visinu (`redovi × 36 + 2 × Space.xs`) bez unutrašnjeg skrola. Čipovi u tri
+  kolone i neporavnato „1…Sc6" nestali.
+- [ ] **P3 · obe — mini-tabla izabranog poteza** — nije rađeno (opciono). Na ovom ekranu tap na
+  potez odmah otvara tu poziciju na velikoj tabli, pa trajnog „izabranog" poteza nema; mini-tabla bi
+  tražila novi tok (tap bira, posebno dugme otvara) — promena interakcije, ostavljeno za odluku.
+
+### § 17 — dijagnoza „0,0 %" posle 8–9 poteza
+
+**Formula je bila pogrešna, ne prikaz.** Reprodukovano testom PRE izmene, na obe platforme
+(`shortGameWithOneBlunderDoesNotCollapseAccuracyToZero`): partija od 9 poteza, beli bez greške,
+crni osam solidnih poteza (gubici 0–10 cp) i jedan promašaj (ostavljena dama, 900 cp) →
+**crni tačno 0,0 %** (iOS `analysis.blackAccuracy → 0.0`, Android „crni 0.0").
+
+Uzrok: tačnost se računala kao `103,1668 · e^(−0,04354 · x) − 3,1669` gde je `x` bio **prosečan
+gubitak u centipionima**. Te konstante su Lichess-ove i kalibrisane za **gubitak procenta pobede**
+(0–100), ne za centipione (Lichess `AccuracyPercent.fromWinPercents`). U pogrešnim jedinicama
+formula pada na 0 već kod proseka ≈ 80 cp (`e^(−0,04354·80) ≈ 3,1669/103,1668`), pa jedan
+promašaj od 900 cp u 9 poteza (prosek ≈ 105 cp) obara celu stranu na nulu, bez obzira na ostale
+poteze. Granica `maxCpLoss = 1000` je to samo ublažavala. Greška potiče iz spec-a v2
+(`docs/superpowers/specs/2026-09-05-chessko-v2-design.md:278` piše `avgCpLoss`) i doslovno je
+prenesena na obe platforme (Faza 5 / 6e); nije znak/perspektiva ni mešanje strana — `cpLoss`,
+klase i razdvajanje po strani bili su tačni (postojeći testovi to i dalje tvrde).
+
+Popravka (identično na obe, `MoveAnalysis.swift` / `MoveAnalysis.kt`):
+- `winPercent(centipawns:)` = `50 + 50 · (2 / (1 + e^(−0,00368208 · cp)) − 1)`, cp ograničen na
+  ±1000 (Lichess `WinPercent.fromCentiPawns`);
+- `winPercentLoss(before:after:)` = `max(0, win(before) − win(−after))` (ista okretna perspektiva
+  kao `cpLoss`);
+- `accuracy(winPercentLoss:)` = ista formula iz spec-a, sada u pravim jedinicama (bila
+  `accuracy(avgCpLoss:)`);
+- tačnost strane = **aritmetička sredina** tačnosti njenih poteza. Lichess uz to meša težine po
+  nestabilnosti i harmonijsku sredinu; harmonijska sredina je nedefinisana/oštra kad potez ima
+  0 %, a težine traže prozor nestabilnosti — svesno izostavljeno radi jednostavnosti i pariteta
+  (rezultat je blaži od Lichess-a za partije sa jednim promašajem).
+
+Isti primer posle popravke: beli 99,7 %, crni **89,5 %** (promašaj sam ≈ 12 %, ostalih osam
+96–100 %). Klase poteza i prelomni potez se i dalje računaju iz `cpLoss` (pragovi 20/50/100/300
+nepromenjeni).
+
+**Prag:** `minMovesForAccuracy` / `MIN_MOVES_FOR_ACCURACY` = **5 sopstvenih poteza po strani**.
+Razlog: tačnost je prosek po potezu, pa kod 4 poteza jedan potez nosi četvrtinu rezultata, a prvih
+nekoliko poteza su skoro uvek otvaranje sa gubitkom ~0 (rezultat bi bio ili „100 %" ili diktiran
+jednim potezom). Od 5 poteza nijedan ne nosi više od 20 %. Partije od 8–9 poteza sa snimaka (52, 64,
+71) imaju tačnost; partija od 4 poteza po strani dobija „—". Prag se proverava po strani
+(`reliableAccuracy(white:)`), pa posle 9 poluteza beli ima broj, a crni „—".
+
+Testovi: postojeći testovi formule (`accuracyMatchesSpecFormula`, `…Clamped…`, `…Falls…`) zadržali
+su nameru i iste brojeve, samo nad preimenovanim parametrom; „savršena igra > 99,99" i „strana se
+računa samo iz svojih poteza" prolaze bez izmene. Novi (obe platforme, 6 + 6): repro iznad,
+`accuracyWeighsLossByWinningChancesNotRawCentipawns`, `winPercentIsFiftyAtEqualAndMonotone`,
+`accuracyIsWithheldBelowMoveThreshold`, `beginnerExplanationRoundsPawnsAndDetectsMates`,
+`lossLabelUsesLocalDecimalAndTypographicMinus`. iOS `MoveAnalysisTests` 26 → 32, Android
+`MoveAnalysisTest` 27 → 33.
+
+### Odluke
+
+- Tap na potez u listi i dalje otvara potez na tabli (zatečeno ponašanje), a „izabran red" je
+  `viewingMoveIndex` — isti izvor kao u Igri, bez novog stanja.
+- Oznaka klase je i u kartici prelomnog poteza (ispred notacije) — ista komponenta, da prelomni
+  potez i lista govore istim jezikom.
+- „—" je em-crtica U+2014 (verbatim, bez ključa).
+
+### Neurađeno / TODO
+
+- P3 mini-tabla (vidi gore). Nema `TODO(design § 6)` u kodu.
+- Vizuelno neprovereno (bez simulatora/emulatora): visina liste u Analizi (puna visina unutar
+  skrola), prelom rečenice u kartici na uskim ekranima.
+
+### Novi stringovi
+
+7 ključeva, obe platforme (iOS katalog hirurški + `build_localizations.py`, Android `Loc.kt`):
+„Premalo poteza za procenu tačnosti.", „Beli/Crni propušta mat.", „Beli/Crni dozvoljava mat." i
+dve množinske osnove „Beli/Crni gubi oko %lld piona prednosti." (Android `%d`; `#one|few|many|other`).
+Nesigurni prevodi (bez izvornog govornika): ru „Белые теряют преимущество примерно в N пешку/пешки/
+пешек"; hi „लगभग N प्यादे/प्यादों की बढ़त गंवाता है", „मात देने का मौका चूक जाता है", „मात होने
+देता है"; zh „白方损失约N个兵的优势。", „让对手可以将杀"; it „si lascia sfuggire il matto"; de
+„verliert etwa N Bauern Vorteil" (ista forma za 1 i više — akuzativ jednine = množina).
 
 ## Task 7 — Put (§ 8)
 

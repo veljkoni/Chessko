@@ -3,8 +3,12 @@ import SwiftUI
 // MARK: - Analysis View
 //
 // Cist prikaz gotovog `GameAnalysis`-a. Ne racuna nista — sve brojke stizu iz
-// `GameAnalysis` (Foundation-only, testirano). Jedino sto ovaj fajl zna, a
-// model ne, jeste kako klasa poteza izgleda: boja i naziv.
+// `GameAnalysis` (Foundation-only, testirano). Dizajnerski pregled § 6: klasa
+// poteza je simbol + ispuna (`MoveClassBadge`, `GameComponents.swift`), `accent`
+// se za klasu NE koristi (u istoj listi znaci „izabran potez"); lista poteza je
+// ista komponenta kao u Igri (`MoveHistoryView`); prelomni potez nosi `warning`
+// ikonu, gubitak u pionima („−2,3") i recenicu za pocetnika. Android:
+// `ui/AnalysisView.kt`, ista pravila.
 
 struct AnalysisView: View {
 
@@ -28,9 +32,9 @@ struct AnalysisView: View {
                             .multilineTextAlignment(.center)
                             .padding(.top, DS.Space.xl)
                     case .done(let result):
-                        accuracyRow(result)
+                        accuracySection(result)
                         if let tp = result.turningPoint { turningPointCard(tp) }
-                        moveStrip(result)
+                        moveList(result)
                     }
                 }
                 .padding(DS.Space.l)
@@ -74,20 +78,33 @@ struct AnalysisView: View {
 
     // MARK: - Tacnost
 
-    private func accuracyRow(_ result: GameAnalysis) -> some View {
-        HStack(spacing: DS.Space.l) {
-            accuracyBox(title: Loc("beli").capitalized, value: result.whiteAccuracy)
-            accuracyBox(title: Loc("crni").capitalized, value: result.blackAccuracy)
+    /// § 6 / § 17: ispod `GameAnalysis.minMovesForAccuracy` sopstvenih poteza
+    /// strana dobija „—" i napomenu ispod kartica (`inkMuted` na `ground`).
+    private func accuracySection(_ result: GameAnalysis) -> some View {
+        let white = result.reliableAccuracy(white: true)
+        let black = result.reliableAccuracy(white: false)
+        return VStack(alignment: .leading, spacing: DS.Space.s) {
+            HStack(spacing: DS.Space.l) {
+                accuracyBox(title: Loc("beli").capitalized, value: white)
+                accuracyBox(title: Loc("crni").capitalized, value: black)
+            }
+            if white == nil || black == nil {
+                Text(Loc("Premalo poteza za procenu tačnosti."))
+                    .font(.dsCaption)
+                    .foregroundStyle(DS.inkMuted)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .multilineTextAlignment(.center)
+            }
         }
     }
 
-    private func accuracyBox(title: String, value: Double) -> some View {
+    private func accuracyBox(title: String, value: Double?) -> some View {
         VStack(spacing: DS.Space.xs) {
             Text(title)
                 .font(.dsCaption)
                 .foregroundStyle(DS.inkMuted)
             // Lokalni format jezika aplikacije (spec § 3): „41,9 %" na srpskom.
-            Text(verbatim: LocPercent(value))
+            Text(verbatim: value.map { LocPercent($0) } ?? "\u{2014}")
                 .font(.dsTitle)
                 .foregroundStyle(DS.ink)
             Text(Loc("Tačnost"))
@@ -97,80 +114,85 @@ struct AnalysisView: View {
         .frame(maxWidth: .infinity)
         .padding(DS.Space.m)
         .dsCard(radius: DS.Radius.m) // spec § 3: surface + 1 pt line
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Prelomni potez
 
+    /// § 6: ikona `warning` (bila `danger`/boja klase), „2.g4  −2,3" i recenica za
+    /// pocetnika umesto „2.g4 (−233)".
     private func turningPointCard(_ move: AnalyzedMove) -> some View {
-        HStack(spacing: DS.Space.m) {
+        let loss = EvaluationLabel.loss(cpLoss: move.cpLoss,
+                                        languageCode: LocalizationManager.shared.effectiveCode)
+        let sentence = explanation(for: move)
+        return HStack(alignment: .top, spacing: DS.Space.m) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(color(for: move.moveClass))
-            VStack(alignment: .leading, spacing: 2) {
+                .foregroundStyle(DS.warning)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text(Loc("Prelomni potez"))
                     .font(.dsCaption)
                     .foregroundStyle(DS.inkMuted)
-                Text(verbatim: "\(move.displayNotation)  (−\(move.cpLoss))")
-                    .font(.dsHeading)
+                HStack(spacing: DS.Space.s) {
+                    MoveClassBadge(moveClass: move.moveClass)
+                    Text(verbatim: move.displayNotation)
+                        .font(.dsHeading)
+                        .foregroundStyle(DS.ink)
+                    Text(verbatim: loss)
+                        .font(.dsHeading)
+                        .foregroundStyle(DS.ink)
+                        .monospacedDigit()
+                }
+                Text(sentence)
+                    .font(.dsBody)
                     .foregroundStyle(DS.ink)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer()
+            Spacer(minLength: 0)
         }
         .padding(DS.Space.m)
         .dsCard(radius: DS.Radius.m) // spec § 3: surface + 1 pt line
         .contentShape(Rectangle())
         .onTapGesture { open(move) }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim:
+            "\(Loc("Prelomni potez")), \(move.moveClass.accessibilityName), \(move.displayNotation), \(loss). \(sentence)"))
         .accessibilityAddTraits(.isButton)
     }
 
-    // MARK: - Traka poteza
+    /// Recenica za pocetnika (§ 6). Strana je ona koja je odigrala potez.
+    private func explanation(for move: AnalyzedMove) -> String {
+        switch move.beginnerExplanation {
+        case .pawnsLost(let n):
+            return move.byWhite ? LocPlural("Beli gubi oko %lld piona prednosti.", n)
+                                : LocPlural("Crni gubi oko %lld piona prednosti.", n)
+        case .missedMate:
+            return move.byWhite ? Loc("Beli propušta mat.") : Loc("Crni propušta mat.")
+        case .allowedMate:
+            return move.byWhite ? Loc("Beli dozvoljava mat.") : Loc("Crni dozvoljava mat.")
+        }
+    }
 
-    private func moveStrip(_ result: GameAnalysis) -> some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: DS.Space.s)],
-                  spacing: DS.Space.s) {
-            ForEach(result.moves) { move in
-                Button { open(move) } label: {
-                    HStack(spacing: DS.Space.xs) {
-                        Circle()
-                            .fill(color(for: move.moveClass))
-                            .frame(width: 8, height: 8)
-                        Text(verbatim: move.displayNotation)
-                            .font(.dsMono)
-                            .foregroundStyle(DS.ink)
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.vertical, DS.Space.xs)
-                    .padding(.horizontal, DS.Space.s)
-                    .dsCard(radius: DS.Radius.s) // spec § 3: surface + 1 pt line (Android isto)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text(verbatim: "\(move.displayNotation), \(label(for: move.moveClass))"))
+    // MARK: - Lista poteza
+
+    /// § 6: ista lista kao u Igri (broj · beli · crni), oznaka klase ispred poteza,
+    /// izabran red na accent tinti. Izabran je potez koji je korisnik vec otvorio u
+    /// pregledu partije (isti `viewingMoveIndex` kao u Igri); tap otvara potez na tabli.
+    /// Lista je unutar skrola ekrana, pa dobija punu visinu (bez sopstvenog skrola).
+    private func moveList(_ result: GameAnalysis) -> some View {
+        let classes = Dictionary(uniqueKeysWithValues: result.moves.map { ($0.ply, $0.moveClass) })
+        let rows = (result.moves.count + 1) / 2
+        return MoveHistoryView(
+            notations: result.moves.map(\.notation),
+            selectedMoveIndex: viewModel.viewingMoveIndex,
+            highlightsLastMoveWhenLive: false,
+            moveClass: { classes[$0] },
+            onSelectMove: { index in   // broj odigranih poluteza (ply + 1)
+                viewModel.goToMove(index)
+                dismiss()
             }
-        }
-    }
-
-    // MARK: - Klase
-
-    private func color(for c: MoveClass) -> Color {
-        switch c {
-        case .best:       DS.accent
-        case .excellent:  DS.success
-        case .good:       DS.success
-        case .inaccuracy: DS.warning
-        case .mistake:    DS.warning
-        case .blunder:    DS.danger
-        }
-    }
-
-    private func label(for c: MoveClass) -> String {
-        switch c {
-        case .best:       Loc("najbolji")
-        case .excellent:  Loc("odličan")
-        case .good:       Loc("dobar")
-        case .inaccuracy: Loc("netačnost")
-        case .mistake:    Loc("greška")
-        case .blunder:    Loc("promašaj")
-        }
+        )
+        .frame(height: CGFloat(rows) * MoveHistoryView.rowHeight + 2 * DS.Space.xs)
     }
 
     /// Otvara poziciju POSLE odigranog poteza u zatecenom review modu.

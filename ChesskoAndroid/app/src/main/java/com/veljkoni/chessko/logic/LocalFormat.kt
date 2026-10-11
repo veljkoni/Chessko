@@ -94,5 +94,15 @@ data class EvaluationLabel(val text: String, val isMate: Boolean) {
                 isMate = false
             )
         }
+
+        /**
+         * Gubitak prelomnog poteza u pionima za pocetnika (§ 6): „−2,3" umesto „(−233)".
+         * Uvek tipografski minus U+2212 i lokalni decimalni zarez/tacka. iOS:
+         * `EvaluationLabel.loss(cpLoss:languageCode:)`.
+         */
+        fun loss(cpLoss: Int, languageCode: String = Loc.fileLanguageCode()): String {
+            val pawns = kotlin.math.floor(kotlin.math.abs(cpLoss) / 10.0 + 0.5) / 10
+            return "\u2212" + LocalNumber.decimal(pawns, languageCode = languageCode)
+        }
     }
 }

@@ -108,3 +108,13 @@ struct EvaluationLabel: Equatable, Sendable {
                                isMate: false)
     }
 }
+
+extension EvaluationLabel {
+    /// Gubitak prelomnog poteza u pionima za početnika (§ 6): „−2,3" umesto „(−233)".
+    /// Uvek tipografski minus U+2212 i lokalni decimalni zarez/tačka. Android:
+    /// `EvaluationLabel.loss` u `logic/LocalFormat.kt`.
+    static func loss(cpLoss: Int, languageCode: String) -> String {
+        let pawns = (Double(abs(cpLoss)) / 10).rounded(.toNearestOrAwayFromZero) / 10
+        return "\u{2212}" + LocalNumber.decimal(pawns, languageCode: languageCode)
+    }
+}
