@@ -58,19 +58,32 @@ class BoardWidthCapTest {
         assertTrue("stepBoardSide mora da ogranici tablu sa DS.maxBoardSide", "DS.maxBoardSide" in helper)
     }
 
+    /**
+     * Svesno obrnuto u dizajnerskom pregledu (Task 8, spec § 9/§ 13). Ovde je stajao
+     * `lessonBoardsAreNotCapped` — tvrdnja da lekcijskim tablama granica ne treba jer
+     * su „vec ogranicene sirinom stranice". Na tabletu to nije bilo tacno (tabla do
+     * 1336 pt, snimci 87/95/110/119), pa spec trazi granicu i za lekciju.
+     *
+     * Do Task-a 11 (jedna funkcija strane table za sve ekrane) granica je privremena
+     * konstanta `LessonBoardMaxSide` u `LessonRenderer.kt` (= `DS.maxBoardSide`), a
+     * svaka lekcijska tabla je mora nositi. Test tvrdi oba: da konstanta postoji i
+     * izvodi se iz `DS.maxBoardSide`, i da je svaki fajl sa lekcijskom tablom koristi.
+     */
     @Test
-    fun lessonBoardsAreNotCapped() {
-        // Table u lekciji zive u skrolujucem stupcu i vec su ogranicene sirinom stranice;
-        // granica od 560 bi im samo dodala mrtav prostor. Ako neko ovo promeni, neka to
-        // bude odluka, ne previd.
+    fun lessonBoardsUseTheTemporaryCap() {
+        val renderer = read("src/main/java/com/veljkoni/chessko/ui/LessonRenderer.kt")
+        assertTrue(
+            "LessonRenderer.kt mora da definise LessonBoardMaxSide iz DS.maxBoardSide",
+            Regex("val\\s+LessonBoardMaxSide\\s*=\\s*DS\\.maxBoardSide").containsMatchIn(renderer)
+        )
         for (path in listOf(
             "src/main/java/com/veljkoni/chessko/ui/LearnView.kt",
             "src/main/java/com/veljkoni/chessko/ui/LessonRenderer.kt"
         )) {
             val src = read(path)
             assertTrue(
-                "$path je lekcijski — ne sme da nosi DS.maxBoardSide",
-                "DS.maxBoardSide" !in src
+                "$path crta lekcijsku tablu, pa mora da je ogranici sa LessonBoardMaxSide",
+                "widthIn(max = LessonBoardMaxSide)" in src
             )
         }
     }

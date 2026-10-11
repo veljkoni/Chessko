@@ -371,8 +371,10 @@ class ContrastTest {
             for ((styleName, styleColor) in listOf(
                 "INFO/null" to p.accent, "RULE" to p.warning, "WARNING" to p.danger
             )) {
-                checkPair("$label telo kutije ($styleName): ink na ${styleName}@10%% tintu",
-                    p.ink, over(styleColor, 0.1f, p.ground), 4.5)
+                // Spec § 9 (Task 8): kutija je `boja@10%` preko `surface` (ne `ground`),
+                // a naslov je od tada `ink` `Type.body` bold — isti par kao telo.
+                checkPair("$label telo i naslov kutije ($styleName): ink na ${styleName}@10%% preko surface",
+                    p.ink, over(styleColor, 0.1f, p.surface), 4.5)
             }
         }
     }
@@ -576,18 +578,25 @@ class ContrastTest {
     @Test
     fun lessonBoxIconTintOnItsOwnTintMeetsNonTextThreshold() {
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
+            // Spec § 9 (Task 8): podloga kutije je `boja@10%` preko `surface`.
             checkPair("$label LBox ikona (INFO/null) na accent@10%% tintu",
-                p.accent, over(p.accent, 0.1f, p.ground), 3.0)
+                p.accent, over(p.accent, 0.1f, p.surface), 3.0)
             checkPair("$label LBox ikona (WARNING) na danger@10%% tintu",
-                p.danger, over(p.danger, 0.1f, p.ground), 3.0)
+                p.danger, over(p.danger, 0.1f, p.surface), 3.0)
         }
         checkPair("tamna LBox ikona (RULE) na warning@10%% tintu",
-            DarkColors.warning, over(DarkColors.warning, 0.1f, DarkColors.ground), 3.0)
+            DarkColors.warning, over(DarkColors.warning, 0.1f, DarkColors.surface), 3.0)
         // Svetla RULE: do dizajnerskog pregleda PINOVANO ispod praga (2,936). Spec § 2
         // menja `warning` svetle teme na `#865F21`, pa par prelazi 3:1 (~4,52 nad
         // ground-tintom; nova kutija nad `surface` iz § 9 daje ~4,99).
         checkPair("svetla LBox ikona (RULE) na warning@10%% tintu",
-            LightColors.warning, over(LightColors.warning, 0.1f, LightColors.ground), 3.0)
+            LightColors.warning, over(LightColors.warning, 0.1f, LightColors.surface), 3.0)
+        // Spec § 2 navodi „ikona u kutiji pravila 4,99 / 7,05" — tacno ova dva para
+        // (nova kutija nad `surface`); prag 4,9 / 7,0 hvata svako pogorsanje.
+        checkPair("svetla RULE ikona (spec § 2: 4,99)",
+            LightColors.warning, over(LightColors.warning, 0.1f, LightColors.surface), 4.9)
+        checkPair("tamna RULE ikona (spec § 2: 7,05)",
+            DarkColors.warning, over(DarkColors.warning, 0.1f, DarkColors.surface), 7.0)
     }
 
     /**
@@ -622,8 +631,10 @@ class ContrastTest {
     @Test
     fun openingExerciseBadgeIconMeetsNonTextThreshold() {
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
-            checkPair("$label OpeningExerciseCard bedz ikone (accent@15%% na surface)",
-                p.accent, over(p.accent, 0.15f, p.surface), 3.0)
+            // Spec § 9 (Task 8): plocica ikone u kartici vezbe je `fill` + `ink`
+            // (bila `accent@15%` + `accent`) — accent je samo za ono sto se tapa.
+            checkPair("$label kartica vezbe: ink glif na fill plocici",
+                p.ink, p.fill, 3.0)
         }
     }
 
@@ -653,8 +664,9 @@ class ContrastTest {
     @Test
     fun lessonHeaderIconMeetsNonTextThreshold() {
         for ((label, p) in listOf("svetla" to LightColors, "tamna" to DarkColors)) {
-            checkPair("$label naslov lekcije ikone (accent@20%% na ground)",
-                p.accent, over(p.accent, 0.2f, p.ground), 3.0)
+            // Task 8 (spec § 3/§ 9): plocica naslovne ikone je `fill` + `ink`.
+            checkPair("$label naslov lekcije: ink ikona na fill plocici",
+                p.ink, p.fill, 3.0)
         }
     }
 }

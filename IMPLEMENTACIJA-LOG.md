@@ -1050,7 +1050,132 @@ iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; And
 
 ## Task 8 — Lekcija (§ 9)
 
-_(popunjava Task 8)_
+### Urađeno po stavkama § 9 (obe platforme, obe teme)
+
+- [x] **Hijerarhija iz tabele.** Naslov lekcije `Type.title` 22 bold `ink` (bio heading 17).
+  Sekcija `Type.heading` 17 bold `ink` + ikona/glif `inkMuted` (iOS `L_SectionHeader`, Android
+  `LSectionHeader`; bili `body` 15 i ikona/naslov u `accent` na Androidu). Pod-blok (naslov stavke
+  nabrajanja i numerisanog pravila) `Type.body` medium `ink`. Telo `Type.body` sa proredom 1,5 u
+  `ink` — iOS `lessonBodyLineSpacing = 4.5` (SF 15 ≈ 18 pt + 4,5 ≈ 22,5), Android
+  `LessonBodyStyle = Type.body.copy(lineHeight = 22.5.sp)`. Telo nabrajanja i numerisanog pravila je
+  na Androidu bilo `inkMuted` → `ink`. Meta (`pieceRow` količina, potpis table, hint vežbe)
+  `Type.caption` `inkMuted`. Podnaslov lekcije ostaje `body` `inkMuted` (podnaslov je meta po § 3,
+  veličinu nije menjala ni jedna platforma).
+- [x] **Naslovi sekcija nisu `accent`.** Uz njih i: ikona neutralne stavke nabrajanja (`accent` →
+  `inkMuted`; pravilo/upozorenje zadržavaju `warning`/`danger`), broj numerisanog pravila (`accent`
+  tinta → `fill` pločica + `ink`), naziv figure u `pieceRow` (Android `accent` → `ink`), vrednost u
+  tabeli (Android ceo stupac `accent`, iOS „∞" `accent` → `ink`), naslov info kartice istraživača
+  (Android `accent` → `ink`), naslovna pločica lekcije (`accent@20%` + `accent` → `fill` + `ink`).
+- [x] **Kutija pravila.** `boja` 10 % preko `surface` (dva sloja: `surface`, pa tinta), `Radius.m`,
+  bez ivice (bila 1 pt `boja@30%`); naslov 12 → `Type.body` bold `ink`; ikona u boji kutije, veličina
+  `body`. Isti oblik za `info`/`warning` kutije i citat. **Android citat je bio goli tekst** (bez
+  kutije) dok je iOS crtao `L_Box` — usklađeno: i Android crta citat kao kutiju (`accent` tinta,
+  ikona `FormatQuote`, autor kao naslov). Uslovi rokade: tekst razdvojen sa „ · " (svih 8 jezika)
+  crta se kao lista sa tačkama — renderer (`LessonLabels.boxItems` / `LBox`), JSON netaknut.
+- [x] **Emoji → glifovi.** Jedna odluka, dva mesta: iOS `LessonSymbol.resolve` (`Models/LessonContent.swift`,
+  Foundation-only — pokriva ga `swift test`) + `LessonSymbolView`; Android `SYMBOL_TO_GLYPH`.
+  `crown.fill` → ♔, `rectangle.portrait.fill` → ♖, `l.joystick.fill` → ♘, `rhombus.fill` → ♗, svi
+  uz U+FE0E; `tuningfork` → SF `arrow.triangle.branch` / `Icons.AutoMirrored.Filled.CallSplit`;
+  `dot.square.fill` → SF `square.fill` / `Icons.Filled.Square`. Boja: glif prima boju mesta na kom
+  stoji (vidi Odluke). Android: nov slučaj `LessonGlyph.Glyph(text)` (tekst koji prima `tint`);
+  mapa je sada **45 `Icon` + 4 `Glyph`**, `Emoji` nema nijedan par u mapi i ostaje samo kao prolaz
+  ne-ASCII glifa iz sadržaja (`lessonGlyph` else grana) — namerno, jer `symbolOutsideTheMapIsLoudNotSilent`
+  tu granicu čuva. KDoc/komentari mape ažurirani (stari tekst Faze 9 označen kao istorija).
+  `LessonGlyphMapTest` (instrumentisan) dobio `shippedIconsAreTintableNeverFullColorEmoji`: nijedan
+  isporučen simbol ne sme da da `Emoji`, svaki `Glyph` mora da se završava sa U+FE0E. Kompajlira se;
+  izvršava ga Task 13 (emulator).
+- [x] **Čipovi figura.** Izabrani `accent` + `onAccent`, ostali `fill` + `ink` (iOS bile
+  `primary.opacity(0.14/0.05)` sa labelama `inkMuted` 10 pt). Kartica čipova = `surface` + `line`
+  sa `Space.m` unutra. Android `LazyVerticalGrid` sa zakucanom visinom 110 dp (prazno dno) → dva
+  reda `Row`-ova. Labela `caption` bold na obe (iOS bila 10 pt, Android `label`). Dugmad scenarija
+  (rokada/en passant/promocija): iOS `warning` (aktivno) → `accent`/`onAccent`, neaktivno `fill`/`ink`,
+  `Radius.s` — kao Android; iOS više nema `warning` tintovan okvir oko njih.
+- [x] **Ritam.** Razmak između blokova računa se na jednom mestu po platformi (iOS
+  `LessonRenderer.gap(before:after:)`, Android `gapBefore`): `Space.xl` iznad i ispod razdelnika,
+  `Space.m` od naslova do teksta, inače `Space.l`; stavke nabrajanja `Space.m`. Ranije: iOS padding po
+  komponenti (8/10/12/14/16), Android `spacedBy(16)` + padding razdelnika 12 (= 28 sa obe strane).
+  iOS bočni razmak 20 → `Space.l` (16, kao Android), jednom na koloni umesto po bloku.
+- [x] **Tabela vrednosti.** Zaglavlje („Figura" / „Vrednost", `caption` `inkMuted`), redovi min 44
+  sa `line` razdelnikom, vrednost `ink` medium desno, tabelarne cifre (iOS `.monospacedDigit()`,
+  Android `fontFeatureSettings = "tnum"`), kartica `surface` + `line`. „∞" → „neprocenjiv",
+  „× N" → „N po strani" — **oba su oznake renderera, ne izmena JSON-a** (iOS `L_PieceValueTable.valueLabel`
+  i `LessonLabels.perSideCount`, Android `valueUnitLabel` i `pieceCountLabel`); „× N" se prepoznaje
+  samo u tom obliku, slova figura iz lekcije o notaciji („K", „D"…) prolaze. iOS `valueLabel` je
+  prepisan na literale (kao Android) — interpolirani ključ je oborio `LocCatalogTests`.
+- [x] **„Elementarni matovi": ikona bez statusa.** `checkmark.seal.fill` (samo dva mesta, oba
+  naslovi: „Elementarni matovi" i „Zlatna pravila otvaranja") → iOS `rosette`, Android
+  `Icons.Filled.WorkspacePremium` (bio `CheckCircle`). U rendereru, JSON netaknut.
+- [x] **„Na potezu si!" u `ink`** — status „u toku" sve tri kartice vežbi `inkMuted` → `ink` (spec
+  imenuje taj tekst; isto pravilo važi i za uputstva „Pronađi mat u 1 potezu!" na istom mestu).
+  **„Završi korak"**: iOS sada `DSPrimaryButtonStyle` (`Radius.m`, visina 48), Android
+  `ButtonShape` + `dsPrimaryButtonColors()` + min 48 (već je bio `Radius.m`).
+- [x] App bar (§ 4) — iz Task-a 3, zadržan bez izmena.
+- [x] **Kartice vežbi u lekciji na tokene.** `surface` + 1 pt ivica `line` (stanje: `success` /
+  `danger`), `Radius.m` (MatePuzzle je bio 14), `Space.m`; pločica ikone `fill` + `ink`; čip „Mat u N"
+  `fill` + `ink` (bio `accent`); „Ponovo" `fill` + `ink`, `Radius.s` (iOS bila kapsula; Android dve
+  kartice pisale „Reset" — sve tri sada „Ponovo", kao iOS); pilule napretka (iOS) `success` / `fill`.
+  Zajednički delovi izdvojeni po platformi (`ExerciseHeader`/`ExerciseFooter`/`exerciseCard`).
+- [x] **Tablet: kolona 640 i pejzaž u dve kolone.** Jedna kolona: sadržaj `maxWidth 640`, centriran
+  (obe). Dve kolone kad je tablet (iOS `horizontalSizeClass == .regular`, Android širina ≥ 600 dp) +
+  pejzaž + visina ≥ 480 + lekcija ima bar jednu tablu: tekst 480–520 levo, kolona table desno.
+  U tekstu na mestu bloka sa tablom stoji **oznaka** (ikona + naslov vežbe + strelica; trenutna u
+  `selectionTint` + `accent`), a desno je tabla bloka čija je oznaka poslednja iznad sredine vidnog
+  polja („lepljiva dok tekst skroluje"). Sve table ostaju u hijerarhiji da napredak u vežbi ne nestane
+  kad se skroluje dalje (iOS: `opacity 0` + bez dodira + skriveno za VoiceOver; Android: neaktivne
+  se mere na 0 i ne postavljaju). Privremena granica table `lessonBoardMaxSide` / `LessonBoardMaxSide`
+  = `DS.maxBoardSide` (560) na svih pet lekcijskih tabli, sa `TODO(design § 13)`.
+
+### Odluke
+- **Boja glifova.** Spec kaže „Boja `ink`"; § 9 tabela istovremeno traži ikonu sekcije u `inkMuted`
+  i ikonu kutije u boji kutije. Presuda: glif dobija boju mesta (sekcija `inkMuted`, kutija pravila
+  `warning`, neutralna stavka `inkMuted`, kartica vežbe i oznaka u dve kolone `ink`). „`ink`" je
+  pročitano kao „neutralno, ne `accent` i ne emoji-boje" — tamo gde mesto nema semantičku boju.
+- **`crown.fill` je polisemičan** (CLAUDE.md: od 11 mesta u `*.sr.json` četiri su Dama, tri Kralj,
+  četiri nisu figura). Spec mapira 👑 → ♔, pa se **i tamo gde lekcija govori o Dami (npr. kutija
+  „Promocija") crta Kralj**. Tačna figura po mestu tražila bi nov SF naziv po mestu u JSON-u (8 jezika
+  × 2 platforme, bajt-identično) — nije neophodno za spec, pa nije rađeno. Kandidat za sadržajnu fazu.
+- **Lekcijski JSON nije menjan.** „neprocenjiv", „N po strani", lista uslova rokade i ikona
+  „Elementarnih matova" su odluke renderera; `diff -r` lekcija između platformi ostaje prazan.
+- **Dve kolone samo uz visinu ≥ 480.** Telefon u pejzažu je ≥ 600 dp širok (Android) / iPhone Max je
+  `regular` u pejzažu (iOS) — po § 13 bi bio „tablet", ali bi mu kolona table bila ~220–250. Tu važi
+  jedna kolona (do 640).
+- **Šta je „lepljiva tabla" kad lekcija ima više tabli** — spec ne kaže. Izabrano: tabla bloka do kog
+  je čitalac stigao, sa oznakom u tekstu. Alternativa (jedna fiksna tabla) bi izgubila vežbe.
+- **`BoardWidthCapTest.lessonBoardsAreNotCapped` svesno obrnut** u `lessonBoardsUseTheTemporaryCap`:
+  `LessonRenderer.kt` mora da definiše `LessonBoardMaxSide = DS.maxBoardSide`, a `LearnView.kt` i
+  `LessonRenderer.kt` da ga koriste (`widthIn(max = LessonBoardMaxSide)`). Stara tvrdnja („lekcijske
+  table su već ograničene širinom stranice") na tabletu nije bila tačna (snimci 87/95/110/119).
+- **`ContrastTest`** (svesno, ne ugašen): kutija se meri nad `boja@10%` preko **`surface`** (bilo
+  `ground`); naslov je sada `ink` pa ga pokriva isti par kao telo; dodata dva para iz spec § 2 za
+  ikonu pravila (≥ 4,9 svetla / ≥ 7,0 tamna — spec 4,99 / 7,05, prolaze); `openingExerciseBadge…` i
+  `lessonHeaderIcon…` sada mere `ink` na `fill` (pločice više nisu `accent` tinta). Broj JVM testova
+  isti (132): jedan test zamenjen, ostale tvrdnje dodate u postojeće testove.
+- Android `LessonBoardsOptOutOfSwipeTest` (4 + 1 `BoardView(` poziva, 5 ukupno kao iOS) je zato
+  ostavio tablu inline u svakoj kartici (deljen je samo `exerciseBoardModifier()`).
+- Android `LessonBlocks` više ne prima `accent` (nijedan blok ga ne koristi kao ukras); `OpeningLine`
+  na Androidu je izgubio `accentColor`. iOS `OpeningLine.accentColor` ostaje (deli ga model), ali ga
+  kartice ne crtaju.
+- Redni broj „Lekcija N" iznad naslova na Androidu je uklonjen (bio `accent` label; isti tekst je već
+  naslov app bara, iOS ga tu nikad nije imao).
+
+### TODO(design § N)
+- `TODO(design § 13)` — `lessonBoardMaxSide` (iOS `LessonRenderer.swift`), `LessonBoardMaxSide`
+  (Android `LessonRenderer.kt`) i širina kolone table u dve kolone (`LessonDetailView` obe) → Task 11
+  zamenjuje zajedničkom funkcijom strane table.
+
+### Neurađeno / za kasnije
+- Vizuelna provera (nije pokretan ni simulator ni emulator, po pravilima): posebno dve kolone na
+  iPad-u/Pixel Tablet-u (prag „poslednja oznaka iznad sredine", širine kolona), prored 1,5, glifovi
+  ♔♖♘♗ uz U+FE0E na Androidu (da li font crta tekstualnu varijantu) i dvoslojna podloga kutije.
+- `LessonGlyphMapTest.shippedIconsAreTintableNeverFullColorEmoji` — instrumentisan, izvršava Task 13.
+
+### Novi stringovi (svih 8 jezika; iOS katalog hirurški +265 linija + `build_localizations.py`, Android `Loc.kt`)
+- `neprocenjiv` — en priceless, fr inestimable, de unbezahlbar, it inestimabile, ru бесценен, zh 无价, hi अमूल्य.
+- `%lld po strani` (Android `%d po strani`) — en „%lld per side", fr „%lld par camp", de „%lld pro Seite",
+  it „%lld per lato", ru „по %lld с каждой стороны", zh „每方 %lld 个", hi „प्रति पक्ष %lld".
+- `Figura`, `Vrednost` (zaglavlje tabele), `Istraživač figura` (oznaka istraživača u dve kolone).
+- Nesigurno (bez izvornog govornika): ru „бесценен" (rod) i „по %lld с каждой стороны", hi „मोहरा
+  अन्वेषक", zh „棋子探索", de „Figuren-Explorer".
 
 ## Task 9 — Šahovski sat (§ 14)
 

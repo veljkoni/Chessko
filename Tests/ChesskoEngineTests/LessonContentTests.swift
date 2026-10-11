@@ -179,3 +179,30 @@ import Foundation
         #expect(languages[id]?.count == 8, "\(id) je prenet na 8 jezika, sada ih ima \(languages[id]?.count ?? 0)")
     }
 }
+
+// MARK: - Spec § 9 (Task 8): simboli i oznake lekcije
+
+@Test func lessonSymbolsReplaceTheSixEmojiWithTintableGlyphsAndIcons() {
+    #expect(LessonSymbol.resolve("crown.fill") == .glyph("\u{2654}\u{FE0E}"))
+    #expect(LessonSymbol.resolve("rectangle.portrait.fill") == .glyph("\u{2656}\u{FE0E}"))
+    #expect(LessonSymbol.resolve("l.joystick.fill") == .glyph("\u{2658}\u{FE0E}"))
+    #expect(LessonSymbol.resolve("rhombus.fill") == .glyph("\u{2657}\u{FE0E}"))
+    #expect(LessonSymbol.resolve("tuningfork") == .sf("arrow.triangle.branch"))
+    #expect(LessonSymbol.resolve("dot.square.fill") == .sf("square.fill"))
+    #expect(LessonSymbol.resolve("checkmark.seal.fill") == .sf("rosette"))
+    #expect(LessonSymbol.resolve("star.fill") == .sf("star.fill"))
+    // Svaki glif MORA nositi U+FE0E — bez njega figura ume da se nacrta kao emoji.
+    for name in ["crown.fill", "rectangle.portrait.fill", "l.joystick.fill", "rhombus.fill"] {
+        if case .glyph(let g) = LessonSymbol.resolve(name) {
+            #expect(g.unicodeScalars.last == "\u{FE0E}")
+        }
+    }
+}
+
+@Test func lessonLabelsParsePerSideCountAndCastlingConditions() {
+    #expect(LessonLabels.perSideCount("× 2") == 2)
+    #expect(LessonLabels.perSideCount("× 8") == 8)
+    #expect(LessonLabels.perSideCount("K") == nil)
+    #expect(LessonLabels.boxItems("a · b · c") == ["a", "b", "c"])
+    #expect(LessonLabels.boxItems("jedan tekst") == ["jedan tekst"])
+}

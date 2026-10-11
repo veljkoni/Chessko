@@ -1,6 +1,17 @@
 package com.veljkoni.chessko.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.CallSplit
+import androidx.compose.material.icons.filled.Square
+import androidx.compose.material.icons.filled.WorkspacePremium
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import com.veljkoni.chessko.logic.locF
+import com.veljkoni.chessko.ui.theme.dsCard
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowCircleRight
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -79,58 +90,168 @@ import com.veljkoni.chessko.viewmodels.LearnViewModel
 // samo hrom koji renderer sam dodaje (podrazumevane poruke vezbi, poruka da
 // interaktivna tabla nije dostupna).
 
+/**
+ * Kako se crtaju blokovi sa TABLOM (vezba, istrazivac, staticna tabla).
+ *
+ * `Inline` — tabla stoji u toku teksta (telefon, tablet portret).
+ * `Markers` — tablet pejzaz (spec § 9): tekst levo, tabla desno i lepljiva.
+ * U levoj koloni na mestu blokа sa tablom stoji samo OZNAKA (`LessonBoardMarker`);
+ * sama tabla se crta u desnoj koloni (`LessonBoardBlock`). Oznaka javlja svoj
+ * vertikalni polozaj, pa ekran zna koja je tabla „trenutna".
+ */
+sealed interface LessonBoardMode {
+    data object Inline : LessonBoardMode
+    class Markers(
+        val activeIndex: Int?,
+        val onMarkerPositioned: (index: Int, yInRoot: Float) -> Unit
+    ) : LessonBoardMode
+}
+
+/** Blok koji nosi tablu — u pejzazu na tabletu ide u desnu kolonu. */
+internal fun LessonBlock.carriesBoard(): Boolean =
+    this is LessonBlock.Board || this is LessonBlock.Explorer || this is LessonBlock.Exercise
+
+/**
+ * Telo lekcije: `Type.body` 15 sa proredom 1,5 (spec § 9 — „Telo `Type.body` 15,
+ * prored 1,5", `ink`). Velicina ostaje na skali; menja se samo prored, pa
+ * `TypographyScaleTest` (meri `fontSize`) ostaje miran. iOS isto postize sa
+ * `.lineSpacing(LessonBodyLineSpacing)` na `.dsBody`.
+ */
+internal val LessonBodyStyle = Type.body.copy(lineHeight = 22.5.sp)
+
+/**
+ * TODO(design § 13): privremena granica lekcijske table. Task 11 uvodi jednu
+ * funkciju strane table za sve ekrane (tablet 560–800); do tada lekcija nosi
+ * isti plafon kao telefon, da tabla na tabletu ne ide do 1336 pt (spec § 9).
+ * `BoardWidthCapTest.lessonBoardsUseTheTemporaryCap` cuva da ova konstanta
+ * postoji i da je kartice vezbi koriste.
+ */
+internal val LessonBoardMaxSide = DS.maxBoardSide
+
+/**
+ * Razmak IZNAD bloka (spec § 9 „Ritam"): `Space.xl` iznad i ispod razdelnika,
+ * `Space.m` od naslova do teksta, inace `Space.l`. Jedno mesto umesto
+ * `spacedBy` + padding-a po komponenti (ranije se razdelnik sabirao sa
+ * razmakom kolone pa je ispadalo 28 dp sa jedne i 16 sa druge strane).
+ */
+private fun gapBefore(prev: LessonBlock?, cur: LessonBlock) = when {
+    prev == null -> 0.dp
+    cur is LessonBlock.Divider || prev is LessonBlock.Divider -> DS.Space.xl
+    prev is LessonBlock.Heading -> DS.Space.m
+    else -> DS.Space.l
+}
+
 @Composable
 fun LessonBlocks(
     blocks: List<LessonBlock>,
-    accent: Color,
-    explorerViewModel: LearnViewModel
+    explorerViewModel: LearnViewModel,
+    boardMode: LessonBoardMode = LessonBoardMode.Inline
 ) {
-    for (b in blocks) {
-        when (b) {
-            is LessonBlock.Heading -> LSectionHeader(lessonGlyph(b.icon), b.text, accent)
-            is LessonBlock.Paragraph -> LPara(b.text)
-            is LessonBlock.Bullets -> for (it in b.items) {
-                LBullet(lessonGlyph(it.icon), it.title, it.text, colorFor(it.style, accent))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        var prev: LessonBlock? = null
+        blocks.forEachIndexed { index, b ->
+            if (prev != null) Spacer(Modifier.height(gapBefore(prev, b)))
+            prev = b
+            if (b.carriesBoard() && boardMode is LessonBoardMode.Markers) {
+                LessonBoardMarker(
+                    block = b,
+                    isActive = boardMode.activeIndex == index,
+                    modifier = Modifier.onGloballyPositioned {
+                        boardMode.onMarkerPositioned(index, it.positionInRoot().y)
+                    }
+                )
+                return@forEachIndexed
             }
-            is LessonBlock.Box -> LBox(lessonGlyph(b.icon), b.title, b.text, colorFor(b.style, accent))
-            is LessonBlock.Quote -> LQuote(b.text, b.author)
-            is LessonBlock.PieceRow -> LPieceRow(b.piece, b.name, b.count, accent)
-            is LessonBlock.NumberedRule -> LNumberedRule(b.number, b.title, b.text, accent)
-            is LessonBlock.PieceValueTable -> LPieceValueTable(b.rows, accent)
-            is LessonBlock.Board -> LStaticBoard(b.fen, b.caption, b.interactive)
-            is LessonBlock.Explorer -> LExplorer(explorerViewModel, accent)
-            is LessonBlock.Exercise -> LExercise(b.spec, accent)
-            is LessonBlock.Divider -> HorizontalDivider(
-                modifier = Modifier.padding(vertical = DS.Space.m),
-                color = DS.line
-            )
+            when (b) {
+                is LessonBlock.Heading -> LSectionHeader(lessonGlyph(b.icon), b.text)
+                is LessonBlock.Paragraph -> LPara(b.text)
+                is LessonBlock.Bullets -> Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
+                    for (it in b.items) {
+                        LBullet(lessonGlyph(it.icon), it.title, it.text, bulletColorFor(it.style))
+                    }
+                }
+                is LessonBlock.Box -> LBox(lessonGlyph(b.icon), b.title, b.text, boxColorFor(b.style))
+                is LessonBlock.Quote -> LBox(lessonGlyph("quote.opening"), b.author, b.text, DS.accent)
+                is LessonBlock.PieceRow -> LPieceRow(b.piece, b.name, b.count)
+                is LessonBlock.NumberedRule -> LNumberedRule(b.number, b.title, b.text)
+                is LessonBlock.PieceValueTable -> LPieceValueTable(b.rows)
+                is LessonBlock.Divider -> HorizontalDivider(color = DS.line)
+                is LessonBlock.Board, is LessonBlock.Explorer, is LessonBlock.Exercise ->
+                    LessonBoardBlock(b, explorerViewModel)
+            }
         }
     }
 }
 
-/// `null` znaci „koristi akcent lekcije". `RULE` i `WARNING` su jedina dva koja
-/// namerno izlaze iz akcenta — zlatno pravilo i upozorenje NOSE ZNACENJE, nisu
-/// ukras (CLAUDE.md: „Dve stvari koje nose znacenje i ne idu na akcent").
-/// Podloga iza oba je `DS.ground` (kutije crtaju sopstvenu providnu tintu preko
-/// njega, ne opipljivu Card/Surface) — provereno u `ContrastTest.lessonBoxStylesMeetAA`.
+/** Sam blok sa tablom — isti crtez u toku teksta i u desnoj koloni na tabletu. */
+@Composable
+fun LessonBoardBlock(block: LessonBlock, explorerViewModel: LearnViewModel) {
+    when (block) {
+        is LessonBlock.Board -> LStaticBoard(block.fen, block.caption, block.interactive)
+        is LessonBlock.Explorer -> PieceExplorer(explorerViewModel)
+        is LessonBlock.Exercise -> LExercise(block.spec)
+        else -> Unit
+    }
+}
+
+/**
+ * Oznaka bloka sa tablom u levoj koloni (tablet pejzaz). Trenutna oznaka nosi
+ * izgled izabranog reda (spec § 2: `accent` 12 % / 16 % preko `surface`, tekst
+ * `accent`); ostale su obicna kartica. Strelica pokazuje gde je tabla.
+ */
+@Composable
+private fun LessonBoardMarker(block: LessonBlock, isActive: Boolean, modifier: Modifier = Modifier) {
+    val (glyph, title) = when (block) {
+        is LessonBlock.Exercise -> lessonGlyph(block.spec.icon) to block.spec.title
+        is LessonBlock.Board -> lessonGlyph("square.grid.3x3.fill") to block.caption
+        else -> lessonGlyph("hand.point.up.left.fill") to loc("Istraživač figura")
+    }
+    val tint = if (isActive) DS.accent else DS.ink
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .dsCard()
+            .then(if (isActive) Modifier.background(selectionTint) else Modifier)
+            .padding(horizontal = DS.Space.m, vertical = DS.Space.m),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+    ) {
+        LessonGlyphView(glyph, fontSize = Type.body.fontSize, tint = tint)
+        Text(
+            text = title,
+            color = tint,
+            style = Type.body,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = if (isActive) DS.accent else DS.inkMuted,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+/// Ikona uz stavku nabrajanja: `RULE`/`WARNING` nose znacenje (`warning`/`danger`);
+/// neutralna stavka je `inkMuted`, ne `accent` — accent je samo za ono sto se tapa
+/// (spec § 3, § 9: „naslovi sekcija nisu accent, izgledaju kao linkovi").
 @Composable
 @ReadOnlyComposable
-private fun colorFor(style: BoxStyle?, accent: Color): Color = when (style) {
-    null -> accent
-    BoxStyle.INFO -> accent
+private fun bulletColorFor(style: BoxStyle?): Color = when (style) {
+    null, BoxStyle.INFO -> DS.inkMuted
     BoxStyle.RULE -> DS.warning
     BoxStyle.WARNING -> DS.danger
 }
 
+/// Boja kutije (ikona i tinta 10 % preko `surface`). Info kutija i citat ostaju u
+/// akcentu kao tinta — spec § 2 meri „inkMuted u kutiji citata" upravo nad njom.
 @Composable
-private fun LQuote(text: String, author: String) {
-    Column(modifier = Modifier.padding(vertical = DS.Space.s)) {
-        // iOS citat crta kao `L_Box` (`Chessko/Views/LessonRenderer.swift:48`):
-        // telo `.dsBody`, potpis `.dsCaption.weight(.bold)` (`:442`, `:446`).
-        Text(text = mdBold(text), style = Type.body, color = DS.ink)
-        Spacer(Modifier.height(DS.Space.xs))
-        Text(text = "— $author", style = Type.caption, color = DS.inkMuted)
-    }
+@ReadOnlyComposable
+private fun boxColorFor(style: BoxStyle): Color = when (style) {
+    BoxStyle.INFO -> DS.accent
+    BoxStyle.RULE -> DS.warning
+    BoxStyle.WARNING -> DS.danger
 }
 
 /**
@@ -141,7 +262,9 @@ private fun LQuote(text: String, author: String) {
  * `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary` vidi i proveri; sklapanje
  * kljuca iz promenljive bi ga sakrilo od tog testa.
  *
- * „∞" (kralj) se ne prevodi — isto je na svih 8 jezika. Nepoznata vrednost se vraca
+ * „∞" (kralj) je od spec § 9 rec „neprocenjiv" — znak beskonacnosti je citaocu
+ * pocetniku izgledao kao greska u tabeli. Sadrzaj (JSON) se ne menja; prevod je
+ * oznaka renderera, isto kao jedinice bodova. Nepoznata vrednost se vraca
  * kakva jeste: bolje gola brojka nego izmisljena jedinica.
  */
 internal fun valueUnitLabel(value: String): String = when (value) {
@@ -149,7 +272,19 @@ internal fun valueUnitLabel(value: String): String = when (value) {
     "3" -> loc("3 boda")
     "5" -> loc("5 boda")
     "9" -> loc("9 bodova")
+    "∞" -> loc("neprocenjiv")
     else -> value
+}
+
+/**
+ * Kolicina figura u redu (`pieceRow.count`): JSON pise „× 2", spec § 9 trazi
+ * „2 po strani" (znak × se citao kao „puta"). Prepoznaje se SAMO oblik „× N";
+ * sve ostalo (slova figura u lekciji o notaciji: „K", „D"…) prolazi nepromenjeno.
+ */
+internal fun pieceCountLabel(count: String): String {
+    val n = Regex("^×\\s*(\\d+)$").find(count.trim())?.groupValues?.get(1)?.toIntOrNull()
+        ?: return count
+    return locF("%d po strani", n)
 }
 
 /**
@@ -172,10 +307,9 @@ internal fun lessonPieceSymbol(lessonKey: String): String? = when (lessonKey) {
 /**
  * Velicina Unicode figure u lekcijskom redu (♙♘♗♖♕♔) — **namerno van
  * tipografske skale**: to je SADRZAJ, ne tekst interfejsa. iOS na istom mestu
- * uopste ne crta tekst nego sliku (`PieceImageView` u `L_PieceRow`,
- * `Chessko/Views/LessonRenderer.swift:466`), pa font-pandan ne postoji i
- * vezivanje za bilo koji korak skale bi bilo lazno poreklo. Vrednost je ista
- * kao pre Faze 10; sto je i cela izmena na ovom mestu — dobila je ime i razlog.
+ * uopste ne crta tekst nego sliku (`PieceImageView` u `L_PieceRow`), pa
+ * font-pandan ne postoji i vezivanje za bilo koji korak skale bi bilo lazno
+ * poreklo.
  */
 private val LessonPieceGlyphSize = 22.sp
 
@@ -183,7 +317,7 @@ private val LessonPieceGlyphSize = 22.sp
 private fun LessonPieceGlyph(piece: String) {
     val symbol = lessonPieceSymbol(piece)
     Text(
-        text = symbol ?: "\u26A0",
+        text = symbol ?: "⚠",
         // Figura je SADRZAJ, pa velicinu uzima iz sopstvene konstante; znak
         // upozorenja je tekst interfejsa i ide na skalu.
         fontSize = if (symbol != null) LessonPieceGlyphSize else Type.body.fontSize,
@@ -195,49 +329,68 @@ private fun LessonPieceGlyph(piece: String) {
 }
 
 @Composable
-fun LPieceRow(piece: String, name: String, count: String, accent: Color) {
+fun LPieceRow(piece: String, name: String, count: String) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Figura se crta iz `piece`; bez nje je red samo naziv i broj, a lekcija
         // o figurama upravo trazi da se figura VIDI (iOS crta `PieceImageView`).
         LessonPieceGlyph(piece)
-        // `name` i `count` dolaze iz JSON-a vec prevedeni — NE kroz `loc()`.
-        Text(text = name, style = Type.body, fontWeight = FontWeight.SemiBold, color = accent)
+        // `name` dolazi iz JSON-a vec preveden — NE kroz `loc()`. Naziv je
+        // naslov pod-bloka (spec § 9: `Type.heading` bold `ink`, ne `accent`).
+        Text(text = name, style = Type.heading, fontWeight = FontWeight.Bold, color = DS.ink)
         Spacer(Modifier.weight(1f))
-        // IZUZETAK od pravila „zateceno 0,75–0,9 → `ink`": zateceno je bilo
-        // `White@0,75`, ali iOS `L_PieceRow` daje kolicini `.secondary`
-        // (`Chessko/Views/LessonRenderer.swift:474`) — otvoreno i provereno. `name`
-        // levo je `accent`; da je i kolicina `ink`, red bi imao dva jednako jaka
-        // glasa umesto naziva i njegovog dodatka.
-        // Velicina je takodje iOS-ova: `.dsCaption.weight(.medium)` na istom mestu.
-        Text(text = count, style = Type.caption, color = DS.inkMuted)
+        // Meta (spec § 9): `Type.caption`, `inkMuted`, na `fill` cipu.
+        Text(
+            text = pieceCountLabel(count),
+            style = Type.caption,
+            fontWeight = FontWeight.Medium,
+            color = DS.inkMuted,
+            modifier = Modifier
+                .clip(RoundedCornerShape(DS.Radius.s))
+                .background(DS.fill)
+                .padding(horizontal = DS.Space.s, vertical = 3.dp)
+        )
     }
 }
 
+/**
+ * Tabela vrednosti (spec § 9): zaglavlje, redovi 44 sa `line` razdelnikom,
+ * vrednost `ink` medium desno, tabelarne cifre, ne `accent`. Kartica = `surface`
+ * + `line` (spec § 3).
+ */
 @Composable
-fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = DS.Space.s)) {
+fun LPieceValueTable(rows: List<PieceValueRow>) {
+    Column(modifier = Modifier.fillMaxWidth().dsCard()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m, vertical = DS.Space.s),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = loc("Figura"), style = Type.caption, fontWeight = FontWeight.Medium, color = DS.inkMuted)
+            Spacer(Modifier.weight(1f))
+            Text(text = loc("Vrednost"), style = Type.caption, fontWeight = FontWeight.Medium, color = DS.inkMuted)
+        }
         for (r in rows) {
+            HorizontalDivider(color = DS.line)
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = DS.Space.xs),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 44.dp)
+                    .padding(horizontal = DS.Space.m),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LessonPieceGlyph(r.piece)
-                // iOS: `.dsBody` (`Chessko/Views/LessonRenderer.swift:537`).
                 Text(text = r.name, style = Type.body, color = DS.ink)
                 Spacer(Modifier.weight(1f))
                 // `valueLabel` je vec preveden (stize iz JSON-a na tom jeziku), ali
                 // ga nijedna isporucena lekcija ne zadaje — pa se u praksi UVEK ide
-                // na `valueUnitLabel`. Bez njega tabela pise golo „1" umesto
-                // „1 bod" / „1 point", sto iOS crta na istom JSON-u.
+                // na `valueUnitLabel`.
                 Text(
                     text = r.valueLabel ?: valueUnitLabel(r.value),
-                    // iOS: `.dsBody.weight(.semibold)` (`Chessko/Views/LessonRenderer.swift:544`).
-                    style = Type.body,
-                    fontWeight = FontWeight.SemiBold,
-                    color = accent
+                    style = Type.body.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Medium,
+                    color = DS.ink
                 )
             }
         }
@@ -247,35 +400,32 @@ fun LPieceValueTable(rows: List<PieceValueRow>, accent: Color) {
 @Composable
 private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
     val state = remember(fen) { com.veljkoni.chessko.models.GameState.fromFEN(fen) }
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = DS.Space.s)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         if (state == null) {
             // Pokvaren FEN u sadrzaju mora da se VIDI, ne da ostavi prazninu.
             Text(text = "⚠︎ $fen", style = Type.body, color = DS.danger)
         } else {
-            // POTPIS JE PROVEREN uz stvarni `BoardView` (`ui/BoardView.kt`):
-            // prima `board`, ne `gameState`, i `onTap`, ne `onSquareClick`.
-            // `BoardTheme.CLASSIC`/`PieceStyle.CLASSIC` su isto ono sto
-            // `LearnView` vec prosledjuje na sva tri mesta (linije 632, 1029, 1132
-            // pre izdvajanja `PieceExplorer` u Step 3; danas
-            // `PieceExplorer`/`OpeningExerciseCard`/`MateExerciseCard`) —
-            // lekcijska tabla namerno NE prati korisnikovu temu.
-            BoardView(
-                board = state.board,
-                isFlipped = false,
-                selectedPosition = null,
-                legalMoves = emptyList(),
-                lastMove = null,
-                boardTheme = BoardTheme.CLASSIC,
-                pieceStyle = PieceStyle.CLASSIC,
-                // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
-                // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
-                allowsStyleSwipe = false,
-                onTap = {}
-            )
+            // `BoardTheme.CLASSIC`/`PieceStyle.CLASSIC` — lekcijska tabla namerno
+            // NE prati korisnikovu temu (isto kao kartice vezbi u `LearnView.kt`).
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                BoardView(
+                    board = state.board,
+                    isFlipped = false,
+                    selectedPosition = null,
+                    legalMoves = emptyList(),
+                    lastMove = null,
+                    boardTheme = BoardTheme.CLASSIC,
+                    pieceStyle = PieceStyle.CLASSIC,
+                    // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+                    // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+                    allowsStyleSwipe = false,
+                    onTap = {},
+                    modifier = Modifier.widthIn(max = LessonBoardMaxSide).fillMaxWidth().aspectRatio(1f)
+                )
+            }
         }
         if (caption.isNotEmpty()) {
-            Spacer(Modifier.height(6.dp))
-            // iOS: `.dsCaption` (`Chessko/Views/LessonRenderer.swift:205`).
+            Spacer(Modifier.height(DS.Space.s))
             Text(text = caption, style = Type.caption, color = DS.inkMuted)
         }
         if (interactive) {
@@ -288,22 +438,10 @@ private fun LStaticBoard(fen: String, caption: String, interactive: Boolean) {
 }
 
 @Composable
-private fun LExplorer(viewModel: LearnViewModel, accent: Color) {
-    // `PieceExplorer` je izdvojen iz `Lesson1Content` u `LearnView.kt` (Faza 6b,
-    // Task 3, Step 3) BEZ izmene izgleda. Prima `accent` (umesto `LessonInfo`,
-    // koji ovde ne postoji) — ista vrednost koju je pre izdvajanja nosio
-    // `info.accentColor`.
-    PieceExplorer(viewModel, accent)
-}
-
-@Composable
-private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Color) {
+private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec) {
     when (spec.kind) {
         // Skriptovana vezba sa `mateIn` ide u `MatePuzzleCard`, koja jedina
-        // prikazuje bedz „Mat u N". Bez ovog grananja pet vezbi u isporucenom
-        // sadrzaju tiho gubi bedz, a Android se razilazi od iOS-a, koji bira
-        // isto (`LessonRenderer.swift:100-112`). `MatePuzzleCard` NE prima
-        // `OpeningLine` nego raspakovane parametre, i `fen` joj nije opcion.
+        // prikazuje bedz „Mat u N" — isti izbor kao iOS.
         ExerciseKind.SCRIPTED -> if (spec.mateIn != null && spec.startFEN != null) {
             MatePuzzleCard(
                 fen = spec.startFEN,
@@ -311,7 +449,6 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
                 title = spec.title,
                 hint = spec.hint,
                 icon = lessonGlyph(spec.icon),
-                accentColor = accent,
                 mateIn = spec.mateIn,
                 // Poruke iz JSON-a moraju da stignu i ovde, inace bi za
                 // mat-zadatke izmena sadrzaja tiho nestala.
@@ -325,7 +462,6 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
                 uciMoves = spec.uciMoves ?: emptyList(),
                 hint = spec.hint,
                 icon = lessonGlyph(spec.icon),
-                accentColor = accent,
                 // Podrazumevane poruke IDU kroz `loc()` — to je hrom, ne sadrzaj.
                 solvedMessage = spec.solvedMessage ?: loc("Bravo! Otvaranje savladano! ✓"),
                 wrongMessage = spec.wrongMessage ?: loc("Pogrešan potez — pokušaj ponovo."),
@@ -333,14 +469,11 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
                 startFEN = spec.startFEN
             )
         )
-        // POTPIS PROVEREN: `MateExerciseCard(fen, title, hint, icon, color)` —
-        // `fen` je PRVI parametar i zove se `fen`, ne `startFEN`; boja je `color`.
         ExerciseKind.VS_ENGINE -> MateExerciseCard(
             fen = spec.startFEN ?: "",
             title = spec.title,
             hint = spec.hint,
-            icon = lessonGlyph(spec.icon),
-            color = accent
+            icon = lessonGlyph(spec.icon)
         )
     }
 }
@@ -357,9 +490,11 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 //   - `Icon`   — SF simbol preveden u Material `ImageVector` (Faza 9: Task 1
 //                21 od 49, strelice i oznake; Task 2 jos 21, predmeti i pojmovi;
 //                Task 3 jos jedan, naslovna ikona lekcije — ukupno 43 od 49)
-//   - `Emoji`  — SF simbol koji OSTAJE emoji (Faza 9, Task 3, preostalih sest
-//                simbola — sve figure i taktike), ili sadrzaj koji vec nosi
-//                emoji direktno (rucno pisane lekcije)
+//   - `Glyph`  — tekstualni glif koji PRIMA boju: Unicode figura uz U+FE0E
+//                (dizajnerski pregled, spec § 9 — ♔ ♖ ♘ ♗ umesto 👑 🏰 🐴 📐)
+//   - `Emoji`  — sadrzaj koji vec nosi emoji direktno (rucno pisana lekcija).
+//                Od spec § 9 mapa vise nema nijedan `Emoji` par; grana ostaje
+//                samo za prolaz ne-ASCII glifa iz sadrzaja (vidi `lessonGlyph`).
 //   - `Unknown`— simbol koji NIJE nasao prevod. Zatecen fallback je bio tih
 //                (neutralna tacka ili sirov string); ovaj MORA da vikne, isto
 //                nacelo kao nepoznat naziv figure u `pieceRow` (CLAUDE.md,
@@ -376,6 +511,13 @@ private fun LExercise(spec: com.veljkoni.chessko.models.ExerciseSpec, accent: Co
 sealed interface LessonGlyph {
     @JvmInline value class Icon(val vector: ImageVector) : LessonGlyph
     @JvmInline value class Emoji(val text: String) : LessonGlyph
+    /**
+     * Tekstualni glif koji prima `tint` — Unicode figura sa VARIATION SELECTOR-15
+     * (U+FE0E). Bez selektora Android ♔ moze da nacrta kao pun-kolor emoji, koji
+     * boju ignorise (CLAUDE.md: „Emoji glif ne prima `color=`"); sa njim je
+     * monohromatski tekst, isto kao `⚠︎` u `LStaticBoard`.
+     */
+    @JvmInline value class Glyph(val text: String) : LessonGlyph
     /** Nepoznat SF simbol — mora da VIKNE, ne da ostavi prazninu. */
     @JvmInline value class Unknown(val symbol: String) : LessonGlyph
 }
@@ -417,6 +559,11 @@ internal fun LessonGlyphView(
             modifier = modifier.size(iconSize)
         )
         is LessonGlyph.Emoji -> Text(text = glyph.text, fontSize = fontSize, modifier = modifier)
+        // Figura je nesto sira od ikone iste visine; `lineHeight = fontSize` i
+        // centriranje drze je u istoj kutiji kao Material ikonu pored nje.
+        is LessonGlyph.Glyph -> Box(modifier = modifier.size(iconSize), contentAlignment = Alignment.Center) {
+            Text(text = glyph.text, fontSize = fontSize, lineHeight = fontSize, color = tint, maxLines = 1)
+        }
         is LessonGlyph.Unknown -> Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -438,6 +585,10 @@ internal fun LessonGlyphView(
 // 21 (predmeti i pojmovi, 20 razlicitih klasa — `book.fill`/`text.book.closed.fill`
 // dele `MenuBook`) — ukupno 42 od 49. Task 3 prevodi jos jedan (`GridOn`,
 // naslovna ikona lekcije — obrazlozeno na mestu u mapi) i ostavlja poslednjih 6
+// [ISTORIJA — od dizajnerskog pregleda (spec § 9) tih 6 vise nisu emoji: 4 su
+// `Glyph` (Unicode figure), 2 su ikone; mapa je 45 `Icon` + 4 `Glyph`, a
+// `checkmark.seal.fill` je presao sa `CheckCircle` na `WorkspacePremium`.
+// Brojevi ispod opisuju stanje Faze 9.]
 // kao emoji, namerno; mapa je time konacna: 43 ikone + 6 emoji, sto tvrdi i
 // `LessonGlyphMapTest` (instrumentisan, jer cita lekcijski JSON kroz `org.json`).
 // Nijedno ime iz oba brief-a nije trebalo zamenu — svih 36 razlicitih
@@ -463,7 +614,10 @@ private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
     "arrow.up.right" to LessonGlyph.Icon(Icons.Filled.OpenInFull),
     "arrow.up.right.and.arrow.up.left" to LessonGlyph.Icon(Icons.Filled.OpenInFull),
     "checkmark.circle.fill" to LessonGlyph.Icon(Icons.Filled.CheckCircle),
-    "checkmark.seal.fill" to LessonGlyph.Icon(Icons.Filled.CheckCircle),
+    // Spec § 9: „Elementarni matovi" (i „Zlatna pravila otvaranja" — jedina dva
+    // pozivna mesta, oba naslovi) nose ikonu koja NE izgleda kao status; kvacica
+    // je citaocu govorila „zavrseno". Medalja (iOS `rosette`) je oznaka, ne stanje.
+    "checkmark.seal.fill" to LessonGlyph.Icon(Icons.Filled.WorkspacePremium),
     "circle.fill" to LessonGlyph.Icon(Icons.Filled.Circle),
     "exclamationmark.2" to LessonGlyph.Icon(Icons.Filled.PriorityHigh),
     "exclamationmark.circle.fill" to LessonGlyph.Icon(Icons.Filled.Error),
@@ -530,75 +684,31 @@ private val SYMBOL_TO_GLYPH: Map<String, LessonGlyph> = mapOf(
     // toga da ga simbol nikad nije ni tvrdio.
     "square.grid.3x3.fill" to LessonGlyph.Icon(Icons.Filled.GridOn),
 
-    // Preostalih 6 -- Faza 9, Task 3: NAMERNO ostaju emoji. Ovo NIJE nedovrsen
-    // posao nego merena odluka; ispod je cime je merena.
+    // Poslednjih 6 — dizajnerski pregled, spec § 9 (obe platforme isto, iOS
+    // `LessonSymbol` u `LessonRenderer.swift`). Faza 9 ih je ostavila kao emoji
+    // jer Material nema figure; spec presudjuje drugacije: emoji su bili jedini
+    // sareni glifovi u inace monohromatskoj lekciji, pa ih zamenjuju Unicode
+    // figure UZ U+FE0E (tekstualna prezentacija, prima boju) i dve ikone.
     //
-    // (1) Material nema ikonu ni za jednu sahovsku figuru ni za ijedan
-    //     takticki motiv. Prosao je raspakovan sources jar
-    //     `material-icons-extended` 1.7.8: nijedno ime nije figura ni motiv.
-    //     Imena u `Icons.Filled` ima **2083** — broj se reprodukuje na tri
-    //     nacina, svi daju isto (spisak fajlova, jedinstvena imena fajlova, i
-    //     brojanje deklaracija):
-    //       unzip -Z1 <sources.jar> 'commonMain/*/icons/filled/*.kt' | wc -l
-    //       unzip -p  <sources.jar> 'commonMain/*/icons/filled/*.kt' \
-    //         | grep -c 'val Icons\.Filled\.'
-    //     (2084 dobija onaj ko ne filtrira `*.kt` — tu upadne i sam
-    //     direktorijum; `material-icons-core` nosi jos 49 imena, disjunktnih.)
-    //     Postoji samo METAFORA — `Castle` za
-    //     topa, `Restaurant` za viljusku — a metafora ovde gubi vise nego sto
-    //     dobija: ona bi ista dva znacenja rekla generickim glifom, uz
-    //     `Icons.Filled.Restaurant` u lekciji o taktici, sto sledeceg citaoca
-    //     koda salje da trazi gresku koje nema.
-    // (2) Emoji koji ostaju NOSE ZNACENJE, i to tacno ono koje lekcija na tom
-    //     mestu izgovara (citati su doslovno iz `assets/lessons/*.sr.json`):
-    //       🐴 `l.joystick.fill` (22 pojave) — „Kretanje: Kreće se u obliku
-    //          slova \"L\": dva polja pravo pa jedno u stranu.", „Viljuška
-    //          skakačem", „Sf3: Skakač je stao na f3."
-    //       🍴 `tuningfork` (10) — naslovi „Viljuška (Rašlje)" i „Viljuška";
-    //          i u srpskom i u engleskom je motiv nazvan po PRIBORU, pa je
-    //          pribor jedini glif koji igru reci zadrzava.
-    //       👑 `crown.fill` (70, najbrojniji) — „Promocija: Ako pion stigne do
-    //          poslednjeg reda — pretvara se u bilo koju figuru, najčešće
-    //          Damu.", ali i „Kralj u završnici postaje napadačka figura" i
-    //          „#: Taraba na kraju znači **mat**." Kruna je ovde oznaka
-    //          KRUNISANE strane uopste, ne jedna figura — vidi (3).
-    //       ⬛ `dot.square.fill` (8) — „Kretanje: Kreće se samo jedno polje u
-    //          bilo kom pravcu." Kvadrat je JEDNO POLJE, ne kralj.
-    //       🏰 `rectangle.portrait.fill` (24) — „Vežba 1 — Kralj + Top",
-    //          „Zadatak 3 — Žrtva Topa!"
-    //       📐 `rhombus.fill` (16) — „Vežba 2 — Kralj + dva Lovca",
-    //          „Zadatak 4 — Lovac + Top". Najslabiji par u setu (trougaoni
-    //          lenjir za lovca je asocijacija na dijagonalu, ne na figuru);
-    //          zapisano da se zna da je viđen, ne previđen.
-    // (3) Unicode figure (`ChessPiece.symbol`, ♙♘♗♖♕♔) su razmotrene kao trece
-    //     resenje i ODBIJENE, mereno:
-    //       - `crown.fill` je 70 od 150 pojava ovih sest (47%) i POLISEMICAN je:
-    //         od 11 razlicitih mesta u `*.sr.json` cetiri su Dama, tri Kralj, a
-    //         cetiri nisu figura uopste („Slova figura", „#", „Španska
-    //         partija", „Vezani branilac"). Jedan znak ne moze biti i ♔ i ♕.
-    //       - `dot.square.fill`, `l.joystick.fill` i `tuningfork` su POTEZ i
-    //         MOTIV, ne figura (citati gore).
-    //       - Ostaju samo top i lovac — 40 od 150 pojava (27%).
-    //       - Za njih bi trebao TRECI slucaj u `LessonGlyph`: emoji grana
-    //         `LessonGlyphView`-a namerno ne prima boju (CLAUDE.md: „na emoji
-    //         glif se boja ne pise uopste"), a Unicode figura `tint` prima i
-    //         mora ga dobiti. Nov mehanizam za 2 od 49 simbola.
-    //       - I sadrzinski se sudaraju: `board-and-pieces` vec crta ♙♖♗♘♕♔
-    //         dvanaest puta (`pieceRow` 6 + `pieceValueTable` 6, kroz
-    //         `LessonPieceGlyph` na 22sp), gde znak znaci „ovaj red JE ta
-    //         figura". Isti ♖ kao oznaka vezbe „Kralj + Top" na istom ekranu
-    //         dao bi jednom znaku dva posla.
-    "crown.fill" to LessonGlyph.Emoji("👑"),
-    "dot.square.fill" to LessonGlyph.Emoji("⬛"),
-    "l.joystick.fill" to LessonGlyph.Emoji("🐴"),
-    "rectangle.portrait.fill" to LessonGlyph.Emoji("🏰"),
-    "rhombus.fill" to LessonGlyph.Emoji("📐"),
-    "tuningfork" to LessonGlyph.Emoji("🍴")
+    // POSLEDICA, svesno prihvacena: `crown.fill` je POLISEMICAN (od 11 mesta u
+    // `*.sr.json` cetiri su Dama, tri Kralj, cetiri nisu figura — CLAUDE.md
+    // „Lekcijski glifovi"). Spec mapira kao 👑 → ♔, pa se na mestima gde se
+    // govori o Dami (npr. „Promocija") sada crta KRALJ. Mapa ne zna kontekst; za
+    // tacnu figuru po mestu bi trebalo menjati JSON (nov SF naziv po mestu) — to
+    // je izmena sadrzaja na 8 jezika × 2 platforme i nije uradjena.
+    "crown.fill" to LessonGlyph.Glyph("\u2654\uFE0E"),
+    "rectangle.portrait.fill" to LessonGlyph.Glyph("\u2656\uFE0E"),
+    "l.joystick.fill" to LessonGlyph.Glyph("\u2658\uFE0E"),
+    "rhombus.fill" to LessonGlyph.Glyph("\u2657\uFE0E"),
+    // Viljuska: „grananje" napada na dve mete (iOS `arrow.triangle.branch`).
+    "tuningfork" to LessonGlyph.Icon(Icons.AutoMirrored.Filled.CallSplit),
+    // „Krece se samo jedno polje" — kvadrat je JEDNO POLJE (iOS `square.fill`).
+    "dot.square.fill" to LessonGlyph.Icon(Icons.Filled.Square)
 )
 
 /// `LessonGlyph` za ime SF simbola iz JSON-a. Poznat simbol daje ono sto mapa
-/// kaze — `Icon` za 43 od 49 (Faza 9: Task 1 21, Task 2 jos 21, Task 3 jos 1),
-/// `Emoji` za ostatak (6, Task 3). Ako sadrzaj vec nosi GLIF direktno — rucno
+/// kaze — od spec § 9 `Icon` za 45 od 49 i `Glyph` (Unicode figura + U+FE0E)
+/// za 4; `Emoji` vise nema nijedan par u mapi. Ako sadrzaj vec nosi GLIF direktno — rucno
 /// pisana lekcija ne mora da zna za SF imena — prosledjuje se nepromenjen, i
 /// dalje kao `Emoji`. Sve ostalo daje `Unknown`, koji MORA da vikne: Task 0 je
 /// uveo samo taj slucaj (zatecen fallback je bio tih "•"). Danas je nedostizan

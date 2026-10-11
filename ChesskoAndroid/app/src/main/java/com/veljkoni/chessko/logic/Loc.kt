@@ -685,6 +685,12 @@ object Loc {
         // Task 7 (dizajn § 8): prevodi preuzeti iz iOS kataloga.
         "Nastavi, korak %d, %s" to mapOf("sr" to "Nastavi, korak %d, %s", "en" to "Continue, step %d, %s", "fr" to "Continuer, étape %d, %s", "de" to "Weiter, Schritt %d, %s", "it" to "Continua, passo %d, %s", "ru" to "Продолжить, шаг %d, %s", "zh-Hans" to "继续，第 %d 步，%s", "hi" to "जारी रखें, चरण %d, %s"),
         "Prešao si ceo put!" to mapOf("sr" to "Prešao si ceo put!", "en" to "You finished the whole path!", "fr" to "Tu as terminé tout le parcours !", "de" to "Du hast den ganzen Pfad geschafft!", "it" to "Hai completato tutto il percorso!", "ru" to "Вы прошли весь путь!", "zh-Hans" to "你走完了整条路径！", "hi" to "आपने पूरा पथ पूरा किया!"),
+        // Task 8 (dizajn § 9): lekcija — tabela vrednosti, kolicina figura, oznaka istrazivaca.
+        "neprocenjiv" to mapOf("sr" to "neprocenjiv", "en" to "priceless", "fr" to "inestimable", "de" to "unbezahlbar", "it" to "inestimabile", "ru" to "бесценен", "zh-Hans" to "无价", "hi" to "अमूल्य"),
+        "%d po strani" to mapOf("sr" to "%d po strani", "en" to "%d per side", "fr" to "%d par camp", "de" to "%d pro Seite", "it" to "%d per lato", "ru" to "по %d с каждой стороны", "zh-Hans" to "每方 %d 个", "hi" to "प्रति पक्ष %d"),
+        "Figura" to mapOf("sr" to "Figura", "en" to "Piece", "fr" to "Pièce", "de" to "Figur", "it" to "Pezzo", "ru" to "Фигура", "zh-Hans" to "棋子", "hi" to "मोहरा"),
+        "Vrednost" to mapOf("sr" to "Vrednost", "en" to "Value", "fr" to "Valeur", "de" to "Wert", "it" to "Valore", "ru" to "Ценность", "zh-Hans" to "价值", "hi" to "मूल्य"),
+        "Istraživač figura" to mapOf("sr" to "Istraživač figura", "en" to "Piece explorer", "fr" to "Explorateur de pièces", "de" to "Figuren-Explorer", "it" to "Esploratore dei pezzi", "ru" to "Исследование фигур", "zh-Hans" to "棋子探索", "hi" to "मोहरा अन्वेषक"),
         "Korak %d" to mapOf("sr" to "Korak %d", "en" to "Step %d", "fr" to "Étape %d", "de" to "Schritt %d", "it" to "Passo %d", "ru" to "Шаг %d", "zh-Hans" to "第 %d 步", "hi" to "चरण %d"),
         "Zaključano" to mapOf("sr" to "Zaključano", "en" to "Locked", "fr" to "Verrouillé", "de" to "Gesperrt", "it" to "Bloccato", "ru" to "Заблокировано", "zh-Hans" to "已锁定", "hi" to "बंद"),
         "Završeno" to mapOf("sr" to "Završeno", "en" to "Completed", "fr" to "Terminé", "de" to "Abgeschlossen", "it" to "Completato", "ru" to "Завершено", "zh-Hans" to "已完成", "hi" to "पूर्ण"),

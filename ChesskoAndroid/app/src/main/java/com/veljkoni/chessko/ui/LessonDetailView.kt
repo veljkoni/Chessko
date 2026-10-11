@@ -1,6 +1,15 @@
 package com.veljkoni.chessko.ui
 
 import com.veljkoni.chessko.ui.theme.ButtonShape
+import com.veljkoni.chessko.ui.theme.dsPrimaryButtonColors
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -77,7 +86,6 @@ fun LessonDetailView(
     val lang = Loc.fileLanguageCode()
 
     val doc = remember(lessonId, lang) { repo.lesson(lessonId, lang) }
-    val accent = DS.accent
     val number = remember(lessonId) {
         repo.discoveredLessonIds().indexOf(lessonId).let { if (it >= 0) it + 1 else null }
     }
@@ -122,117 +130,165 @@ fun LessonDetailView(
                 .padding(horizontal = DS.Space.xs)
         )
 
-        // Scrollable Lesson Content
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(scrollState)
-                .padding(horizontal = DS.Space.l),
-            verticalArrangement = Arrangement.spacedBy(DS.Space.l)
-        ) {
-            if (doc == null) {
-                // Kartica postoji samo ako se lekcija vec jednom ucitala,
-                // pa je ovo prakticno nedostizno — ali tiha praznina bi
-                // bila gora od recenice.
-                Text(
-                    text = loc("Lekcija nije dostupna."),
-                    // Direktno na `DS.ground` (skrol nema Card ni Surface iza ovog
-                    // teksta) — isti par kao `inkMuted`/`ground` u `PathView`.
-                    color = DS.inkMuted,
-                    // Recenica, ne oznaka -> `body`.
-                    style = Type.body
-                )
-            } else {
-                // Lesson Header — BEZ kartice ispod naslova. iOS (`LessonDetailView.swift:128-150`,
-                // `lessonHeader`) nema pozadinu/ivicu na celom header-u; tint akcenta stoji SAMO
-                // iza kvadrata sa ikonom. Kriska 6d-2, krug ispravki 1: prethodna verzija je
-                // tintovala CEO red (`accent@12%` preko `DS.ground`), pa je podnaslov
-                // (`DS.inkMuted`, tada 12sp, nije bold) pao na 3,62:1 u svetloj temi -- ispod AA i
-                // NOV sub-AA par kog iOS nema, jer iOS ovde nema kompozitnu podlogu uopste.
-                // Uklanjanjem tinta sa reda podnaslov pada na goli `DS.ground`, gde je
-                // `inkMuted`/`ground` = 4,36 (svetla) / 5,94 (tamna) -- vec poznat, vec pinovan
-                // par (`ContrastTest.knownSubAAPairsDoNotGetWorse`), i tacno ono sto iOS ima.
-                Row(
+        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            // Spec § 13: tablet = sirina prozora >= 600. Dve kolone (spec § 9) samo
+            // u pejzazu I uz dovoljno visine: telefon u pejzazu je takodje >= 600
+            // sirok, ali bi mu kolona table ispala ~220 dp — tu vazi jedna kolona.
+            val isTablet = maxWidth >= 600.dp
+            val twoColumn = doc != null && isTablet && maxWidth > maxHeight &&
+                maxHeight >= 480.dp && doc.blocks.any { it.carriesBoard() }
+
+            if (!twoColumn) {
+                // Jedna kolona: tekst do 640 (spec § 9 „Tablet: tekst u koloni do
+                // 640"), centrirana; na telefonu granica nije dostizna.
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = DS.Space.l),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(accent.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.widthIn(max = LessonTextMaxWidth).fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(DS.Space.l)
                     ) {
-                        // Naslovna ikona lekcije: iOS je crta na `.dsTitle.weight(.medium)`
-                        // (`Chessko/Views/LessonDetailView.swift:135`), dakle bas velicinom
-                        // `title`. Glif nije tekst, pa uzima samo velicinu iz skale.
-                        LessonGlyphView(lessonGlyph(doc.icon), fontSize = Type.title.fontSize, tint = accent)
-                    }
-                    Spacer(modifier = Modifier.width(DS.Space.m))
-                    Column {
-                        if (number != null) {
-                            Text(
-                                text = locF("Lekcija %d", number),
-                                color = accent,
-                                // Sitna oznaka iznad naslova -> `label`. iOS ovaj red
-                                // nema (`lessonHeader` ne pise redni broj).
-                                style = Type.label,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Text(
-                            text = doc.title,
-                            color = DS.ink,
-                            // iOS: `.dsHeading.weight(.bold)`
-                            // (`Chessko/Views/LessonDetailView.swift:140`).
-                            style = Type.heading,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = doc.subtitle,
-                            color = DS.inkMuted,
-                            // iOS: `.dsBody` (`Chessko/Views/LessonDetailView.swift:142`).
-                            // 12 je ovde bilo razilazenje naniže, ne odluka.
-                            style = Type.body
-                        )
+                        LessonContent(doc, explorerViewModel, LessonBoardMode.Inline, onComplete)
                     }
                 }
+            } else {
+                // Tablet pejzaz (spec § 9): tekst 480–520 levo, tabla desno i
+                // lepljiva dok tekst skroluje. Desno stoji tabla bloka do kog je
+                // citalac stigao — poslednja oznaka iznad sredine vidnog polja.
+                // TODO(design § 13): sirinu kolone table zameniti zajednickom
+                // funkcijom strane table (Task 11); do tada `LessonBoardMaxSide`.
+                val gutter = DS.Space.xl
+                val boardCol = minOf(maxHeight - 160.dp, maxWidth - 480.dp - gutter * 3, LessonBoardMaxSide)
+                    .coerceAtLeast(280.dp)
+                val textCol = (maxWidth - boardCol - gutter * 3).coerceIn(480.dp, 520.dp)
+                val boardIndices = doc!!.blocks.indices.filter { doc.blocks[it].carriesBoard() }
+                val markerY = remember(doc) { mutableStateMapOf<Int, Float>() }
+                var viewportTop by remember { mutableFloatStateOf(0f) }
+                var viewportHeight by remember { mutableFloatStateOf(0f) }
+                val activeIndex = boardIndices
+                    .filter { (markerY[it] ?: Float.MAX_VALUE) <= viewportTop + viewportHeight / 2 }
+                    .maxOrNull() ?: boardIndices.first()
 
-                LessonBlocks(doc.blocks, accent, explorerViewModel)
-
-                // Vidi se SAMO kad je lekcija otvorena kao korak Puta.
-                // `onComplete` (iz `PathView`) i zavrsava korak i vraca listu —
-                // spec 5.1 trazi da se korak zavrsi tek kad korisnik dodje do
-                // kraja lekcije i POTVRDI, ne samim otvaranjem.
-                if (onComplete != null) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = gutter),
+                    horizontalArrangement = Arrangement.spacedBy(gutter, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.Top
+                ) {
                     Column(
-                        modifier = Modifier.padding(top = DS.Space.xs, bottom = DS.Space.xl),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                        modifier = Modifier
+                            .width(textCol)
+                            .fillMaxHeight()
+                            .onGloballyPositioned {
+                                viewportTop = it.positionInRoot().y
+                                viewportHeight = it.size.height.toFloat()
+                            }
+                            .verticalScroll(scrollState),
+                        verticalArrangement = Arrangement.spacedBy(DS.Space.l)
                     ) {
-                        HorizontalDivider(color = DS.line)
-                        Button(
-                            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-                            onClick = onComplete,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = accent)
-                        ) {
-                            Text(
-                                text = loc("Završi korak"),
-                                fontWeight = FontWeight.SemiBold,
-                                // Tekst NA `accent` podlozi -> `DS.onAccent`, ne
-                                // `DS.ink`/bela. `accent` menja svetlinu izmedju
-                                // tema (`DS.onAccent` doc-komentar u
-                                // `DesignSystem.kt`); bela bi u tamnoj temi pala
-                                // na 2,6:1 (ista greska koju je iOS vec pravio).
-                                color = DS.onAccent
-                            )
+                        LessonContent(
+                            doc, explorerViewModel,
+                            LessonBoardMode.Markers(activeIndex) { i, y -> markerY[i] = y },
+                            onComplete
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .width(boardCol)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = DS.Space.l)
+                    ) {
+                        // Sve table ostaju u kompoziciji (napredak u vezbi ne sme da
+                        // nestane kad citalac skroluje dalje i vrati se); neaktivne
+                        // se mere na 0 i ne postavljaju — ne crtaju se i ne primaju
+                        // dodir.
+                        for (i in boardIndices) {
+                            val active = i == activeIndex
+                            Box(
+                                modifier = if (active) Modifier.fillMaxWidth() else Modifier
+                                    .clearAndSetSemantics {}
+                                    .layout { measurable, _ ->
+                                        measurable.measure(Constraints.fixed(0, 0))
+                                        layout(0, 0) {}
+                                    }
+                            ) {
+                                LessonBoardBlock(doc.blocks[i], explorerViewModel)
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+/** Spec § 9: tekst lekcije na tabletu u koloni do 640. */
+private val LessonTextMaxWidth = 640.dp
+
+/** Zaglavlje + blokovi + dugme koraka — isto u jednoj i u dve kolone. */
+@Composable
+private fun LessonContent(
+    doc: com.veljkoni.chessko.models.LessonDocument?,
+    explorerViewModel: LearnViewModel,
+    boardMode: LessonBoardMode,
+    onComplete: (() -> Unit)?
+) {
+    if (doc == null) {
+        // Kartica postoji samo ako se lekcija vec jednom ucitala, pa je ovo
+        // prakticno nedostizno — ali tiha praznina bi bila gora od recenice.
+        Text(text = loc("Lekcija nije dostupna."), color = DS.inkMuted, style = Type.body)
+        return
+    }
+    // Zaglavlje lekcije (spec § 9): naslov `Type.title` 22 bold `ink`, podnaslov
+    // meta `inkMuted`. Plocica ikone `fill` + `ink` (bila `accent` tinta — accent
+    // je samo za ono sto se tapa, spec § 3). Redni broj „Lekcija N" je vec
+    // naslov app bara, pa iznad naslova vise ne stoji (iOS ga tu nikad nije imao).
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = DS.Space.l),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .clip(RoundedCornerShape(DS.Radius.m))
+                .background(DS.fill),
+            contentAlignment = Alignment.Center
+        ) {
+            LessonGlyphView(lessonGlyph(doc.icon), fontSize = Type.title.fontSize, tint = DS.ink)
+        }
+        Spacer(modifier = Modifier.width(DS.Space.m))
+        Column {
+            Text(text = doc.title, color = DS.ink, style = Type.title)
+            Text(text = doc.subtitle, color = DS.inkMuted, style = Type.body)
+        }
+    }
+
+    LessonBlocks(doc.blocks, explorerViewModel, boardMode)
+
+    // Vidi se SAMO kad je lekcija otvorena kao korak Puta: korak se zavrsava tek
+    // kad korisnik dodje do kraja lekcije i POTVRDI (spec 5.1).
+    if (onComplete != null) {
+        Column(
+            modifier = Modifier.padding(top = DS.Space.s, bottom = DS.Space.xl),
+            verticalArrangement = Arrangement.spacedBy(DS.Space.l)
+        ) {
+            HorizontalDivider(color = DS.line)
+            Button(
+                shape = ButtonShape, // spec § 3/§ 9: Radius.m, nigde „stadion"
+                onClick = onComplete,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                colors = dsPrimaryButtonColors()
+            ) {
+                // Tekst NA `accent` podlozi -> `DS.onAccent` (u `dsPrimaryButtonColors`).
+                Text(text = loc("Završi korak"), style = Type.body, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    } else {
+        Spacer(Modifier.height(DS.Space.l))
     }
 }
 

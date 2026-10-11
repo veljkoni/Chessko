@@ -200,3 +200,57 @@ enum LessonBlock: Codable, Equatable {
         }
     }
 }
+
+// MARK: - Lekcijski simboli i oznake (dizajnerski pregled, spec § 9)
+//
+// Foundation-only, da ih pokrije `swift test`. Android ima iste odluke u
+// `ui/LessonRenderer.kt` (`SYMBOL_TO_GLYPH`, `pieceCountLabel`) i `LearnView.LBox`.
+
+/// Kako se crta `icon` iz JSON-a: SF simbol ili tekstualni glif.
+enum LessonSymbol: Equatable {
+    case sf(String)
+    /// Unicode figura uz U+FE0E (tekstualna prezentacija — prima boju).
+    case glyph(String)
+
+    /// Spec § 9: 👑 → ♔, 🏰 → ♖, 🐴 → ♘, 📐 → ♗ (uvek uz U+FE0E), viljuška →
+    /// `arrow.triangle.branch`, jedno polje → `square.fill`. iOS je do sada te
+    /// SF simbole crtao doslovno (kruna, pravougaonik, džojstik, romb, viljuška
+    /// za štimovanje, kvadrat sa tačkom) — Android ih je nosio kao emoji; posle
+    /// ovoga obe platforme crtaju isti glif.
+    ///
+    /// Posledica, svesno prihvaćena: `crown.fill` je polisemičan (Dama, Kralj ili
+    /// ništa od toga — CLAUDE.md „Lekcijski glifovi"); spec ga mapira na ♔, pa
+    /// se i na mestima gde lekcija govori o Dami crta Kralj.
+    ///
+    /// `checkmark.seal.fill` (naslovi „Elementarni matovi" i „Zlatna pravila
+    /// otvaranja") → `rosette`: kvačica je izgledala kao status „završeno".
+    static func resolve(_ name: String) -> LessonSymbol {
+        switch name {
+        case "crown.fill":              return .glyph("\u{2654}\u{FE0E}")
+        case "rectangle.portrait.fill": return .glyph("\u{2656}\u{FE0E}")
+        case "l.joystick.fill":         return .glyph("\u{2658}\u{FE0E}")
+        case "rhombus.fill":            return .glyph("\u{2657}\u{FE0E}")
+        case "tuningfork":              return .sf("arrow.triangle.branch")
+        case "dot.square.fill":         return .sf("square.fill")
+        case "checkmark.seal.fill":     return .sf("rosette")
+        default:                        return .sf(name)
+        }
+    }
+}
+
+enum LessonLabels {
+    /// „× 2" iz `pieceRow.count` → 2 (prikazuje se kao „2 po strani", spec § 9).
+    /// Sve što nije oblik „× N" (slova figura u lekciji o notaciji) daje `nil`
+    /// i prikazuje se nepromenjeno.
+    static func perSideCount(_ count: String) -> Int? {
+        let t = count.trimmingCharacters(in: .whitespaces)
+        guard t.hasPrefix("×") else { return nil }
+        return Int(t.dropFirst().trimmingCharacters(in: .whitespaces))
+    }
+
+    /// Uslovi razdvojeni sa „ · " (kutija „Uslovi za rokadu") se crtaju kao lista
+    /// sa tačkama (spec § 9). Jedan element = običan tekst.
+    static func boxItems(_ text: String) -> [String] {
+        text.components(separatedBy: " · ").map { $0.trimmingCharacters(in: .whitespaces) }
+    }
+}

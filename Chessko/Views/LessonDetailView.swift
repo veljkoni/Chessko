@@ -40,33 +40,36 @@ struct LessonDetailView: View {
         LessonRepository.lessonOrder.firstIndex(of: lessonId).map { $0 + 1 }
     }
 
+    @Environment(\.horizontalSizeClass) private var hSize
+    /// Položaj oznaka blokova sa tablom (iPad pejzaž) u prostoru skrola.
+    @State private var markerY: [Int: CGFloat] = [:]
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
                 AppBackgroundView()
 
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        if let document {
-                            lessonHeader(document)
-                            LessonRenderer(blocks: document.blocks)
-                        } else {
-                            // Sadrzaj je van koda; ako fajl nedostaje iz bundle-a
-                            // korisnik mora da vidi zasto, a ne prazan ekran.
-                            Text(Loc("Lekcija nije dostupna"))
-                                .font(.dsBody)
-                                .foregroundStyle(DS.inkMuted)
-                                .padding(40)
-                        }
+                // Spec § 13: tablet = `regular` širina. Dve kolone (spec § 9) samo u
+                // pejzažu i uz dovoljno visine — iPhone Max u pejzažu je takođe
+                // `regular`, ali bi mu kolona table ispala ~250 pt.
+                let isTablet = hSize == .regular
+                let twoColumn = isTablet && geo.size.width > geo.size.height
+                    && geo.size.height >= 480
+                    && (document?.blocks.contains { $0.carriesBoard } ?? false)
 
-                        if document != nil, let stepId {
-                            stepFooter(stepId)
-                        }
+                if twoColumn, let document {
+                    twoColumnLayout(document, size: geo.size)
+                } else {
+                    // Jedna kolona: tekst do 640 (spec § 9), centrirana.
+                    ScrollView(.vertical, showsIndicators: true) {
+                        content(boardMode: .inline)
+                            .frame(maxWidth: Self.textMaxWidth)
+                            .padding(.horizontal, DS.Space.l)
+                            .frame(width: geo.size.width)
+                            .padding(.bottom, 40)
                     }
-                    .frame(width: geo.size.width)
-                    .padding(.bottom, 40)
+                    .safeAreaPadding(.bottom, 24)
                 }
-                .safeAreaPadding(.bottom, 24)
             }
         }
         // Kad je lekcija otvorena IZ KORAKA Puta, naslov je naslov lekcije, a ne
@@ -106,7 +109,7 @@ struct LessonDetailView: View {
     private func stepFooter(_ stepId: String) -> some View {
         let done = ProgressStore.shared.snapshot.completedSteps.contains(stepId)
 
-        VStack(spacing: DS.Space.m) {
+        VStack(spacing: DS.Space.l) {
             Rectangle()
                 .fill(DS.line)
                 .frame(height: 1)
@@ -119,52 +122,109 @@ struct LessonDetailView: View {
                         .foregroundStyle(DS.inkMuted)
                 }
                 .font(.dsBody)
-                .padding(.horizontal, DS.Space.xl)
             } else {
                 Button {
                     ProgressStore.shared.completeStep(stepId)
                     Haptics.notification(.success)
                     dismiss()
                 } label: {
+                    // Spec § 9: primarno dugme `Radius.m` (ne stadion), `accent` + `onAccent`.
                     Text(Loc("Završi korak"))
-                        .font(.dsHeading.weight(.semibold))
-                        .foregroundStyle(DS.onAccent)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, DS.Space.m)
-                        .background(DS.accent, in: RoundedRectangle(cornerRadius: DS.Radius.m))
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal, DS.Space.xl)
+                .buttonStyle(DSPrimaryButtonStyle())
             }
         }
-        .padding(.top, DS.Space.xl)
+        .padding(.top, DS.Space.s)
+    }
+
+    // MARK: - Sadržaj (isti u jednoj i u dve kolone)
+
+    /// Spec § 9: tekst lekcije na iPad-u u koloni do 640.
+    static let textMaxWidth: CGFloat = 640
+
+    @ViewBuilder
+    private func content(boardMode: LessonBoardMode) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.l) {
+            if let document {
+                lessonHeader(document)
+                LessonRenderer(blocks: document.blocks, boardMode: boardMode)
+            } else {
+                // Sadrzaj je van koda; ako fajl nedostaje iz bundle-a korisnik
+                // mora da vidi zasto, a ne prazan ekran.
+                Text(Loc("Lekcija nije dostupna"))
+                    .font(.dsBody)
+                    .foregroundStyle(DS.inkMuted)
+                    .padding(.vertical, 40)
+            }
+
+            if document != nil, let stepId {
+                stepFooter(stepId)
+            }
+        }
+    }
+
+    /// iPad pejzaž (spec § 9): tekst 480–520 levo, tabla desno i lepljiva dok
+    /// tekst skroluje. Desno je tabla bloka do kog je čitalac stigao — poslednja
+    /// oznaka iznad sredine vidnog polja. Sve table ostaju u hijerarhiji (napredak
+    /// u vežbi ne nestaje kad čitalac skroluje dalje), neaktivne su skrivene.
+    /// TODO(design § 13): širinu kolone table zameniti zajedničkom funkcijom
+    /// strane table (Task 11); do tada `lessonBoardMaxSide`.
+    private func twoColumnLayout(_ document: LessonDocument, size: CGSize) -> some View {
+        let gutter = DS.Space.xl
+        let boardCol = max(280, min(size.height - 160, size.width - 480 - gutter * 3, lessonBoardMaxSide))
+        let textCol = min(520, max(480, size.width - boardCol - gutter * 3))
+        let boardIndices = document.blocks.indices.filter { document.blocks[$0].carriesBoard }
+        let viewportMid = size.height / 2
+        let active = boardIndices.last { (markerY[$0] ?? .infinity) <= viewportMid } ?? boardIndices.first
+
+        return HStack(alignment: .top, spacing: gutter) {
+            ScrollView(.vertical, showsIndicators: true) {
+                content(boardMode: .markers(activeIndex: active))
+                    .padding(.bottom, 40)
+            }
+            .coordinateSpace(name: "lessonScroll")
+            .onPreferenceChange(LessonMarkerYKey.self) { markerY = $0 }
+            .frame(width: textCol)
+
+            ScrollView(.vertical, showsIndicators: false) {
+                ZStack(alignment: .top) {
+                    ForEach(boardIndices, id: \.self) { i in
+                        let isActive = i == active
+                        LessonBoardBlock(block: document.blocks[i])
+                            .opacity(isActive ? 1 : 0)
+                            .allowsHitTesting(isActive)
+                            .accessibilityHidden(!isActive)
+                    }
+                }
+                .padding(.vertical, DS.Space.l)
+            }
+            .frame(width: boardCol)
+        }
+        .frame(maxWidth: .infinity)
+        .safeAreaPadding(.bottom, 24)
     }
 
     // MARK: - Lesson Header
 
+    /// Spec § 9: naslov lekcije `title` 22 bold `ink`; podnaslov `inkMuted`.
+    /// Pločica ikone `fill` + `ink` (bila `accent` tinta — accent je samo za ono
+    /// što se tapa, spec § 3).
     private func lessonHeader(_ document: LessonDocument) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(DS.accent.opacity(0.18))
-                    .frame(width: 60, height: 60)
-                Image(systemName: document.icon)
-                    .font(.dsTitle.weight(.medium))
-                    .foregroundStyle(DS.accent)
-            }
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: DS.Space.m) {
+            LessonSymbolView(name: document.icon, color: DS.ink, font: .dsTitle.weight(.medium))
+                .frame(width: 56, height: 56)
+                .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.m))
+            VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text(document.title)
-                    .font(.dsHeading.weight(.bold))
+                    .font(.dsTitle)
                     .foregroundStyle(DS.ink)
                 Text(document.subtitle)
                     .font(.dsBody)
                     .foregroundStyle(DS.inkMuted)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer()
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 20)
+        .padding(.top, DS.Space.l)
     }
 }
 

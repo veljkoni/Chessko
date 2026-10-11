@@ -7,9 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -33,6 +30,7 @@ import com.veljkoni.chessko.viewmodels.LearnScenario
 import com.veljkoni.chessko.viewmodels.LearnViewModel
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
+import com.veljkoni.chessko.ui.theme.dsCard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,7 +68,6 @@ data class OpeningLine(
     val uciMoves: List<String>,
     val hint: String,
     val icon: LessonGlyph,
-    val accentColor: Color,
     val solvedMessage: String = loc("Bravo! Otvaranje savladano! ✓"),
     val wrongMessage: String = loc("Pogrešan potez — pokušaj ponovo."),
     val playingPrompt: String? = null,
@@ -315,34 +312,47 @@ class MateExerciseState(
     }
 }
 
+/**
+ * Kutija (pravilo, upozorenje, info, citat) — spec § 9: boja kutije 10 % preko
+ * `surface` (ne preko `ground`), `Radius.m`, BEZ ivice; naslov `Type.body` bold
+ * `ink` (bio 12 u boji kutije), ikona u boji kutije (pravilo: `warning`
+ * 4,99 / 7,05), telo `ink`.
+ *
+ * Tekst sa „ · " razdvojenim uslovima (kutija „Uslovi za rokadu", svih 8 jezika)
+ * crta se kao lista sa tackama — spec § 9 „Uslovi (rokada) kao lista sa tackama".
+ * Sadrzaj (JSON) se ne menja; renderer cita isti separator na obe platforme.
+ */
 @Composable
 fun LBox(icon: LessonGlyph, title: String, text: String, color: Color) {
+    val items = text.split(" · ")
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(DS.Radius.m))
+            .background(DS.surface)
             .background(color.copy(alpha = 0.1f))
-            .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(DS.Radius.m))
-            .padding(14.dp)
+            .padding(DS.Space.m)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
         ) {
-            // iOS `L_Box`: i ikona i naslov na `.dsCaption.weight(.bold)`
-            // (`Chessko/Views/LessonRenderer.swift:438-443`). Glif nije tekst, pa
-            // uzima samo velicinu iz skale.
-            LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = color)
-            Text(text = title, color = color, style = Type.caption, fontWeight = FontWeight.Bold)
+            LessonGlyphView(icon, fontSize = Type.body.fontSize, tint = color)
+            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
         }
-        Spacer(modifier = Modifier.height(DS.Space.xs))
-        // TELO kutije, ne sporedan tekst: zateceno `White@0,85`, iOS `L_Box` daje
-        // `.primary.opacity(0.85)` (`Chessko/Views/LessonRenderer.swift:447`) — dakle
-        // `ink`, ne `inkMuted`. Prvi prelaz je 0,85 preslikao naniže i telo je u svetloj
-        // temi palo na 3,73:1 nad sopstvenim tintom (`ink` vraca 13,40–14,19, po stilu
-        // kutije) — mereno u `ContrastTest.lessonBoxStylesMeetAA`.
-        // iOS: `.dsBody` (`Chessko/Views/LessonRenderer.swift:446`).
-        Text(text = mdBold(text), color = DS.ink, style = Type.body)
+        Spacer(modifier = Modifier.height(DS.Space.s))
+        if (items.size > 1) {
+            Column(verticalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
+                for (item in items) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
+                        Text(text = "•", color = DS.ink, style = LessonBodyStyle)
+                        Text(text = mdBold(item.trim()), color = DS.ink, style = LessonBodyStyle, modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        } else {
+            Text(text = mdBold(text), color = DS.ink, style = LessonBodyStyle)
+        }
     }
 }
 
@@ -351,207 +361,167 @@ fun LPara(text: String) {
     Text(
         // Podebljanje iz JSON-a (`**ovako**`) — vidi `mdBold` u LessonRenderer.kt.
         text = mdBold(text),
-        // Zateceno `White@0,8`; iOS `L_Para` je `.primary.opacity(0.85)`
-        // (`Chessko/Views/LessonRenderer.swift:395`). Ovo je NOSECI tekst lekcije (30
-        // blokova u isporucenom sadrzaju), ne podnaslov: `inkMuted` bi ga u svetloj temi
-        // drzao na 4,36:1 nad `DS.ground`, `ink` daje 15,72.
+        // Telo lekcije (spec § 9): `Type.body` 15, prored 1,5, `ink` (15,72 / 16,15).
         color = DS.ink,
-        // NAJVIDLJIVIJA izmena Faze 10: telo lekcije 13 -> 15. iOS `L_Para` crta
-        // `.dsBody` (`Chessko/Views/LessonRenderer.swift:394`), pa je Android ovde
-        // bio razidjen naniže; dolazak skali ga vraca u paritet. `lineHeight` odlazi
-        // sa velicinom — `Type.body` nosi 20, srazmerno istom odnosu.
-        style = Type.body,
+        style = LessonBodyStyle,
         modifier = Modifier.fillMaxWidth()
     )
 }
 
+/**
+ * Stavka nabrajanja: naslov je POD-BLOK (spec § 9 „Kretanje": `Type.body` medium
+ * `ink`), telo je telo lekcije (`ink`, ne `inkMuted` — dugi tekst, spec § 3).
+ * Ikona: neutralna `inkMuted`, a pravilo/upozorenje nose svoju boju.
+ */
 @Composable
 fun LBullet(icon: LessonGlyph, title: String, text: String, color: Color) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = DS.Space.xs),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
         verticalAlignment = Alignment.Top
     ) {
-        // iOS `L_Bullet`: ikona `.dsCaption.weight(.semibold)`, naslov
-        // `.dsBody.weight(.semibold)`, telo `.dsBody`
-        // (`Chessko/Views/LessonRenderer.swift:408`, `:414`, `:417`).
-        LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = color, modifier = Modifier.padding(top = 2.dp))
+        LessonGlyphView(icon, fontSize = Type.body.fontSize, tint = color, modifier = Modifier.padding(top = 3.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
-            Text(text = mdBold(text), color = DS.inkMuted, style = Type.body)
+            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
+            Text(text = mdBold(text), color = DS.ink, style = LessonBodyStyle)
         }
     }
 }
 
+/**
+ * Naslov sekcije (spec § 9): `Type.heading` 17 bold `ink` + ikona/glif `inkMuted`
+ * (5,28 / 5,94). NIJE `accent` — u akcentu su naslovi izgledali kao linkovi.
+ */
 @Composable
-fun LSectionHeader(icon: LessonGlyph, title: String, color: Color) {
+fun LSectionHeader(icon: LessonGlyph, title: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
-        modifier = Modifier.padding(vertical = DS.Space.xs)
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
     ) {
-        // iOS `L_SectionHeader`: ikona `.dsBody.weight(.semibold)`, naslov
-        // `.dsBody.weight(.bold)` (`Chessko/Views/LessonRenderer.swift:360`, `:362`).
-        // Naslov sekcije i telo lekcije su NAMERNO iste velicine, kao na iOS-u —
-        // razlikuju se tezinom i bojom.
-        LessonGlyphView(icon, fontSize = Type.body.fontSize, tint = color)
-        Text(text = title, color = color, style = Type.body, fontWeight = FontWeight.Bold)
+        LessonGlyphView(icon, fontSize = Type.heading.fontSize, tint = DS.inkMuted)
+        Text(text = title, color = DS.ink, style = Type.heading, fontWeight = FontWeight.Bold)
     }
 }
 
+/** Numerisano pravilo: broj na `fill` plocici u `ink` (statican broj nije `accent`, spec § 3). */
 @Composable
-fun LNumberedRule(number: Int, title: String, text: String, color: Color) {
+fun LNumberedRule(number: Int, title: String, text: String) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = DS.Space.xs),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
         verticalAlignment = Alignment.Top
     ) {
         Box(
             modifier = Modifier
                 .size(28.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(color.copy(alpha = 0.15f)),
+                .clip(RoundedCornerShape(DS.Radius.s))
+                .background(DS.fill),
             contentAlignment = Alignment.Center
         ) {
-            // iOS `L_NumberedRule`: sva tri reda na `.dsBody`
-            // (`Chessko/Views/LessonRenderer.swift:494`, `:499`, `:502`).
-            Text(text = number.toString(), color = color, style = Type.body, fontWeight = FontWeight.Bold)
+            Text(text = number.toString(), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
-            Text(text = mdBold(text), color = DS.inkMuted, style = Type.body)
+            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
+            Text(text = mdBold(text), color = DS.ink, style = LessonBodyStyle)
         }
     }
 }
 
 // Istrazivac figura: birac figura + sandbox tabla + info kartica + scenario
-// dugmad (rokada/en passant/promocija). Izdvojen iz `Lesson1Content` (Faza 6b,
-// Task 3) da bi `LessonRenderer` mogao da ga pozove za JSON blok tipa
-// `explorer`, BEZ izmene izgleda — isti pozivi, isti parametri
-// (`BoardTheme.CLASSIC`, `PieceStyle.CLASSIC`), ista kartica.
-// `accent` je izdvojen kao parametar (umesto `LessonInfo`, koji ovde ne
-// postoji) jer `LessonRenderer.LessonBlocks` vec nosi svoj `accent: Color` za
-// ceo blok niz — `info.accentColor` sa poziva iz `Lesson1Content` ostaje
-// bit-za-bit ista vrednost.
+// dugmad (rokada/en passant/promocija).
+//
+// Spec § 9 „Cipovi figura": izabrani `accent` + `onAccent` (8,53 / 6,71), ostali
+// `fill` + `ink` (14,47 / 13,08). Kartica cipova je obicna kartica (`surface` +
+// `line`) sa `Space.m` unutra — ranije `LazyVerticalGrid` sa zakucanom visinom
+// 110 dp, koja je ostavljala prazno dno.
 @Composable
-fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
-    // Piece picker grid
+fun PieceExplorer(viewModel: LearnViewModel) {
     val piecesList = listOf(PieceType.PAWN, PieceType.KNIGHT, PieceType.BISHOP, PieceType.ROOK, PieceType.QUEEN, PieceType.KING)
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(110.dp)
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.surface)
-            .padding(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        items(piecesList) { piece ->
-            val isSelected = viewModel.selectedPieceType == piece
-            // Isti par kao birac TEME u `SettingsView.kt:506-507` i kategorije u
-            // `ChessClockView.kt` (`if (isSelected) DS.accent else DS.fill` +
-            // `DS.onAccent`/`DS.ink`) — NE providna bela preko tamne podloge.
-            // Birac TEZINE nije isti par i namerno se ne pominje: `DifficultyOptionRow`
-            // (`SettingsView.kt:690-721`) nosi izbor `DS.accent` TEKSTOM plus kvacicom,
-            // bez akcent-ispune i bez `DS.onAccent` — tvrdnja „isto kao tezina" je
-            // stajala ovde neproverena i bila je netacna.
-            // Zamka istog oblika kao nalaz 2 iz 6d-1: `Color.White.copy(alpha=0.18f)`
-            // je bilo svetlije od `0.04f` SAMO zato sto je podloga bila tamna; u
-            // svetloj temi bi se `DS.fill` (svetliji od `DS.surface`) ponasao
-            // suprotno. Akcent-cip resava to u oba pravca odjednom.
-            val bg = if (isSelected) DS.accent else DS.fill
-            val fg = if (isSelected) DS.onAccent else DS.ink
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(DS.Radius.s))
-                    .background(bg)
-                    .clickable { viewModel.select(piece) }
-                    .padding(vertical = 6.dp, horizontal = DS.Space.xs),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                val pieceAsset = getAssetName(ChessPiece(piece, PieceColor.WHITE), PieceStyle.CLASSIC, BoardTheme.CLASSIC)
-                AsyncImage(
-                    model = "file:///android_asset/pieces/$pieceAsset.svg",
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                // `srbName` je bukvalno srpski string u modelu; kljucevi („Kralj",
-                // „Dama"...) postoje u `Loc.kt` na svih 8 jezika. Bez `loc()` je
-                // birac figura u lekciji pisao srpski i na engleskom UI-ju.
-                Text(text = loc(piece.srbName), color = fg, style = Type.label, fontWeight = FontWeight.Bold)
+    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().dsCard().padding(DS.Space.m),
+            verticalArrangement = Arrangement.spacedBy(DS.Space.s)
+        ) {
+            for (rowPieces in piecesList.chunked(3)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
+                    for (piece in rowPieces) {
+                        val isSelected = viewModel.selectedPieceType == piece
+                        val bg = if (isSelected) DS.accent else DS.fill
+                        val fg = if (isSelected) DS.onAccent else DS.ink
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(DS.Radius.s))
+                                .background(bg)
+                                .clickable { viewModel.select(piece) }
+                                .padding(vertical = DS.Space.s, horizontal = DS.Space.xs),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            val pieceAsset = getAssetName(ChessPiece(piece, PieceColor.WHITE), PieceStyle.CLASSIC, BoardTheme.CLASSIC)
+                            AsyncImage(
+                                model = "file:///android_asset/pieces/$pieceAsset.svg",
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            // `srbName` je bukvalno srpski string u modelu; kljucevi
+                            // postoje u `Loc.kt` na svih 8 jezika.
+                            Text(text = loc(piece.srbName), color = fg, style = Type.caption, fontWeight = FontWeight.Bold, maxLines = 1)
+                        }
+                    }
+                }
             }
         }
-    }
 
-    // Sandboxed BoardView
-    BoardView(
-        board = viewModel.board,
-        isFlipped = false,
-        selectedPosition = viewModel.selectedPosition,
-        legalMoves = viewModel.legalMoves,
-        lastMove = null,
-        boardTheme = BoardTheme.CLASSIC,
-        pieceStyle = PieceStyle.CLASSIC,
-        // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
-        // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
-        allowsStyleSwipe = false,
-        onTap = { viewModel.tap(it) }
-    )
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            BoardView(
+                board = viewModel.board,
+                isFlipped = false,
+                selectedPosition = viewModel.selectedPosition,
+                legalMoves = viewModel.legalMoves,
+                lastMove = null,
+                boardTheme = BoardTheme.CLASSIC,
+                pieceStyle = PieceStyle.CLASSIC,
+                // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+                // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+                allowsStyleSwipe = false,
+                onTap = { viewModel.tap(it) },
+                modifier = Modifier.widthIn(max = LessonBoardMaxSide).fillMaxWidth()
+            )
+        }
 
-    // Display Scenario details or moves count
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(DS.surface)
-            .padding(DS.Space.m)
-    ) {
-        // Tri nivoa (naslov / opis / brojac) ostaju TRI, kao i boje iznad:
-        // `body` / `caption` / `label`. iOS ovde nema pandan — `LessonPieceExplorer`
-        // (`Chessko/Views/LessonRenderer.swift:306`) nema info panel.
-        Text(text = viewModel.infoTitle, color = accent, style = Type.body, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(2.dp))
-        // Tri nivoa, tri boje. `infoText` je zatecen na `White@0,8` a
-        // `movesCountLabel` na `White@0,4`; prvi prelaz ih je oba poslao na
-        // `inkMuted`, pa je hijerarhija nestala — „Najjaca figura…" i „27 mogucih
-        // poteza" su se citali kao isti red. iOS ovde nema par za poredjenje
-        // (`LessonPieceExplorer` u `Chessko/Views/LessonRenderer.swift` uopste nema
-        // info panel), pa vazi pravilo raspona: 0,75–0,9 → `ink`, 0,4–0,7 → `inkMuted`.
-        Text(text = viewModel.infoText, color = DS.ink, style = Type.caption)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(text = viewModel.movesCountLabel, color = DS.inkMuted, style = Type.label)
-    }
-
-    // Scenario selectors
-    val scenarios = viewModel.availableScenarios
-    if (scenarios.isNotEmpty()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+        // Info kartica: naslov `ink` bold (statican tekst nije `accent`, spec § 3),
+        // opis `ink`, brojac poteza meta `inkMuted`.
+        Column(
+            modifier = Modifier.fillMaxWidth().dsCard().padding(DS.Space.m)
         ) {
-            scenarios.forEach { sc ->
-                val active = viewModel.activeScenario == sc
-                Button(
-                    onClick = { viewModel.toggleScenario(sc) },
-                    colors = ButtonDefaults.buttonColors(
-                        // `DS.warning` (narandzasta) je ovde bio UKRAS — aktivno stanje
-                        // dugmeta, ne upozorenje — pa ide na `DS.accent`/`DS.onAccent`,
-                        // isti par kao selekcija u `SettingsView.kt`/`ChessClockView.kt`.
-                        containerColor = if (active) DS.accent else DS.fill,
-                        contentColor = if (active) DS.onAccent else DS.ink
-                    ),
-                    shape = RoundedCornerShape(DS.Radius.s),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(text = sc.label, style = Type.caption, fontWeight = FontWeight.Bold)
+            Text(text = viewModel.infoTitle, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(DS.Space.xs))
+            Text(text = viewModel.infoText, color = DS.ink, style = Type.body)
+            Spacer(modifier = Modifier.height(DS.Space.s))
+            Text(text = viewModel.movesCountLabel, color = DS.inkMuted, style = Type.caption)
+        }
+
+        val scenarios = viewModel.availableScenarios
+        if (scenarios.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+            ) {
+                scenarios.forEach { sc ->
+                    val active = viewModel.activeScenario == sc
+                    Button(
+                        onClick = { viewModel.toggleScenario(sc) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (active) DS.accent else DS.fill,
+                            contentColor = if (active) DS.onAccent else DS.ink
+                        ),
+                        shape = RoundedCornerShape(DS.Radius.s),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = sc.label, style = Type.caption, fontWeight = FontWeight.Bold, maxLines = 1)
+                    }
                 }
             }
         }
@@ -559,12 +529,123 @@ fun PieceExplorer(viewModel: LearnViewModel, accent: Color) {
 }
 
 // Telo lekcija je od Faze 6b u `assets/lessons/*.json`; crta ga
-// `LessonRenderer.LessonBlocks`. Ovde su nekad stajale `Lesson1Content`..
-// `Lesson4Content` sa ~400 linija zakucanog SRPSKOG teksta koji se na svim
-// ostalim jezicima video onakav kakav jeste. Komponente koje su one koristile
-// (`LBox`, `LPara`, `LBullet`, `LSectionHeader`, `LNumberedRule`,
-// `PieceExplorer`, `OpeningExerciseCard`, `MateExerciseCard`, `MatePuzzleCard`)
-// NISU obrisane — renderer ih zove.
+// `LessonRenderer.LessonBlocks`.
+
+// ── Kartice vezbi (spec § 9, § 3) ────────────────────────────────────────────
+//
+// Kartica = `surface` + 1 dp ivica, `Radius.m`, `Space.m` unutra. Ivica je
+// `line` dok se igra, `success`/`danger` posle resenja/greske (stanje, ne ukras).
+// Plocica ikone `fill` + `ink` glif (bila `accent` tinta — accent je samo za ono
+// sto se tapa). Status „u toku" (npr. „Na potezu si!") je `ink` (spec § 9).
+
+@Composable
+private fun Modifier.exerciseCard(border: Color): Modifier {
+    val shape = RoundedCornerShape(DS.Radius.m)
+    return this
+        .fillMaxWidth()
+        .clip(shape)
+        .background(DS.surface)
+        .border(1.dp, border, shape)
+        .padding(DS.Space.m)
+}
+
+@Composable
+private fun ExerciseHeader(
+    icon: LessonGlyph,
+    title: String,
+    hint: String,
+    solved: Boolean,
+    badge: String? = null,
+    solvedIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Default.CheckCircle
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(DS.Radius.s))
+                .background(DS.fill),
+            contentAlignment = Alignment.Center
+        ) {
+            LessonGlyphView(icon, fontSize = Type.body.fontSize, tint = DS.ink)
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = title,
+                    color = DS.ink,
+                    style = Type.body,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                if (badge != null) {
+                    // Oznaka „Mat u N": meta cip `fill` + `ink` (ne `accent`).
+                    Text(
+                        text = badge,
+                        color = DS.ink,
+                        style = Type.label,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(DS.Radius.s))
+                            .background(DS.fill)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+            Text(text = hint, color = DS.inkMuted, style = Type.caption)
+        }
+        // Bedz resenosti stoji SAM na kraju reda (status tekst je odvojen celom
+        // tablom), pa nosi opis — nije dekorativan (Faza 8, Task 4).
+        if (solved) {
+            Icon(
+                imageVector = solvedIcon,
+                contentDescription = loc("Rešeno"),
+                tint = DS.success,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+/** Lekcijska tabla u kartici: privremena granica (`LessonBoardMaxSide`), centrirana. */
+@Composable
+private fun exerciseBoardModifier(): Modifier = Modifier
+    .widthIn(max = LessonBoardMaxSide)
+    .fillMaxWidth()
+    .aspectRatio(1f)
+    .clip(RoundedCornerShape(DS.Radius.s))
+
+@Composable
+private fun ExerciseFooter(status: String, statusColor: Color, onReset: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+    ) {
+        Text(
+            text = status,
+            color = statusColor,
+            style = Type.caption,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+        Button(
+            onClick = onReset,
+            colors = ButtonDefaults.buttonColors(containerColor = DS.fill, contentColor = DS.ink),
+            contentPadding = PaddingValues(horizontal = DS.Space.m, vertical = DS.Space.xs),
+            shape = RoundedCornerShape(DS.Radius.s)
+        ) {
+            // iOS na sve tri kartice pise „Ponovo"; Android je na dve pisao „Reset".
+            Text(text = loc("Ponovo"), style = Type.caption)
+        }
+    }
+}
 
 @Composable
 fun OpeningExerciseCard(line: OpeningLine) {
@@ -574,128 +655,46 @@ fun OpeningExerciseCard(line: OpeningLine) {
     val scope = rememberCoroutineScope()
     val state = remember { OpeningExerciseState(line) }
 
+    val border = when (state.phase) {
+        OpeningPhase.SOLVED -> DS.success
+        OpeningPhase.WRONG_MOVE -> DS.danger
+        OpeningPhase.PLAYING -> DS.line
+    }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.surface)
-            .border(1.dp, line.accentColor.copy(alpha = 0.2f), RoundedCornerShape(DS.Radius.m))
-            .padding(DS.Space.m)
+        modifier = Modifier.exerciseCard(border),
+        verticalArrangement = Arrangement.spacedBy(DS.Space.m)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(line.accentColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // iOS `OpeningExerciseCard`: ikona `.dsCaption.weight(.semibold)`,
-                    // naziv `.dsBody.weight(.semibold)`, hint `.dsCaption`
-                    // (`Chessko/Views/LessonRenderer.swift:720`, `:723`, `:726`).
-                    LessonGlyphView(line.icon, fontSize = Type.caption.fontSize, tint = line.accentColor)
-                }
-                Column {
-                    Text(text = line.name, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
-                    Text(text = line.hint, color = DS.inkMuted, style = Type.caption)
-                }
-            }
-            // Faza 8, Task 4: emoji -> Material ikona. Ovaj bedz stoji SAM na
-            // desnom kraju header reda -- naslov/hint levo od njega govore o
-            // VEZBI, ne o tome da li je resena, pa ikona nosi informaciju koju
-            // sused ne ponavlja (isti obrazac kao kvacica resenosti u
-            // `PuzzleView.kt:372-384` datumske trake). Status tekst ispod
-            // ("Bravo! Otvaranje savladano! ✓") je odvojen celom tablom -- nije
-            // "neposredno uz" -- pa ovo NIJE dekorativna ikona. `success/surface`
-            // je vec pokriven `ContrastTest.textOnBackgroundsMeetsAA`.
-            if (state.phase == OpeningPhase.SOLVED) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = loc("Rešeno"),
-                    tint = DS.success,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Chessboard
-        BoardView(
-            board = state.gameState.board,
-            isFlipped = false,
-            selectedPosition = state.selectedPosition,
-            legalMoves = state.legalMovesForSelected,
-            lastMove = state.lastMove,
-            boardTheme = BoardTheme.CLASSIC,
-            pieceStyle = PieceStyle.CLASSIC,
-            // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
-            // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
-            allowsStyleSwipe = false,
-            onTap = { state.tap(it, soundManager, hapticManager, scope) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(DS.Radius.s))
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Progress + Status
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                // `playingPrompt` je uputstvo koje JSON pise uz vezbu („Find
-                // mate in 1!"). `MatePuzzleCard` ga postuje, ali renderer zove
-                // OVU karticu za sve `scripted` vezbe, a ona ga je ignorisala —
-                // pa je 13 od 16 vezbi u isporucenom sadrzaju pisalo genericko
-                // „Potez N — pronadji pravi potez za bele!" umesto svog teksta.
-                text = if (state.phase == OpeningPhase.PLAYING && line.playingPrompt != null)
-                    line.playingPrompt
-                else
-                    state.statusMessage,
-                color = when (state.phase) {
-                    OpeningPhase.SOLVED -> DS.success
-                    OpeningPhase.WRONG_MOVE -> DS.danger
-                    // IZUZETAK od pravila „zateceno 0,75–0,9 → `ink`": zateceno jeste
-                    // bilo `White@0,8`, ali iOS `OpeningExerciseCard.statusColor` za
-                    // `.playing` vraca `.secondary`
-                    // (`Chessko/Views/LessonRenderer.swift:685`) — provereno, ne
-                    // pretpostavljeno. Ovo je mirno stanje pored dva obojena; da je
-                    // `ink`, „u toku" bi vikalo jace od „reseno".
-                    else -> DS.inkMuted
-                },
-                // iOS: `.dsCaption.weight(.medium)`
-                // (`Chessko/Views/LessonRenderer.swift:655`, `:776`, `:902`).
-                style = Type.caption,
-                fontWeight = FontWeight.Medium
+        ExerciseHeader(line.icon, line.name, line.hint, solved = state.phase == OpeningPhase.SOLVED)
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            BoardView(
+                board = state.gameState.board,
+                isFlipped = false,
+                selectedPosition = state.selectedPosition,
+                legalMoves = state.legalMovesForSelected,
+                lastMove = state.lastMove,
+                boardTheme = BoardTheme.CLASSIC,
+                pieceStyle = PieceStyle.CLASSIC,
+                // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+                // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+                allowsStyleSwipe = false,
+                onTap = { state.tap(it, soundManager, hapticManager, scope) },
+                modifier = exerciseBoardModifier()
             )
-
-            Button(
-                onClick = { state.reset() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DS.fill,
-                    contentColor = DS.ink
-                ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = DS.Space.xs),
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                // iOS: `.dsCaption.weight(.medium)` (`Chessko/Views/LessonRenderer.swift:663`).
-                Text(text = loc("Reset"), style = Type.caption)
-            }
         }
+        ExerciseFooter(
+            // `playingPrompt` je uputstvo koje JSON pise uz vezbu; bez njega
+            // genericko „Potez N — pronadji pravi potez za bele!".
+            status = if (state.phase == OpeningPhase.PLAYING && line.playingPrompt != null)
+                line.playingPrompt
+            else
+                state.statusMessage,
+            statusColor = when (state.phase) {
+                OpeningPhase.SOLVED -> DS.success
+                OpeningPhase.WRONG_MOVE -> DS.danger
+                OpeningPhase.PLAYING -> DS.ink
+            },
+            onReset = { state.reset() }
+        )
     }
 }
 
@@ -704,8 +703,7 @@ fun MateExerciseCard(
     fen: String,
     title: String,
     hint: String,
-    icon: LessonGlyph,
-    color: Color
+    icon: LessonGlyph
 ) {
     val context = LocalContext.current
     val soundManager = remember { SoundManager(context.applicationContext as android.app.Application) }
@@ -713,112 +711,42 @@ fun MateExerciseCard(
     val scope = rememberCoroutineScope()
     val state = remember { MateExerciseState(fen, title, hint) }
 
+    val border = when {
+        state.isSolved -> DS.success
+        state.isOver -> DS.danger
+        else -> DS.line
+    }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.surface)
-            .border(1.dp, color.copy(alpha = 0.2f), RoundedCornerShape(DS.Radius.m))
-            .padding(DS.Space.m)
+        modifier = Modifier.exerciseCard(border),
+        verticalArrangement = Arrangement.spacedBy(DS.Space.m)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(color.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // iOS `MateExerciseCard`: isti trojac kao kartica iznad
-                    // (`Chessko/Views/LessonRenderer.swift:852`, `:856`, `:858`).
-                    LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = color)
-                }
-                Column {
-                    Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
-                    Text(text = hint, color = DS.inkMuted, style = Type.caption)
-                }
-            }
-            // Faza 8, Task 4: emoji -> Material ikona. Isti obrazac kao
-            // `OpeningExerciseCard` iznad -- bedz sam na desnom kraju header
-            // reda, naslov/hint levo ne govore o resenosti, status tekst ispod
-            // je odvojen celom tablom. Nije dekorativna.
-            if (state.isSolved) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = loc("Rešeno"),
-                    tint = DS.success,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Chessboard
-        BoardView(
-            board = state.gameState.board,
-            isFlipped = false,
-            selectedPosition = state.selectedPosition,
-            legalMoves = state.legalMovesForSelected,
-            lastMove = state.lastMove,
-            boardTheme = BoardTheme.CLASSIC,
-            pieceStyle = PieceStyle.CLASSIC,
-            // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
-            // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
-            allowsStyleSwipe = false,
-            onTap = { state.tap(it, soundManager, hapticManager, scope) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(DS.Radius.s))
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Progress + Status
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = state.statusMessage,
-                color = when {
-                    state.isSolved -> DS.success
-                    state.isOver && !state.isSolved -> DS.danger
-                    // Isti izuzetak kao u `OpeningExerciseCard` iznad: zateceno
-                    // `White@0,8`, ali iOS `MateExerciseCard.statusColor` za `.playing`
-                    // vraca `.secondary` (`Chessko/Views/LessonRenderer.swift:809`).
-                    else -> DS.inkMuted
-                },
-                // iOS: `.dsCaption.weight(.medium)`
-                // (`Chessko/Views/LessonRenderer.swift:655`, `:776`, `:902`).
-                style = Type.caption,
-                fontWeight = FontWeight.Medium
+        ExerciseHeader(icon, title, hint, solved = state.isSolved)
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            BoardView(
+                board = state.gameState.board,
+                isFlipped = false,
+                selectedPosition = state.selectedPosition,
+                legalMoves = state.legalMovesForSelected,
+                lastMove = state.lastMove,
+                boardTheme = BoardTheme.CLASSIC,
+                pieceStyle = PieceStyle.CLASSIC,
+                // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+                // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+                allowsStyleSwipe = false,
+                onTap = { state.tap(it, soundManager, hapticManager, scope) },
+                modifier = exerciseBoardModifier()
             )
-
-            Button(
-                onClick = { state.reset() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DS.fill,
-                    contentColor = DS.ink
-                ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = DS.Space.xs),
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                // iOS: `.dsCaption.weight(.medium)` (`Chessko/Views/LessonRenderer.swift:663`).
-                Text(text = loc("Reset"), style = Type.caption)
-            }
         }
+        ExerciseFooter(
+            status = state.statusMessage,
+            statusColor = when {
+                state.isSolved -> DS.success
+                state.isOver -> DS.danger
+                // „Na potezu si!" je `ink` (spec § 9).
+                else -> DS.ink
+            },
+            onReset = { state.reset() }
+        )
     }
 }
 
@@ -829,28 +757,19 @@ fun MatePuzzleCard(
     title: String,
     hint: String,
     icon: LessonGlyph,
-    accentColor: Color,
     mateIn: Int,
-    // Poruke iz JSON-a. `null` = koristi podrazumevanu.
-    //
-    // Bez ovih parametara `solvedMessage`/`wrongMessage`/`playingPrompt` iz
-    // sadrzaja NEMAJU EFEKTA za mat-zadatke, jer ih je kartica sama sklapala.
-    // Danas se razlika ne bi videla — vrednosti u JSON-u se slucajno poklapaju
-    // sa podrazumevanima — ali bi pao ugovor cele faze: „sadrzaj je u JSON-u,
-    // izmena JSON-a menja aplikaciju". iOS ih prosledjuje
-    // (`LessonRenderer.swift:106-111`), pa bi Android tiho odstupao.
+    // Poruke iz JSON-a. `null` = koristi podrazumevanu. Bez ovih parametara
+    // izmena sadrzaja ne bi imala efekta za mat-zadatke (iOS ih prosledjuje).
     solvedMessage: String? = null,
     wrongMessage: String? = null,
     playingPrompt: String? = null
 ) {
-    val line = remember(fen, moves, title, hint, icon, accentColor,
-                        solvedMessage, wrongMessage, playingPrompt) {
+    val line = remember(fen, moves, title, hint, icon, solvedMessage, wrongMessage, playingPrompt) {
         OpeningLine(
             name = title,
             uciMoves = moves,
             hint = hint,
             icon = icon,
-            accentColor = accentColor,
             solvedMessage = solvedMessage ?: loc("Sjajno! Mat pronađen! 🏆"),
             wrongMessage = wrongMessage ?: loc("Nije to — traži pravi ključni potez!"),
             playingPrompt = playingPrompt
@@ -865,161 +784,45 @@ fun MatePuzzleCard(
     val scope = rememberCoroutineScope()
     val state = remember(line) { OpeningExerciseState(line) }
 
+    val border = when (state.phase) {
+        OpeningPhase.SOLVED -> DS.success
+        OpeningPhase.WRONG_MOVE -> DS.danger
+        OpeningPhase.PLAYING -> DS.line
+    }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(DS.surface)
-            .border(
-                width = 1.5.dp,
-                color = when (state.phase) {
-                    // Bila je narandzasta (`#F59E0B`) dok ISTA kartica dva reda ispod
-                    // (status traka) i sestarske kartice (`OpeningExerciseCard`,
-                    // `MateExerciseCard`) koriste zelenu za RESENO — jedina
-                    // nedoslednost boje u ovom fajlu. iOS `MatePuzzleCard`
-                    // (`Chessko/Views/LessonRenderer.swift:626,691`) potvrdjeno koristi
-                    // `DS.success` i za trofej i za ivicu kad je `.solved`; poravnato.
-                    OpeningPhase.SOLVED -> DS.success.copy(alpha = 0.6f)
-                    OpeningPhase.WRONG_MOVE -> DS.danger.copy(alpha = 0.5f)
-                    OpeningPhase.PLAYING -> accentColor.copy(alpha = 0.3f)
-                },
-                shape = RoundedCornerShape(14.dp)
-            )
-            .padding(DS.Space.m)
+        modifier = Modifier.exerciseCard(border),
+        verticalArrangement = Arrangement.spacedBy(DS.Space.m)
     ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(DS.Radius.s))
-                        .background(accentColor.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // iOS `MatePuzzleCard`: ikona `.dsCaption.weight(.semibold)`
-                    // (`Chessko/Views/LessonRenderer.swift:603`).
-                    LessonGlyphView(icon, fontSize = Type.caption.fontSize, tint = accentColor)
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = title,
-                            color = DS.ink,
-                            // iOS: `.dsBody.weight(.semibold)` (`:608`).
-                            style = Type.body,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                        Text(
-                            text = locF("Mat u %d", mateIn),
-                            color = accentColor,
-                            // iOS ovaj cip crta `.appFont(.caption2).weight(.bold)` uz
-                            // komentar „van skale — caption2 nema DS ekvivalent"
-                            // (`Chessko/Views/LessonRenderer.swift:611`). Na Androidu
-                            // caption2 OD FAZE 10 ima ekvivalent: `Type.label` = 11.
-                            style = Type.label,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .background(accentColor.copy(alpha = 0.18f), RoundedCornerShape(50.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                    Text(text = hint, color = DS.inkMuted, style = Type.caption)
-                }
-            }
-            // Faza 8, Task 4: emoji -> Material ikona. Isti obrazac kao dve
-            // kvacice iznad -- bedz sam na desnom kraju header reda, naziv
-            // zadatka i "Mat u N" cip levo od njega ne govore o resenosti,
-            // status traka ispod je odvojena celom tablom. Nije dekorativna.
-            //
-            // Faza 8, talas ispravki: opis je bio kljuc "Trofej" — IZGLED ikone,
-            // ne njeno znacenje. Bedz znaci „reseno", isto kao dve kvacice iznad
-            // (`:598`, `:724`), koje su odmah i pisale „Rešeno"; citac ekrana je
-            // za isto stanje imao dva imena. Bio je to poslednji kljuc na grani
-            // izveden iz izgleda; time je ostao bez pozivaoca i uklonjen je iz
-            // `Loc.kt`. (Ime kljuca se ovde NE pise kao poziv sa `loc` ispred —
-            // `LocTest.everyLocCallInTheSourceHasAKeyInTheDictionary` cita izvor
-            // kao tekst, pa bi ga i u komentaru procitao kao zivog pozivaoca;
-            // uhvatio je upravo ovaj komentar u prvoj verziji ispravke.)
-            if (state.phase == OpeningPhase.SOLVED) {
-                Icon(
-                    imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = loc("Rešeno"),
-                    tint = DS.success,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Chessboard
-        BoardView(
-            board = state.gameState.board,
-            isFlipped = false,
-            selectedPosition = state.selectedPosition,
-            legalMoves = state.legalMovesForSelected,
-            lastMove = state.lastMove,
-            boardTheme = BoardTheme.CLASSIC,
-            pieceStyle = PieceStyle.CLASSIC,
-            // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
-            // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
-            allowsStyleSwipe = false,
-            onTap = { state.tap(it, soundManager, hapticManager, scope) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(DS.Radius.s))
+        ExerciseHeader(
+            icon, title, hint,
+            solved = state.phase == OpeningPhase.SOLVED,
+            badge = locF("Mat u %d", mateIn),
+            solvedIcon = Icons.Default.EmojiEvents
         )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Status bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = if (state.phase == OpeningPhase.PLAYING && line.playingPrompt != null) line.playingPrompt else state.statusMessage,
-                color = when (state.phase) {
-                    // Ista odluka kao ivica iznad — poravnato sa iOS-om, `DS.success`
-                    // umesto narandzaste, umesto necitljive zelena/narandzasta podele
-                    // izmedju ove kartice i sestarskih.
-                    OpeningPhase.SOLVED -> DS.success
-                    OpeningPhase.WRONG_MOVE -> DS.danger
-                    OpeningPhase.PLAYING -> DS.inkMuted
-                },
-                // iOS: `.dsCaption.weight(.medium)`
-                // (`Chessko/Views/LessonRenderer.swift:655`, `:776`, `:902`).
-                style = Type.caption,
-                fontWeight = FontWeight.Medium
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            BoardView(
+                board = state.gameState.board,
+                isFlipped = false,
+                selectedPosition = state.selectedPosition,
+                legalMoves = state.legalMovesForSelected,
+                lastMove = state.lastMove,
+                boardTheme = BoardTheme.CLASSIC,
+                pieceStyle = PieceStyle.CLASSIC,
+                // Lekcijska tabla ne menja globalno podešavanje — isti izuzetak i
+                // istih pet mesta kao iOS (`allowsStyleSwipe: false`).
+                allowsStyleSwipe = false,
+                onTap = { state.tap(it, soundManager, hapticManager, scope) },
+                modifier = exerciseBoardModifier()
             )
-
-            Button(
-                onClick = { state.reset() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DS.fill,
-                    contentColor = DS.ink
-                ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = DS.Space.xs),
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                Text(text = loc("Ponovo"), style = Type.caption)
-            }
         }
+        ExerciseFooter(
+            status = if (state.phase == OpeningPhase.PLAYING && line.playingPrompt != null) line.playingPrompt else state.statusMessage,
+            statusColor = when (state.phase) {
+                OpeningPhase.SOLVED -> DS.success
+                OpeningPhase.WRONG_MOVE -> DS.danger
+                OpeningPhase.PLAYING -> DS.ink
+            },
+            onReset = { state.reset() }
+        )
     }
 }

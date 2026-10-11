@@ -87,6 +87,31 @@ class LessonGlyphMapTest {
         // je i popravljena.
     }
 
+    /**
+     * Dizajnerski pregled, spec § 9 (Task 8): 👑 🏰 🐴 📐 🍴 ⬛ su zamenjeni
+     * Unicode figurama uz U+FE0E i ikonama. Isporucen sadrzaj zato vise ne sme
+     * da razresi NIJEDAN simbol u pun-kolor `Emoji` (koji ne prima boju), a svaki
+     * `Glyph` mora nositi VARIATION SELECTOR-15 — bez njega Android ♔ ume da
+     * nacrta kao emoji i tiho izgubi `tint`.
+     */
+    @Test
+    fun shippedIconsAreTintableNeverFullColorEmoji() {
+        val files = assets.list("lessons")?.filter { it.endsWith(".json") }.orEmpty()
+        assertTrue(files.isNotEmpty())
+        val distinct = sortedSetOf<String>()
+        for (name in files) {
+            val text = assets.open("lessons/$name").bufferedReader().use { it.readText() }
+            val icons = mutableListOf<String>()
+            collectIcons(JSONObject(text), icons)
+            distinct.addAll(icons)
+        }
+        val emoji = distinct.filter { lessonGlyph(it) is LessonGlyph.Emoji }
+        assertEquals("simboli koji bi se crtali kao pun-kolor emoji: $emoji", emptyList<String>(), emoji)
+        val noSelector = distinct.mapNotNull { lessonGlyph(it) as? LessonGlyph.Glyph }
+            .filterNot { it.text.endsWith("\uFE0E") }
+        assertEquals("Glyph bez U+FE0E: $noSelector", emptyList<LessonGlyph.Glyph>(), noSelector)
+    }
+
     @Test
     fun symbolOutsideTheMapIsLoudNotSilent() {
         // Bez ove tvrdnje bi prva prolazila i nad mapom koja PROGUTA sve — npr.

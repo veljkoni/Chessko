@@ -5,44 +5,103 @@ import SwiftUI
 // Jedino mesto koje zna kako se blok sadržaja crta. Nova lekcija je nov JSON;
 // nov tip bloka je jedna grana ovde plus jedan slučaj u `LessonBlock`.
 //
-// Razmaci: u Swift izvoru lekcija svako pozivno mesto je nosilo sopstveni
-// `.padding(.bottom, …)` (4/8/12/16 za pasus, 0/8/16 za vežbu). JSON to ne
-// prenosi — namerno, jer bi razmak u sadržaju bio dizajn u podacima. Ovde je
-// po tipu bloka jedna vrednost; odstupanja su popisana u izveštaju Task-a 4.
+// Dizajnerski pregled, spec § 9 (Task 8): hijerarhija (naslov lekcije `title`,
+// sekcija `heading` bold `ink` + ikona `inkMuted`, pod-blok `body` medium, telo
+// `body` sa proredom 1,5 u `ink`, meta `caption` `inkMuted`), kutija pravila
+// `warning` 10 % preko `surface` bez ivice, i ritam: razmak IZMEĐU blokova se
+// računa na jednom mestu (`gap(before:after:)`), ne padding-om po komponenti.
+// Android: `ui/LessonRenderer.kt` (`LessonBlocks`, `gapBefore`) i `ui/LearnView.kt`.
+
+/// Telo lekcije: `.dsBody` (15) sa proredom 1,5 → visina reda ~22,5. Prirodna
+/// visina reda SF-a na 15 pt je ~18, pa je dodatak ~4,5 (Android: `LessonBodyStyle`,
+/// `lineHeight = 22.5.sp`).
+let lessonBodyLineSpacing: CGFloat = 4.5
+
+/// TODO(design § 13): privremena granica lekcijske table do zajedničke funkcije
+/// strane table (Task 11). Bez nje je tabla na iPad-u išla do 1336 pt (spec § 9).
+let lessonBoardMaxSide: CGFloat = DS.maxBoardSide
+
+/// Kako se crtaju blokovi sa tablom. `.inline` — u toku teksta; `.markers` —
+/// iPad u pejzažu (spec § 9): na mestu bloka stoji samo oznaka, a tabla se crta
+/// u desnoj, lepljivoj koloni (`LessonDetailView`).
+enum LessonBoardMode: Equatable {
+    case inline
+    case markers(activeIndex: Int?)
+}
+
+extension LessonBlock {
+    /// Blok koji nosi tablu (vežba, istraživač, statična tabla).
+    var carriesBoard: Bool {
+        switch self {
+        case .board, .explorer, .exercise: return true
+        default: return false
+        }
+    }
+}
+
+/// Vertikalni položaj oznaka (po indeksu bloka) u koordinatnom prostoru skrola.
+struct LessonMarkerYKey: PreferenceKey {
+    static let defaultValue: [Int: CGFloat] = [:]
+    static func reduce(value: inout [Int: CGFloat], nextValue: () -> [Int: CGFloat]) {
+        value.merge(nextValue(), uniquingKeysWith: { $1 })
+    }
+}
 
 struct LessonRenderer: View {
     let blocks: [LessonBlock]
+    var boardMode: LessonBoardMode = .inline
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
-                view(for: block)
+            ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
+                view(for: block, at: index)
+                    .padding(.top, index == 0 ? 0 : Self.gap(before: blocks[index - 1], after: block))
             }
         }
-        // Prvi blok svake lekcije je citat-kutija koja je u izvoru imala
-        // `.padding(.top, 4)`; ovde stoji na korenu, sa istim rezultatom.
-        .padding(.top, 4)
+    }
+
+    /// Spec § 9 „Ritam": `Space.xl` iznad i ispod razdelnika, `Space.m` od naslova
+    /// do teksta, inače `Space.l`.
+    static func gap(before prev: LessonBlock, after cur: LessonBlock) -> CGFloat {
+        if case .divider = cur { return DS.Space.xl }
+        if case .divider = prev { return DS.Space.xl }
+        if case .heading = prev { return DS.Space.m }
+        return DS.Space.l
     }
 
     @ViewBuilder
-    private func view(for block: LessonBlock) -> some View {
+    private func view(for block: LessonBlock, at index: Int) -> some View {
+        if block.carriesBoard, case .markers(let active) = boardMode {
+            LessonBoardMarker(block: block, isActive: active == index)
+                .background(GeometryReader { g in
+                    Color.clear.preference(key: LessonMarkerYKey.self,
+                                           value: [index: g.frame(in: .named("lessonScroll")).minY])
+                })
+        } else {
+            content(for: block)
+        }
+    }
+
+    @ViewBuilder
+    private func content(for block: LessonBlock) -> some View {
         switch block {
         case .heading(let text, let icon):
-            L_SectionHeader(icon: icon, title: text, color: DS.accent)
+            L_SectionHeader(icon: icon, title: text)
 
         case .paragraph(let text):
             L_Para(text)
-                .padding(.horizontal, 20).padding(.bottom, 8)
 
         case .bullets(let items):
-            ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                L_Bullet(icon: item.icon,
-                         color: item.style.map(color(for:)) ?? DS.accent,
-                         title: item.title, text: item.text)
+            VStack(alignment: .leading, spacing: DS.Space.m) {
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                    L_Bullet(icon: item.icon,
+                             color: Self.bulletColor(item.style),
+                             title: item.title, text: item.text)
+                }
             }
 
         case .box(let style, let icon, let title, let text):
-            L_Box(icon: icon, color: color(for: style), title: title, text: text)
+            L_Box(icon: icon, color: Self.boxColor(style), title: title, text: text)
 
         case .quote(let text, let author):
             L_Box(icon: "quote.opening", color: DS.accent, title: author, text: text)
@@ -55,83 +114,30 @@ struct LessonRenderer: View {
             }
 
         case .numberedRule(let number, let title, let text):
-            L_NumberedRule(number: number, color: DS.accent, title: title, text: text)
+            L_NumberedRule(number: number, title: title, text: text)
 
         case .pieceValueTable(let rows):
             L_PieceValueTable(rows: rows)
 
-        case .board(let fen, let caption, let interactive):
-            // Interaktivna tabla u lekciji jos nije implementirana. Tiho crtanje
-            // staticne bi dalo mrtvu tablu bez ijednog traga; bolje da pisac
-            // lekcije odmah vidi da polje nista ne radi.
-            if interactive {
-                LessonBlockError(message: "Interaktivna tabla još nije podržana: '\(caption)'")
-            } else {
-                LessonStaticBoard(fen: fen, caption: caption)
-            }
-
-        case .explorer:
-            LessonPieceExplorer()
-
         case .divider:
-            Divider().background(DS.line)
-                .padding(.horizontal, 20).padding(.vertical, 12)
+            Rectangle().fill(DS.line).frame(height: 1)
 
-        case .exercise(let spec):
-            exerciseView(spec)
+        case .board, .explorer, .exercise:
+            LessonBoardBlock(block: block)
         }
     }
 
-    @ViewBuilder
-    private func exerciseView(_ spec: ExerciseSpec) -> some View {
-        switch spec.kind {
-        case .vsEngine:
-            // `startFEN` je kod vsEngine obavezan; prazan string bi dao praznu
-            // tablu, pa se blok preskače uz vidljivu poruku umesto tihe rupe.
-            if let fen = spec.startFEN {
-                MateExerciseCard(fen: fen, title: spec.title, hint: spec.hint,
-                                 icon: spec.icon, color: DS.accent)
-                    .padding(.horizontal, 16).padding(.bottom, 16)
-            } else {
-                LessonBlockError(message: "Vežba '\(spec.title)' nema startFEN")
-            }
-
-        case .scripted:
-            if let moves = spec.uciMoves {
-                if let mateIn = spec.mateIn {
-                    // `MatePuzzleCard` NE prima `OpeningLine` nego raspakovane
-                    // parametre, i `fen` mu NIJE opcion. `OpeningExerciseCard`
-                    // prima `line:`. Potpisi se razlikuju — provereno u izvoru.
-                    if let fen = spec.startFEN {
-                        MatePuzzleCard(fen: fen, moves: moves, title: spec.title,
-                                       hint: spec.hint, icon: spec.icon,
-                                       accentColor: DS.accent, mateIn: mateIn,
-                                       solvedMessage: spec.solvedMessage,
-                                       wrongMessage: spec.wrongMessage,
-                                       playingPrompt: spec.playingPrompt)
-                            // Pet zadataka finalnog testa u izvoru stoje spojeni,
-                            // bez razmaka među karticama — otud nema `.bottom`.
-                            .padding(.horizontal, 16)
-                    } else {
-                        LessonBlockError(message: "Zadatak '\(spec.title)' ima mateIn ali nema startFEN")
-                    }
-                } else {
-                    OpeningExerciseCard(line: OpeningLine(
-                        name: spec.title, uciMoves: moves, hint: spec.hint,
-                        icon: spec.icon, accentColor: DS.accent,
-                        solvedMessage: spec.solvedMessage ?? Loc("Bravo! Otvaranje savladano! ✓"),
-                        wrongMessage:  spec.wrongMessage  ?? Loc("Pogrešan potez — pokušaj ponovo."),
-                        playingPrompt: spec.playingPrompt,
-                        startFEN: spec.startFEN))
-                        .padding(.horizontal, 16).padding(.bottom, 16)
-                }
-            } else {
-                LessonBlockError(message: "Vežba '\(spec.title)' nema uciMoves")
-            }
+    /// Neutralna stavka nabrajanja je `inkMuted`, ne `accent` (spec § 3: accent
+    /// samo za ono što se tapa). Pravilo/upozorenje nose značenje.
+    static func bulletColor(_ style: BoxStyle?) -> Color {
+        switch style {
+        case .rule:          return DS.warning
+        case .warning:       return DS.danger
+        case .info, .none:   return DS.inkMuted
         }
     }
 
-    private func color(for style: BoxStyle) -> Color {
+    static func boxColor(_ style: BoxStyle) -> Color {
         switch style {
         case .rule:    return DS.warning
         case .warning: return DS.danger
@@ -155,6 +161,121 @@ struct LessonRenderer: View {
     }
 }
 
+/// Blok sa tablom — isti crtež u toku teksta i u desnoj koloni na iPad-u.
+struct LessonBoardBlock: View {
+    let block: LessonBlock
+
+    var body: some View {
+        switch block {
+        case .board(let fen, let caption, let interactive):
+            // Interaktivna tabla u lekciji jos nije implementirana. Tiho crtanje
+            // staticne bi dalo mrtvu tablu bez ijednog traga.
+            if interactive {
+                LessonBlockError(message: "Interaktivna tabla još nije podržana: '\(caption)'")
+            } else {
+                LessonStaticBoard(fen: fen, caption: caption)
+            }
+        case .explorer:
+            LessonPieceExplorer()
+        case .exercise(let spec):
+            exerciseView(spec)
+        default:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private func exerciseView(_ spec: ExerciseSpec) -> some View {
+        switch spec.kind {
+        case .vsEngine:
+            // `startFEN` je kod vsEngine obavezan; prazan string bi dao praznu
+            // tablu, pa se blok preskače uz vidljivu poruku umesto tihe rupe.
+            if let fen = spec.startFEN {
+                MateExerciseCard(fen: fen, title: spec.title, hint: spec.hint, icon: spec.icon)
+            } else {
+                LessonBlockError(message: "Vežba '\(spec.title)' nema startFEN")
+            }
+
+        case .scripted:
+            if let moves = spec.uciMoves {
+                if let mateIn = spec.mateIn {
+                    if let fen = spec.startFEN {
+                        MatePuzzleCard(fen: fen, moves: moves, title: spec.title,
+                                       hint: spec.hint, icon: spec.icon,
+                                       accentColor: DS.accent, mateIn: mateIn,
+                                       solvedMessage: spec.solvedMessage,
+                                       wrongMessage: spec.wrongMessage,
+                                       playingPrompt: spec.playingPrompt)
+                    } else {
+                        LessonBlockError(message: "Zadatak '\(spec.title)' ima mateIn ali nema startFEN")
+                    }
+                } else {
+                    OpeningExerciseCard(line: OpeningLine(
+                        name: spec.title, uciMoves: moves, hint: spec.hint,
+                        icon: spec.icon, accentColor: DS.accent,
+                        solvedMessage: spec.solvedMessage ?? Loc("Bravo! Otvaranje savladano! ✓"),
+                        wrongMessage:  spec.wrongMessage  ?? Loc("Pogrešan potez — pokušaj ponovo."),
+                        playingPrompt: spec.playingPrompt,
+                        startFEN: spec.startFEN))
+                }
+            } else {
+                LessonBlockError(message: "Vežba '\(spec.title)' nema uciMoves")
+            }
+        }
+    }
+}
+
+/// Oznaka bloka sa tablom u levoj koloni (iPad pejzaž). Trenutna nosi izgled
+/// izabranog reda (`selectionTint` preko `surface`, tekst `accent`).
+struct LessonBoardMarker: View {
+    let block: LessonBlock
+    let isActive: Bool
+
+    var body: some View {
+        let (icon, title): (String, String) = {
+            switch block {
+            case .exercise(let spec):         return (spec.icon, spec.title)
+            case .board(_, let caption, _):   return ("square.grid.3x3.fill", caption)
+            default:                          return ("hand.point.up.left.fill", Loc("Istraživač figura"))
+            }
+        }()
+        let tint = isActive ? DS.accent : DS.ink
+        HStack(spacing: DS.Space.s) {
+            LessonSymbolView(name: icon, color: tint, font: .dsBody)
+            Text(title)
+                .font(.dsBody.weight(.medium))
+                .foregroundStyle(tint)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: "arrow.right")
+                .font(.dsCaption.weight(.semibold))
+                .foregroundStyle(isActive ? DS.accent : DS.inkMuted)
+        }
+        .padding(DS.Space.m)
+        .dsCard()
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+                .fill(isActive ? DS.selectionTint : Color.clear)
+                .allowsHitTesting(false)
+        )
+    }
+}
+
+/// SF simbol ili tekstualni glif iz `LessonSymbol.resolve` (spec § 9).
+struct LessonSymbolView: View {
+    let name: String
+    let color: Color
+    let font: Font
+
+    var body: some View {
+        switch LessonSymbol.resolve(name) {
+        case .sf(let sf):
+            Image(systemName: sf).font(font).foregroundStyle(color)
+        case .glyph(let g):
+            Text(g).font(font).foregroundStyle(color)
+        }
+    }
+}
+
 /// Vidljiva poruka umesto tihe rupe kad je blok nepotpun. Sadržaj je van koda,
 /// pa greška u JSON-u ne sme da se izgubi bez traga.
 struct LessonBlockError: View {
@@ -163,7 +284,6 @@ struct LessonBlockError: View {
         Text(message)
             .font(.dsCaption)
             .foregroundStyle(DS.danger)
-            .padding(.horizontal, 20).padding(.bottom, 8)
     }
 }
 
@@ -171,15 +291,12 @@ struct LessonBlockError: View {
 // MARK: - Static Board
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Nepokretna pozicija iz FEN-a sa potpisom ispod. Nijedna od četiri lekcije je
-/// za sada ne koristi (`board` blok postoji u šemi, ali ga generator ne emituje),
-/// pa je namerno svedena na isti okvir kakav nose kartice vežbi.
 struct LessonStaticBoard: View {
     let fen: String
     let caption: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DS.Space.s) {
             if let state = GameState.fromFEN(fen) {
                 BoardView(
                     board:            state.board,
@@ -197,6 +314,8 @@ struct LessonStaticBoard: View {
                 .aspectRatio(1, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .allowsHitTesting(false)
+                .frame(maxWidth: lessonBoardMaxSide)
+                .frame(maxWidth: .infinity)
             } else {
                 LessonBlockError(message: "Neispravan FEN: \(fen)")
             }
@@ -207,7 +326,6 @@ struct LessonStaticBoard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, 16).padding(.bottom, 16)
     }
 }
 
@@ -215,107 +333,83 @@ struct LessonStaticBoard: View {
 // MARK: - Piece Explorer
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Interaktivni „sandbox" iz lekcije 1, izdvojen iz `LessonDetailView`-a
-/// nepromenjen. Tri stringa oko table (naslov specijalnih pravila, njegov
-/// dodatak i savet o tapu) ostaju ovde jer `case explorer` nema sadržaja.
+/// Interaktivni „sandbox" iz lekcije 1. Spec § 9 „Čipovi figura": izabrani
+/// `accent` + `onAccent` (8,53 / 6,71), ostali `fill` + `ink` (14,47 / 13,08) —
+/// ranije sistemske sive (labele 3,0 ✕). Kartica čipova je obična kartica sa
+/// `Space.m` unutra.
 struct LessonPieceExplorer: View {
 
-    /// Model se ne pravi ovde: jedan `LearnViewModel` živi u `ContentView`-u
-    /// (da se ne inicijalizuje tokom animacije prelaska taba) i `PathView` ga
-    /// ubacuje u okruženje. Kroz okruženje ide zato što bi ga inače i
-    /// `LessonDetailView` i `LessonRenderer` morali provlačiti kao parametar,
-    /// a nijedan od njih nema razloga da zna za istraživač figura.
+    /// Jedan `LearnViewModel` živi u `ContentView`-u i `PathView` ga ubacuje u
+    /// okruženje (vidi PathView).
     @Environment(LearnViewModel.self) private var vm
 
     var body: some View {
-            VStack(spacing: 10) {
-                piecePicker
-                BoardView(
-                    board:            vm.board,
-                    isFlipped:        false,
-                    selectedPosition: vm.selectedPosition,
-                    legalMoves:       vm.legalMoves,
-                    lastMove:         vm.lastMove,
-                    animatingPiece:   vm.animatingPiece,
-                    flyingCapture:    vm.flyingCapture,
-                    playerColor:      .white,
-                    isPlayerTurn:     true,
-                    allowsStyleSwipe: false,
-                    onTap:            { vm.tap(position: $0) }
-                )
-                .padding(.horizontal, 4)
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            piecePicker
+            BoardView(
+                board:            vm.board,
+                isFlipped:        false,
+                selectedPosition: vm.selectedPosition,
+                legalMoves:       vm.legalMoves,
+                lastMove:         vm.lastMove,
+                animatingPiece:   vm.animatingPiece,
+                flyingCapture:    vm.flyingCapture,
+                playerColor:      .white,
+                isPlayerTurn:     true,
+                allowsStyleSwipe: false,
+                onTap:            { vm.tap(position: $0) }
+            )
+            .frame(maxWidth: lessonBoardMaxSide)
+            .frame(maxWidth: .infinity)
 
-                let scenarios = vm.availableScenarios
-                if !scenarios.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "star.fill")
-                                .font(.dsCaption.weight(.semibold))
-                                .foregroundStyle(DS.warning)
-                            Text(Loc("Specijalna pravila"))
-                                .font(.dsBody.weight(.semibold))
-                                .foregroundStyle(DS.ink)
-                            Text(Loc("— izaberi i istraži na tabli"))
-                                .font(.dsCaption)
-                                .foregroundStyle(DS.inkMuted)
-                        }
-                        HStack(spacing: 10) {
-                            ForEach(scenarios, id: \.self) { s in
-                                let active = vm.activeScenario == s
-                                Button {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        vm.toggleScenario(s)
-                                    }
-                                } label: {
-                                    HStack(spacing: 5) {
-                                        Image(systemName: active ? "checkmark.circle.fill" : "circle")
-                                            .font(.dsCaption.weight(.semibold))
-                                        Text(s.label)
-                                            .font(.dsBody.weight(.semibold))
-                                            .lineLimit(1)
-                                            .minimumScaleFactor(0.8)
-                                    }
-                                    .foregroundStyle(active ? DS.inkFixed : DS.ink)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 9)
-                                    .background(
-                                        active ? DS.warning : Color.primary.opacity(0.08),
-                                        in: RoundedRectangle(cornerRadius: 10)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .strokeBorder(
-                                                active ? DS.warning : Color.primary.opacity(0.14),
-                                                lineWidth: 1
-                                            )
-                                    )
+            let scenarios = vm.availableScenarios
+            if !scenarios.isEmpty {
+                VStack(alignment: .leading, spacing: DS.Space.s) {
+                    HStack(spacing: DS.Space.s) {
+                        Text(Loc("Specijalna pravila"))
+                            .font(.dsBody.weight(.semibold))
+                            .foregroundStyle(DS.ink)
+                        Text(Loc("— izaberi i istraži na tabli"))
+                            .font(.dsCaption)
+                            .foregroundStyle(DS.inkMuted)
+                    }
+                    HStack(spacing: DS.Space.s) {
+                        ForEach(scenarios, id: \.self) { s in
+                            let active = vm.activeScenario == s
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    vm.toggleScenario(s)
                                 }
-                                .buttonStyle(.plain)
+                            } label: {
+                                Text(s.label)
+                                    .font(.dsCaption.weight(.bold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                    .foregroundStyle(active ? DS.onAccent : DS.ink)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: 40)
+                                    .background(active ? DS.accent : DS.fill,
+                                                in: RoundedRectangle(cornerRadius: DS.Radius.s))
                             }
+                            .buttonStyle(.plain)
                         }
                     }
-                    .padding(14)
-                    .background(DS.warning.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(DS.warning.opacity(0.25), lineWidth: 1)
-                    )
                 }
-
-                HStack(spacing: 5) {
-                    Image(systemName: "hand.point.up.left").font(.appFont(.caption2))  // van skale — caption2 nema DS ekvivalent
-                    Text(Loc("Tapni figuru da je promeniš · Tapni polje da je premestiš")).font(.dsCaption)
-                }
-                .foregroundStyle(DS.inkMuted)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 16).padding(.bottom, 24)
+
+            HStack(spacing: DS.Space.xs) {
+                Image(systemName: "hand.point.up.left").font(.dsLabel)
+                Text(Loc("Tapni figuru da je promeniš · Tapni polje da je premestiš")).font(.dsCaption)
+            }
+            .foregroundStyle(DS.inkMuted)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private var piecePicker: some View {
         let pieces: [PieceType] = [.pawn, .knight, .bishop, .rook, .queen, .king]
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
-        return LazyVGrid(columns: columns, spacing: 6) {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: DS.Space.s), count: 3)
+        return LazyVGrid(columns: columns, spacing: DS.Space.s) {
             ForEach(pieces, id: \.self) { piece in
                 let sel = vm.selectedPieceType == piece
                 Button {
@@ -323,49 +417,45 @@ struct LessonPieceExplorer: View {
                         vm.select(piece: piece)
                     }
                 } label: {
-                    VStack(spacing: 3) {
+                    HStack(spacing: 6) {
                         PieceImageView(piece: ChessPiece(type: piece, color: .white))
-                            .frame(width: 28, height: 28)
+                            .frame(width: 20, height: 20)
                         Text(piece.srbName)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(sel ? DS.ink : DS.inkMuted)
+                            .font(.dsCaption.weight(.bold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .foregroundStyle(sel ? DS.onAccent : DS.ink)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(sel ? Color.primary.opacity(0.14) : Color.primary.opacity(0.05),
-                                in: RoundedRectangle(cornerRadius: 10))
+                    .padding(.vertical, DS.Space.s)
+                    .background(sel ? DS.accent : DS.fill,
+                                in: RoundedRectangle(cornerRadius: DS.Radius.s))
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(6)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+        .padding(DS.Space.m)
+        .dsCard()
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MARK: - Reusable Lesson Components
-//
-// Premešteno iz `LessonDetailView.swift` nepromenjeno (Faza 3, Task 4).
-// `L_OpeningCard` nije prenesen — mrtav kod od 2026-06-24.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Naslov sekcije (spec § 9): `heading` 17 bold `ink` + ikona/glif `inkMuted`
+/// (5,28 / 5,94). Nije `accent` — izgledao je kao link.
 struct L_SectionHeader: View {
     let icon: String
     let title: String
-    let color: Color
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.dsBody.weight(.semibold))
-                .foregroundStyle(color)
+        HStack(spacing: DS.Space.s) {
+            LessonSymbolView(name: icon, color: DS.inkMuted, font: .dsHeading)
             Text(title)
-                .font(.dsBody.weight(.bold))
+                .font(.dsSectionHeading)
                 .foregroundStyle(DS.ink)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 10)
     }
 }
 
@@ -385,18 +475,29 @@ fileprivate func mdText(_ localized: String) -> Text {
     return Text(localized)
 }
 
+/// Telo lekcije: `.dsBody`, prored 1,5, `ink` (spec § 9).
+fileprivate struct LessonBodyText: View {
+    let text: String
+    var body: some View {
+        mdText(text)
+            .font(.dsBody)
+            .lineSpacing(lessonBodyLineSpacing)
+            .foregroundStyle(DS.ink)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
 struct L_Para: View {
     let text: String
     init(_ text: String) { self.text = text }
 
     var body: some View {
-        mdText(text)
-            .font(.dsBody)
-            .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
-            .fixedSize(horizontal: false, vertical: true)
+        LessonBodyText(text: text)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
+/// Stavka nabrajanja: naslov je pod-blok (`body` medium `ink`), telo je telo lekcije.
 struct L_Bullet: View {
     let icon: String
     let color: Color
@@ -404,28 +505,25 @@ struct L_Bullet: View {
     let text: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.dsCaption.weight(.semibold))
-                .foregroundStyle(color)
-                .frame(width: 18)
-                .padding(.top, 2)
-            VStack(alignment: .leading, spacing: 3) {
+        HStack(alignment: .top, spacing: DS.Space.m) {
+            LessonSymbolView(name: icon, color: color, font: .dsBody)
+                .frame(width: 20)
+                .padding(.top, 1)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.dsBody.weight(.semibold))
+                    .font(.dsBody.weight(.medium))
                     .foregroundStyle(DS.ink)
-                mdText(text)
-                    .font(.dsBody)
-                    .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
-                    .fixedSize(horizontal: false, vertical: true)
+                LessonBodyText(text: text)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 12)
     }
 }
 
+/// Kutija (pravilo, upozorenje, info, citat) — spec § 9: boja kutije 10 % preko
+/// `surface`, `Radius.m`, bez ivice; naslov `body` bold `ink` (bio 12 u boji
+/// kutije), ikona u boji kutije (pravilo: `warning` 4,99 / 7,05). Uslovi
+/// razdvojeni sa „ · " (rokada) se crtaju kao lista sa tačkama.
 struct L_Box: View {
     let icon: String
     let color: Color
@@ -433,98 +531,111 @@ struct L_Box: View {
     let text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.dsCaption.weight(.bold))
-                    .foregroundStyle(color)
+        let items = LessonLabels.boxItems(text)
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            HStack(spacing: DS.Space.s) {
+                LessonSymbolView(name: icon, color: color, font: .dsBody.weight(.semibold))
                 Text(title)
-                    .font(.dsCaption.weight(.bold))
-                    .foregroundStyle(color)
+                    .font(.dsBody.weight(.bold))
+                    .foregroundStyle(DS.ink)
             }
-            mdText(text)
-                .font(.dsBody)
-                .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
-                .fixedSize(horizontal: false, vertical: true)
+            if items.count > 1 {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+                            Text("•").font(.dsBody).foregroundStyle(DS.ink)
+                            LessonBodyText(text: item)
+                        }
+                    }
+                }
+            } else {
+                LessonBodyText(text: text)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(color.opacity(0.3), lineWidth: 1))
-        .padding(.horizontal, 20)
-        .padding(.bottom, 12)
+        .padding(DS.Space.m)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+                .fill(DS.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+                        .fill(color.opacity(0.1))
+                )
+        )
     }
 }
 
+/// Red figure: naziv je naslov pod-bloka (`heading` bold `ink`), količina je
+/// meta na `fill` čipu — „× 2" iz JSON-a se prikazuje kao „2 po strani" (spec § 9).
 struct L_PieceRow: View {
     let type: PieceType
     let name: String
     let count: String
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DS.Space.m) {
             PieceImageView(piece: ChessPiece(type: type, color: .white))
                 .frame(width: 32, height: 32)
             Text(name)
-                .font(.dsBody.weight(.bold))
+                .font(.dsSectionHeading)
                 .foregroundStyle(DS.ink)
             Spacer()
-            Text(count)
+            Text(LessonLabels.perSideCount(count).map { LocF("%lld po strani", $0) } ?? count)
                 .font(.dsCaption.weight(.medium))
                 .foregroundStyle(DS.inkMuted)
-                .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(Color.primary.opacity(0.06), in: Capsule())
+                .padding(.horizontal, DS.Space.s).padding(.vertical, 3)
+                .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.s))
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 6)
     }
 }
 
+/// Numerisano pravilo: broj na `fill` pločici u `ink` (statičan broj nije `accent`).
 struct L_NumberedRule: View {
     let number: Int
-    let color: Color
     let title: String
     let text: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                Circle().fill(color.opacity(0.2)).frame(width: 32, height: 32)
-                Text("\(number)")
-                    .font(.dsBody.weight(.bold))
-                    .foregroundStyle(color)
-            }
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .top, spacing: DS.Space.m) {
+            Text("\(number)")
+                .font(.dsBody.weight(.bold))
+                .foregroundStyle(DS.ink)
+                .frame(width: 28, height: 28)
+                .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.s))
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.dsBody.weight(.bold))
+                    .font(.dsBody.weight(.medium))
                     .foregroundStyle(DS.ink)
-                mdText(text)
-                    .font(.dsBody)
-                    .foregroundStyle(DS.ink) // spec § 3: dugi tekst je `ink`
-                    .fixedSize(horizontal: false, vertical: true)
+                LessonBodyText(text: text)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 14)
     }
 }
 
-/// Redovi više nisu ugrađeni — dolaze iz JSON-a. Formatiranje i boja su
-/// nepromenjeni: srpska množina se računa ovde ("1 bod" / "3 boda" / "9 bodova"),
-/// a Kraljevo „∞" je jedina vrednost u akcentu. Te četiri oznake bodova su
-/// jedini lekcijski tekst koji je OSTAO u katalogu prevoda — sastavljaju se
-/// interpolacijom, pa ih pretraga literala po izvoru ne vidi; ne brisati ih.
+/// Tabela vrednosti (spec § 9): zaglavlje, redovi 44 sa `line` razdelnikom,
+/// vrednost `ink` medium desno, tabelarne cifre, ne `accent`. Kraljevo „∞" je
+/// „neprocenjiv". Oznake bodova („1 bod" / „3 boda" / „9 bodova") su lekcijski
+/// tekst koji je OSTAO u katalogu prevoda.
 struct L_PieceValueTable: View {
     let rows: [PieceValueRow]
 
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { idx, row in
-                HStack(spacing: 12) {
-                    // Isto preslikavanje kao u rendereru — jedan izvor istine.
-                    // Nepoznat kljuc daje prazno mesto i vidljivu poruku umesto
-                    // tiho nacrtanog Kralja.
+            HStack {
+                Text(Loc("Figura"))
+                Spacer()
+                Text(Loc("Vrednost"))
+            }
+            .font(.dsCaption.weight(.medium))
+            .foregroundStyle(DS.inkMuted)
+            .padding(.horizontal, DS.Space.m)
+            .padding(.vertical, DS.Space.s)
+
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                Rectangle().fill(DS.line).frame(height: 1)
+                HStack(spacing: DS.Space.m) {
+                    // Nepoznat kljuc daje vidljivu poruku umesto tiho nacrtanog Kralja.
                     if let type = LessonRenderer.pieceType(lessonKey: row.piece) {
                         PieceImageView(piece: ChessPiece(type: type, color: .white))
                             .frame(width: 28, height: 28)
@@ -537,25 +648,133 @@ struct L_PieceValueTable: View {
                         .font(.dsBody)
                         .foregroundStyle(DS.ink)
                     Spacer()
-                    // `valueLabel` je vec preveden (dolazi iz JSON-a na tom jeziku).
-                    // Fallback sklapa srpsku mnozinu i trazi je u katalogu — radi
-                    // samo za 1/3/5/9/∞, pa ga nove lekcije zaobilaze.
-                    Text(row.valueLabel ?? Loc(row.value == "∞" ? "∞" : "\(row.value) bod\(row.value == "1" ? "" : row.value == "9" ? "ova" : "a")"))
-                        .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(row.value == "∞" ? DS.accent : DS.ink)
+                    Text(row.valueLabel ?? Self.valueLabel(row.value))
+                        .font(.dsBody.weight(.medium).monospacedDigit())
+                        .foregroundStyle(DS.ink)
                 }
-                .padding(.vertical, 9)
-                .padding(.horizontal, 14)
-                .background(idx % 2 == 0 ? Color.primary.opacity(0.03) : Color.clear)
+                .frame(minHeight: 44)
+                .padding(.horizontal, DS.Space.m)
             }
         }
         .frame(maxWidth: .infinity)
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.primary.opacity(0.08), lineWidth: 1))
-        .padding(.horizontal, 20)
-        .padding(.bottom, 16)
+        .dsCard()
     }
 
+    /// `valueLabel` je vec preveden (dolazi iz JSON-a), ali ga nijedna isporucena
+    /// lekcija ne zadaje. Fallback radi za 1/3/5/9/∞.
+    /// Ključevi su LITERALI (kao Android `valueUnitLabel`), da ih test kataloga vidi.
+    static func valueLabel(_ value: String) -> String {
+        switch value {
+        case "1": return Loc("1 bod")
+        case "3": return Loc("3 boda")
+        case "5": return Loc("5 boda")
+        case "9": return Loc("9 bodova")
+        case "∞": return Loc("neprocenjiv")
+        default:  return value
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK: - Kartice vežbi (spec § 9, § 3)
+//
+// Kartica = `surface` + 1 pt ivica, `Radius.m`, `Space.m` unutra (bile
+// `primary.opacity(0.04)` + ivica u akcentu). Ivica je `line` dok se igra,
+// `success`/`danger` posle rešenja/greške. Pločica ikone `fill` + `ink` glif;
+// oznaka „Mat u N" `fill` čip; status „u toku" (npr. „Na potezu si!") `ink`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+private struct ExerciseHeader: View {
+    let icon: String
+    let title: String
+    let hint: String
+    let solved: Bool
+    var badge: String? = nil
+    var solvedIcon: String = "checkmark.circle.fill"
+
+    var body: some View {
+        HStack(spacing: DS.Space.s) {
+            LessonSymbolView(name: icon, color: DS.ink, font: .dsBody)
+                .frame(width: 32, height: 32)
+                .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.s))
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(title)
+                        .font(.dsBody.weight(.semibold))
+                        .foregroundStyle(DS.ink)
+                    if let badge {
+                        Text(badge)
+                            .font(.dsLabel.weight(.bold))
+                            .foregroundStyle(DS.ink)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.s))
+                    }
+                }
+                Text(hint)
+                    .font(.dsCaption)
+                    .foregroundStyle(DS.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if solved {
+                Image(systemName: solvedIcon)
+                    .foregroundStyle(DS.success)
+                    .font(.dsHeading)
+                    .accessibilityLabel(Loc("Rešeno"))
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+    }
+}
+
+private struct ExerciseFooter<Leading: View>: View {
+    let status: String
+    let statusColor: Color
+    let onReset: () -> Void
+    @ViewBuilder var leading: Leading
+
+    var body: some View {
+        HStack(spacing: DS.Space.s) {
+            leading
+            Text(status)
+                .font(.dsCaption.weight(.medium))
+                .foregroundStyle(statusColor)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                withAnimation(.easeInOut(duration: 0.15)) { onReset() }
+            } label: {
+                Label(Loc("Ponovo"), systemImage: "arrow.counterclockwise")
+                    .font(.dsCaption.weight(.medium))
+                    .foregroundStyle(DS.ink)
+                    .padding(.horizontal, DS.Space.m).padding(.vertical, 6)
+                    .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.s))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+private extension View {
+    func exerciseCard(border: Color) -> some View {
+        self
+            .padding(DS.Space.m)
+            .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+                    .strokeBorder(border, lineWidth: 1)
+            )
+    }
+
+    /// Lekcijska tabla u kartici: privremena granica, centrirana.
+    func lessonBoardFrame() -> some View {
+        self
+            .aspectRatio(1, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .frame(maxWidth: lessonBoardMaxSide)
+            .frame(maxWidth: .infinity)
+    }
 }
 
 // MARK: - Mate Puzzle Card
@@ -566,10 +785,7 @@ struct MatePuzzleCard: View {
 
     @State private var vm: OpeningExerciseViewModel
 
-    /// Poruke su parametri, ne konstante: sadrzaj je od Faze 3 u JSON-u, pa bi
-    /// zakucane vrednosti znacile da izmena `solvedMessage`/`wrongMessage` u
-    /// `endgame.*.json` prividno nista ne radi. Podrazumevane vrednosti su
-    /// dosadasnje zakucane, da ponasanje ostane isto kad ih JSON ne zada.
+    /// Poruke su parametri, ne konstante: sadrzaj je od Faze 3 u JSON-u.
     init(fen: String, moves: [String], title: String, hint: String,
          icon: String, accentColor: Color, mateIn: Int,
          solvedMessage: String? = nil, wrongMessage: String? = nil,
@@ -592,46 +808,12 @@ struct MatePuzzleCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            ExerciseHeader(icon: vm.line.icon, title: vm.line.name, hint: vm.line.hint,
+                           solved: vm.phase == .solved,
+                           badge: LocF("Mat u %lld", mateIn),
+                           solvedIcon: "trophy.fill")
 
-            // Header
-            HStack(spacing: 8) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(vm.line.accentColor.opacity(0.2))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: vm.line.icon)
-                        .font(.dsCaption.weight(.semibold))
-                        .foregroundStyle(vm.line.accentColor)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(vm.line.name)
-                            .font(.dsBody.weight(.semibold))
-                            .foregroundStyle(DS.ink)
-                        Text(LocF("Mat u %lld", mateIn))
-                            .font(.appFont(.caption2).weight(.bold))  // van skale — caption2 nema DS ekvivalent
-                            .foregroundStyle(vm.line.accentColor)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(vm.line.accentColor.opacity(0.18), in: Capsule())
-                    }
-                    Text(vm.line.hint)
-                        .font(.dsCaption)
-                        .foregroundStyle(DS.inkMuted)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                if vm.phase == .solved {
-                    Image(systemName: "trophy.fill")
-                        .foregroundStyle(DS.success)
-                        .font(.appFont(.title3))  // van skale — ikonica statusa, title3 nema DS ekvivalent
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-
-            // Board
             BoardView(
                 board:            vm.gameState.board,
                 isFlipped:        false,
@@ -645,52 +827,28 @@ struct MatePuzzleCard: View {
                 allowsStyleSwipe: false,
                 onTap:            { vm.tap(position: $0) }
             )
-            .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .padding(.horizontal, 10)
+            .lessonBoardFrame()
 
-            // Status bar
-            HStack(spacing: 6) {
-                Text(vm.statusMessage)
-                    .font(.dsCaption.weight(.medium))
-                    .foregroundStyle(puzzleStatusColor)
-                    .lineLimit(1).minimumScaleFactor(0.8)
-                Spacer(minLength: 0)
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
-                } label: {
-                    Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.dsCaption.weight(.medium))
-                        .foregroundStyle(DS.inkMuted)
-                        .padding(.horizontal, 10).padding(.vertical, 5)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            ExerciseFooter(status: vm.statusMessage, statusColor: statusColor,
+                           onReset: { vm.reset() }) { EmptyView() }
         }
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(puzzleBorderColor, lineWidth: 1.5)
-        )
+        .exerciseCard(border: borderColor)
         .animation(.easeInOut(duration: 0.2), value: vm.phase)
     }
 
-    private var puzzleStatusColor: Color {
+    private var statusColor: Color {
         switch vm.phase {
         case .solved:    return DS.success
         case .wrongMove: return DS.danger
-        case .playing:   return DS.inkMuted
+        case .playing:   return DS.ink
         }
     }
 
-    private var puzzleBorderColor: Color {
+    private var borderColor: Color {
         switch vm.phase {
-        case .solved:    return DS.success.opacity(0.6)
-        case .wrongMove: return DS.danger.opacity(0.5)
-        case .playing:   return vm.line.accentColor.opacity(0.3)
+        case .solved:    return DS.success
+        case .wrongMove: return DS.danger
+        case .playing:   return DS.line
         }
     }
 }
@@ -709,39 +867,10 @@ struct OpeningExerciseCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            ExerciseHeader(icon: line.icon, title: line.name, hint: line.hint,
+                           solved: vm.phase == .solved)
 
-            // Header
-            HStack(spacing: 8) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(line.accentColor.opacity(0.2))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: line.icon)
-                        .font(.dsCaption.weight(.semibold))
-                        .foregroundStyle(line.accentColor)
-                }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(line.name)
-                        .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(DS.ink)
-                    Text(line.hint)
-                        .font(.dsCaption)
-                        .foregroundStyle(DS.inkMuted)
-                        .lineLimit(2)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Spacer(minLength: 0)
-                if vm.phase == .solved {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(DS.success)
-                        .font(.appFont(.title3))  // van skale — ikonica statusa, title3 nema DS ekvivalent
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-
-            // Board
             BoardView(
                 board:           vm.gameState.board,
                 isFlipped:       false,
@@ -755,66 +884,38 @@ struct OpeningExerciseCard: View {
                 allowsStyleSwipe: false,
                 onTap:           { vm.tap(position: $0) }
             )
-            .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .padding(.horizontal, 10)
+            .lessonBoardFrame()
 
-            // Status bar
-            HStack(spacing: 6) {
-                // Progress pills
+            ExerciseFooter(status: vm.statusMessage, statusColor: statusColor,
+                           onReset: { vm.reset() }) {
+                // Pilule napretka: odigrano `success`, preostalo `fill`.
                 let whiteMoveCount = (line.uciMoves.count + 1) / 2
                 HStack(spacing: 3) {
                     ForEach(0..<whiteMoveCount, id: \.self) { i in
                         let done = i * 2 < vm.movePointer
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(done ? line.accentColor : Color.primary.opacity(0.12))
+                            .fill(done ? DS.success : DS.fill)
                             .frame(width: 18, height: 4)
                     }
                 }
-
-                Text(vm.statusMessage)
-                    .font(.dsCaption.weight(.medium))
-                    .foregroundStyle(openingStatusColor)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                Spacer(minLength: 0)
-
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
-                } label: {
-                    Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.dsCaption.weight(.medium))
-                        .foregroundStyle(DS.inkMuted)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
-                }
-                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
         }
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(openingBorderColor, lineWidth: 1)
-        )
+        .exerciseCard(border: borderColor)
     }
 
-    private var openingStatusColor: Color {
+    private var statusColor: Color {
         switch vm.phase {
         case .solved:    return DS.success
         case .wrongMove: return DS.danger
-        case .playing:   return DS.inkMuted
+        case .playing:   return DS.ink
         }
     }
 
-    private var openingBorderColor: Color {
+    private var borderColor: Color {
         switch vm.phase {
-        case .solved:    return DS.success.opacity(0.5)
-        case .wrongMove: return DS.danger.opacity(0.4)
-        case .playing:   return line.accentColor.opacity(0.3)
+        case .solved:    return DS.success
+        case .wrongMove: return DS.danger
+        case .playing:   return DS.line
         }
     }
 }
@@ -827,52 +928,21 @@ struct MateExerciseCard: View {
     let title: String
     let hint:  String
     let icon:  String
-    let color: Color
 
     @State private var vm: MateExerciseViewModel
 
-    init(fen: String, title: String, hint: String, icon: String, color: Color) {
+    init(fen: String, title: String, hint: String, icon: String) {
         self.fen   = fen
         self.title = title
         self.hint  = hint
         self.icon  = icon
-        self.color = color
         _vm = State(initialValue: MateExerciseViewModel(fen: fen, title: title, hint: hint))
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            ExerciseHeader(icon: icon, title: title, hint: hint, solved: vm.isSolved)
 
-            // Header
-            HStack(spacing: 8) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(color.opacity(0.2))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: icon)
-                        .font(.dsCaption.weight(.semibold))
-                        .foregroundStyle(color)
-                }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.dsBody.weight(.semibold))
-                        .foregroundStyle(DS.ink)
-                    Text(hint)
-                        .font(.dsCaption)
-                        .foregroundStyle(DS.inkMuted)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Spacer(minLength: 0)
-                if vm.isSolved {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(DS.success)
-                        .font(.appFont(.title3))  // van skale — ikonica statusa, title3 nema DS ekvivalent
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-
-            // Board
             BoardView(
                 board:          vm.gameState.board,
                 isFlipped:      false,
@@ -886,42 +956,19 @@ struct MateExerciseCard: View {
                 allowsStyleSwipe: false,
                 onTap:          { vm.tap(position: $0) }
             )
-            .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .padding(.horizontal, 10)
+            .lessonBoardFrame()
 
-            // Status bar
-            HStack(spacing: 6) {
+            ExerciseFooter(status: vm.statusMessage, statusColor: statusColor,
+                           onReset: { vm.reset() }) {
                 if vm.isThinking {
                     ProgressView()
                         .progressViewStyle(.circular)
                         .scaleEffect(0.7)
-                        .tint(color)
+                        .tint(DS.inkMuted)
                 }
-                Text(vm.statusMessage)
-                    .font(.dsCaption.weight(.medium))
-                    .foregroundStyle(statusColor)
-                Spacer(minLength: 0)
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { vm.reset() }
-                } label: {
-                    Label("Ponovo", systemImage: "arrow.counterclockwise")
-                        .font(.dsCaption.weight(.medium))
-                        .foregroundStyle(DS.inkMuted)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
-                }
-                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
         }
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(borderColor, lineWidth: 1)
-        )
+        .exerciseCard(border: borderColor)
     }
 
     private var statusColor: Color {
@@ -929,11 +976,13 @@ struct MateExerciseCard: View {
         if case .draw = vm.gameState.status { return DS.warning }
         if case .checkmate(let c) = vm.gameState.status, c == .white { return DS.danger }
         if case .check = vm.gameState.status { return DS.warning }
-        return DS.inkMuted
+        // „Na potezu si!" je `ink` (spec § 9).
+        return DS.ink
     }
 
     private var borderColor: Color {
-        if vm.isSolved { return DS.success.opacity(0.5) }
-        return color.opacity(0.3)
+        if vm.isSolved { return DS.success }
+        if case .checkmate(let c) = vm.gameState.status, c == .white { return DS.danger }
+        return DS.line
     }
 }
