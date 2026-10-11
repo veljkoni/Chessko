@@ -166,6 +166,10 @@ fun BoardView(
             .aspectRatio(1f)
             .clip(RoundedCornerShape(6.dp))
             .background(Color(0xFF17234F))
+            // spec § 5/§ 11 (P3): okvir table 1 dp u boji tamnog polja aktivne teme
+            // (svetlo polje i `ground` su 1,09 : 1 — uglovi bi se gubili). `border`
+            // crta posle sadrzaja, pa ide preko ivicnih polja kao na iOS-u.
+            .border(1.dp, boardTheme.darkColor, RoundedCornerShape(6.dp))
     ) {
         val squareSize = maxWidth / 8
         val squareSizePx = with(LocalDensity.current) { squareSize.toPx() }

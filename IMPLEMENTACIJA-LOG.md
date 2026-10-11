@@ -605,7 +605,131 @@ Opšti rizici:
 
 ## Task 4 — Zajedničke komponente + Igra (§ 18 korak 4, § 5)
 
-_(popunjava Task 4)_
+### Zajedničke komponente (za Task 5, 6 i dalje)
+
+Novi fajlovi: `iOS/Views/GameComponents.swift` (ručno dodat u `project.pbxproj`, ID-jevi
+`D5A1C0DE…G1/G2`; prvi pokušaj sa `…Y1/Y2` se sudario sa `StepGameView.swift` i ispravljen je
+pre build-a) i `AND/ui/GameComponents.kt`. Build dokazuje da se fajl kompajlira u aplikaciju —
+`GameView` koristi njegove tipove.
+
+| Komponenta | iOS | Android |
+|---|---|---|
+| Kartica igrača/protivnika | `DSPlayerCard(color:name:subtitle:status:isActive:materialAdvantage:capturedPieces:flyingCapture:evaluation:showsChevron:)` | `PlayerCard(color, name, boardTheme, pieceStyle, modifier, subtitle, status, isActive, materialAdvantage, capturedPieces, evaluation, showsChevron, onClick)` |
+| Status u kartici | `enum PlayerCardStatus { toMove, thinking, result(String) }` | `sealed interface PlayerCardStatus { ToMove, Thinking, Result(text) }` |
+| Procena u kartici | `DSEvaluation.make(score:mateIn:)` → „0,0" / „+1,2" / „M1" / „−M2" | `evaluationOf(score, mateIn)` → `Evaluation(text, isMate)` |
+| Okvir uputstva (§ 7) | `DSInstructionBox(text:sideToMove:)` | `InstructionBox(text, modifier, sideToMove)` |
+| Akciona traka | `GameActionBar(canUndo:canResign:compact:onUndo:onResign:moreMenu:)` (meni = `@ViewBuilder`), dugme `DSActionButtonLabel(systemImage:title:tint:compact:)` | `GameActionBar(canUndo, canResign, onUndo, onResign, moreItems: List<MoreMenuItem>, modifier, compact)`, `ActionBarButton(...)`, `MoreMenuItem(label, icon, enabled, onClick)` |
+| Lista poteza | `MoveHistoryView(notations:selectedMoveIndex:highlightsLastMoveWhenLive:moveClass:onSelectMove:)`, `MoveHistoryView.rowHeight` (36) | `MoveHistoryView(notations, modifier, selectedMoveIndex, highlightsLastMoveWhenLive, moveClass, onSelectMove)`, `MoveRowHeight` |
+| Oznaka klase poteza (§ 6) | `MoveClassBadge(moveClass:)` + `MoveClass.symbol/badgeColor/badgeFilled/accessibilityName` | `MoveClassBadge(moveClass, modifier)` + iste ekstenzije |
+| Dugmad / dijalog | `DSPrimaryButtonStyle`, `DSSecondaryButtonStyle`, `DSTextButtonStyle(color:)`, `DSPressableButtonStyle` (bez sistemskog zatamnjenja, za ručnih 38 %) | `ButtonShape`, `DialogShape`, `dsPrimaryButtonColors()`, `dsSecondaryButtonColors()` (Task 2 — sada imaju pozivaoce: dijalog kraja partije) |
+| Izabran potez/red | `DS.selectionTint` (accent 12 % L / 16 % D, iz `accent`-a) | `selectionTint` |
+
+Napomene za potrošače:
+- `MoveHistoryView`: `selectedMoveIndex` = broj odigranih poluteza (1 = posle prvog belog), `nil` =
+  živa partija (tada se ističe poslednji potez, osim ako `highlightsLastMoveWhenLive = false`).
+  `moveClass` prima polutez od 0 i crta oznaku ispred notacije; čitač ekrana dobija
+  „Promašaj, 2. g4". Visinu daje pozivalac. `onSelectMove` dobija polutez + 1 (isto kao ranije).
+- `PlayerCard`: drugi red (`subtitle`) se ne crta ako je `nil`/prazan → ime vertikalno centrirano;
+  „–" ne postoji nigde. Task 5 (§ 7 „kartica Računar · Početnik") treba samo `subtitle` + `status`.
+- `InstructionBox`/`DSInstructionBox` još nema pozivaoca — Task 5 ga ugrađuje u Zadatke i korake.
+- `MoveClassBadge` još nema pozivaoca — Task 6.
+
+### Urađeno po stavkama § 5
+
+- [x] **Kartica protivnika:** ime + drugi red „Srednje · ~1300 · igra crnima" (`Type.caption`,
+  `inkMuted`) + strelica (`chevron.down` / `ExpandMore`); tap otvara izbor nivoa (5 težina;
+  iOS uz to Stockfish nivo kad je izabran Stockfish, kao u Podešavanjima) i protivnika
+  („Igraj sa prijateljem" / „Igraj protiv računara" — uz potvrdu ako je partija u toku). Elo:
+  ~500/~900/~1300/~1700, Stockfish po nivou (~1320…~2600), „Maksimalno" bez broja. U partiji u
+  dvoje kartica nosi samo ime („Beli"/„Crni").
+- [x] **Kartica igrača:** „Na potezu" (`caption` medium `ink`) + tačka `success`; kraj partije u istoj
+  kartici kao `Type.body`. Android `StatusBanner` uklonjen iz oba rasporeda Igre (komponenta ostaje
+  za `StepPracticeView` — Task 5).
+- [x] **Aktivna kartica:** ivica 2 pt `accent` na obe (iOS bio `accent@55%` preko materijala, Android
+  1,5 dp). Podloga `surface` + `line` (iOS `.regularMaterial` uklonjen).
+- [x] **Procena** desno u kartici igrača (samo donja kartica, samo kad je eval uključen — isti
+  prekidač kao eval traka); znak nosi stranu. Android je ranije nosio broj u obe kartice po strani.
+  Mat: zlatna oznaka na fiksnoj tamnoj podlozi (§ 0) — sada i na iOS-u (ranije bez broja), da
+  platforme crtaju isto.
+- [x] **Akcije Vrati · Predaj · Više** (obe, oba rasporeda): `fill`, `Radius.m`, visina 48; < 360
+  širine ikona iznad labele (`Type.label`); nedostupna dugmad na mestu sa 38 % (Predaj pre prvog
+  poteza, Vrati bez istorije); Predaj u `danger`. „Više": Podeli (iOS `ShareLink` PGN-a, Android
+  zatečen `Intent`), Nova partija (bivši „Reset" — ista strana i protivnik, uz potvrdu), Analiza
+  (samo na gotovoj partiji; Android i dalje kroz `FullScreenDestination`). Android „Računar/
+  Prijatelj" i „Srednje" dugmad prešla u karticu protivnika; iOS „Vrati" i „Predaj" iz toolbara u
+  traku. Veliko dugme „Analiziraj partiju" ispod table uklonjeno (Analiza je u „Više" i u dijalogu
+  kraja partije) — `AnalysisButton` ostaje za `StepGameView`.
+- [x] **Lista poteza** rezerviše ostatak visine: portret — visina dela iznad liste se meri
+  (`onGeometryChange` / `onSizeChanged`), lista dobija `max(3 reda, ekran − to)`; pejzaž — do dna
+  table. Prazno stanje „Potezi će se pojaviti ovde". Izgled: kartica, mreža broj · beli · crni (jedan
+  par po redu umesto dva), red 36, `Type.mono`, izabran = `accent` na accent tinti. Naslov „Potezi"
+  iznad liste uklonjen (lista je uvek tu i ima prazno stanje).
+- [x] **Dijalog predaje:** „Predati partiju?" · „Nastavi" · „Predaj" (danger). iOS sistemski
+  `.alert` (`.cancel` / `.destructive`), bez rečenice na „Vi"; Android isto, bez teksta.
+  Android „Reset" potvrda prešla na iOS tekst „Napustiti partiju?" / „Partija je u toku. Sigurno
+  želiš da počneš iznova?" / „Napusti" (danger) / „Nastavi" (bila na „Vi").
+- [x] **Kraj partije:** `surface` dijalog; primarno „Nova igra", sporedno (`fill`+`ink`)
+  „Analiziraj partiju" (samo ako ima poteza), tekst-dugme „Zatvori" (`accent`) — bez njega se
+  završna pozicija ne bi mogla pogledati kad nestane „Pregledaj partiju". iOS: tap na zatamnjenje
+  takođe zatvara. Poruke rodno neutralne (`statusMessage` iOS, `getStatusMessage` Android):
+  „Mat · pobeda belih/crnih", „Partija je predata · pobeda belih/crnih"; 🎉 ostaje gde je bio (§ 0).
+- [x] **Nova igra (meni) — Android:** redovi na `surface` dijalogu razdvojeni `line` (bez `fill`
+  pločica), opisi `Type.caption` `inkMuted`; „Premium šahovski sat…" → „Šahovski sat sa vremenskim
+  kontrolama" (stari ključ obrisan iz `Loc.kt`).
+- [x] **Izbor boje (54) — Android:** nema podrazumevanog izbora → sve tri pločice ista ispuna
+  (`fill` + `line`; crna je bila `black@40%`). Krugovi strane netaknuti.
+- [x] **Telefon pejzaž:** tabla i panel kao centriran par, vrhovi poravnati (`alignment: .top` /
+  `Alignment.Top`), panel 400 (manje ako ne staje), visina panela = strana table.
+- [x] **Okvir table (P3):** 1 pt/dp u boji tamnog polja aktivne teme, u `BoardView` (obe) — važi za
+  svaku tablu (Igra, Zadaci, koraci, lekcije), jer je to odluka #9 (§ 1). Podloga `#17234F` ispod
+  polja ostaje (nevidljiva iza polja).
+- [x] Traka pregleda partije: `surface` kartica (iOS bio `.regularMaterial`, Android `fill`).
+
+### Odluke
+
+- **Jedna vrednost table:** `boardSide(for:isLandscape:)` (iOS `GameView`) i
+  `gameBoardSide(...)` (Android `MainActivity.kt`) — raspored čita samo nju; telo je zatečena logika
+  (560). Task 11 menja telo funkcije.
+- **Status „Šah!" više nema svoj red** (Android ga je nosio u `StatusBanner`-u, iOS nikad): šah se
+  vidi na tabli (crveni prsten), a kartica kaže „Na potezu" — paritet sa iOS-om. Ako treba tekst,
+  mesto je `PlayerCardStatus`.
+- **Rezultat u kartici igrača:** uvek donja kartica (u partiji u dvoje takođe), jer spec kaže „u
+  istoj kartici" (igračevoj).
+- **Akcija „Nova partija"** = nova partija sa istim protivnikom i bojom (bivši Android „Reset");
+  „Nova igra" (+ u zaglavlju, primarno dugme kraja partije) i dalje otvara izbor režima/boje.
+- **iOS „Nova igra" meni ostaje sistemski `Menu`** u toolbaru (HIG; nema opisa ni reči „Premium",
+  pa se § 5 stavka odnosi na Android dijalog).
+- **iOS izbor boje** (2 pločice, iste ispune `onScrim@18%`) — već ispunjava pravilo „ista ispuna";
+  nije diran (§ 0).
+
+### Neurađeno / TODO
+
+- **iOS kartica promocije** (`.ultraThinMaterial`) nije prebačena na `surface`: pločice
+  (`onScrim@15%` + `onScrim@30%` ivica) i naslov (`onScrim`) bi na beloj `surface` nestali, a pločica
+  je § 0 izuzetak. Bezbedno rešenje je Android-ov par (fiksna pločica `#708090` + `surface`
+  kartica), ali to menja pločicu — ostavljeno za odluku vlasnika (i dalje kao u Task-u 2).
+- Neiskorišćeni ključevi ostali u rečnicima (bez pozivaoca posle ovog taska, uklanjanje za Task 13):
+  iOS „Mat! Izgubio si.", „Mat! Pobedio si! 🎉", „Predaja! …" (6), „Pregledaj partiju",
+  „Da li ste sigurni da želite da predate trenutnu partiju?"; Android isto + „Predaja partije",
+  „Da li ste sigurni da želite da predate partiju?", „Nastavi igru", „Reset", „Prijatelj",
+  „Nema odigranih poteza", „Da li ste sigurni? Trenutna partija će biti izgubljena.".
+- Mrtav `widthIn(max = 500.dp)` u portretu Igre (CLAUDE.md, poznata ograničenja) nestao je sa
+  prepisom rasporeda (bio bez efekta).
+- Vizuelno neprovereno (bez simulatora/emulatora): `Menu` sa karticom kao labelom (iOS — da li
+  sistem tintuje sadržaj), visina liste u portretu na iPhone SE (lista pada na 3 reda, pa se ekran
+  skroluje), pejzaž na niskim telefonima (panel može biti tesan kad se pojavi traka pregleda —
+  lista se sužava do jednog reda).
+
+### Novi stringovi
+
+13 ključeva na iOS-u (`Localizable.xcstrings` hirurški + `build_localizations.py`) i 13 na Androidu
+(`Loc.kt`): „Više", „Nova partija", „Analiza", „Na potezu", „Potezi će se pojaviti ovde",
+„igra crnima", „igra belima", „Mat · pobeda belih/crnih", „Partija je predata · pobeda belih/crnih";
+iOS još „Podeli", „Vrati" (prevodi preuzeti iz `Loc.kt`); Android još „Predati partiju?" (iz iOS
+kataloga) i „Šahovski sat sa vremenskim kontrolama".
+Nesigurni prevodi: ru „Ходит" za „Na potezu" (kratko, neutralno; alternativa „Ваш ход" nije
+neutralna za oba igrača); hi „काले मोहरों से" / „सफ़ेद मोहरों से" (bez glagola, da izbegne rod);
+it „Al tratto"; fr „Au trait"; zh „轮到走棋". Ostalo standardna šahovska terminologija.
 
 ## Task 5 — Zadaci i koraci Puta (§ 7)
 

@@ -1,6 +1,11 @@
 package com.veljkoni.chessko
 
 import com.veljkoni.chessko.ui.theme.DialogShape
+import com.veljkoni.chessko.ui.theme.ButtonShape
+import com.veljkoni.chessko.ui.theme.DSRowDivider
+import com.veljkoni.chessko.ui.theme.dsCard
+import com.veljkoni.chessko.ui.theme.dsPrimaryButtonColors
+import com.veljkoni.chessko.ui.theme.dsSecondaryButtonColors
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -66,6 +71,13 @@ import androidx.compose.material.icons.filled.SentimentDissatisfied
 import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import com.veljkoni.chessko.logic.StockfishLevel
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.foundation.shape.CircleShape
 import com.veljkoni.chessko.ui.theme.ChesskoTheme
@@ -133,6 +145,8 @@ class MainActivity : ComponentActivity() {
                 var showResignConfirm by remember { mutableStateOf(false) }
                 var dismissGameOverOverlay by remember { mutableStateOf(false) }
                 var showAnalysis by remember { mutableStateOf(false) }
+                // Radnja koja ceka potvrdu „Napustiti partiju?" (Nova partija, promena protivnika).
+                var pendingNewGame by remember { mutableStateOf<(() -> Unit)?>(null) }
 
                 LaunchedEffect(gameViewModel.gameState.status) {
                     if (gameViewModel.gameState.status is GameStatus.Playing) {
@@ -204,84 +218,35 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
 
-                                // Option 1: VS COMPUTER
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(DS.Radius.m))
-                                        .background(DS.fill)
-                                        .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
-                                        .clickable {
-                                            showNewGameMenu = false
-                                            showColorPicker = true
-                                        }
-                                        .padding(14.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Computer,
-                                        contentDescription = null,
-                                        tint = DS.accent,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Column {
-                                        Text(text = loc("Igraj protiv računara"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Igraj protiv veštačke inteligencije sa izborom boje"), color = DS.inkMuted, style = Type.label)
+                                // spec § 5: opcije kao redovi u `surface` dijalogu, razdvojeni `line`;
+                                // opisi `inkMuted` na surface (5,86 / 5,43). `fill` nije kartica (§ 3).
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    NewGameOptionRow(
+                                        icon = Icons.Default.Computer,
+                                        title = loc("Igraj protiv računara"),
+                                        description = loc("Igraj protiv veštačke inteligencije sa izborom boje")
+                                    ) {
+                                        showNewGameMenu = false
+                                        showColorPicker = true
                                     }
-                                }
-
-                                // Option 2: LOCAL_FRIEND
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(DS.Radius.m))
-                                        .background(DS.fill)
-                                        .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
-                                        .clickable {
-                                            showNewGameMenu = false
-                                            gameViewModel.newGame(GameMode.LOCAL_FRIEND, PieceColor.WHITE)
-                                        }
-                                        .padding(14.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.People,
-                                        contentDescription = null,
-                                        tint = DS.accent,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Column {
-                                        Text(text = loc("Igraj sa prijateljem"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Lokalna igra na istom telefonu sa rotiranjem table"), color = DS.inkMuted, style = Type.label)
+                                    DSRowDivider()
+                                    NewGameOptionRow(
+                                        icon = Icons.Default.People,
+                                        title = loc("Igraj sa prijateljem"),
+                                        description = loc("Lokalna igra na istom telefonu sa rotiranjem table")
+                                    ) {
+                                        showNewGameMenu = false
+                                        gameViewModel.newGame(GameMode.LOCAL_FRIEND, PieceColor.WHITE)
                                     }
-                                }
-
-                                // Option 3: CHESS_CLOCK
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(DS.Radius.m))
-                                        .background(DS.fill)
-                                        .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
-                                        .clickable {
-                                            showNewGameMenu = false
-                                            showChessClock = true
-                                        }
-                                        .padding(14.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Timer,
-                                        contentDescription = null,
-                                        tint = DS.accent,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Column {
-                                        Text(text = loc("Šahovski sat"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Bold)
-                                        Text(text = loc("Premium šahovski sat sa vremenskim kontrolama"), color = DS.inkMuted, style = Type.label)
+                                    DSRowDivider()
+                                    // Bez reci „Premium" — nema kupovina (spec § 5, § 16).
+                                    NewGameOptionRow(
+                                        icon = Icons.Default.Timer,
+                                        title = loc("Šahovski sat"),
+                                        description = loc("Šahovski sat sa vremenskim kontrolama")
+                                    ) {
+                                        showNewGameMenu = false
+                                        showChessClock = true
                                     }
                                 }
 
@@ -400,8 +365,11 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .weight(1f)
                                             .clip(RoundedCornerShape(DS.Radius.m))
-                                            .background(Color.Black.copy(alpha = 0.4f))
-                                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(DS.Radius.m))
+                                            // spec § 5 (54): nema podrazumevanog izbora, pa sve tri
+                                            // plocice imaju ISTU ispunu (`fill` + `line`). Krug
+                                            // ispod i dalje nosi stranu (fiksno crn, svetla ivica).
+                                            .background(DS.fill)
+                                            .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
                                             .clickable {
                                                 showColorPicker = false
                                                 gameViewModel.newGame(GameMode.VS_COMPUTER, PieceColor.BLACK)
@@ -451,25 +419,28 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (showResetConfirm) {
+                    val dismiss = {
+                        showResetConfirm = false
+                        pendingNewGame = null
+                    }
                     AlertDialog(
-                        onDismissRequest = { showResetConfirm = false },
-                        title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
-                        text = { Text(text = loc("Da li ste sigurni? Trenutna partija će biti izgubljena."), color = DS.ink) },
+                        onDismissRequest = dismiss,
+                        // Isti tekst kao iOS (obracanje „ti", spec § 3/§ 16).
+                        title = { Text(text = loc("Napustiti partiju?"), color = DS.ink, fontWeight = FontWeight.Bold) },
+                        text = { Text(text = loc("Partija je u toku. Sigurno želiš da počneš iznova?"), color = DS.ink) },
                         confirmButton = {
                             TextButton(onClick = {
-                                gameViewModel.resetGame()
-                                showResetConfirm = false
+                                val action = pendingNewGame ?: { gameViewModel.resetGame() }
+                                dismiss()
+                                action()
                             }) {
-                                // Destruktivna potvrda (partija se gubi; iOS „Napusti" je `.destructive`):
-                                // tekst-dugme u `DS.danger`, ne puno `accent` dugme — presuda kontrolora,
-                                // spec § 3/§ 5.
-                                Text(text = loc("Potvrdi"), color = DS.danger, fontWeight = FontWeight.Bold)
+                                // Destruktivna potvrda: tekst-dugme u `DS.danger` (presuda kontrolora).
+                                Text(text = loc("Napusti"), color = DS.danger, fontWeight = FontWeight.Bold)
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { showResetConfirm = false }) {
-                                // spec § 3: sporedna radnja je tekst-dugme u `accent`, nikad `inkMuted`.
-                                Text(text = loc("Otkaži"), color = DS.accent)
+                            TextButton(onClick = dismiss) {
+                                Text(text = loc("Nastavi"), color = DS.accent)
                             }
                         },
                         containerColor = DS.surface,
@@ -480,8 +451,8 @@ class MainActivity : ComponentActivity() {
                 if (showResignConfirm) {
                     AlertDialog(
                         onDismissRequest = { showResignConfirm = false },
-                        title = { Text(text = loc("Predaja partije"), color = DS.ink, fontWeight = FontWeight.Bold) },
-                        text = { Text(text = loc("Da li ste sigurni da želite da predate partiju?"), color = DS.ink) },
+                        // spec § 5: „Predati partiju?" · „Nastavi" (accent) · „Predaj" (danger, 6,54 / 6,69).
+                        title = { Text(text = loc("Predati partiju?"), color = DS.ink, fontWeight = FontWeight.Bold) },
                         confirmButton = {
                             TextButton(onClick = {
                                 gameViewModel.resign()
@@ -492,7 +463,7 @@ class MainActivity : ComponentActivity() {
                         },
                         dismissButton = {
                             TextButton(onClick = { showResignConfirm = false }) {
-                                Text(text = loc("Nastavi igru"), color = DS.accent)
+                                Text(text = loc("Nastavi"), color = DS.accent)
                             }
                         },
                         containerColor = DS.surface,
@@ -596,38 +567,9 @@ class MainActivity : ComponentActivity() {
 
                                 Spacer(modifier = Modifier.height(6.dp))
 
-                                // Dugme za pregled / analizu partije
-                                Button(
-                                    onClick = {
-                                        dismissGameOverOverlay = true
-                                        gameViewModel.goToStart()
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(DS.Radius.m),
-                                    // Nema tacnog pogotka u tabeli preslikavanja za solidnu 0xFF334155 --
-                                    // ista uloga (sekundarno dugme) kao svi ostali translucentni beli
-                                    // fill-ovi u ovom fajlu, pa ide na isti DS.fill (vidi izvestaj).
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = DS.fill,
-                                        contentColor = DS.ink
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(DS.Space.s))
-                                    Text(
-                                        text = loc("Pregledaj partiju"),
-                                        style = Type.body,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-
-                                // Dugme za novu igru
+                                // spec § 5: primarno „Nova igra", sporedno „Analiziraj partiju"
+                                // (jedan naziv za radnju — nema vise „Pregledaj partiju"),
+                                // „Zatvori" kao tekst-dugme u `accent`.
                                 Button(
                                     onClick = {
                                         dismissGameOverOverlay = true
@@ -636,23 +578,33 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(48.dp),
-                                    shape = RoundedCornerShape(DS.Radius.m),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = DS.accent,
-                                        contentColor = DS.onAccent
-                                    )
+                                    shape = ButtonShape,
+                                    colors = dsPrimaryButtonColors()
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(DS.Space.s))
-                                    Text(
-                                        text = loc("Nova igra"),
-                                        style = Type.body,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Text(text = loc("Nova igra"), style = Type.body, fontWeight = FontWeight.Bold)
+                                }
+
+                                if (canAnalyzeGame(gameViewModel)) {
+                                    Button(
+                                        onClick = {
+                                            dismissGameOverOverlay = true
+                                            showAnalysis = true
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp),
+                                        shape = ButtonShape,
+                                        colors = dsSecondaryButtonColors()
+                                    ) {
+                                        Text(text = loc("Analiziraj partiju"), style = Type.body, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+
+                                TextButton(
+                                    onClick = { dismissGameOverOverlay = true },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(text = loc("Zatvori"), color = DS.accent, style = Type.body, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
@@ -700,6 +652,8 @@ class MainActivity : ComponentActivity() {
                             0 -> {
                                 val configuration = LocalConfiguration.current
                                 val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                                // spec § 5: ispod 360 dp sirine ikona iznad labele u akcionoj traci.
+                                val compactActions = configuration.screenWidthDp < 360
 
                                 val activeTheme = remember(settingsManager.boardTheme) {
                                     BoardTheme.values().find { it.rawValue == settingsManager.boardTheme } ?: BoardTheme.CLASSIC
@@ -709,448 +663,204 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 val topColor = if (gameViewModel.isFlipped) PieceColor.WHITE else PieceColor.BLACK
-                                val topCaptured = if (topColor == PieceColor.WHITE) {
-                                    gameViewModel.gameState.capturedByWhite
-                                } else {
-                                    gameViewModel.gameState.capturedByBlack
-                                }
-                                val topAdv = getMaterialAdvantage(gameViewModel.gameState, topColor)
-
                                 val bottomColor = if (gameViewModel.isFlipped) PieceColor.BLACK else PieceColor.WHITE
-                                val bottomCaptured = if (bottomColor == PieceColor.WHITE) {
-                                    gameViewModel.gameState.capturedByWhite
-                                } else {
-                                    gameViewModel.gameState.capturedByBlack
+
+                                // „Nova partija" / promena protivnika: uz potvrdu ako je partija u toku
+                                // (isti uslov kao iOS `handleNewGameSelection`).
+                                val requestNewGame: (() -> Unit) -> Unit = { action ->
+                                    val inProgress = !gameViewModel.isGameOver && gameViewModel.gameState.moveNotations.isNotEmpty()
+                                    if (inProgress) {
+                                        pendingNewGame = action
+                                        showResetConfirm = true
+                                    } else {
+                                        action()
+                                    }
                                 }
-                                val bottomAdv = getMaterialAdvantage(gameViewModel.gameState, bottomColor)
+
+                                val opponentCard: @Composable () -> Unit = {
+                                    GameOpponentCard(
+                                        viewModel = gameViewModel,
+                                        color = topColor,
+                                        boardTheme = activeTheme,
+                                        pieceStyle = activeStyle,
+                                        onPlayFriend = {
+                                            requestNewGame { gameViewModel.newGame(GameMode.LOCAL_FRIEND, PieceColor.WHITE) }
+                                        },
+                                        onPlayComputer = {
+                                            requestNewGame { showColorPicker = true }
+                                        }
+                                    )
+                                }
+                                val playerCard: @Composable () -> Unit = {
+                                    GamePlayerCard(
+                                        viewModel = gameViewModel,
+                                        color = bottomColor,
+                                        boardTheme = activeTheme,
+                                        pieceStyle = activeStyle
+                                    )
+                                }
+                                val actionBar: @Composable (Boolean) -> Unit = { compact ->
+                                    GameActionBar(
+                                        canUndo = gameViewModel.canUndo,
+                                        canResign = gameViewModel.canResign,
+                                        onUndo = { gameViewModel.undo() },
+                                        onResign = { showResignConfirm = true },
+                                        compact = compact,
+                                        // „Više": Podeli, Nova partija, Analiza (spec § 5). Analiza se
+                                        // otvara kroz `FullScreenDestination` (Task 3) kao i ranije.
+                                        moreItems = listOf(
+                                            MoreMenuItem(
+                                                label = loc("Podeli"),
+                                                icon = Icons.Default.Share,
+                                                enabled = gameViewModel.gameState.moveNotations.isNotEmpty()
+                                            ) {
+                                                val pgn = gameViewModel.generatePGN()
+                                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                    type = "text/plain"
+                                                    putExtra(Intent.EXTRA_TEXT, pgn)
+                                                    putExtra(Intent.EXTRA_SUBJECT, loc("Chessko partija"))
+                                                }
+                                                context.startActivity(Intent.createChooser(sendIntent, loc("Podeli partiju")))
+                                            },
+                                            MoreMenuItem(label = loc("Nova partija"), icon = Icons.Default.Refresh) {
+                                                requestNewGame { gameViewModel.resetGame() }
+                                            },
+                                            MoreMenuItem(
+                                                label = loc("Analiza"),
+                                                icon = Icons.Default.Assessment,
+                                                enabled = canAnalyzeGame(gameViewModel)
+                                            ) { showAnalysis = true }
+                                        )
+                                    )
+                                }
+                                val board: @Composable (androidx.compose.ui.unit.Dp) -> Unit = { boardSize ->
+                                    Row(
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        if (gameViewModel.showEvalBar) {
+                                            EvalBar(
+                                                evaluation = gameViewModel.evaluationScore,
+                                                mateIn = gameViewModel.evaluationMateIn,
+                                                isFlipped = gameViewModel.isFlipped,
+                                                modifier = Modifier.size(width = GameEvalBarWidth, height = boardSize)
+                                            )
+                                            Spacer(modifier = Modifier.width(GameEvalBarSpacing))
+                                        }
+                                        BoardView(
+                                            board = gameViewModel.displayState.board,
+                                            isFlipped = gameViewModel.isFlipped,
+                                            selectedPosition = if (gameViewModel.isReviewing) null else gameViewModel.selectedPosition,
+                                            legalMoves = if (gameViewModel.isReviewing) emptyList() else gameViewModel.legalMovesForSelected,
+                                            lastMove = gameViewModel.displayLastMove,
+                                            gameStatus = gameViewModel.displayState.status,
+                                            boardTheme = activeTheme,
+                                            pieceStyle = activeStyle,
+                                            showCoordinates = settingsManager.showCoordinates,
+                                            showLastMoveHighlight = settingsManager.showLastMoveHighlight,
+                                            showLegalMoves = settingsManager.showLegalMoves,
+                                            onTap = { pos -> gameViewModel.tap(pos) },
+                                            modifier = Modifier.size(boardSize)
+                                        )
+                                    }
+                                }
+                                val moveList: @Composable (Modifier) -> Unit = { mod ->
+                                    MoveHistoryView(
+                                        notations = gameViewModel.gameState.moveNotations,
+                                        selectedMoveIndex = gameViewModel.viewingMoveIndex,
+                                        onSelectMove = { gameViewModel.goToMove(it) },
+                                        modifier = mod
+                                    )
+                                }
+                                val header: @Composable () -> Unit = {
+                                    GameHeaderRow(
+                                        onNewGame = { showNewGameMenu = true },
+                                        onSettings = { showSettings = true }
+                                    )
+                                }
 
                                 if (isLandscape) {
-                                    Row(
+                                    // Telefon pejzaz (spec § 5): tabla i panel 400 kao par, VRHOVI
+                                    // poravnati; lista poteza ide do dna table.
+                                    BoxWithConstraints(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(DS.Space.s),
-                                        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-                                        verticalAlignment = Alignment.CenterVertically
+                                            .padding(DS.Space.s)
                                     ) {
-                                        // Left Side: Board & EvalBar
-                                        BoxWithConstraints(
-                                            modifier = Modifier
-                                                .fillMaxHeight()
-                                                .padding(vertical = DS.Space.xs),
-                                            contentAlignment = Alignment.Center
+                                        val boardSize = gameBoardSide(maxWidth, maxHeight, isLandscape = true, showEvalBar = gameViewModel.showEvalBar)
+                                        val evalWidth = if (gameViewModel.showEvalBar) GameEvalBarWidth + GameEvalBarSpacing else 0.dp
+                                        val panelWidth = (maxWidth - boardSize - evalWidth - DS.Space.l)
+                                            .coerceAtMost(GameLandscapePanelWidth)
+                                            .coerceAtLeast(0.dp)
+                                        Row(
+                                            modifier = Modifier.fillMaxSize(),
+                                            horizontalArrangement = Arrangement.spacedBy(DS.Space.l, Alignment.CenterHorizontally),
+                                            verticalAlignment = Alignment.Top
                                         ) {
-                                            // Granica ide na VREDNOST, ne na tablu: istu
-                                            // `boardSize` citaju i tabla i eval traka, pa ne
-                                            // mogu da se razidju (Faza 10: tabla ogranicena
-                                            // modifikatorom, traka celom visinom tableta).
-                                            // Isto kao iOS, `GameView.swift:35`.
-                                            val boardSize = maxHeight.coerceAtMost(DS.maxBoardSide)
-                                            val evalBarWidth = 6.dp
-                                            val spacing = 6.dp
-
-                                            Row(
-                                                modifier = Modifier.fillMaxHeight(),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
+                                            board(boardSize)
+                                            Column(
+                                                modifier = Modifier
+                                                    .width(panelWidth)
+                                                    .height(boardSize),
+                                                verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                                             ) {
-                                                if (gameViewModel.showEvalBar) {
-                                                    EvalBar(
-                                                        evaluation = gameViewModel.evaluationScore,
-                                                        mateIn = gameViewModel.evaluationMateIn,
-                                                        isFlipped = gameViewModel.isFlipped,
-                                                        modifier = Modifier
-                                                            .size(width = evalBarWidth, height = boardSize)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(spacing))
+                                                header()
+                                                opponentCard()
+                                                playerCard()
+                                                actionBar(false)
+                                                if (gameViewModel.totalReviewMoves > 0) {
+                                                    ReviewControlsRow(viewModel = gameViewModel, modifier = Modifier.fillMaxWidth())
                                                 }
-                                                BoardView(
-                                                    board = gameViewModel.displayState.board,
-                                                    isFlipped = gameViewModel.isFlipped,
-                                                    selectedPosition = if (gameViewModel.isReviewing) null else gameViewModel.selectedPosition,
-                                                    legalMoves = if (gameViewModel.isReviewing) emptyList() else gameViewModel.legalMovesForSelected,
-                                                    lastMove = gameViewModel.displayLastMove,
-                                                    gameStatus = gameViewModel.displayState.status,
-                                                    boardTheme = activeTheme,
-                                                    pieceStyle = activeStyle,
-                                                    showCoordinates = settingsManager.showCoordinates,
-                                                    showLastMoveHighlight = settingsManager.showLastMoveHighlight,
-                                                    showLegalMoves = settingsManager.showLegalMoves,
-                                                    onTap = { pos -> gameViewModel.tap(pos) },
-                                                    // Pejzaz: strana table se racuna iz VISINE i
-                                                    // vec je ogranicena u `boardSize` iznad.
-                                                    modifier = Modifier.size(boardSize)
-                                                )
+                                                moveList(Modifier.weight(1f).heightIn(min = MoveRowHeight))
                                             }
-                                        }
-
-                                        // Right Side: Header, Player Cards, Move History & Controls
-                                        val landscapeScrollState = rememberScrollState()
-                                        Column(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .fillMaxHeight()
-                                                .verticalScroll(landscapeScrollState)
-                                                .padding(end = DS.Space.s),
-                                            verticalArrangement = Arrangement.spacedBy(DS.Space.s)
-                                        ) {
-                                            // Top Header
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                IconButton(
-                                                    onClick = { showNewGameMenu = true },
-                                                    modifier = Modifier.size(32.dp)
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Add,
-                                                        contentDescription = loc("Nova igra"),
-                                                        tint = DS.ink,
-                                                        modifier = Modifier.size(22.dp)
-                                                    )
-                                                }
-
-                                                Text(
-                                                    text = loc("Chessko"),
-                                                    color = DS.ink,
-                                                    // spec § 4 (P3): naslov u zaglavlju je
-                                                    // `Type.heading` semibold na obe platforme
-                                                    // (iOS inline naslov = headline 17 semibold).
-                                                    style = Type.heading,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    textAlign = TextAlign.Center,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-
-                                                IconButton(
-                                                    onClick = { showSettings = true },
-                                                    modifier = Modifier.size(32.dp)
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Menu,
-                                                        contentDescription = loc("Podešavanja"),
-                                                        tint = DS.ink,
-                                                        modifier = Modifier.size(22.dp)
-                                                    )
-                                                }
-                                            }
-
-                                            // Top Player Card
-                                            PlayerHeaderCard(
-                                                color = topColor,
-                                                name = getPlayerName(gameViewModel, topColor),
-                                                isActive = gameViewModel.gameState.currentTurn == topColor && !gameViewModel.isGameOver,
-                                                isThinking = topColor != gameViewModel.playerColor && gameViewModel.isThinking,
-                                                capturedPieces = topCaptured,
-                                                materialAdvantage = topAdv,
-                                                boardTheme = activeTheme,
-                                                pieceStyle = activeStyle,
-                                                evaluationScore = gameViewModel.evaluationScore,
-                                                evaluationMateIn = gameViewModel.evaluationMateIn,
-                                                showEvalBar = gameViewModel.showEvalBar
-                                            )
-
-                                            // Bottom Player Card
-                                            PlayerHeaderCard(
-                                                color = bottomColor,
-                                                name = getPlayerName(gameViewModel, bottomColor),
-                                                isActive = gameViewModel.gameState.currentTurn == bottomColor && !gameViewModel.isGameOver,
-                                                isThinking = bottomColor != gameViewModel.playerColor && gameViewModel.isThinking,
-                                                capturedPieces = bottomCaptured,
-                                                materialAdvantage = bottomAdv,
-                                                boardTheme = activeTheme,
-                                                pieceStyle = activeStyle,
-                                                evaluationScore = gameViewModel.evaluationScore,
-                                                evaluationMateIn = gameViewModel.evaluationMateIn,
-                                                showEvalBar = gameViewModel.showEvalBar
-                                            )
-
-                                            // Review Controls (Move Navigation)
-                                            if (gameViewModel.totalReviewMoves > 0) {
-                                                ReviewControlsRow(
-                                                    viewModel = gameViewModel,
-                                                    modifier = Modifier.fillMaxWidth()
-                                                )
-                                            }
-
-                                            // Dugme "Analiziraj partiju" -- vidljivo samo na gotovoj
-                                            // partiji sa bar jednim potezom (vidi AnalysisButton ispod).
-                                            AnalysisButton(
-                                                viewModel = gameViewModel,
-                                                onClick = { showAnalysis = true }
-                                            )
-
-                                            // Move History
-                                            if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
-                                                Text(
-                                                    text = loc("Potezi"),
-                                                    color = DS.inkMuted,
-                                                    // iOS: `.subheadline.weight(.semibold)`
-                                                    // (`Chessko/Views/GameView.swift:81`). Pejzaz je
-                                                    // bio 13, portret 14 -- ista uloga, dve vrednosti.
-                                                    style = Type.body,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                                MoveHistoryView(
-                                                    notations = gameViewModel.gameState.moveNotations,
-                                                    selectedMoveIndex = gameViewModel.viewingMoveIndex,
-                                                    onSelectMove = { gameViewModel.goToMove(it) },
-                                                    modifier = Modifier.fillMaxWidth()
-                                                )
-                                            }
-
-                                            // Status Banner
-                                            StatusBanner(message = getStatusMessage(gameViewModel))
-
-                                            // Actions Row
-                                            ActionsRow(
-                                                viewModel = gameViewModel,
-                                                onReset = {
-                                                    if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
-                                                        showResetConfirm = true
-                                                    } else {
-                                                        gameViewModel.resetGame()
-                                                    }
-                                                },
-                                                onResign = {
-                                                    showResignConfirm = true
-                                                },
-                                                onShare = {
-                                                    val pgn = gameViewModel.generatePGN()
-                                                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                                        type = "text/plain"
-                                                        putExtra(Intent.EXTRA_TEXT, pgn)
-                                                        putExtra(Intent.EXTRA_SUBJECT, loc("Chessko partija"))
-                                                    }
-                                                    context.startActivity(Intent.createChooser(sendIntent, loc("Podeli partiju")))
-                                                }
-                                            )
                                         }
                                     }
                                 } else {
-                                    // Portrait mode (existing Edge-to-Edge full width layout)
-                                    val gameScrollState = rememberScrollState()
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .verticalScroll(gameScrollState),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
+                                    // Portret: od vrha — zaglavlje, kartica protivnika, tabla, kartica
+                                    // igraca, akcije, (pregled), lista poteza koja zauzima OSTATAK visine
+                                    // (spec § 5). Nista nije centrirano po visini.
+                                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                                        val viewportHeight = maxHeight
+                                        val density = LocalDensity.current
+                                        var fixedHeightPx by remember { mutableIntStateOf(0) }
+                                        val evalPadding = if (gameViewModel.showEvalBar) DS.Space.s * 2 else 0.dp
+                                        val boardSize = gameBoardSide(maxWidth - evalPadding, maxHeight, isLandscape = false, showEvalBar = gameViewModel.showEvalBar)
+                                        val fixedHeight = with(density) { fixedHeightPx.toDp() }
+                                        val listHeight = (viewportHeight - fixedHeight - DS.Space.m * 2)
+                                            .coerceAtLeast(GameMinMoveListHeight)
+
                                         Column(
                                             modifier = Modifier
-                                                .fillMaxWidth()
-                                                .widthIn(max = 500.dp)
-                                                .padding(vertical = DS.Space.m),
+                                                .fillMaxSize()
+                                                .verticalScroll(rememberScrollState()),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            // 0. Top Header
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = DS.Space.l, vertical = 2.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                IconButton(
-                                                    onClick = { showNewGameMenu = true },
-                                                    modifier = Modifier.size(36.dp)
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Add,
-                                                        contentDescription = loc("Nova igra"),
-                                                        tint = DS.ink,
-                                                        modifier = Modifier.size(24.dp)
-                                                    )
-                                                }
-
-                                                Text(
-                                                    text = loc("Chessko"),
-                                                    color = DS.ink,
-                                                    // spec § 4 (P3): `Type.heading` semibold, kao pejzaz i iOS.
-                                                    style = Type.heading,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    textAlign = TextAlign.Center,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-
-                                                IconButton(
-                                                    onClick = { showSettings = true },
-                                                    modifier = Modifier.size(36.dp)
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Menu,
-                                                        contentDescription = loc("Podešavanja"),
-                                                        tint = DS.ink,
-                                                        modifier = Modifier.size(24.dp)
-                                                    )
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.height(6.dp))
-
-                                            // 1. Top Player Card
-                                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) {
-                                                PlayerHeaderCard(
-                                                    color = topColor,
-                                                    name = getPlayerName(gameViewModel, topColor),
-                                                    isActive = gameViewModel.gameState.currentTurn == topColor && !gameViewModel.isGameOver,
-                                                    isThinking = topColor != gameViewModel.playerColor && gameViewModel.isThinking,
-                                                    capturedPieces = topCaptured,
-                                                    materialAdvantage = topAdv,
-                                                    boardTheme = activeTheme,
-                                                    pieceStyle = activeStyle,
-                                                    evaluationScore = gameViewModel.evaluationScore,
-                                                    evaluationMateIn = gameViewModel.evaluationMateIn,
-                                                    showEvalBar = gameViewModel.showEvalBar
-                                                )
-                                            }
-
-                                            Spacer(modifier = Modifier.height(10.dp))
-
-                                            // 2. Chessboard & EvalBar
-                                            BoxWithConstraints(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = if (gameViewModel.showEvalBar) DS.Space.s else 0.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                val totalWidth = maxWidth
-                                                val evalBarWidth = 6.dp
-                                                val spacing = 6.dp
-                                                // Granica na VREDNOSTI, ne na tabli — tabla i
-                                                // eval traka citaju istu `boardSize`. Isto kao
-                                                // iOS, `GameView.swift:105`.
-                                                val boardSize = (if (gameViewModel.showEvalBar) (totalWidth - evalBarWidth - spacing) else totalWidth)
-                                                    .coerceAtMost(DS.maxBoardSide)
-
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.Center,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    if (gameViewModel.showEvalBar) {
-                                                        EvalBar(
-                                                            evaluation = gameViewModel.evaluationScore,
-                                                            mateIn = gameViewModel.evaluationMateIn,
-                                                            isFlipped = gameViewModel.isFlipped,
-                                                            modifier = Modifier
-                                                                .size(width = evalBarWidth, height = boardSize)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(spacing))
-                                                    }
-                                                    BoardView(
-                                                        board = gameViewModel.displayState.board,
-                                                        isFlipped = gameViewModel.isFlipped,
-                                                        selectedPosition = if (gameViewModel.isReviewing) null else gameViewModel.selectedPosition,
-                                                        legalMoves = if (gameViewModel.isReviewing) emptyList() else gameViewModel.legalMovesForSelected,
-                                                        lastMove = gameViewModel.displayLastMove,
-                                                        gameStatus = gameViewModel.displayState.status,
-                                                        boardTheme = activeTheme,
-                                                        pieceStyle = activeStyle,
-                                                        showCoordinates = settingsManager.showCoordinates,
-                                                        showLastMoveHighlight = settingsManager.showLastMoveHighlight,
-                                                        showLegalMoves = settingsManager.showLegalMoves,
-                                                        onTap = { pos -> gameViewModel.tap(pos) },
-                                                        // Portret: strana table se racuna iz SIRINE i
-                                                        // vec je ogranicena u `boardSize` iznad.
-                                                        modifier = Modifier.size(boardSize)
-                                                    )
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.height(10.dp))
-
-                                            // 3. Bottom Player Card
-                                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) {
-                                                PlayerHeaderCard(
-                                                    color = bottomColor,
-                                                    name = getPlayerName(gameViewModel, bottomColor),
-                                                    isActive = gameViewModel.gameState.currentTurn == bottomColor && !gameViewModel.isGameOver,
-                                                    isThinking = bottomColor != gameViewModel.playerColor && gameViewModel.isThinking,
-                                                    capturedPieces = bottomCaptured,
-                                                    materialAdvantage = bottomAdv,
-                                                    boardTheme = activeTheme,
-                                                    pieceStyle = activeStyle,
-                                                    evaluationScore = gameViewModel.evaluationScore,
-                                                    evaluationMateIn = gameViewModel.evaluationMateIn,
-                                                    showEvalBar = gameViewModel.showEvalBar
-                                                )
-                                            }
-
-                                            Spacer(modifier = Modifier.height(10.dp))
-
-                                            // Review Controls (Move Navigation)
-                                            if (gameViewModel.totalReviewMoves > 0) {
-                                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) {
-                                                    ReviewControlsRow(
-                                                        viewModel = gameViewModel,
-                                                        modifier = Modifier.fillMaxWidth()
-                                                    )
-                                                }
-                                                Spacer(modifier = Modifier.height(10.dp))
-                                            }
-
-                                            // 4. Move history, Status & Actions
                                             Column(
-                                                modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .onSizeChanged { fixedHeightPx = it.height }
+                                                    .padding(top = DS.Space.m),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                                             ) {
-                                                // Dugme "Analiziraj partiju" -- vidljivo samo na gotovoj
-                                                // partiji sa bar jednim potezom. Ova Column (za razliku od
-                                                // pejzazne) nema `spacedBy`, pa razmak ide rucno, isto kao
-                                                // za Review Controls iznad.
-                                                if (canAnalyzeGame(gameViewModel)) {
-                                                    AnalysisButton(
-                                                        viewModel = gameViewModel,
-                                                        onClick = { showAnalysis = true }
-                                                    )
-                                                    Spacer(modifier = Modifier.height(DS.Space.m))
-                                                }
-
-                                                if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
-                                                    Text(
-                                                        text = loc("Potezi"),
-                                                        color = DS.inkMuted,
-                                                        style = Type.body,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        modifier = Modifier.padding(start = DS.Space.xs, bottom = DS.Space.xs)
-                                                    )
-                                                    MoveHistoryView(
-                                                        notations = gameViewModel.gameState.moveNotations,
-                                                        selectedMoveIndex = gameViewModel.viewingMoveIndex,
-                                                        onSelectMove = { gameViewModel.goToMove(it) },
-                                                        modifier = Modifier.fillMaxWidth()
-                                                    )
-                                                    Spacer(modifier = Modifier.height(DS.Space.m))
-                                                }
-
-                                                StatusBanner(message = getStatusMessage(gameViewModel))
-
-                                                Spacer(modifier = Modifier.height(DS.Space.m))
-
-                                                ActionsRow(
-                                                    viewModel = gameViewModel,
-                                                    onReset = {
-                                                        if (gameViewModel.gameState.moveNotations.isNotEmpty()) {
-                                                            showResetConfirm = true
-                                                        } else {
-                                                            gameViewModel.resetGame()
-                                                        }
-                                                    },
-                                                    onResign = {
-                                                        showResignConfirm = true
-                                                    },
-                                                    onShare = {
-                                                        val pgn = gameViewModel.generatePGN()
-                                                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                                            type = "text/plain"
-                                                            putExtra(Intent.EXTRA_TEXT, pgn)
-                                                            putExtra(Intent.EXTRA_SUBJECT, loc("Chessko partija"))
-                                                        }
-                                                        context.startActivity(Intent.createChooser(sendIntent, loc("Podeli partiju")))
+                                                Box(modifier = Modifier.padding(horizontal = DS.Space.l)) { header() }
+                                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) { opponentCard() }
+                                                board(boardSize)
+                                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) { playerCard() }
+                                                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) { actionBar(compactActions) }
+                                                if (gameViewModel.totalReviewMoves > 0) {
+                                                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.m)) {
+                                                        ReviewControlsRow(viewModel = gameViewModel, modifier = Modifier.fillMaxWidth())
                                                     }
-                                                )
+                                                }
                                             }
+                                            Spacer(modifier = Modifier.height(DS.Space.m))
+                                            moveList(
+                                                Modifier
+                                                    .padding(horizontal = DS.Space.m)
+                                                    .height(listHeight)
+                                            )
+                                            Spacer(modifier = Modifier.height(DS.Space.m))
                                         }
                                     }
                                 }
@@ -1181,11 +891,10 @@ fun ReviewControlsRow(
     val total = viewModel.totalReviewMoves
 
     Row(
+        // spec § 3: `fill` nije kartica — traka pregleda je kartica (`surface` + `line`).
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.fill)
-            .border(1.dp, DS.line, RoundedCornerShape(DS.Radius.m))
+            .dsCard()
             .padding(horizontal = DS.Space.s, vertical = DS.Space.xs),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -1264,187 +973,230 @@ fun ReviewControlsRow(
     }
 }
 
+// ── Igra (spec § 5) — delovi ekrana ───────────────────────────────────────────
+
+/** Sirina i razmak eval trake pored table (zateceno). */
+val GameEvalBarWidth = 6.dp
+val GameEvalBarSpacing = 6.dp
+/** Panel u pejzazu (spec § 5 „Telefon pejzaz", § 13). */
+val GameLandscapePanelWidth = 400.dp
+/** Najmanja visina liste poteza: tri reda + unutrasnji razmak. */
+val GameMinMoveListHeight = MoveRowHeight * 3 + 8.dp
+
+/**
+ * Strana table na ekranu Igra. JEDNO mesto za vrednost — Task 11 (spec § 13) ovde
+ * menja telo zajednickom funkcijom `boardSide`; raspored cita samo ovaj broj.
+ * Logika je zatecena: portret iz sirine, pejzaz iz visine, granica 560.
+ */
+fun gameBoardSide(availableWidth: Dp, availableHeight: Dp, isLandscape: Boolean, showEvalBar: Boolean): Dp {
+    if (isLandscape) return availableHeight.coerceAtMost(DS.maxBoardSide)
+    val evalWidth = if (showEvalBar) GameEvalBarWidth + GameEvalBarSpacing else 0.dp
+    return (availableWidth - evalWidth).coerceAtMost(DS.maxBoardSide).coerceAtLeast(0.dp)
+}
+
 @Composable
-fun ActionsRow(
-    viewModel: GameViewModel,
-    onReset: () -> Unit,
-    onResign: () -> Unit,
-    onShare: () -> Unit
+private fun NewGameOptionRow(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    onClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = DS.Space.m),
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Toggle Game Mode Button
-        Button(
-            onClick = {
-                viewModel.resetGame()
-                viewModel.gameMode = if (viewModel.gameMode == GameMode.VS_COMPUTER) {
-                    GameMode.LOCAL_FRIEND
-                } else {
-                    GameMode.VS_COMPUTER
-                }
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = DS.fill,
-                contentColor = DS.ink
-            ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(vertical = 10.dp)
+        Icon(imageVector = icon, contentDescription = null, tint = DS.accent, modifier = Modifier.size(28.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.SemiBold)
+            Text(text = description, color = DS.inkMuted, style = Type.caption)
+        }
+    }
+}
+
+/** Zaglavlje ekrana Igra: nova igra · „Chessko" · podesavanja. */
+@Composable
+private fun GameHeaderRow(onNewGame: () -> Unit, onSettings: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onNewGame, modifier = Modifier.size(36.dp)) {
+            Icon(imageVector = Icons.Default.Add, contentDescription = loc("Nova igra"), tint = DS.ink, modifier = Modifier.size(24.dp))
+        }
+        Text(
+            text = loc("Chessko"),
+            color = DS.ink,
+            // spec § 4 (P3): `Type.heading` semibold na obe platforme.
+            style = Type.heading,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(onClick = onSettings, modifier = Modifier.size(36.dp)) {
+            Icon(imageVector = Icons.Default.Menu, contentDescription = loc("Podešavanja"), tint = DS.ink, modifier = Modifier.size(24.dp))
+        }
+    }
+}
+
+private fun isComputerSide(viewModel: GameViewModel, color: PieceColor): Boolean =
+    viewModel.gameMode == GameMode.VS_COMPUTER && color != viewModel.playerColor
+
+private fun isActiveSide(viewModel: GameViewModel, color: PieceColor): Boolean =
+    viewModel.gameState.currentTurn == color && !viewModel.isGameOver
+
+/** Priblizan Elo za drugi red kartice protivnika (isti brojevi kao iOS). `null` = ne prikazuje se. */
+private fun opponentElo(difficulty: GameDifficulty, level: StockfishLevel): String? = when (difficulty) {
+    GameDifficulty.BEGINNER -> "~500"
+    GameDifficulty.EASY -> "~900"
+    GameDifficulty.MEDIUM -> "~1300"
+    GameDifficulty.HARD -> "~1700"
+    GameDifficulty.STOCKFISH -> when (level) {
+        StockfishLevel.BEGINNER -> "~1320"
+        StockfishLevel.CASUAL -> "~1600"
+        StockfishLevel.INTERMEDIATE -> "~1900"
+        StockfishLevel.ADVANCED -> "~2200"
+        StockfishLevel.EXPERT -> "~2600"
+        StockfishLevel.MAXIMUM -> null
+    }
+}
+
+/**
+ * Kartica protivnika (gore, spec § 5): ime + drugi red „Srednje · ~1300 · igra
+ * crnima" + strelica; tap otvara izbor protivnika i nivoa („Racunar" i „Srednje"
+ * iz stare akcione trake prelaze ovde). Promena nivoa vazi odmah; promena
+ * protivnika pokrece novu partiju (uz potvrdu ako je partija u toku).
+ */
+@Composable
+private fun GameOpponentCard(
+    viewModel: GameViewModel,
+    color: PieceColor,
+    boardTheme: BoardTheme,
+    pieceStyle: PieceStyle,
+    onPlayFriend: () -> Unit,
+    onPlayComputer: () -> Unit
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    val computer = isComputerSide(viewModel, color)
+    val active = isActiveSide(viewModel, color)
+    val status: PlayerCardStatus? = when {
+        !active -> null
+        computer -> if (viewModel.isThinking) PlayerCardStatus.Thinking else null
+        else -> PlayerCardStatus.ToMove
+    }
+    val subtitle = if (computer) {
+        listOfNotNull(
+            viewModel.difficulty.label,
+            opponentElo(viewModel.difficulty, viewModel.stockfishLevel),
+            if (color == PieceColor.BLACK) loc("igra crnima") else loc("igra belima")
+        ).joinToString(" · ")
+    } else null
+
+    Box {
+        PlayerCard(
+            color = color,
+            name = getPlayerName(viewModel, color),
+            boardTheme = boardTheme,
+            pieceStyle = pieceStyle,
+            subtitle = subtitle,
+            status = status,
+            isActive = active,
+            materialAdvantage = getMaterialAdvantage(viewModel.gameState, color),
+            capturedPieces = if (color == PieceColor.WHITE) viewModel.gameState.capturedByWhite else viewModel.gameState.capturedByBlack,
+            showsChevron = true,
+            onClick = { menuOpen = true }
+        )
+        DropdownMenu(
+            expanded = menuOpen,
+            onDismissRequest = { menuOpen = false },
+            containerColor = DS.surface,
+            shape = DialogShape
         ) {
-            val isVsComputer = viewModel.gameMode == GameMode.VS_COMPUTER
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                Icon(
-                    imageVector = if (isVsComputer) Icons.Default.Computer else Icons.Default.People,
-                    // vidi progress.md); za "Prijatelj" nema dodeljenog kljuca u tabeli, a
-                    // vidljivi Text odmah desno vec nosi znacenje -- ikona je tu dekorativna.
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(text = if (isVsComputer) loc("Računar") else loc("Prijatelj"), style = Type.label, fontWeight = FontWeight.SemiBold)
-            }
-        }
-
-        // Toggle Difficulty Button (enabled only in VS COMPUTER mode)
-        if (viewModel.gameMode == GameMode.VS_COMPUTER) {
-            Button(
-                onClick = {
-                    val nextDiff = when (viewModel.difficulty) {
-                        GameDifficulty.BEGINNER -> GameDifficulty.EASY
-                        GameDifficulty.EASY -> GameDifficulty.MEDIUM
-                        GameDifficulty.MEDIUM -> GameDifficulty.HARD
-                        GameDifficulty.HARD -> GameDifficulty.STOCKFISH
-                        GameDifficulty.STOCKFISH -> GameDifficulty.BEGINNER
-                    }
-                    viewModel.difficulty = nextDiff
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DS.fill,
-                    contentColor = DS.ink
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 10.dp)
-            ) {
-                val label = when (viewModel.difficulty) {
-                    GameDifficulty.BEGINNER -> loc("Početnik")
-                    GameDifficulty.EASY -> loc("Lako")
-                    GameDifficulty.MEDIUM -> loc("Srednje")
-                    GameDifficulty.HARD -> loc("Teško")
-                    GameDifficulty.STOCKFISH -> "Stockfish"
-                }
-                Text(text = label, style = Type.label, fontWeight = FontWeight.SemiBold)
-            }
-        }
-
-        // Undo Button
-        Button(
-            onClick = { viewModel.undo() },
-            enabled = viewModel.canUndo,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = DS.fill,
-                contentColor = DS.ink,
-                disabledContainerColor = DS.fill,
-                disabledContentColor = DS.inkMuted
-            ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.weight(0.7f),
-            contentPadding = PaddingValues(vertical = 10.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                // Dekorativna: `Button` spaja semantiku potomaka, pa bi opis uz
-                // vidljiv `Text` naterao citac ekrana da radnju kaze dvaput
-                // ("Vrati potez, Vrati, dugme"). Isto vazi za preostala tri
-                // dugmeta ovog reda. Kljuc "Vrati potez" ostaje u recniku —
-                // `StepGameView.kt` ga koristi na dugmetu BEZ teksta.
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Undo,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp)
-                )
-                Text(text = loc("Vrati"), style = Type.label, fontWeight = FontWeight.SemiBold)
-            }
-        }
-
-        // Resign Button
-        if (viewModel.canResign) {
-            Button(
-                onClick = { onResign() },
-                // 0xFFEF4444/0xFFFCA5A5 nisu bukvalni pogodci u tabeli (to je "soft danger"
-                // dugme -- providna pozadina + puna boja teksta), ali obe boje su semanticki
-                // DS.danger; vidi izvestaj, dilema.
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DS.danger.copy(alpha = 0.15f),
-                    contentColor = DS.danger
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(0.7f),
-                contentPadding = PaddingValues(vertical = 10.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                    // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Predaj partiju"
-                    // ostaje — koristi ga `StepGameView.kt`, gde zastava stoji sama.
-                    Icon(
-                        imageVector = Icons.Default.Flag,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
+            val itemColors = MenuDefaults.itemColors(
+                textColor = DS.ink,
+                leadingIconColor = DS.ink,
+                trailingIconColor = DS.accent
+            )
+            if (viewModel.gameMode == GameMode.VS_COMPUTER) {
+                GameDifficulty.values().forEach { diff ->
+                    val selected = viewModel.difficulty == diff
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = diff.title,
+                                style = Type.body,
+                                color = if (selected) DS.accent else DS.ink,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        },
+                        trailingIcon = if (selected) {
+                            { Icon(imageVector = Icons.Default.Check, contentDescription = null) }
+                        } else null,
+                        onClick = {
+                            viewModel.difficulty = diff
+                            menuOpen = false
+                        },
+                        colors = itemColors
                     )
-                    Text(text = loc("Predaj"), style = Type.label, fontWeight = FontWeight.SemiBold)
                 }
-            }
-        }
-
-        // Share Button
-        Button(
-            onClick = { onShare() },
-            enabled = viewModel.gameState.moveNotations.isNotEmpty(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = DS.fill,
-                contentColor = DS.ink,
-                disabledContainerColor = DS.fill,
-                disabledContentColor = DS.inkMuted
-            ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.weight(0.7f),
-            contentPadding = PaddingValues(vertical = 10.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                // Dekorativna (vidi dugme „Vrati" iznad). Kljuc "Podeli partiju"
-                // ostaje — naslov je `Intent.createChooser` dijaloga (`:908`, `:1125`).
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp)
+                DSRowDivider()
+                DropdownMenuItem(
+                    text = { Text(text = loc("Igraj sa prijateljem"), style = Type.body) },
+                    leadingIcon = { Icon(imageVector = Icons.Default.People, contentDescription = null) },
+                    onClick = {
+                        menuOpen = false
+                        onPlayFriend()
+                    },
+                    colors = itemColors
                 )
-                Text(text = loc("Podeli"), style = Type.label, fontWeight = FontWeight.SemiBold)
-            }
-        }
-
-        // Reset Button
-        Button(
-            onClick = { onReset() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = DS.fill,
-                contentColor = DS.ink
-            ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.weight(0.7f),
-            contentPadding = PaddingValues(vertical = 10.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                // Dekorativna (vidi dugme „Vrati" iznad), i to je ovde POPRAVKA a
-                // ne samo dosledost: raniji opis je bio "Pokušaj ponovo" — fraza sa
-                // ekrana Zadataka — dok se dugme zove „Reset" i zove `onReset()`.
-                // Citac ekrana je za jednu kontrolu izgovarao DVA razlicita imena.
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp)
+            } else {
+                DropdownMenuItem(
+                    text = { Text(text = loc("Igraj protiv računara"), style = Type.body) },
+                    leadingIcon = { Icon(imageVector = Icons.Default.Computer, contentDescription = null) },
+                    onClick = {
+                        menuOpen = false
+                        onPlayComputer()
+                    },
+                    colors = itemColors
                 )
-                Text(text = loc("Reset"), style = Type.label, fontWeight = FontWeight.SemiBold)
             }
         }
     }
+}
+
+/**
+ * Kartica igraca (dole, spec § 5): „Na potezu" + tacka `success`, kraj partije u
+ * istoj kartici kao `Type.body`, procena desno (kad je eval ukljucen) — jedno
+ * stalno mesto; poseban red „Tvoj potez" je uklonjen.
+ */
+@Composable
+private fun GamePlayerCard(
+    viewModel: GameViewModel,
+    color: PieceColor,
+    boardTheme: BoardTheme,
+    pieceStyle: PieceStyle
+) {
+    val computer = isComputerSide(viewModel, color)
+    val active = isActiveSide(viewModel, color)
+    val status: PlayerCardStatus? = when {
+        viewModel.isGameOver -> PlayerCardStatus.Result(getStatusMessage(viewModel))
+        !active -> null
+        computer -> if (viewModel.isThinking) PlayerCardStatus.Thinking else null
+        else -> PlayerCardStatus.ToMove
+    }
+    PlayerCard(
+        color = color,
+        name = getPlayerName(viewModel, color),
+        boardTheme = boardTheme,
+        pieceStyle = pieceStyle,
+        status = status,
+        isActive = active,
+        materialAdvantage = getMaterialAdvantage(viewModel.gameState, color),
+        capturedPieces = if (color == PieceColor.WHITE) viewModel.gameState.capturedByWhite else viewModel.gameState.capturedByBlack,
+        evaluation = if (viewModel.showEvalBar) evaluationOf(viewModel.evaluationScore, viewModel.evaluationMateIn) else null
+    )
 }

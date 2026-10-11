@@ -33,169 +33,9 @@ import com.veljkoni.chessko.viewmodels.GameMode
 import com.veljkoni.chessko.viewmodels.GameViewModel
 import kotlin.math.max
 
-@Composable
-fun PlayerHeaderCard(
-    color: PieceColor,
-    name: String,
-    isActive: Boolean,
-    isThinking: Boolean,
-    capturedPieces: List<ChessPiece>,
-    materialAdvantage: Int,
-    boardTheme: BoardTheme,
-    pieceStyle: PieceStyle,
-    evaluationScore: Double = 0.0,
-    evaluationMateIn: Int? = null,
-    showEvalBar: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    val cardBackground = DS.surface
-
-    val borderColor = if (isActive) {
-        DS.accent
-    } else {
-        DS.line
-    }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(cardBackground)
-            .border(
-                width = if (isActive) 1.5.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(DS.Radius.m)
-            )
-            .padding(horizontal = DS.Space.m, vertical = DS.Space.s),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // King Avatar
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(DS.Radius.s))
-                .background(DS.fill),
-            contentAlignment = Alignment.Center
-        ) {
-            val kingAsset = getAssetName(ChessPiece(PieceType.KING, color), pieceStyle, boardTheme)
-            AsyncImage(
-                model = "file:///android_asset/pieces/$kingAsset.svg",
-                contentDescription = null,
-                modifier = Modifier.size(26.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        // Name + Material Adv + Captured list
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(
-                    text = name,
-                    color = DS.ink,
-                    // iOS: `.subheadline.weight(.semibold)` (`Chessko/Views/GameView.swift:420`).
-                    style = Type.body,
-                    fontWeight = FontWeight.SemiBold
-                )
-                if (materialAdvantage > 0) {
-                    Text(
-                        text = "+$materialAdvantage",
-                        // spec § 3: statican broj nije `accent` (iOS: `inkMuted`).
-                        color = DS.inkMuted,
-                        // iOS: `.caption.weight(.medium)` (`Chessko/Views/GameView.swift:423`),
-                        // dakle `caption`. Tezina ostaje Bold -- to je razlika u izgledu
-                        // koju ovaj task ne resava.
-                        style = Type.caption,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            CapturedPiecesView(
-                pieces = capturedPieces,
-                pieceStyle = pieceStyle,
-                boardTheme = boardTheme
-            )
-        }
-
-        // Evaluation Score Pill (when eval bar is enabled)
-        if (showEvalBar) {
-            val evalText: String? = when {
-                evaluationMateIn != null -> {
-                    if (color == PieceColor.WHITE && evaluationMateIn > 0) "M$evaluationMateIn"
-                    else if (color == PieceColor.BLACK && evaluationMateIn < 0) "M${kotlin.math.abs(evaluationMateIn)}"
-                    else null
-                }
-                color == PieceColor.WHITE -> {
-                    if (evaluationScore >= 0.1) locDecimal(evaluationScore, signed = true)
-                    else if (kotlin.math.abs(evaluationScore) < 0.1) locDecimal(0.0)
-                    else null
-                }
-                else -> {
-                    if (evaluationScore <= -0.1) locDecimal(kotlin.math.abs(evaluationScore), signed = true)
-                    else null
-                }
-            }
-
-            val isMate = (color == PieceColor.WHITE && (evaluationMateIn ?: 0) > 0) ||
-                         (color == PieceColor.BLACK && (evaluationMateIn ?: 0) < 0)
-
-            if (evalText != null) {
-                // Zlatna oznaka mata namerno ostaje fiksna -- nije u tabeli preslikavanja,
-                // ista klasa izuzetka kao oznaka saha u BoardView. Krug ispravki 1/5: ta boja
-                // je NEVIDLJIVA (1,16:1) na `DS.fill` svetle teme, jer je `DS.fill` od ovog
-                // taska tema-zavisan a marker nije -- isto nacelo koje je Task 2 platio,
-                // izokrenuto (fiksna boja nad podlogom koja je postala token). Podloga ISPOD
-                // markera zato mora da bude isto tako fiksna, po analogiji sa oznakom saha
-                // koja stoji na tabli -- tabla nikad ne prati temu.
-                val mateBadgeBackground = Color(0xFF1E293B)
-                val mateBadgeBorder = Color.White.copy(alpha = 0.18f)
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(if (isMate) mateBadgeBackground else DS.fill)
-                        .border(1.dp, if (isMate) mateBadgeBorder else DS.line, RoundedCornerShape(6.dp))
-                        .padding(horizontal = 7.dp, vertical = 3.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = evalText,
-                        color = if (isMate) Color(0xFFFFD700) else DS.ink,
-                        // Brojcani bedz u kartici igraca -> `label`. iOS pandan ne
-                        // postoji: Faza 1 je taj broj sklonila iz kartice i ostavila ga
-                        // samo na eval traci.
-                        style = Type.label,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Spacer(modifier = Modifier.width(DS.Space.s))
-            }
-        }
-
-        // Active State Indicator
-        if (isActive) {
-            if (isThinking) {
-                ThinkingDots()
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(DS.success)
-                )
-            }
-        }
-    }
-}
+// `PlayerHeaderCard` je zamenjen zajednickom `PlayerCard` (`ui/GameComponents.kt`,
+// dizajnerski pregled § 5): status „Na potezu" i kraj partije u kartici, procena
+// samo u kartici igraca, aktivna ivica 2 dp.
 
 @Composable
 fun ThinkingDots() {
@@ -337,21 +177,20 @@ fun getStatusMessage(viewModel: GameViewModel): String {
                 if (targetColor == color) loc("Šah! Tvoj kralj je napadnut.") else loc("Šah! Napadaš kralja.")
             }
         }
+        // Ishod je rodno neutralan (spec § 5, § 16): „Partija je predata · pobeda
+        // crnih", ne „Izgubio si". 🎉 ostaje tamo gde je i bio (emoji u porukama se
+        // ne diraju, § 0). Isto kao iOS `GameViewModel.statusMessage`.
         is GameStatus.Checkmate -> {
             val loserColor = status.color
-            if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
-                if (loserColor == PieceColor.WHITE) loc("Mat! Crni je pobedio! 🎉") else loc("Mat! Beli je pobedio! 🎉")
-            } else {
-                if (loserColor == color) loc("Mat! Izgubio si.") else loc("Mat! Pobedio si! 🎉")
-            }
+            val base = if (loserColor == PieceColor.WHITE) loc("Mat · pobeda crnih") else loc("Mat · pobeda belih")
+            val celebrate = viewModel.gameMode == GameMode.LOCAL_FRIEND || loserColor != color
+            if (celebrate) "$base 🎉" else base
         }
         is GameStatus.Resigned -> {
             val loserColor = status.color
-            if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
-                if (loserColor == PieceColor.WHITE) loc("Predaja! Crni je pobedio.") else loc("Predaja! Beli je pobedio.")
-            } else {
-                if (loserColor == color) loc("Predaja! Izgubio si.") else loc("Predaja! Pobedio si! 🎉")
-            }
+            val base = if (loserColor == PieceColor.WHITE) loc("Partija je predata · pobeda crnih") else loc("Partija je predata · pobeda belih")
+            val celebrate = viewModel.gameMode != GameMode.LOCAL_FRIEND && loserColor != color
+            if (celebrate) "$base 🎉" else base
         }
         is GameStatus.Draw -> {
             when (status.reason) {

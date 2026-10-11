@@ -387,26 +387,19 @@ final class GameViewModel {
                     ? Loc("Šah! Tvoj kralj je napadnut.")
                     : Loc("Šah! Napadaš kralja.")
             }
+        // Ishod je rodno neutralan (spec § 5, § 16): „Partija je predata · pobeda
+        // crnih", ne „Izgubio si". 🎉 ostaje tamo gde je i bio (emoji u porukama
+        // se ne diraju, § 0) — kad pobedi igrač, odnosno u partiji u dvoje za mat.
         case .checkmate(let c):
-            if gameMode == .localFriend {
-                return c == .white
-                    ? Loc("Mat! Crni je pobedio! 🎉")
-                    : Loc("Mat! Beli je pobedio! 🎉")
-            } else {
-                return c == playerColor
-                    ? Loc("Mat! Izgubio si.")
-                    : Loc("Mat! Pobedio si! 🎉")
-            }
+            let base = c == .white ? Loc("Mat · pobeda crnih") : Loc("Mat · pobeda belih")
+            let celebrate = gameMode == .localFriend || c != playerColor
+            return celebrate ? base + " 🎉" : base
         case .resigned(let c):
-            if gameMode == .localFriend {
-                return c == .white
-                    ? Loc("Predaja! Crni je pobedio.")
-                    : Loc("Predaja! Beli je pobedio.")
-            } else {
-                return c == playerColor
-                    ? Loc("Predaja! Izgubio si.")
-                    : Loc("Predaja! Pobedio si! 🎉")
-            }
+            let base = c == .white
+                ? Loc("Partija je predata · pobeda crnih")
+                : Loc("Partija je predata · pobeda belih")
+            let celebrate = gameMode != .localFriend && c != playerColor
+            return celebrate ? base + " 🎉" : base
         case .draw(let reason):
             switch reason {
             case .stalemate:            return Loc("Pat – remi!")

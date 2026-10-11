@@ -3,12 +3,11 @@ package com.veljkoni.chessko.ui
 import com.veljkoni.chessko.logic.loc
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -16,137 +15,119 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.veljkoni.chessko.models.MoveClass
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
+import com.veljkoni.chessko.ui.theme.dsCard
 
-data class MovePair(
-    val number: Int,
-    val white: String,
-    val black: String?
-)
+/** Visina jednog reda liste poteza (spec § 5). */
+val MoveRowHeight = 36.dp
 
+/**
+ * Lista poteza (spec § 5, deli je i Analiza — § 6): kartica `surface` + `line`,
+ * mreza broj · beli · crni, red 36, `Type.mono`. Izabran potez je `accent` tekst
+ * na `selectionTint` (accent 12 % / 16 %). Prazno stanje: „Potezi će se pojaviti
+ * ovde" (`Type.body`, `inkMuted`).
+ *
+ * Visinu odredjuje pozivalac (`Modifier.height`/`weight`) — u Igri lista rezervise
+ * ostatak visine ispod table. iOS: `Chessko/Views/MoveHistoryView.swift`.
+ *
+ * @param selectedMoveIndex izabrana pozicija kao broj odigranih poluteza
+ *   (1 = posle prvog belog poteza); `null` = ziva partija.
+ * @param moveClass opciona klasa poteza po polutezu (od 0) — oznaka ispred notacije.
+ */
 @Composable
 fun MoveHistoryView(
     notations: List<String>,
+    modifier: Modifier = Modifier,
     selectedMoveIndex: Int? = null,
-    onSelectMove: (Int) -> Unit = {},
-    modifier: Modifier = Modifier
+    highlightsLastMoveWhenLive: Boolean = true,
+    moveClass: ((Int) -> MoveClass?)? = null,
+    onSelectMove: (Int) -> Unit = {}
 ) {
-    val pairs = remember(notations) {
-        val list = mutableListOf<MovePair>()
-        for (i in notations.indices step 2) {
-            val num = (i / 2) + 1
-            val white = notations[i]
-            val black = if (i + 1 < notations.size) notations[i + 1] else null
-            list.add(MovePair(num, white, black))
-        }
-        list
-    }
+    val rowCount = (notations.size + 1) / 2
+    val listState = rememberLazyListState()
 
-    val pairRows = remember(pairs) {
-        val list = mutableListOf<Pair<MovePair, MovePair?>>()
-        for (i in pairs.indices step 2) {
-            val left = pairs[i]
-            val right = if (i + 1 < pairs.size) pairs[i + 1] else null
-            list.add(Pair(left, right))
-        }
-        list
-    }
-
-    val lazyListState = rememberLazyListState()
-
-    // Auto-scroll to the end or selected item
+    // Auto-skrol do izabranog ili poslednjeg poteza.
     LaunchedEffect(notations.size, selectedMoveIndex) {
-        if (pairRows.isNotEmpty()) {
-            if (selectedMoveIndex != null && selectedMoveIndex > 0) {
-                val pairIndex = (selectedMoveIndex - 1) / 4
-                if (pairIndex in pairRows.indices) {
-                    lazyListState.animateScrollToItem(pairIndex)
-                }
-            } else {
-                lazyListState.animateScrollToItem(pairRows.size - 1)
-            }
+        if (rowCount > 0) {
+            val ply = if (selectedMoveIndex != null && selectedMoveIndex > 0) selectedMoveIndex - 1 else notations.size - 1
+            val row = (ply / 2).coerceIn(0, rowCount - 1)
+            listState.animateScrollToItem(row)
         }
     }
+
+    fun isSelected(ply: Int): Boolean =
+        if (selectedMoveIndex != null) selectedMoveIndex == ply + 1
+        else highlightsLastMoveWhenLive && ply == notations.size - 1
 
     Box(
         modifier = modifier
-            .height(80.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(DS.fill)
-            .border(1.dp, DS.line, RoundedCornerShape(10.dp))
-            .padding(vertical = DS.Space.xs),
+            .fillMaxWidth()
+            .dsCard(),
         contentAlignment = Alignment.Center
     ) {
         if (notations.isEmpty()) {
             Text(
-                text = loc("Nema odigranih poteza"),
+                text = loc("Potezi će se pojaviti ovde"),
                 color = DS.inkMuted,
-                // Prigusena poruka u istom panelu u kom stoje redovi poteza ->
-                // `Type.caption`, isto kao oni. `fontWeight` je obrisan jer je
-                // `Normal`, dakle vec tezina `caption`-a.
-                style = Type.caption
+                style = Type.body,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(DS.Space.l)
             )
         } else {
             LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxWidth()
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = DS.Space.xs)
             ) {
-                itemsIndexed(pairRows) { index, row ->
-                    // Kontejner iznad je `DS.fill`, pa je parni (providan) red vec
-                    // `DS.fill`; neparni MORA biti drugi token, inace se slika
-                    // `DS.fill` preko `DS.fill` i obe grane daju **identican piksel**
-                    // (izmereno 1,000 — zebre nema ni u jednoj temi, a kod izgleda kao
-                    // da nesto radi). Pre prelaska na tokene su se redovi razlikovali
-                    // (`White 5%` vs `White 2%`).
-                    // Izmereno posle popravke: `surface`/`fill` = 1,204 (svetla) /
-                    // 1,129 (tamna) — suptilno ali vidljivo, sto pruga i treba da bude.
-                    val bg = if (index % 2 == 0) Color.Transparent else DS.surface
+                itemsIndexed(List(rowCount) { it }) { _, row ->
+                    val number = row + 1
+                    val whitePly = row * 2
+                    val blackPly = whitePly + 1
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(bg)
-                            .padding(vertical = DS.Space.xs, horizontal = DS.Space.m),
-                        verticalAlignment = Alignment.CenterVertically
+                            .height(MoveRowHeight)
+                            .padding(horizontal = DS.Space.m),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
                     ) {
-                        // Left Pair
-                        val leftWhiteIdx = row.first.number * 2 - 1
-                        val leftBlackIdx = row.first.number * 2
-                        MovePairCell(
-                            pair = row.first,
-                            isLastWhite = if (selectedMoveIndex != null) selectedMoveIndex == leftWhiteIdx else leftWhiteIdx == notations.size,
-                            isLastBlack = if (selectedMoveIndex != null) selectedMoveIndex == leftBlackIdx else leftBlackIdx == notations.size,
-                            onWhiteClick = { onSelectMove(leftWhiteIdx) },
-                            onBlackClick = { if (row.first.black != null) onSelectMove(leftBlackIdx) },
-                            modifier = Modifier.weight(1f)
+                        Text(
+                            text = "$number.",
+                            color = DS.inkMuted,
+                            style = Type.mono,
+                            modifier = Modifier
+                                .width(36.dp)
+                                .clearAndSetSemantics { }
                         )
-
-                        // Divider if right pair exists
-                        if (row.second != null) {
-                            Spacer(modifier = Modifier.width(DS.Space.s))
-                            Box(
-                                modifier = Modifier
-                                    .width(1.dp)
-                                    .height(16.dp)
-                                    .background(DS.line)
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                            MoveCell(
+                                notation = notations[whitePly],
+                                label = "$number. ${notations[whitePly]}",
+                                selected = isSelected(whitePly),
+                                moveClass = moveClass?.invoke(whitePly),
+                                onClick = { onSelectMove(whitePly + 1) }
                             )
-                            Spacer(modifier = Modifier.width(DS.Space.s))
-                            
-                            // Right Pair
-                            val rightWhiteIdx = row.second!!.number * 2 - 1
-                            val rightBlackIdx = row.second!!.number * 2
-                            MovePairCell(
-                                pair = row.second!!,
-                                isLastWhite = if (selectedMoveIndex != null) selectedMoveIndex == rightWhiteIdx else rightWhiteIdx == notations.size,
-                                isLastBlack = if (selectedMoveIndex != null) selectedMoveIndex == rightBlackIdx else rightBlackIdx == notations.size,
-                                onWhiteClick = { onSelectMove(rightWhiteIdx) },
-                                onBlackClick = { if (row.second!!.black != null) onSelectMove(rightBlackIdx) },
-                                modifier = Modifier.weight(1f)
-                            )
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                            if (blackPly < notations.size) {
+                                MoveCell(
+                                    notation = notations[blackPly],
+                                    label = "$number… ${notations[blackPly]}",
+                                    selected = isSelected(blackPly),
+                                    moveClass = moveClass?.invoke(blackPly),
+                                    onClick = { onSelectMove(blackPly + 1) }
+                                )
+                            }
                         }
                     }
                 }
@@ -156,57 +137,38 @@ fun MoveHistoryView(
 }
 
 @Composable
-fun RowScope.MovePairCell(
-    pair: MovePair,
-    isLastWhite: Boolean,
-    isLastBlack: Boolean,
-    onWhiteClick: () -> Unit,
-    onBlackClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun MoveCell(
+    notation: String,
+    label: String,
+    selected: Boolean,
+    moveClass: MoveClass?,
+    onClick: () -> Unit
 ) {
+    val description = if (moveClass != null) "${moveClass.accessibilityName}, $label" else label
     Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier
+            .height(28.dp)
+            .clip(RoundedCornerShape(DS.Radius.s))
+            .background(if (selected) selectionTint else Color.Transparent)
+            .clickable(role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = description
+                role = Role.Button
+                this.selected = selected
+            }
+            .padding(horizontal = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        if (moveClass != null) {
+            MoveClassBadge(moveClass)
+        }
         Text(
-            text = "${pair.number}.",
-            color = DS.inkMuted,
-            style = Type.caption,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.width(26.dp)
+            text = notation,
+            color = if (selected) DS.accent else DS.ink,
+            style = Type.mono,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1
         )
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(4.dp))
-                .background(if (isLastWhite) DS.accent.copy(alpha = 0.2f) else Color.Transparent)
-                .clickable(onClick = onWhiteClick)
-                .padding(horizontal = DS.Space.xs, vertical = 2.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(
-                text = pair.white,
-                color = if (isLastWhite) DS.accent else DS.ink,
-                style = Type.caption,
-                fontWeight = if (isLastWhite) FontWeight.Bold else FontWeight.Normal
-            )
-        }
-        Spacer(modifier = Modifier.width(DS.Space.xs))
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(4.dp))
-                .background(if (isLastBlack) DS.accent.copy(alpha = 0.2f) else Color.Transparent)
-                .clickable(enabled = pair.black != null, onClick = onBlackClick)
-                .padding(horizontal = DS.Space.xs, vertical = 2.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(
-                text = pair.black ?: "",
-                color = if (isLastBlack) DS.accent else DS.ink,
-                style = Type.caption,
-                fontWeight = if (isLastBlack) FontWeight.Bold else FontWeight.Normal
-            )
-        }
     }
 }

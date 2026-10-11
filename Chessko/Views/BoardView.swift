@@ -131,6 +131,13 @@ struct BoardView: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 6))
+        // spec § 5/§ 11 (P3): okvir table 1 pt u boji tamnog polja aktivne teme —
+        // svetlo polje i `ground` su 1,09 : 1, pa bi se uglovi table gubili.
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .strokeBorder((BoardTheme(rawValue: boardTheme) ?? .classic).darkSquareColor, lineWidth: 1)
+                .allowsHitTesting(false)
+        )
         .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 4)
         .gesture(
             DragGesture(minimumDistance: 30)

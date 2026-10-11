@@ -12,162 +12,33 @@ struct GameView: View {
     @State private var showSettings = false
     @State private var showAnalysis = false
     @State private var dismissGameOverOverlay = false
+    /// Visina dela iznad liste poteza (kartice, tabla, akcije) u portretu —
+    /// lista dobija ostatak visine ekrana (spec § 5).
+    @State private var portraitFixedHeight: CGFloat = 0
 
     enum PendingSelection {
         case computer
         case localFriend
         case chessClock
+        /// „Nova partija" iz menija „Više" — isti protivnik i ista boja.
+        case restart
     }
     @State private var pendingSelection: PendingSelection? = nil
     @State private var showChessClock = false
+
+    /// Najmanja visina liste poteza (tri reda + unutrašnji razmak).
+    private static let minMoveListHeight: CGFloat = MoveHistoryView.rowHeight * 3 + DS.Space.s
+    /// Širina panela u pejzažu (spec § 5 „Telefon pejzaž", § 13).
+    private static let landscapePanelWidth: CGFloat = 400
 
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
                 let isLandscape = geo.size.width > geo.size.height
-
                 if isLandscape {
-                    // Landscape je visinski ogranicen (ne sirinski kao portret) — strana
-                    // table se racuna iz raspolozive VISINE, isto kao sto se u portretu
-                    // racuna iz sirine. Bez ovoga EvalBarView nema visinsku granicu i
-                    // HStack.frame(maxHeight: .infinity) ga razvlaci iznad table.
-                    let available = max(0, geo.size.height - DS.Space.s * 2)
-                    let side = min(available, DS.maxBoardSide)
-
-                    HStack(alignment: .top, spacing: 12) {
-                        // Left side: EvalBar (optional) + Board
-                        HStack(spacing: 8) {
-                            if showEvalBar {
-                                EvalBarView(
-                                    evaluation: viewModel.evaluationScore,
-                                    mateIn: viewModel.evaluationMateIn,
-                                    isFlipped: viewModel.isFlipped
-                                )
-                                .frame(height: side)
-                            }
-
-                            BoardView(
-                                board:            viewModel.displayState.board,
-                                isFlipped:        viewModel.isFlipped,
-                                selectedPosition: viewModel.isReviewing ? nil : viewModel.selectedPosition,
-                                legalMoves:       viewModel.isReviewing ? [] : viewModel.legalMovesForSelected,
-                                lastMove:         viewModel.displayLastMove,
-                                animatingPiece:   viewModel.animatingPiece,
-                                flyingCapture:    viewModel.flyingCapture,
-                                playerColor:      viewModel.activePlayerColor,
-                                isPlayerTurn:     viewModel.isPlayerTurn,
-                                gameStatus:       viewModel.displayState.status,
-                                onTap:            { viewModel.tap(position: $0) }
-                            )
-                            .frame(width: side, height: side)
-                        }
-                        .padding(.vertical, DS.Space.s)
-
-                        // Right side: Info, Review Controls and History
-                        ScrollView {
-                            VStack(spacing: 10) {
-                                topHeader
-                                bottomHeader
-
-                                if viewModel.totalReviewMoves > 0 {
-                                    reviewControlsView
-                                }
-
-                                analysisButton
-
-                                if !viewModel.gameState.moveNotations.isEmpty {
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(Loc("Potezi"))
-                                            .font(.subheadline.weight(.semibold))
-                                            .foregroundStyle(DS.inkMuted)
-                                            .padding(.leading, 4)
-                                        MoveHistoryView(
-                                            notations: viewModel.gameState.moveNotations,
-                                            selectedMoveIndex: viewModel.viewingMoveIndex,
-                                            onSelectMove: { viewModel.goToMove($0) }
-                                        )
-                                    }
-                                }
-                            }
-                            .padding(.trailing, 8)
-                            .padding(.vertical, 8)
-                        }
-                        .scrollBounceBehavior(.basedOnSize)
-                    }
-                    .padding(.horizontal, 16)
+                    landscapeLayout(size: geo.size)
                 } else {
-                    GeometryReader { portraitGeo in
-                        // Tabla je kvadrat: sirina ekrana minus vodoravni padding, minus eval traka i razmak.
-                        let evalWidth: CGFloat = showEvalBar ? EvalBarView.width + DS.Space.xs : 0
-                        let available = max(0, portraitGeo.size.width - DS.Space.s * 2 - evalWidth)
-                        // Na sirokim ekranima tabla se ne razvlaci preko cele sirine — inace
-                        // iPad izgleda kao uvecan telefon. Ogranicena i centrirana.
-                        let side = min(available, DS.maxBoardSide)
-
-                        ScrollView {
-                            VStack(spacing: DS.Space.m) {
-                                Spacer(minLength: 0)
-
-                                topHeader
-
-                                HStack(spacing: DS.Space.xs) {
-                                    if showEvalBar {
-                                        EvalBarView(
-                                            evaluation: viewModel.evaluationScore,
-                                            mateIn: viewModel.evaluationMateIn,
-                                            isFlipped: viewModel.isFlipped
-                                        )
-                                        .frame(height: side)
-                                    }
-
-                                    BoardView(
-                                        board:            viewModel.displayState.board,
-                                        isFlipped:        viewModel.isFlipped,
-                                        selectedPosition: viewModel.isReviewing ? nil : viewModel.selectedPosition,
-                                        legalMoves:       viewModel.isReviewing ? [] : viewModel.legalMovesForSelected,
-                                        lastMove:         viewModel.displayLastMove,
-                                        animatingPiece:   viewModel.animatingPiece,
-                                        flyingCapture:    viewModel.flyingCapture,
-                                        playerColor:      viewModel.activePlayerColor,
-                                        isPlayerTurn:     viewModel.isPlayerTurn,
-                                        gameStatus:       viewModel.displayState.status,
-                                        onTap:            { viewModel.tap(position: $0) }
-                                    )
-                                    .frame(width: side, height: side)
-                                }
-
-                                bottomHeader
-
-                                if viewModel.totalReviewMoves > 0 {
-                                    reviewControlsView
-                                }
-
-                                analysisButton
-
-                                if !viewModel.gameState.moveNotations.isEmpty {
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text(Loc("Potezi"))
-                                            .font(.subheadline.weight(.semibold))
-                                            .foregroundStyle(DS.inkMuted)
-                                            .padding(.leading, 4)
-                                        MoveHistoryView(
-                                            notations: viewModel.gameState.moveNotations,
-                                            selectedMoveIndex: viewModel.viewingMoveIndex,
-                                            onSelectMove: { viewModel.goToMove($0) }
-                                        )
-                                    }
-                                }
-
-                                Spacer(minLength: 0)
-                            }
-                            .frame(minHeight: portraitGeo.size.height)
-                            .padding(.horizontal, DS.Space.s)
-                            .padding(.top, 4)
-                            .padding(.bottom, 16)
-                        }
-                        .scrollBounceBehavior(.basedOnSize)
-                        .safeAreaPadding(.bottom, 24)
-                    }
+                    portraitLayout(size: geo.size)
                 }
             }
             .navigationTitle("Chessko")
@@ -196,33 +67,15 @@ struct GameView: View {
                         Image(systemName: "plus")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if viewModel.canResign {
-                        Button {
-                            showResignConfirm = true
-                        } label: {
-                            Image(systemName: "flag.fill")
-                                .foregroundStyle(DS.danger)
-                        }
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        viewModel.undo()
-                    } label: {
-                        Image(systemName: "arrow.uturn.backward")
-                    }
-                    .disabled(!viewModel.canUndo)
-                }
-                if #available(iOS 26.0, *) {
-                    ToolbarSpacer(.fixed, placement: .primaryAction)
-                } 
+                // spec § 5: „Vrati" i „Predaj" su prešli iz zaglavlja u akcionu
+                // traku ispod table (paritet sa Androidom).
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
                     } label: {
                         Image(systemName: "line.3.horizontal")
                     }
+                    .accessibilityLabel(Loc("Podešavanja"))
                 }
             }
             .background(AppBackgroundView())
@@ -244,13 +97,13 @@ struct GameView: View {
             } message: {
                 Text(Loc("Partija je u toku. Sigurno želiš da počneš iznova?"))
             }
+            // spec § 5: „Predati partiju?" · „Nastavi" (otkazivanje) · „Predaj"
+            // (destruktivno). Bez teksta na „Vi" — obraćanje je „ti" svuda.
             .alert(Loc("Predati partiju?"), isPresented: $showResignConfirm) {
                 Button(Loc("Predaj"), role: .destructive) {
                     viewModel.resign()
                 }
-                Button(Loc("Otkaži"), role: .cancel) {}
-            } message: {
-                Text(Loc("Da li ste sigurni da želite da predate trenutnu partiju?"))
+                Button(Loc("Nastavi"), role: .cancel) {}
             }
             .sheet(isPresented: $showSettings) {
                 SettingsSheet(gameViewModel: viewModel, localization: localization)
@@ -264,26 +117,158 @@ struct GameView: View {
         }
     }
 
-    // MARK: - Analiza partije
+    // MARK: - Raspored
 
-    // Vidi se samo na gotovoj partiji koja ima bar jedan potez: analiza pretrazuje
-    // pozicije redom, pa nad partijom koja jos traje ne bi ni imala sta da kaze.
-    // Stoji u OBE grane rasporeda (portret i pejzaz) — grane ne dele telo, pa bi
-    // dodavanje na jedno mesto ostavilo dugme nevidljivim u drugoj orijentaciji.
+    /// Strana table. JEDNO mesto za veličinu table na ovom ekranu — Task 11
+    /// (spec § 13) ovde menja telo zajedničkom funkcijom `boardSide`; raspored
+    /// ispod čita samo ovu vrednost. Logika je zatečena (telefon do 560).
+    private func boardSide(for size: CGSize, isLandscape: Bool) -> CGFloat {
+        if isLandscape {
+            // Pejzaž je visinski ograničen — strana se računa iz VISINE.
+            return min(max(0, size.height - DS.Space.s * 2), DS.maxBoardSide)
+        }
+        let available = max(0, size.width - DS.Space.s * 2 - evalBarWidth)
+        return min(available, DS.maxBoardSide)
+    }
+
+    private var evalBarWidth: CGFloat { showEvalBar ? EvalBarView.width + DS.Space.xs : 0 }
+
+    /// Portret: od vrha — kartica protivnika, tabla, kartica igrača, akcije,
+    /// (pregled), lista poteza koja zauzima ostatak visine (spec § 5, § 13).
+    /// Ništa nije centrirano po visini.
     @ViewBuilder
-    private var analysisButton: some View {
-        if viewModel.isGameOver && !viewModel.gameState.moveNotations.isEmpty {
+    private func portraitLayout(size: CGSize) -> some View {
+        let side = boardSide(for: size, isLandscape: false)
+        let topPadding = DS.Space.xs
+        let bottomPadding = DS.Space.l
+        let tabBarClearance: CGFloat = 24   // isto kao `safeAreaPadding` ispod
+        let listHeight = max(
+            Self.minMoveListHeight,
+            size.height - portraitFixedHeight - DS.Space.m - topPadding - bottomPadding - tabBarClearance
+        )
+
+        ScrollView {
+            VStack(spacing: DS.Space.m) {
+                VStack(spacing: DS.Space.m) {
+                    opponentCard
+                    boardRow(side: side)
+                    playerCard
+                    actionBar(compact: size.width < 360)
+                    if viewModel.totalReviewMoves > 0 {
+                        reviewControlsView
+                    }
+                }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { portraitFixedHeight = $0 }
+
+                moveList
+                    .frame(height: listHeight)
+            }
+            .frame(maxWidth: side + evalBarWidth)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, DS.Space.s)
+            .padding(.top, topPadding)
+            .padding(.bottom, bottomPadding)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .safeAreaPadding(.bottom, tabBarClearance)
+    }
+
+    /// Pejzaž (telefon, spec § 5): tabla i panel 400 kao par, vrhovi poravnati;
+    /// lista poteza ide do dna table.
+    @ViewBuilder
+    private func landscapeLayout(size: CGSize) -> some View {
+        let side = boardSide(for: size, isLandscape: true)
+        let panelWidth = max(0, min(Self.landscapePanelWidth,
+                                    size.width - side - evalBarWidth - DS.Space.l * 3))
+
+        HStack(alignment: .top, spacing: DS.Space.l) {
+            boardRow(side: side)
+
+            VStack(spacing: DS.Space.s) {
+                opponentCard
+                playerCard
+                actionBar(compact: false)
+                if viewModel.totalReviewMoves > 0 {
+                    reviewControlsView
+                }
+                moveList
+                    .frame(minHeight: MoveHistoryView.rowHeight, maxHeight: .infinity)
+            }
+            .frame(width: panelWidth, height: side)
+        }
+        .padding(.vertical, DS.Space.s)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func boardRow(side: CGFloat) -> some View {
+        HStack(spacing: DS.Space.xs) {
+            if showEvalBar {
+                EvalBarView(
+                    evaluation: viewModel.evaluationScore,
+                    mateIn: viewModel.evaluationMateIn,
+                    isFlipped: viewModel.isFlipped
+                )
+                .frame(height: side)
+            }
+
+            BoardView(
+                board:            viewModel.displayState.board,
+                isFlipped:        viewModel.isFlipped,
+                selectedPosition: viewModel.isReviewing ? nil : viewModel.selectedPosition,
+                legalMoves:       viewModel.isReviewing ? [] : viewModel.legalMovesForSelected,
+                lastMove:         viewModel.displayLastMove,
+                animatingPiece:   viewModel.animatingPiece,
+                flyingCapture:    viewModel.flyingCapture,
+                playerColor:      viewModel.activePlayerColor,
+                isPlayerTurn:     viewModel.isPlayerTurn,
+                gameStatus:       viewModel.displayState.status,
+                onTap:            { viewModel.tap(position: $0) }
+            )
+            .frame(width: side, height: side)
+        }
+    }
+
+    private var moveList: some View {
+        MoveHistoryView(
+            notations: viewModel.gameState.moveNotations,
+            selectedMoveIndex: viewModel.viewingMoveIndex,
+            onSelectMove: { viewModel.goToMove($0) }
+        )
+    }
+
+    // MARK: - Akciona traka (spec § 5)
+
+    private var canAnalyze: Bool {
+        viewModel.isGameOver && !viewModel.gameState.moveNotations.isEmpty
+    }
+
+    private func actionBar(compact: Bool) -> some View {
+        GameActionBar(
+            canUndo: viewModel.canUndo,
+            canResign: viewModel.canResign,
+            compact: compact,
+            onUndo: { viewModel.undo() },
+            onResign: { showResignConfirm = true }
+        ) {
+            // „Više": Podeli, Nova partija, Analiza. Analiza je ovde u OBA
+            // rasporeda (portret i pejzaž dele traku) i u dijalogu kraja partije.
+            ShareLink(item: viewModel.generatePGN()) {
+                Label(Loc("Podeli"), systemImage: "square.and.arrow.up")
+            }
+            .disabled(viewModel.gameState.moveNotations.isEmpty)
+
+            Button {
+                handleNewGameSelection(.restart)
+            } label: {
+                Label(Loc("Nova partija"), systemImage: "arrow.counterclockwise")
+            }
+
             Button {
                 showAnalysis = true
             } label: {
-                Label(Loc("Analiziraj partiju"), systemImage: "chart.bar.doc.horizontal")
-                    .font(.dsBody.weight(.semibold))
-                    .foregroundStyle(DS.onAccent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, DS.Space.m)
-                    .background(DS.accent, in: RoundedRectangle(cornerRadius: DS.Radius.m))
+                Label(Loc("Analiza"), systemImage: "chart.bar.doc.horizontal")
             }
-            .buttonStyle(.plain)
+            .disabled(!canAnalyze)
         }
     }
 
@@ -300,6 +285,7 @@ struct GameView: View {
                     .contentShape(Rectangle())
             }
             .disabled(!viewModel.canStepBackward)
+            .accessibilityLabel(Loc("Početna pozicija"))
 
             Button {
                 viewModel.stepBackward()
@@ -314,9 +300,7 @@ struct GameView: View {
             Spacer()
 
             let label: String = {
-                if viewModel.totalReviewMoves == 0 {
-                    return Loc("Početna pozicija")
-                } else if viewModel.currentReviewMoveIndex == 0 {
+                if viewModel.totalReviewMoves == 0 || viewModel.currentReviewMoveIndex == 0 {
                     return Loc("Početna pozicija")
                 } else {
                     return String(format: Loc("Potez %d od %d"), viewModel.currentReviewMoveIndex, viewModel.totalReviewMoves)
@@ -324,7 +308,7 @@ struct GameView: View {
             }()
 
             Text(label)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.dsCaption.weight(.semibold))
                 .foregroundStyle(viewModel.isReviewing ? DS.accent : DS.ink)
 
             Spacer()
@@ -350,36 +334,141 @@ struct GameView: View {
             .disabled(!viewModel.canStepForward)
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.primary.opacity(0.12), lineWidth: 1)
-        )
+        .foregroundStyle(DS.ink)
+        .padding(.horizontal, DS.Space.s)
+        .padding(.vertical, DS.Space.xs)
+        // spec § 3: kartica (`surface` + `line`), ne materijal.
+        .dsCard()
     }
 
-    // MARK: - Sub-views
+    // MARK: - Kartice igrača (spec § 5)
 
-    private var topHeader: some View {
-        let color = viewModel.isFlipped ? PieceColor.white : PieceColor.black
-        return playerHeader(
-            color: color,
-            label: headerLabel(for: color),
-            capturedPieces: color == .white
-                ? viewModel.gameState.capturedByWhite
-                : viewModel.gameState.capturedByBlack
-        )
+    private var topColor: PieceColor { viewModel.isFlipped ? .white : .black }
+    private var bottomColor: PieceColor { viewModel.isFlipped ? .black : .white }
+
+    private func captured(by color: PieceColor) -> [ChessPiece] {
+        color == .white ? viewModel.gameState.capturedByWhite : viewModel.gameState.capturedByBlack
     }
 
-    private var bottomHeader: some View {
-        let color = viewModel.isFlipped ? PieceColor.black : PieceColor.white
-        return playerHeader(
+    private func isActive(_ color: PieceColor) -> Bool {
+        viewModel.gameState.currentTurn == color && !viewModel.isGameOver
+    }
+
+    private func isComputer(_ color: PieceColor) -> Bool {
+        viewModel.gameMode == .vsComputer && color != viewModel.playerColor
+    }
+
+    /// Kartica protivnika (gore): ime + drugi red „Srednje · ~1300 · igra
+    /// crnima" + strelica; tap otvara izbor protivnika i nivoa.
+    private var opponentCard: some View {
+        let color = topColor
+        let status: PlayerCardStatus? = {
+            guard isActive(color) else { return nil }
+            if isComputer(color) { return viewModel.isThinking ? .thinking : nil }
+            return .toMove
+        }()
+        return Menu {
+            opponentMenu
+        } label: {
+            DSPlayerCard(
+                color: color,
+                name: headerLabel(for: color),
+                subtitle: isComputer(color) ? opponentSubtitle(computerColor: color) : nil,
+                status: status,
+                isActive: isActive(color),
+                materialAdvantage: materialAdvantage(for: color),
+                capturedPieces: captured(by: color),
+                flyingCapture: viewModel.flyingCapture,
+                showsChevron: true
+            )
+        }
+        .buttonStyle(DSPressableButtonStyle())
+    }
+
+    /// Izbor protivnika i nivoa (spec § 5 — „Računar" i „Srednje" iz stare
+    /// Android trake prelaze ovde). Promena protivnika pokreće novu partiju
+    /// (uz potvrdu ako je partija u toku); promena nivoa važi odmah.
+    @ViewBuilder
+    private var opponentMenu: some View {
+        if viewModel.gameMode == .vsComputer {
+            Picker(Loc("Težina"), selection: Binding(
+                get: { viewModel.difficulty },
+                set: { viewModel.setDifficulty($0) }
+            )) {
+                ForEach(GameDifficulty.allCases, id: \.self) { diff in
+                    Text(diff.title).tag(diff)
+                }
+            }
+            .pickerStyle(.inline)
+
+            if viewModel.difficulty == .stockfish {
+                Picker(Loc("Stockfish nivo"), selection: Binding(
+                    get: { viewModel.stockfishLevel },
+                    set: { viewModel.setStockfishLevel($0) }
+                )) {
+                    ForEach(StockfishLevel.allCases, id: \.self) { level in
+                        Text(level.label).tag(level)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            Divider()
+
+            Button {
+                handleNewGameSelection(.localFriend)
+            } label: {
+                Label(Loc("Igraj sa prijateljem"), systemImage: "person.2")
+            }
+        } else {
+            Button {
+                handleNewGameSelection(.computer)
+            } label: {
+                Label(Loc("Igraj protiv računara"), systemImage: "cpu")
+            }
+        }
+    }
+
+    /// „Srednje · ~1300 · igra crnima". Elo se izostavlja kad ga nema
+    /// (Stockfish „Maksimalno") — nikad „–".
+    private func opponentSubtitle(computerColor: PieceColor) -> String {
+        var parts: [String] = [viewModel.difficulty.label]
+        if let elo = opponentElo { parts.append(elo) }
+        parts.append(computerColor == .black ? Loc("igra crnima") : Loc("igra belima"))
+        return parts.joined(separator: " · ")
+    }
+
+    private var opponentElo: String? {
+        switch viewModel.difficulty {
+        case .beginner:  return "~500"
+        case .easy:      return "~900"
+        case .medium:    return "~1300"
+        case .hard:      return "~1700"
+        case .stockfish: return viewModel.stockfishLevel.elo
+        }
+    }
+
+    /// Kartica igrača (dole): „Na potezu" + tačka, kraj partije kao `Type.body`,
+    /// procena desno (kad je eval uključen).
+    private var playerCard: some View {
+        let color = bottomColor
+        let status: PlayerCardStatus? = {
+            if viewModel.isGameOver { return .result(viewModel.statusMessage) }
+            guard isActive(color) else { return nil }
+            if isComputer(color) { return viewModel.isThinking ? .thinking : nil }
+            return .toMove
+        }()
+        return DSPlayerCard(
             color: color,
-            label: headerLabel(for: color),
-            capturedPieces: color == .white
-                ? viewModel.gameState.capturedByWhite
-                : viewModel.gameState.capturedByBlack
+            name: headerLabel(for: color),
+            status: status,
+            isActive: isActive(color),
+            materialAdvantage: materialAdvantage(for: color),
+            capturedPieces: captured(by: color),
+            flyingCapture: viewModel.flyingCapture,
+            evaluation: showEvalBar
+                ? DSEvaluation.make(score: viewModel.evaluationScore, mateIn: viewModel.evaluationMateIn)
+                : nil
         )
     }
 
@@ -394,72 +483,6 @@ struct GameView: View {
         } else {
             return color == viewModel.playerColor ? Loc("Ti") : Loc("Računar")
         }
-    }
-
-    @ViewBuilder
-    private func playerHeader(color: PieceColor, label: String, capturedPieces: [ChessPiece]) -> some View {
-        let isActive   = viewModel.gameState.currentTurn == color && !viewModel.isGameOver
-        let isComputer = viewModel.gameMode == .vsComputer && color != viewModel.playerColor
-        let matAdv     = materialAdvantage(for: color)
-
-        HStack(alignment: .center, spacing: 10) {
-
-            // King avatar
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(DS.fill)
-                    .frame(width: 38, height: 38)
-                PieceImageView(piece: ChessPiece(type: .king, color: color))
-                    .frame(width: 26, height: 26)
-            }
-
-            // Name row + captured pieces
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(Loc(label))
-                        .font(.subheadline.weight(.semibold))
-                    if matAdv > 0 {
-                        Text("+\(matAdv)")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(DS.inkMuted)
-                    }
-                    Spacer()
-                    // Turn / thinking indicator (right-aligned)
-                    if isActive {
-                        if isComputer && viewModel.isThinking {
-                            ThinkingIndicator(isActive: true)
-                        } else {
-                            Circle()
-                                .fill(DS.success)
-                                .frame(width: 7, height: 7)
-                        }
-                    }
-                }
-                if isComputer {
-                    Text(viewModel.difficulty.label)
-                        .font(.dsCaption)
-                        .foregroundStyle(DS.inkMuted)
-                }
-                if !capturedPieces.isEmpty {
-                    CapturedPiecesView(
-                        pieces: capturedPieces,
-                        capturedByColor: color,
-                        flyingCapture: viewModel.flyingCapture
-                    )
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(
-                    isActive ? DS.accent.opacity(0.55) : Color.primary.opacity(0.07),
-                    lineWidth: isActive ? 1.5 : 1
-                )
-        )
-        .animation(.easeInOut(duration: 0.2), value: isActive)
     }
 
     /// Razlika u vrednosti uzetih figura za datog igrača (0 ako je negativna).
@@ -519,6 +542,8 @@ struct GameView: View {
             viewModel.newGame(gameMode: .localFriend, playerColor: .white)
         case .chessClock:
             showChessClock = true
+        case .restart:
+            viewModel.newGame(gameMode: viewModel.gameMode, playerColor: viewModel.playerColor)
         }
     }
 
@@ -562,51 +587,51 @@ struct GameView: View {
 
     // MARK: - Game Over Overlay
 
+    /// Kraj partije (spec § 5, § 3): `surface` + `Radius.l`; primarno „Nova
+    /// igra", sporedno „Analiziraj partiju" (jedan naziv za radnju — nema više
+    /// „Pregledaj partiju"), „Zatvori" kao tekst-dugme u `accent` (bez njega
+    /// se završna pozicija ne bi mogla pogledati). Poruka je rodno neutralna.
     @ViewBuilder
     private var gameOverOverlay: some View {
         if viewModel.isGameOver && !dismissGameOverOverlay {
             ZStack {
                 DS.scrim.ignoresSafeArea()
-                // spec § 3: sopstveni dijalog = `DS.surface` + `Radius.l`; primarno dugme
-                // `accent` + `onAccent` (`Radius.m`), sporedno sa ispunom `fill` + `ink` —
-                // isti izgled kao Android dijalog kraja partije (`MainActivity.kt`).
-                VStack(spacing: 18) {
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.25)) { dismissGameOverOverlay = true }
+                    }
+
+                VStack(spacing: DS.Space.l) {
                     Text(gameOverEmoji)
-                        .font(.system(size: 60))
+                        .font(.system(size: 56))
+                        .accessibilityHidden(true)
                     Text(viewModel.statusMessage)
-                        .font(.title2.weight(.semibold))
+                        .font(.dsTitle)
                         .foregroundStyle(DS.ink)
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: 12) {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                dismissGameOverOverlay = true
-                            }
-                        } label: {
-                            Text(Loc("Pregledaj partiju"))
-                                .font(.subheadline.weight(.semibold))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(DS.fill)
-                                .foregroundStyle(DS.ink)
-                                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m)) // nigde „stadion"
-                        }
-
-                        Button {
+                    VStack(spacing: DS.Space.s) {
+                        Button(Loc("Nova igra")) {
                             withAnimation(.spring(duration: 0.3)) { showColorPicker = true }
-                        } label: {
-                            Text(Loc("Nova igra"))
-                                .font(.subheadline.weight(.bold))
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .background(DS.accent)
-                                .foregroundStyle(DS.onAccent)
-                                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m))
                         }
+                        .buttonStyle(DSPrimaryButtonStyle())
+
+                        if canAnalyze {
+                            Button(Loc("Analiziraj partiju")) {
+                                dismissGameOverOverlay = true
+                                showAnalysis = true
+                            }
+                            .buttonStyle(DSSecondaryButtonStyle())
+                        }
+
+                        Button(Loc("Zatvori")) {
+                            withAnimation(.easeInOut(duration: 0.25)) { dismissGameOverOverlay = true }
+                        }
+                        .buttonStyle(DSTextButtonStyle())
                     }
                 }
-                .padding(28)
+                .padding(DS.Space.xl)
+                .frame(maxWidth: 400)
                 .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.l, style: .continuous))
                 .padding(.horizontal, DS.Space.xl)
             }
@@ -634,7 +659,7 @@ struct ThinkingIndicator: View {
         HStack(spacing: 3) {
             ForEach(0..<3, id: \.self) { i in
                 Circle()
-                    .fill(Color.secondary)
+                    .fill(DS.inkMuted)
                     .frame(width: 5, height: 5)
                     .scaleEffect(animating ? 1.0 : 0.4)
                     .animation(

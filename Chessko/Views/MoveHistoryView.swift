@@ -2,156 +2,144 @@ import SwiftUI
 
 // MARK: - Move History View
 //
-// Prikazuje odigrane poteze u srpskoj algebarskoj notaciji (K/D/T/L/S).
-// Potezi su grupisani u parove: beli potez | crni potez.
-// Dva para po redu radi veće gustine. Auto-skrol do poslednjeg poteza.
+// Lista poteza (spec § 5, deli je i Analiza — § 6): kartica `surface` + `line`,
+// mreža broj · beli · crni, red 36, `Type.mono` (`.dsMono`). Izabran potez je
+// `accent` tekst na `DS.selectionTint` (accent 12 % / 16 %). Prazno stanje:
+// „Potezi će se pojaviti ovde" (`Type.body`, `inkMuted`).
+//
+// Visinu određuje pozivalac (`.frame(height:)` / `maxHeight`) — u Igri lista
+// rezerviše ostatak visine ispod table. Auto-skrol do poslednjeg ili izabranog
+// poteza. Android: `ui/MoveHistoryView.kt`, ista pravila.
 
 struct MoveHistoryView: View {
 
     /// Notacije u redosledu igranja: [beli1, crni1, beli2, crni2, ...]
     let notations: [String]
+    /// Izabrana pozicija kao broj odigranih poluteza (1 = posle prvog belog
+    /// poteza); `nil` = živa partija.
     var selectedMoveIndex: Int? = nil
+    /// U živoj partiji (`selectedMoveIndex == nil`) istakni poslednji potez.
+    var highlightsLastMoveWhenLive: Bool = true
+    /// Opciona klasa poteza po polutezu (od 0) — oznaka ispred notacije (Analiza).
+    var moveClass: ((Int) -> MoveClass?)? = nil
     var onSelectMove: ((Int) -> Void)? = nil
 
-    // MARK: - Data model
+    static let rowHeight: CGFloat = 36
 
-    private struct MovePair: Identifiable {
-        let id: Int
-        let number: Int
-        let white: String
-        let whiteIndex: Int
-        let black: String?
-        let blackIndex: Int?
+    private struct MoveRow: Identifiable {
+        let id: Int          // 0-based broj reda
+        var number: Int { id + 1 }
+        let whitePly: Int
+        let blackPly: Int?
     }
 
-    private struct PairRow: Identifiable {
-        let id: Int
-        let left: MovePair
-        let right: MovePair?
-    }
-
-    private var pairs: [MovePair] {
+    private var rows: [MoveRow] {
         stride(from: 0, to: notations.count, by: 2).map { i in
-            MovePair(
-                id: i / 2,
-                number: i / 2 + 1,
-                white: notations[i],
-                whiteIndex: i + 1,
-                black: i + 1 < notations.count ? notations[i + 1] : nil,
-                blackIndex: i + 1 < notations.count ? i + 2 : nil
-            )
+            MoveRow(id: i / 2, whitePly: i, blackPly: i + 1 < notations.count ? i + 1 : nil)
         }
     }
 
-    private var pairRows: [PairRow] {
-        stride(from: 0, to: pairs.count, by: 2).map { i in
-            PairRow(id: i / 2, left: pairs[i], right: i + 1 < pairs.count ? pairs[i + 1] : nil)
-        }
+    private func isSelected(_ ply: Int) -> Bool {
+        if let sel = selectedMoveIndex { return sel == ply + 1 }
+        return highlightsLastMoveWhenLive && ply == notations.count - 1
     }
-
-    // MARK: - Body
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(pairRows) { row in
-                        pairRowView(row: row)
-                            .id(row.id)
-                    }
-                }
-                .padding(.vertical, 3)
-            }
-            .frame(maxHeight: 150)
-            .onChange(of: notations.count) { _, _ in
-                if let last = pairRows.last {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        proxy.scrollTo(last.id, anchor: .bottom)
-                    }
-                }
-            }
-            .onChange(of: selectedMoveIndex) { _, newIndex in
-                if let idx = newIndex, idx > 0 {
-                    let pairId = (idx - 1) / 4
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        proxy.scrollTo(pairId, anchor: .center)
-                    }
-                }
-            }
-        }
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    // MARK: - Row (two pairs side by side)
-
-    @ViewBuilder
-    private func pairRowView(row: PairRow) -> some View {
-        HStack(spacing: 0) {
-            pairCell(pair: row.left)
-
-            if let right = row.right {
-                Rectangle()
-                    .fill(Color.primary.opacity(0.08))
-                    .frame(width: 0.5)
-                    .padding(.vertical, 4)
-                pairCell(pair: right)
+        Group {
+            if notations.isEmpty {
+                Text(Loc("Potezi će se pojaviti ovde"))
+                    .font(.dsBody)
+                    .foregroundStyle(DS.inkMuted)
+                    .multilineTextAlignment(.center)
+                    .padding(DS.Space.l)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                Spacer().frame(maxWidth: .infinity)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(rows) { row in
+                                rowView(row).id(row.id)
+                            }
+                        }
+                        .padding(.vertical, DS.Space.xs)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .onAppear { scrollToCurrent(proxy, animated: false) }
+                    .onChange(of: notations.count) { _, _ in scrollToCurrent(proxy, animated: true) }
+                    .onChange(of: selectedMoveIndex) { _, _ in scrollToCurrent(proxy, animated: true) }
+                }
             }
         }
-        .background(row.id % 2 == 0 ? Color.clear : Color.primary.opacity(0.04))
+        .frame(maxWidth: .infinity)
+        .dsCard()
     }
 
-    // MARK: - Single pair cell
+    private func scrollToCurrent(_ proxy: ScrollViewProxy, animated: Bool) {
+        let ply: Int
+        if let sel = selectedMoveIndex, sel > 0 { ply = sel - 1 } else { ply = notations.count - 1 }
+        guard ply >= 0 else { return }
+        let target = ply / 2
+        if animated {
+            withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(target, anchor: .center) }
+        } else {
+            proxy.scrollTo(target, anchor: .center)
+        }
+    }
 
     @ViewBuilder
-    private func pairCell(pair: MovePair) -> some View {
-        let whiteSelected = selectedMoveIndex == pair.whiteIndex
-        let blackSelected = pair.blackIndex != nil && selectedMoveIndex == pair.blackIndex
-
-        HStack(spacing: 0) {
-            Text("\(pair.number).")
+    private func rowView(_ row: MoveRow) -> some View {
+        HStack(spacing: DS.Space.xs) {
+            Text("\(row.number).")
+                .font(.dsMono)
                 .foregroundStyle(DS.inkMuted)
-                .frame(width: 26, alignment: .trailing)
+                .frame(width: 36, alignment: .leading)
+                .accessibilityHidden(true)
 
-            Button {
-                onSelectMove?(pair.whiteIndex)
-            } label: {
-                Text(pair.white)
-                    .fontWeight(whiteSelected ? .bold : .regular)
-                    .foregroundStyle(whiteSelected ? DS.accent : DS.ink)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(whiteSelected ? DS.accent.opacity(0.18) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-            }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 4)
+            moveCell(ply: row.whitePly, number: row.number, isWhite: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Group {
-                if let black = pair.black, let bIdx = pair.blackIndex {
-                    Button {
-                        onSelectMove?(bIdx)
-                    } label: {
-                        Text(black)
-                            .fontWeight(blackSelected ? .bold : .regular)
-                            .foregroundStyle(blackSelected ? DS.accent : DS.ink)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 2)
-                            .background(blackSelected ? DS.accent.opacity(0.18) : Color.clear)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
-                    .buttonStyle(.plain)
+                if let black = row.blackPly {
+                    moveCell(ply: black, number: row.number, isWhite: false)
                 } else {
-                    Text("").foregroundStyle(DS.inkMuted)
+                    Color.clear.frame(height: 1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .font(.system(.subheadline, design: .monospaced))
-        .padding(.vertical, 4)
-        .padding(.horizontal, 6)
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, DS.Space.m)
+        .frame(height: Self.rowHeight)
+    }
+
+    @ViewBuilder
+    private func moveCell(ply: Int, number: Int, isWhite: Bool) -> some View {
+        let selected = isSelected(ply)
+        let notation = notations[ply]
+        let cls = moveClass?(ply)
+        let moveLabel = isWhite ? "\(number). \(notation)" : "\(number)… \(notation)"
+
+        Button {
+            onSelectMove?(ply + 1)
+        } label: {
+            HStack(spacing: 6) {
+                if let cls {
+                    MoveClassBadge(moveClass: cls)
+                }
+                Text(notation)
+                    .font(.dsMono)
+                    .fontWeight(selected ? .semibold : .regular)
+                    .foregroundStyle(selected ? DS.accent : DS.ink)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 6)
+            .frame(height: 28)
+            .background(selected ? DS.selectionTint : Color.clear,
+                        in: RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(DSPressableButtonStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(cls.map { "\($0.accessibilityName), \(moveLabel)" } ?? moveLabel)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 }
