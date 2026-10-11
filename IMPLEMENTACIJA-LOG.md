@@ -1179,7 +1179,92 @@ iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; And
 
 ## Task 9 — Šahovski sat (§ 14)
 
-_(popunjava Task 9)_
+### Urađeno po stavkama § 14 (obe platforme, obe teme)
+
+- [x] **Android: preko celog prozora** — već urađeno u Task-u 3 (`FullScreenDestination`,
+  `background = Color.Black`); bez izmene. Sat zadržava podrazumevani `safeDrawing` padding
+  (vidi „Odluke").
+- [x] **iOS: traka između polovina fiksno tamna u obe teme.** `.ultraThinMaterial` (`#F4F5F5` u
+  svetloj) → `ClockBar.background` `#1E293B`; krugovi `Color.primary@5%` → `ClockBar.well`
+  (belo 12 %); sadržaj trake na fiksnim članovima (`ClockBar.ink #EEF1F7`, `inkMuted #8B93A7`,
+  `accent #7EA0E8`, `onAccent #161A22`) — iste vrednosti kao Android `ClockBarBackground`/
+  `ClockBarWell`/`ClockBarAccent`/`DarkColors`, pa važe isti izmereni parovi
+  (`ContrastTest.clockControlBarIsReadableOverFixedHalves`: ink 12,93, accent 5,63, čip @12 % 4,58,
+  onAccent/accent 6,71, ink na krugu 8,87, inkMuted na krugu 3,26). Hairline ivice
+  `Color.primary@8%` uklonjene (Android ih nema). `.environment(\.colorScheme, .dark)` na traci.
+  Onemogućen reset: glif `inkMuted`, krug ceo, bez sistemskog zatamnjenja (`DSPressableButtonStyle`)
+  — isto kao Android. Senka ispod dugmeta pauze (accent@30 %) uklonjena — na tamnoj traci prljava.
+  Android traka i obe polovine na obe platforme: **nedirnute** (boje).
+- [x] **Cifre iste:** iOS `.system(size: 86, design: .monospaced)` (SF Mono, precrtana nula) →
+  `.system(size: 86, weight: .bold).monospacedDigit()` (+ `lineLimit(1)`, `minimumScaleFactor(0.5)`
+  kao zaštita na uskom ekranu); Android `FontFamily.Monospace` → sistemski Roboto sa
+  `TextStyle(fontFeatureSettings = "tnum")` (+ `maxLines = 1`). `tnum`/`.monospacedDigit()` i na
+  čipu vremenske kontrole, nazivima u izboru i vrednostima u objašnjenju. Veličine (86/72) i boje
+  polovina nepromenjene.
+- [x] **Objašnjenje kontrola:** vrednost IZNAD opisa (`Type.heading`, U+00A0 oko „+"), opis
+  `Type.body` `ink`, redovi u `surface` grupi sa `line` razdelnikom (iOS `.dsCard()` + 1 pt `line`
+  pravougaonik; Android `DSCardGroup` + `DSRowDivider`). Naslov kategorije: iOS je bio implicitna
+  sistemska boja na `.title3` → `DSSectionHeader` (`Type.heading` bold `DS.ink`); Android već
+  `heading` bold `ink`, sada kroz `DSSectionHeader`. Razmak `Space.xl` između grupa, `Space.s`
+  naslov → grupa. Opis na Androidu je bio `caption` `inkMuted` → `body` `ink`.
+- [x] **Segmenti** (Blic / Ubrzani / Klasični): jednake širine, do 2 reda, `Type.label` bold,
+  centrirano, iste visine (Android `IntrinsicSize.Min` + `fillMaxHeight`, iOS
+  `.fixedSize(vertical)` + `maxHeight: .infinity`). Android `LineBreak.Heading` + `Hyphens.None`
+  (prelom samo na razmaku). Napomena: današnji ruski prevod je „Классика" (ne „Классические
+  шахматы" iz pregleda) — najduža reč u 8 jezika staje u trećinu; dva reda su rezerva.
+  Semantika: Android `selectable(role = Role.Tab)`, iOS `.isSelected`.
+- [x] **Izbor vremena:** ceo red je dugme, „Izaberi" uklonjeno; izabrano = kvačica `accent` +
+  ivica 2 pt `accent`, ostali ivica 1 pt `line`, `Radius.m` (Android bio 10 dp); ★ u `inkMuted`
+  (bila `accent`) i sakrivena od čitača ekrana (Android `contentDescription = null`, iOS
+  `.accessibilityHidden(true)`); semantika reda Android `selectable(role = RadioButton)`, iOS
+  `.isSelected`. **iOS:** ugnežđeni sistemski `Menu` zamenjen sheet-om `ChessClockPresetSheet`
+  (isti sadržaj kao Android dijalog) — vidi „Odluke".
+- [x] **„Zatvori" kao tekst-dugme `accent`:** Android info dijalog — bilo puno primarno dugme →
+  `TextButton` `accent` (izbor vremena je već imao); iOS info i izbor vremena — toolbar dugme sa
+  eksplicitnim `DS.accent`.
+- [x] **Odloženo iz ranijih pregleda:** Android „Poteza: $moves" (zakucan srpski) →
+  `locF("Poteza: %d", moves)` (ključ postoji, 8 jezika). Oblik je „oznaka: broj", ne „broj
+  imenica", pa množina ne treba (iOS isto, `LocF("Poteza: %d")`).
+
+### Usput ispravljene greške
+- **Android: lista u izboru vremena je bila prazna na svim jezicima osim srpskog.** Početni
+  `selectedCategory` je bio zakucan `"Blic"`, a kategorije preseta su `loc("Blic")` = „Blitz" —
+  nijedan segment izabran i filter bez ijednog reda dok korisnik ne tapne segment. Sada je početna
+  kategorija = kategorija izabranog preseta (otvara se na trenutnom izboru).
+- **iOS: nazivi kategorija nisu bili u katalogu** (`Loc(category)` sa promenljivom — `LocCatalogTests`
+  vidi samo literale), pa su „Blic / Ubrzani šah / Klasični šah" bili srpski na svim jezicima.
+  Dodati u katalog sa Android prevodima.
+- iOS dugmad trake nisu imala `accessibilityLabel` (VoiceOver je čitao ime SF simbola) — dodati isti
+  ključevi kao Android.
+
+### Odluke
+- **iOS izbor vremena: sheet umesto sistemskog `Menu`.** Spec § 14 traži segmente, red kao dugme,
+  kvačicu + ivicu 2 pt, ★ u `inkMuted` sakrivenu od čitača — ništa od toga se ne može na
+  `UIMenu` (boja, ivica, sakrivanje slike). To nije sistemski dijalog iz odluke kontrolora
+  (`.alert`/`.confirmationDialog`) nego navigacioni meni, pa je paritet sa Androidom važniji.
+  Sheet je isti obrazac kao postojeći info sheet sata (`NavigationStack`, `DS.ground`, „Zatvori"
+  u toolbaru), `presentationDetents([.medium, .large])`; izbor zatvara sheet i resetuje sat (kao
+  ranije). Redovi su `surface` + ivica (kartica) nad `ground`; na Androidu nad `surface` dijalogom.
+- **Neprelomni razmak se dodaje pri prikazu** (`TimeControlPreset.displayName` /
+  `nonBreakingTimeControl`), u podacima ostaje „3 + 2" — jednakost preseta i čitljivost koda.
+- **iOS `presets` je postao `static let`**, a početni izbor `presets[0]` (ranije posebna
+  kopija literala, koja bi uz NBSP morala da se održava na dva mesta).
+- **Sat ostaje unutar `safeDrawing` inseta na Androidu** (Task 3 je ostavio odluku Task-u 9):
+  polovine ivica-do-ivice bi stavile cifre ispod izreza kamere; crna podloga odredišta već pokriva
+  trake. Bez izmene.
+- Izabran red bez ispune (ranije Android `DS.fill`): kvačica + ivica 2 pt su dovoljne, a `fill`
+  nije kartica.
+
+### Neurađeno / TODO
+- Ništa iz § 14. Vizuelna provera (ruski segmenti, NBSP, tamna traka u svetloj temi iOS) — vlasnik.
+- Android `Loc.kt` ključ „Izaberi" više nema pozivaoca — ostavljen (bezopasan), može da ga
+  ukloni Task 13.
+
+### Novi stringovi
+- iOS katalog (hirurški, +424 linije) + `build_localizations.py`: „Blic", „Ubrzani šah", „Klasični
+  šah", „Vremenska kontrola", „Objašnjenje pravila", „Resetuj sat", „Pusti sat", „Pauziraj sat" —
+  prevodi preuzeti doslovno iz Android `Loc.kt` (već u upotrebi), dakle bez novih nesigurnih
+  prevoda. Android: nijedan nov ključ.
 
 ## Task 10 — Podešavanja (§ 15)
 

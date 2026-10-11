@@ -223,9 +223,8 @@ class ContrastTest {
         // `ink/fill` (Task 3) nosi i „Reset"/„Ponovo" dugme u sve tri kartice vezbi
         // i neodabranu figuru u `PieceExplorer`-ovom pikeru (`LearnView.kt`) -- isti
         // par kao dugme "Nazad" u `LessonDetailView.kt` (vidi komentar tamo).
-        // `accent/fill` (Faza 8, Task 1) nosi i zvezdicu (`⭐` -> `Icons.Default.Star`)
-        // uz naziv izabranog preseta u `ChessClockView.kt` kad je red preseta obelezen
-        // kao izabran (`.background(if (isSelected) DS.fill else Color.Transparent)`).
+        // (Zvezdica uz zvanicni preset u `ChessClockView.kt` je od dizajnerskog pregleda,
+        // Task 9, `inkMuted` nad `surface` — vise nije na ovom paru.)
         // `ink/fill` (Faza 8, Task 2) nosi i cetiri ikone u `ActionsRow`-u
         // (`MainActivity.kt`, ekran Igra) u omogucenom stanju: `Icons.Default.Computer`/
         // `People` (Racunar/Prijatelj), `Icons.AutoMirrored.Filled.Undo` (Vrati),

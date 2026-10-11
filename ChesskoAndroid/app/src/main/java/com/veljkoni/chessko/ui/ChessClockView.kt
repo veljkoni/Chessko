@@ -1,7 +1,6 @@
 package com.veljkoni.chessko.ui
 
 import com.veljkoni.chessko.ui.theme.DialogShape
-import com.veljkoni.chessko.ui.theme.ButtonShape
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -14,8 +13,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -31,8 +32,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +46,9 @@ import com.veljkoni.chessko.logic.HapticManager
 import com.veljkoni.chessko.logic.SoundManager
 import com.veljkoni.chessko.ui.theme.DarkColors
 import com.veljkoni.chessko.ui.theme.DS
+import com.veljkoni.chessko.ui.theme.DSCardGroup
+import com.veljkoni.chessko.ui.theme.DSRowDivider
+import com.veljkoni.chessko.ui.theme.DSSectionHeader
 import com.veljkoni.chessko.ui.theme.Type
 import kotlinx.coroutines.delay
 
@@ -85,7 +92,16 @@ data class TimeControlPreset(
     val secondPhaseAddedMinutes: Int = 0,
     val isOfficial: Boolean = false,
     val subtitle: String = ""
-)
+) {
+    /** Naziv za prikaz, sa neprelomnim razmakom oko „+" (spec § 14). */
+    val displayName: String get() = nonBreakingTimeControl(name)
+}
+
+/**
+ * Neprelomni razmak (U+00A0) oko „+" — „90 + 30 + 30" se ne lomi u dva reda
+ * (spec § 14). U podacima ostaje obican razmak; iOS isto (`TimeControlPreset.nonBreaking`).
+ */
+fun nonBreakingTimeControl(value: String): String = value.replace(" + ", "\u00A0+\u00A0")
 
 @Composable
 fun ChessClockView(
@@ -237,7 +253,7 @@ fun ChessClockView(
             isPaused = isPaused,
             p1Time = p1Time,
             baseSeconds = selectedPreset.baseMinutes * 60.0,
-            selectedPresetName = selectedPreset.name,
+            selectedPresetName = selectedPreset.displayName,
             onClose = onDismiss,
             onPresetClick = { showPresetDialog = true },
             onPlayPauseClick = {
@@ -360,7 +376,9 @@ fun PlayerArea(
                 }
             } else {
                 Text(
-                    text = if (!hasStarted) subtitle else "Poteza: $moves",
+                    // Oznaka + broj („Poteza: 12"), ne broj + imenica — mnozina ne treba.
+                    // Do Task-a 9 je ovde bio zakucan srpski string mimo `loc`.
+                    text = if (!hasStarted) subtitle else locF("Poteza: %d", moves),
                     color = subtextColor,
                     // iOS: `.subheadline.weight(.semibold)` = 15
                     // (`Chessko/Views/ChessClockView.swift:206`, `:210`).
@@ -381,7 +399,12 @@ fun PlayerArea(
                 // (`Chessko/Views/ChessClockView.swift:216`).
                 fontSize = 72.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace
+                // Spec § 14: sistemski Roboto sa tabularnim ciframa (`tnum`), ne
+                // `FontFamily.Monospace` — iOS isto (SF Pro `.monospacedDigit()`).
+                // Boje polovina se ne diraju.
+                style = TextStyle(fontFeatureSettings = "tnum"),
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
@@ -479,7 +502,7 @@ fun ControlBar(
                         // (`Chessko/Views/ChessClockView.swift:275`). Ostaje `body`:
                         // traka je uska i nosi jos dve kontrole, a 14-tier se po
                         // presudi Task-a 2 razvrstava na `body`/`caption`.
-                        style = Type.body,
+                        style = Type.body.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -588,7 +611,10 @@ fun PresetChooserDialog(
     onPresetSelected: (TimeControlPreset) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedCategory by remember { mutableStateOf("Blic") }
+    // Pocetna kategorija = kategorija izabranog preseta. Ranije zakucano "Blic" —
+    // a kategorije su `loc(...)` vrednosti, pa na svakom jeziku osim srpskog nijedan
+    // segment nije bio izabran i lista je bila PRAZNA dok se ne tapne segment.
+    var selectedCategory by remember { mutableStateOf(currentPreset.category) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -612,83 +638,91 @@ fun PresetChooserDialog(
                     textAlign = TextAlign.Center
                 )
 
-                // Category selection Tabs
+                // Segmenti (spec § 14): jednake sirine, do 2 reda, `Type.label`.
+                // `LineBreak.Heading` + `Hyphens.None`: prelom samo na razmaku, nikad
+                // usred reci; `IntrinsicSize.Min` + `fillMaxHeight` daje istu visinu
+                // sva tri segmenta i kad se jedan prelomi u dva reda.
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
                 ) {
                     listOf(loc("Blic"), loc("Ubrzani šah"), loc("Klasični šah")).forEach { category ->
                         val isSelected = selectedCategory == category
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .fillMaxHeight()
                                 .clip(RoundedCornerShape(DS.Radius.s))
                                 .background(if (isSelected) DS.accent else DS.fill)
-                                .clickable { selectedCategory = category }
-                                .padding(vertical = DS.Space.s),
+                                .selectable(
+                                    selected = isSelected,
+                                    role = Role.Tab,
+                                    onClick = { selectedCategory = category }
+                                )
+                                .padding(vertical = DS.Space.s, horizontal = DS.Space.xs),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = category,
                                 color = if (isSelected) DS.onAccent else DS.ink,
-                                // Oznaka zbijenog taba -> `label`, bez promene vrednosti.
-                                style = Type.label,
-                                fontWeight = FontWeight.Bold
+                                style = Type.label.copy(
+                                    lineBreak = LineBreak.Heading,
+                                    hyphens = Hyphens.None
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2
                             )
                         }
                     }
                 }
 
-                // Preset List
+                // Preset List — ceo red je dugme (bez „Izaberi"); izabrano = kvacica
+                // `accent` + ivica 2 dp `accent`, ostali ivica 1 dp `line` (spec § 14).
                 Column(
                     verticalArrangement = Arrangement.spacedBy(DS.Space.s)
                 ) {
                     presets.filter { it.category == selectedCategory }.forEach { preset ->
                         val isSelected = currentPreset == preset
+                        val rowShape = RoundedCornerShape(DS.Radius.m)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) DS.fill else Color.Transparent)
+                                .clip(rowShape)
                                 .border(
-                                    1.dp,
+                                    if (isSelected) 2.dp else 1.dp,
                                     if (isSelected) DS.accent else DS.line,
-                                    RoundedCornerShape(10.dp)
+                                    rowShape
                                 )
-                                .clickable { onPresetSelected(preset) }
+                                .selectable(
+                                    selected = isSelected,
+                                    role = Role.RadioButton,
+                                    onClick = { onPresetSelected(preset) }
+                                )
                                 .padding(DS.Space.m),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = preset.name,
+                                        text = preset.displayName,
                                         color = DS.ink,
-                                        style = Type.body,
+                                        style = Type.body.copy(fontFeatureSettings = "tnum"),
                                         fontWeight = FontWeight.Bold
                                     )
                                     if (preset.isOfficial) {
                                         Spacer(modifier = Modifier.width(6.dp))
-                                        // `DS.accent` — dijalog lebdi nad scrim-om i
-                                        // prati temu (vidi komentar iznad `ControlBar`),
-                                        // pa ovde, za razliku od trake, ide token, ne
-                                        // fiksna boja. Par je vec pokriven: `accent/fill`
-                                        // (`ContrastTest.textOnFillMeetsAA`) i
-                                        // `accent/surface`
-                                        // (`accentTextOnSurfaceAndGroundMeetsAA`) — ovaj
-                                        // red sedi na `DS.fill` kad je izabran, inace na
-                                        // providnoj podlozi nad `DS.surface`. Oba >= 4.5,
-                                        // iznad i WCAG-ovog ne-tekstualnog praga od 3:1
-                                        // koji ovde stvarno vazi (ikonica je dekorativna).
+                                        // Spec § 14: ★ (zvanicni FIDE format) u `inkMuted`
+                                        // (5,86 / 5,43 na `surface`), sakrivena od citaca
+                                        // ekrana — podnaslov ispod to vec kaze recima
+                                        // („Zvanicni svetski blic", „Turniri kandidata / FIDE").
                                         Icon(
                                             imageVector = Icons.Default.Star,
-                                            // Dekorativna: zvezdica oznacava `preset.isOfficial`, a Text
-                                            // odmah ispod vec kaze „Zvanicni svetski blic" /
-                                            // „Turniri kandidata / FIDE". contentDescription bi
-                                            // citac ekrana naterao da istu stvar kaze dvaput.
                                             contentDescription = null,
-                                            tint = DS.accent,
+                                            tint = DS.inkMuted,
                                             modifier = Modifier.size(12.dp)
                                         )
                                     }
@@ -697,16 +731,20 @@ fun PresetChooserDialog(
                                 Text(
                                     text = preset.subtitle,
                                     color = DS.inkMuted,
-                                    // iOS: `.caption` (`Chessko/Views/ChessClockView.swift:261`).
+                                    // iOS: `.dsCaption` (`ChessClockPresetSheet`).
                                     style = Type.caption
                                 )
                             }
-                            Text(
-                                text = loc("Izaberi"),
-                                color = if (isSelected) DS.accent else DS.inkMuted,
-                                style = Type.caption,
-                                fontWeight = FontWeight.Bold
-                            )
+                            if (isSelected) {
+                                // Stanje nosi `selectable(selected = true)`; kvacica je
+                                // vizuelni par te semantike, pa bez opisa.
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = DS.accent,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -753,7 +791,7 @@ fun InfoDialog(onDismiss: () -> Unit) {
                         .weight(1f, fill = false)
                         .verticalScroll(scrollState)
                         .padding(vertical = DS.Space.xs),
-                    verticalArrangement = Arrangement.spacedBy(DS.Space.l)
+                    verticalArrangement = Arrangement.spacedBy(DS.Space.xl)
                 ) {
                     InfoCategorySection(
                         title = loc("Blic"),
@@ -782,65 +820,49 @@ fun InfoDialog(onDismiss: () -> Unit) {
                     )
                 }
 
-                Button(
-                    shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
+                // Spec § 14: „Zatvori" kao tekst-dugme `accent` (isto kao izbor vremena).
+                TextButton(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = DS.accent),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = loc("Zatvori"), color = DS.onAccent, fontWeight = FontWeight.Bold)
+                    Text(text = loc("Zatvori"), color = DS.accent)
                 }
             }
         }
     }
 }
 
+/**
+ * Spec § 14: naslov kategorije (`Type.heading` bold `ink`), redovi u `surface` grupi
+ * sa `line` razdelnikom; vrednost (`Type.heading`, neprelomni razmak oko „+") IZNAD
+ * opisa (`Type.body` `ink`, 17,43 / 14,76). iOS: `ChessClockInfoView.categorySection`.
+ */
 @Composable
 fun InfoCategorySection(
     title: String,
     items: List<Pair<String, String>>
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
-            text = title,
-            // spec § 3: naslov sekcije je `ink`, ne `accent`.
-            color = DS.ink,
-            // IZUZETAK od „14 -> body/caption": ovo je naslov sekcije u dijalogu i
-            // ispod njega stoje dva nivoa (naziv 13, opis 12) koja moraju ostati
-            // ispod njega. iOS: `.title3.weight(.bold)` = 20
-            // (`Chessko/Views/ChessClockView.swift:497`), dakle iznad `heading`-a,
-            // ne ispod. Tri nivoa dijaloga -> `heading`/`body`/`caption`.
-            style = Type.heading,
-            fontWeight = FontWeight.Bold
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
+        DSSectionHeader(text = title)
 
-        Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-            items.forEach { (name, description) ->
-                Row(
+        DSCardGroup {
+            items.forEachIndexed { index, (name, description) ->
+                if (index > 0) DSRowDivider()
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(DS.Radius.s))
-                        .background(DS.fill)
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-                    verticalAlignment = Alignment.Top
+                        .padding(DS.Space.m),
+                    verticalArrangement = Arrangement.spacedBy(DS.Space.xs)
                 ) {
                     Text(
-                        text = name,
+                        text = nonBreakingTimeControl(name),
                         color = DS.ink,
-                        // iOS: `.headline.weight(.bold)` (`:504`); ovde `body`, jer
-                        // `heading` vec nosi naslov sekcije iznad.
-                        style = Type.body,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.width(80.dp)
+                        style = Type.heading.copy(fontFeatureSettings = "tnum")
                     )
-
                     Text(
                         text = description,
-                        color = DS.inkMuted,
-                        // `Type.caption` je tacno 12/16, pa se i `lineHeight` gubi
-                        // bez ijedne promene piksela.
-                        style = Type.caption
+                        color = DS.ink,
+                        style = Type.body
                     )
                 }
             }

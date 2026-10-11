@@ -38,36 +38,55 @@ struct TimeControlPreset: Identifiable, Hashable {
                lhs.baseMinutes == rhs.baseMinutes &&
                lhs.incrementSeconds == rhs.incrementSeconds
     }
+
+    /// Naziv za prikaz: neprelomni razmak (U+00A0) oko „+" — „90 + 30 + 30" se ne
+    /// lomi u dva reda (spec § 14). U podacima ostaje običan razmak (jednakost).
+    var displayName: String { TimeControlPreset.nonBreaking(name) }
+
+    static func nonBreaking(_ value: String) -> String {
+        value.replacingOccurrences(of: " + ", with: "\u{00A0}+\u{00A0}")
+    }
+}
+
+/// Fiksno tamna traka između polovina sata (spec § 14), u OBE teme — iste vrednosti
+/// kao Android `ClockBarBackground` / `ClockBarWell` / `ClockBarAccent` i `DarkColors`
+/// članovi (`ChesskoAndroid/.../ui/ChessClockView.kt`). Traka dodiruje crnu polovinu
+/// odozgo i belu odozdo, pa prati STRANU sata, ne temu: sistemski materijal je u
+/// svetloj temi bio `#F4F5F5`, skoro ista boja kao bela polovina ispod.
+/// Pravilo „fiksna površina dobija fiksne članove": ni jedan `DS.*` token na traci —
+/// `DS.ink` svetle teme na `#1E293B` bi dao 1,19 : 1. Mereno (Android
+/// `ContrastTest.clockControlBarIsReadableOverFixedHalves`): ink na traci 12,93,
+/// accent 5,63, onAccent na accent 6,71, ink na krugu 8,87, inkMuted na krugu 3,26.
+private enum ClockBar {
+    static let background = Color(hex: "#1E293B")
+    static let well       = Color.white.opacity(0.12)
+    static let accent     = Color(hex: "#7EA0E8") // DarkColors.accent
+    static let ink        = Color(hex: "#EEF1F7") // DarkColors.ink
+    static let inkMuted   = Color(hex: "#8B93A7") // DarkColors.inkMuted
+    static let onAccent   = Color(hex: "#161A22") // DarkColors.onAccent
 }
 
 struct ChessClockView: View {
     @Environment(\.dismiss) private var dismiss
 
+    /// Kategorije su ključevi prevoda (prikaz kroz `Loc`).
+    static let categories = ["Blic", "Ubrzani šah", "Klasični šah"]
+
     // Available presets
-    private let presets: [TimeControlPreset] = [
+    static let presets: [TimeControlPreset] = [
         TimeControlPreset(name: "3 + 2", category: "Blic", baseMinutes: 3, incrementSeconds: 2, isOfficial: true, subtitle: "Zvanični svetski blic"),
         TimeControlPreset(name: "5 + 0", category: "Blic", baseMinutes: 5, incrementSeconds: 0, subtitle: "Stara škola blica"),
         TimeControlPreset(name: "5 + 3", category: "Blic", baseMinutes: 5, incrementSeconds: 3, subtitle: "Turnirski blic"),
-        
+
         TimeControlPreset(name: "15 + 10", category: "Ubrzani šah", baseMinutes: 15, incrementSeconds: 10, isOfficial: true, subtitle: "Zvanični svetski rapid"),
         TimeControlPreset(name: "10 + 5", category: "Ubrzani šah", baseMinutes: 10, incrementSeconds: 5, subtitle: "Popularni online rapid"),
         TimeControlPreset(name: "25 + 10", category: "Ubrzani šah", baseMinutes: 25, incrementSeconds: 10, subtitle: "Lokalni turniri"),
-        
+
         TimeControlPreset(name: "90 + 30 + 30", category: "Klasični šah", baseMinutes: 90, incrementSeconds: 30, hasSecondPhase: true, secondPhaseTriggerMove: 40, secondPhaseAddedMinutes: 30, isOfficial: true, subtitle: "Turniri kandidata / FIDE"),
         TimeControlPreset(name: "90 + 30", category: "Klasični šah", baseMinutes: 90, incrementSeconds: 30, subtitle: "Domaća liga")
     ]
 
-    @State private var selectedPreset: TimeControlPreset = TimeControlPreset(
-        name: "3 + 2",
-        category: "Blic",
-        baseMinutes: 3,
-        incrementSeconds: 2,
-        hasSecondPhase: false,
-        secondPhaseTriggerMove: 0,
-        secondPhaseAddedMinutes: 0,
-        isOfficial: true,
-        subtitle: "Zvanični svetski blic"
-    )
+    @State private var selectedPreset: TimeControlPreset = ChessClockView.presets[0]
 
     // Timer states
     @State private var p1Time: Double = 180.0 // Player 1 (White, bottom)
@@ -80,6 +99,7 @@ struct ChessClockView: View {
     @State private var isPaused = false
     @State private var hasStarted = false
     @State private var showInfoSheet = false
+    @State private var showPresetSheet = false
 
     private let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
@@ -129,6 +149,16 @@ struct ChessClockView: View {
         .statusBarHidden(true)
         .sheet(isPresented: $showInfoSheet) {
             ChessClockInfoView()
+        }
+        .sheet(isPresented: $showPresetSheet) {
+            ChessClockPresetSheet(
+                presets: ChessClockView.presets,
+                selected: selectedPreset
+            ) { preset in
+                Haptics.impact(.light)
+                selectedPreset = preset
+                resetClock()
+            }
         }
     }
 
@@ -212,8 +242,13 @@ struct ChessClockView: View {
                     }
                 }
 
+                // Spec § 14: SF Pro sa `.monospacedDigit()` (tabularne cifre, bez
+                // precrtane nule SF Mono-a) — Android isto: Roboto + `tnum`.
+                // Boje polovina se ne diraju.
                 Text(formatTime(timeLeft))
-                    .font(.system(size: 86, weight: .bold, design: .monospaced))
+                    .font(.system(size: 86, weight: .bold).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(textColor)
             }
             .rotationEffect(.degrees(isRotated ? 180 : 0))
@@ -224,7 +259,8 @@ struct ChessClockView: View {
     // MARK: - Control Bar
 
     private var controlBar: some View {
-        HStack(spacing: 24) {
+        let canReset = hasStarted || p1Time != Double(selectedPreset.baseMinutes * 60)
+        return HStack(spacing: 24) {
             // Close Button
             Button {
                 Haptics.impact(.light)
@@ -232,51 +268,37 @@ struct ChessClockView: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.title2.weight(.bold))
+                    .foregroundStyle(ClockBar.ink)
                     .padding(12)
-                    .background(Color.primary.opacity(0.05), in: Circle())
+                    .background(ClockBar.well, in: Circle())
             }
+            .accessibilityLabel(Loc("Zatvori"))
 
             Spacer()
 
-            // Time Selection Menu (only if game hasn't started)
+            // Time Selection (only if game hasn't started)
             if !hasStarted {
                 HStack(spacing: 8) {
-                    Menu {
-                        ForEach(["Blic", "Ubrzani šah", "Klasični šah"], id: \.self) { category in
-                            Menu {
-                                ForEach(presets.filter { $0.category == category }) { preset in
-                                    Button {
-                                        Haptics.impact(.light)
-                                        selectedPreset = preset
-                                        resetClock()
-                                    } label: {
-                                        VStack(alignment: .leading) {
-                                            HStack {
-                                                Text(preset.name)
-                                                if preset.isOfficial {
-                                                    Image(systemName: "star.fill")
-                                                }
-                                            }
-                                            Text(Loc(preset.subtitle))
-                                                .font(.caption)
-                                        }
-                                    }
-                                }
-                            } label: {
-                                Text(Loc(category))
-                            }
-                        }
+                    Button {
+                        Haptics.impact(.light)
+                        showPresetSheet = true
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "timer")
-                            Text(selectedPreset.name)
+                                .accessibilityHidden(true)
+                            Text(selectedPreset.displayName)
                                 .fontWeight(.semibold)
+                                .monospacedDigit()
                         }
                         .font(.headline)
+                        .foregroundStyle(ClockBar.accent)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(DS.accent.opacity(0.12), in: Capsule())
+                        // 12 %: akcent trake na sopstvenom tintu 4,58 (Android isto).
+                        .background(ClockBar.accent.opacity(0.12), in: Capsule())
                     }
+                    .accessibilityLabel(Loc("Vremenska kontrola"))
+                    .accessibilityValue(selectedPreset.name)
 
                     Button {
                         Haptics.impact(.light)
@@ -284,8 +306,9 @@ struct ChessClockView: View {
                     } label: {
                         Image(systemName: "info.circle")
                             .font(.title2)
-                            .foregroundColor(DS.accent)
+                            .foregroundStyle(ClockBar.ink)
                     }
+                    .accessibilityLabel(Loc("Objašnjenje pravila"))
                 }
             } else {
                 // Play / Pause Button (when game has started)
@@ -295,45 +318,36 @@ struct ChessClockView: View {
                 } label: {
                     Image(systemName: isPaused ? "play.fill" : "pause.fill")
                         .font(.title)
-                        // `onAccent`, ne `onScrim`: podloga je `DS.accent`, koji
-                        // menja svetlinu izmedju tema. Fiksna bela je ovde davala
-                        // 2.6:1 u tamnoj temi.
-                        .foregroundStyle(DS.onAccent)
+                        // Fiksni par trake: tamni `onAccent` na svetlom akcentu (6,71).
+                        .foregroundStyle(ClockBar.onAccent)
                         .frame(width: 56, height: 56)
-                        .background(DS.accent, in: Circle())
-                        .shadow(color: DS.accent.opacity(0.3), radius: 6, y: 3)
+                        .background(ClockBar.accent, in: Circle())
                 }
+                .accessibilityLabel(Loc(isPaused ? "Pusti sat" : "Pauziraj sat"))
             }
 
             Spacer()
 
-            // Reset Button
+            // Reset Button — onemogućeno stanje kroz boju glifa (inkMuted, 3,26),
+            // krug ostaje ceo; bez sistemskog zatamnjenja (isto kao Android).
             Button {
                 Haptics.impact(.medium)
                 resetClock()
             } label: {
                 Image(systemName: "arrow.clockwise")
                     .font(.title2.weight(.bold))
+                    .foregroundStyle(canReset ? ClockBar.ink : ClockBar.inkMuted)
                     .padding(12)
-                    .background(Color.primary.opacity(0.05), in: Circle())
+                    .background(ClockBar.well, in: Circle())
             }
-            .disabled(!hasStarted && p1Time == Double(selectedPreset.baseMinutes * 60))
+            .buttonStyle(DSPressableButtonStyle())
+            .disabled(!canReset)
+            .accessibilityLabel(Loc("Resetuj sat"))
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 14)
-        .background(.ultraThinMaterial)
-        .overlay(
-            Rectangle()
-                .fill(Color.primary.opacity(0.08))
-                .frame(height: 1),
-            alignment: .top
-        )
-        .overlay(
-            Rectangle()
-                .fill(Color.primary.opacity(0.08))
-                .frame(height: 1),
-            alignment: .bottom
-        )
+        .background(ClockBar.background)
+        .environment(\.colorScheme, .dark)
     }
 
     // MARK: - Logic Helpers
@@ -450,7 +464,7 @@ struct ChessClockInfoView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: DS.Space.xl) {
                     categorySection(
                         title: "Blic",
                         items: [
@@ -477,45 +491,178 @@ struct ChessClockInfoView: View {
                         ]
                     )
                 }
-                .padding(20)
+                .padding(DS.Space.l)
             }
             .background(DS.ground) // spec § 3: nijedna sistemska podloga
             .navigationTitle(Loc("Objašnjenje vremenskih kontrola"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
+                    // Spec § 14 / § 3: „Zatvori" kao tekst-dugme u `accent`.
                     Button(Loc("Zatvori")) {
                         dismiss()
                     }
+                    .foregroundStyle(DS.accent)
                 }
             }
         }
     }
 
+    /// Spec § 14: naslov kategorije `Type.heading` bold `ink`; redovi u `surface`
+    /// grupi sa `line` razdelnikom; vrednost (`Type.heading`, neprelomni razmak
+    /// oko „+") iznad opisa (`Type.body` `ink`).
     private func categorySection(title: String, items: [(String, String)]) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(Loc(title))
-                .font(.title3.weight(.bold))
-                .padding(.bottom, 4)
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            DSSectionHeader(Loc(title))
 
-            VStack(spacing: 12) {
-                ForEach(items, id: \.0) { name, description in
-                    HStack(alignment: .top, spacing: 12) {
-                        Text(name)
-                            .font(.headline.weight(.bold))
-                            .frame(width: 100, alignment: .leading)
+            VStack(spacing: 0) {
+                ForEach(Array(items.enumerated()), id: \.element.0) { index, item in
+                    if index > 0 {
+                        Rectangle()
+                            .fill(DS.line)
+                            .frame(height: 1)
+                    }
+                    VStack(alignment: .leading, spacing: DS.Space.xs) {
+                        Text(TimeControlPreset.nonBreaking(item.0))
+                            .font(.dsHeading)
+                            .monospacedDigit()
                             .foregroundStyle(DS.ink)
 
-                        Text(Loc(description))
-                            .font(.subheadline)
+                        Text(Loc(item.1))
+                            .font(.dsBody)
                             .foregroundStyle(DS.ink) // spec § 3: opis je dugi tekst
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(12)
+                    .padding(DS.Space.m)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 8))
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .dsCard()
+        }
+    }
+}
+
+/// Izbor vremenske kontrole (spec § 14) — umesto sistemskog ugnežđenog `Menu`-ja,
+/// isti sadržaj kao Android `PresetChooserDialog`: segmenti kategorija (do 2 reda,
+/// `Type.label`), ceo red je dugme, izabrano = kvačica `accent` + ivica 2 pt `accent`,
+/// ★ u `inkMuted` sakrivena od čitača ekrana, „Zatvori" tekst-dugme `accent`.
+struct ChessClockPresetSheet: View {
+    let presets: [TimeControlPreset]
+    let selected: TimeControlPreset
+    let onSelect: (TimeControlPreset) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var category: String
+
+    init(presets: [TimeControlPreset], selected: TimeControlPreset, onSelect: @escaping (TimeControlPreset) -> Void) {
+        self.presets = presets
+        self.selected = selected
+        self.onSelect = onSelect
+        _category = State(initialValue: selected.category)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Space.l) {
+                    segments
+
+                    VStack(spacing: DS.Space.s) {
+                        ForEach(presets.filter { $0.category == category }) { preset in
+                            row(preset)
+                        }
+                    }
+                }
+                .padding(DS.Space.l)
+            }
+            .background(DS.ground)
+            .navigationTitle(Loc("Vremenska kontrola"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(Loc("Zatvori")) {
+                        dismiss()
+                    }
+                    .foregroundStyle(DS.accent)
                 }
             }
         }
+        .presentationDetents([.medium, .large])
+    }
+
+    /// Segmenti: jednake širine, do 2 reda, bez lomljenja usred reči (reč se
+    /// prelama samo na razmaku; najduža reč u 8 jezika staje u trećinu).
+    private var segments: some View {
+        HStack(spacing: DS.Space.xs) {
+            ForEach(ChessClockView.categories, id: \.self) { item in
+                let isSelected = item == category
+                Button {
+                    category = item
+                } label: {
+                    Text(Loc(item))
+                        .font(.dsLabel.weight(.bold))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .foregroundStyle(isSelected ? DS.onAccent : DS.ink)
+                        .padding(.vertical, DS.Space.s)
+                        .padding(.horizontal, DS.Space.xs)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(isSelected ? DS.accent : DS.fill,
+                                    in: RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(DSPressableButtonStyle())
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func row(_ preset: TimeControlPreset) -> some View {
+        let isSelected = preset == selected
+        let shape = RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+        return Button {
+            onSelect(preset)
+            dismiss()
+        } label: {
+            HStack(spacing: DS.Space.m) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(preset.displayName)
+                            .font(.dsBody.weight(.bold))
+                            .monospacedDigit()
+                            .foregroundStyle(DS.ink)
+                        if preset.isOfficial {
+                            // Zvanični FIDE format — podnaslov to već kaže rečima,
+                            // pa je ★ za čitač ekrana suvišna (spec § 14).
+                            Image(systemName: "star.fill")
+                                .font(.caption2)
+                                .foregroundStyle(DS.inkMuted)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                    Text(Loc(preset.subtitle))
+                        .font(.dsCaption)
+                        .foregroundStyle(DS.inkMuted)
+                }
+                Spacer(minLength: 0)
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.dsBody.weight(.semibold))
+                        .foregroundStyle(DS.accent)
+                        .accessibilityHidden(true)
+                }
+            }
+            .padding(DS.Space.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DS.surface, in: shape)
+            .overlay(shape.strokeBorder(isSelected ? DS.accent : DS.line, lineWidth: isSelected ? 2 : 1))
+            .contentShape(shape)
+        }
+        .buttonStyle(DSPressableButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
