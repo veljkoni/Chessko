@@ -987,7 +987,66 @@ Nesigurni prevodi (bez izvornog govornika): ru „Белые теряют пре
 
 ## Task 7 — Put (§ 8)
 
-_(popunjava Task 7)_
+### Urađeno po stavkama § 8
+- [x] **Android preuzima iOS raspored** (`AND/ui/PathView.kt`): naslov „Put" (`Type.title`) u
+  sadržaju, karta „Nastavi" (accent), kartica niza + dnevnog cilja, pa poglavlja — isti redosled
+  i iste komponente kao iOS. Redovi koraka imaju pločicu 28 sa ikonom vrste (knjiga / slagalica /
+  pečat / računar — isti simboli kao iOS `icon(of:)`), katanac, traku napretka. Kraj puta
+  („Prešao si ceo put!") sada postoji i na Androidu (ranije se karta samo sakrivala). Navigacija
+  netaknuta: `routeFor` / iOS `route(for:)` i dalje jedino mesto odluke; `curriculum.json` nije diran.
+- [x] **Status koraka ikonom 24** (obe): završeno `checkmark.circle.fill` / `Icons.Filled.CheckCircle`
+  `success`, trenutni `play.circle.fill` / `PlayCircle` `accent`, zaključano `lock.fill` / `Lock`
+  `inkMuted`. Naslov `ink`, zaključan `inkMuted` (Android je ranije bojio naslov završenog koraka
+  u `success` i imao drugi red „Završeno/Dostupno" — uklonjeno; stanje ide čitaču ekrana kao
+  `stateDescription`, iOS `accessibilityValue`). Strelica „›" (Android glif `U+203A`,
+  `StepChevronSize = 20.sp`) i iOS `chevron.right` u redu uklonjeni — status ikona ih zamenjuje.
+- [x] **Trenutni korak istaknut:** red na `fill`, `Radius.m`, uvučen `Space.s` u kartici; naslov
+  semibold. Razdelnik `line` se ne crta uz istaknut red.
+- [x] **Napredak poglavlja:** „1/3" na obe (iOS je pisao „0%"), traka 4 pt `accent` na `fill`
+  ispod naslova (Android je dobio traku; iOS ju je imao).
+- [x] **Dugme:** „Nastavi: Vežba · 5" u jednom redu (`Type.heading` bold, `lineLimit(1)` /
+  `maxLines = 1`), naslov poglavlja ispod kao `Type.caption`, `onAccent` na `accent`, `Radius.m`
+  (iOS karta je bila `Radius.l` sa tri reda „Nastavi / Korak N / naslov"). „Korak N" ostaje samo u
+  opisu za čitač ekrana (`Nastavi, korak %lld, %@`, sada i na Androidu).
+- [x] **Dnevni cilj:** „Danas: 1 / 1 korak" + traka 4 pt (`accent`, `success` kad je ispunjen,
+  uz kvačicu); niz „1 dan zaredom / 2 dana / 5 dana" (Task 2 množina, zadržano). Oba kroz
+  `LocPlural` / `locPlural`. Nova čista funkcija `PathProgress.dailyGoal(steps:puzzles:)` na obe
+  (+ `ProgressStore.dailyGoal`), konstante `stepGoal 1` / `puzzleGoal 3`.
+- [x] **P3 — sažeta zaključana poglavlja:** poglavlje čiji su svi koraci zaključani je jedan red
+  „naslov · 3 koraka · katanac" (obe).
+- [ ] **P3 — nazivi „Vežba: 5 zadataka", „Partija protiv računara"** — namerno nije rađeno: isti
+  dokument za dugme traži „Nastavi: Vežba · 5"; sa novim nazivima bi dugme glasilo
+  „Nastavi: Vežba: 5 zadataka" (dve dvotačke). Zadržani „Vežba · 5" / „Test · 5" / „Partija".
+- [x] **Tablet:** kolona do 720, centrirana (iOS `.frame(maxWidth: 720)` + `.frame(maxWidth:
+  .infinity)`; Android `Box(TopCenter)` + `widthIn(max = 720.dp)`).
+
+### Odluke
+- **Dnevni cilj ima dva puta (1 korak ILI 3 zadatka), traka prati jedan.** Podrazumevano koraci;
+  zadaci („Danas: 2 / 3 zadatka") samo kad danas nema završenog koraka a ima rešenog zadatka —
+  inače bi korisnik sa 3 rešena zadatka gledao „0 / 1 korak" pored ispunjenog cilja. Invarijantu
+  „traka puna ⇔ cilj ispunjen" za sve kombinacije 0–3 × 0–5 tvrde novi testovi
+  `dailyGoalCardAgreesWithGoalMet` (swift) i `PathProgressTest.dailyGoalCardAgreesWithGoalMet`.
+- **`LocPlural` / `locPlural` primaju opcione argumente formata** (tekst sa dva broja, kategorija
+  po `n`): `LocPlural("Danas: %lld / %lld korak", goal, done, goal)`. Bez argumenata ponašanje je
+  isto kao pre (formatira `n`). Regex testova (`\bLocPlural\(\s*"…"`) i dalje hvata osnovu.
+- Status tekstovi „Cilj za danas (nije) ispunjen" više nisu vidljiv red: iOS ih nosi kao
+  `accessibilityValue` kartice cilja, Android kao opis kvačice (stoji sama → ima opis).
+- iOS kartice Puta su imale dvostruku ivicu (`.dsCard` + ručni `overlay` iste ivice) — ručni
+  `overlay` uklonjen na 4 mesta.
+- Android razmak između blokova `spacedBy(14.dp)` → `DS.Space.l` (iOS 16).
+
+### TODO(design § N)
+- Nema.
+
+### Novi stringovi
+iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; Android `Loc.kt`:
+- `Nastavi: %@` (Android `Nastavi: %s`) — 8 jezika.
+- Množine `Danas: %lld / %lld korak#…`, `Danas: %lld / %lld zadatak#…`, `%lld koraka#…`
+  (Android `%d`).
+- Android dobio postojeće iOS ključeve `Nastavi, korak %d, %s`, `Prešao si ceo put!` (prevodi iz kataloga).
+- Nesigurno (bez izvornog govornika): ru „Сегодня: … шаг/шага/шагов", „задача/задачи/задач";
+  hi „आज: … चरण", „पहेली/पहेलियाँ"; zh „今天：… 步/题"; it „passo/passi" (isti termin kao
+  postojeći „Passo %d"); fr „étape(s)", „problème(s)".
 
 ## Task 8 — Lekcija (§ 9)
 

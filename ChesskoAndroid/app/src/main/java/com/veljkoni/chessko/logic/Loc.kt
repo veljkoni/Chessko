@@ -51,13 +51,15 @@ object Loc {
      * ga nema). Isti kljucevi i iste forme kao iOS katalog
      * (`<osnova>#one|few|many|other`).
      */
-    fun plural(key: String, n: Int): String {
+    fun plural(key: String, n: Int, vararg args: Any): String {
         val forms = pluralDictionary[key] ?: return key
         val byLang = forms[currentLanguage] ?: forms["en"] ?: forms["sr"] ?: return key
         val pattern = byLang[PluralRules.category(currentLanguage, n)]
             ?: byLang[PluralCategory.OTHER] ?: return key
         return if (pattern.contains("%")) {
-            try { String.format(LocalNumber.locale(currentLanguage), pattern, n) } catch (e: Exception) { pattern }
+            // `args` (opciono): vise brojeva u tekstu, kategorija po `n` (iOS `LocPlural`).
+            val formatArgs: Array<out Any> = if (args.isEmpty()) arrayOf(n) else args
+            try { String.format(LocalNumber.locale(currentLanguage), pattern, *formatArgs) } catch (e: Exception) { pattern }
         } else pattern
     }
 
@@ -84,6 +86,37 @@ object Loc {
             "ru" to mapOf(PluralCategory.ONE to "Чёрные теряют преимущество примерно в %d пешку.", PluralCategory.FEW to "Чёрные теряют преимущество примерно в %d пешки.", PluralCategory.MANY to "Чёрные теряют преимущество примерно в %d пешек.", PluralCategory.OTHER to "Чёрные теряют преимущество примерно в %d пешки."),
             "zh-Hans" to mapOf(PluralCategory.OTHER to "黑方损失约%d个兵的优势。"),
             "hi" to mapOf(PluralCategory.ONE to "काला लगभग %d प्यादे की बढ़त गंवाता है।", PluralCategory.OTHER to "काला लगभग %d प्यादों की बढ़त गंवाता है।")
+        ),
+        // Task 7 (dizajn § 8): Put — dnevni cilj i sažeta poglavlja.
+        "Danas: %d / %d korak" to mapOf(
+            "sr" to mapOf(PluralCategory.ONE to "Danas: %d / %d korak", PluralCategory.FEW to "Danas: %d / %d koraka", PluralCategory.OTHER to "Danas: %d / %d koraka"),
+            "en" to mapOf(PluralCategory.ONE to "Today: %d / %d step", PluralCategory.OTHER to "Today: %d / %d steps"),
+            "fr" to mapOf(PluralCategory.ONE to "Aujourd'hui : %d / %d étape", PluralCategory.OTHER to "Aujourd'hui : %d / %d étapes"),
+            "de" to mapOf(PluralCategory.ONE to "Heute: %d / %d Schritt", PluralCategory.OTHER to "Heute: %d / %d Schritte"),
+            "it" to mapOf(PluralCategory.ONE to "Oggi: %d / %d passo", PluralCategory.OTHER to "Oggi: %d / %d passi"),
+            "ru" to mapOf(PluralCategory.ONE to "Сегодня: %d / %d шаг", PluralCategory.FEW to "Сегодня: %d / %d шага", PluralCategory.MANY to "Сегодня: %d / %d шагов", PluralCategory.OTHER to "Сегодня: %d / %d шага"),
+            "zh-Hans" to mapOf(PluralCategory.OTHER to "今天：%d / %d 步"),
+            "hi" to mapOf(PluralCategory.ONE to "आज: %d / %d चरण", PluralCategory.OTHER to "आज: %d / %d चरण")
+        ),
+        "Danas: %d / %d zadatak" to mapOf(
+            "sr" to mapOf(PluralCategory.ONE to "Danas: %d / %d zadatak", PluralCategory.FEW to "Danas: %d / %d zadatka", PluralCategory.OTHER to "Danas: %d / %d zadataka"),
+            "en" to mapOf(PluralCategory.ONE to "Today: %d / %d puzzle", PluralCategory.OTHER to "Today: %d / %d puzzles"),
+            "fr" to mapOf(PluralCategory.ONE to "Aujourd'hui : %d / %d problème", PluralCategory.OTHER to "Aujourd'hui : %d / %d problèmes"),
+            "de" to mapOf(PluralCategory.ONE to "Heute: %d / %d Aufgabe", PluralCategory.OTHER to "Heute: %d / %d Aufgaben"),
+            "it" to mapOf(PluralCategory.ONE to "Oggi: %d / %d problema", PluralCategory.OTHER to "Oggi: %d / %d problemi"),
+            "ru" to mapOf(PluralCategory.ONE to "Сегодня: %d / %d задача", PluralCategory.FEW to "Сегодня: %d / %d задачи", PluralCategory.MANY to "Сегодня: %d / %d задач", PluralCategory.OTHER to "Сегодня: %d / %d задачи"),
+            "zh-Hans" to mapOf(PluralCategory.OTHER to "今天：%d / %d 题"),
+            "hi" to mapOf(PluralCategory.ONE to "आज: %d / %d पहेली", PluralCategory.OTHER to "आज: %d / %d पहेलियाँ")
+        ),
+        "%d koraka" to mapOf(
+            "sr" to mapOf(PluralCategory.ONE to "%d korak", PluralCategory.FEW to "%d koraka", PluralCategory.OTHER to "%d koraka"),
+            "en" to mapOf(PluralCategory.ONE to "%d step", PluralCategory.OTHER to "%d steps"),
+            "fr" to mapOf(PluralCategory.ONE to "%d étape", PluralCategory.OTHER to "%d étapes"),
+            "de" to mapOf(PluralCategory.ONE to "%d Schritt", PluralCategory.OTHER to "%d Schritte"),
+            "it" to mapOf(PluralCategory.ONE to "%d passo", PluralCategory.OTHER to "%d passi"),
+            "ru" to mapOf(PluralCategory.ONE to "%d шаг", PluralCategory.FEW to "%d шага", PluralCategory.MANY to "%d шагов", PluralCategory.OTHER to "%d шага"),
+            "zh-Hans" to mapOf(PluralCategory.OTHER to "%d 步"),
+            "hi" to mapOf(PluralCategory.ONE to "%d चरण", PluralCategory.OTHER to "%d चरण")
         ),
         "dana zaredom" to mapOf(
             "sr" to mapOf(PluralCategory.ONE to "dan zaredom", PluralCategory.FEW to "dana zaredom", PluralCategory.OTHER to "dana zaredom"),
@@ -647,6 +680,11 @@ object Loc {
 
         // Faza 6c, Task 5: treci tab je Put (PathView.kt) umesto Ucenja.
         "Put" to mapOf("sr" to "Put", "en" to "Path", "fr" to "Parcours", "de" to "Pfad", "it" to "Percorso", "ru" to "Путь", "zh-Hans" to "路径", "hi" to "पथ"),
+        // Task 7 (dizajn § 8): dugme „Nastavi: Vežba · 5".
+        "Nastavi: %s" to mapOf("sr" to "Nastavi: %s", "en" to "Continue: %s", "fr" to "Continuer : %s", "de" to "Weiter: %s", "it" to "Continua: %s", "ru" to "Продолжить: %s", "zh-Hans" to "继续：%s", "hi" to "जारी रखें: %s"),
+        // Task 7 (dizajn § 8): prevodi preuzeti iz iOS kataloga.
+        "Nastavi, korak %d, %s" to mapOf("sr" to "Nastavi, korak %d, %s", "en" to "Continue, step %d, %s", "fr" to "Continuer, étape %d, %s", "de" to "Weiter, Schritt %d, %s", "it" to "Continua, passo %d, %s", "ru" to "Продолжить, шаг %d, %s", "zh-Hans" to "继续，第 %d 步，%s", "hi" to "जारी रखें, चरण %d, %s"),
+        "Prešao si ceo put!" to mapOf("sr" to "Prešao si ceo put!", "en" to "You finished the whole path!", "fr" to "Tu as terminé tout le parcours !", "de" to "Du hast den ganzen Pfad geschafft!", "it" to "Hai completato tutto il percorso!", "ru" to "Вы прошли весь путь!", "zh-Hans" to "你走完了整条路径！", "hi" to "आपने पूरा पथ पूरा किया!"),
         "Korak %d" to mapOf("sr" to "Korak %d", "en" to "Step %d", "fr" to "Étape %d", "de" to "Schritt %d", "it" to "Passo %d", "ru" to "Шаг %d", "zh-Hans" to "第 %d 步", "hi" to "चरण %d"),
         "Zaključano" to mapOf("sr" to "Zaključano", "en" to "Locked", "fr" to "Verrouillé", "de" to "Gesperrt", "it" to "Bloccato", "ru" to "Заблокировано", "zh-Hans" to "已锁定", "hi" to "बंद"),
         "Završeno" to mapOf("sr" to "Završeno", "en" to "Completed", "fr" to "Terminé", "de" to "Abgeschlossen", "it" to "Completato", "ru" to "Завершено", "zh-Hans" to "已完成", "hi" to "पूर्ण"),
@@ -699,7 +737,7 @@ object Loc {
 
 fun loc(key: String): String = Loc.get(key)
 fun locF(key: String, vararg args: Any): String = Loc.format(key, *args)
-fun locPlural(key: String, n: Int): String = Loc.plural(key, n)
+fun locPlural(key: String, n: Int, vararg args: Any): String = Loc.plural(key, n, *args)
 fun locInteger(n: Int): String = NumberFormat.getIntegerInstance(LocalNumber.locale(Loc.fileLanguageCode())).format(n)
 fun locDecimal(value: Double, fractionDigits: Int = 1, signed: Boolean = false): String =
     LocalNumber.decimal(value, fractionDigits, signed, Loc.fileLanguageCode())

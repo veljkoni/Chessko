@@ -1,24 +1,37 @@
 package com.veljkoni.chessko.ui
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.logic.LessonRepository
+import com.veljkoni.chessko.logic.PathProgress
 import com.veljkoni.chessko.logic.ProgressStore
 import com.veljkoni.chessko.logic.StepState
 import com.veljkoni.chessko.logic.Loc
@@ -31,6 +44,7 @@ import com.veljkoni.chessko.models.StepKind
 import com.veljkoni.chessko.models.loadCurriculum
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
+import com.veljkoni.chessko.ui.theme.dsCard
 
 /**
  * Odluka o tome gde korak vodi stoji na JEDNOM mestu. Razmazana po UI-ju, ona
@@ -108,132 +122,257 @@ fun PathView(modifier: Modifier = Modifier) {
         null -> Unit
     }
 
-    Column(
-        modifier = modifier.fillMaxSize().padding(DS.Space.l).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        // Nastavak: prvi korak koji nije zavrsen.
-        val next = curriculum.allStepIds.firstOrNull { states[it] == StepState.AVAILABLE }
-        val nextIndex = next?.let { curriculum.allStepIds.indexOf(it) + 1 }
-        PathHeader(
-            streak = store.currentStreak,
-            goalMet = store.goalMetToday,
-            continueLabel = nextIndex?.let { locF("Korak %d", it) },
-            onContinue = { next?.let { id -> curriculum.step(id)?.let { route = routeFor(it) } } }
-        )
-
-        for (chapter in curriculum.chapters) {
-            val done = chapter.steps.count { states[it.id] == StepState.COMPLETED }
-            ChapterSection(
-                title = chapter.title[lang] ?: chapter.title["en"] ?: chapter.id,
-                progress = done to chapter.steps.size,
-                steps = chapter.steps,
-                states = states,
-                lessonRepo = lessonRepo,
-                fileLang = fileLang,
-                onOpen = { step -> routeFor(step)?.let { route = it } }
-            )
-        }
-    }
-}
-
-/**
- * Zaglavlje ekrana: streak, dnevni cilj i kartica „Nastavi" ka prvom
- * nezavrsenom koraku sa rutom. Spec 5.1: pocetni ekran Puta NE prikazuje
- * spisak lekcija nego NASTAVAK.
- *
- * `continueLabel == null` znaci da nema sledeceg koraka koji se moze
- * otvoriti (ceo Put predjen, ili je sledeci korak jos bez rute) — kartica
- * "Nastavi" se tad ne prikazuje.
- */
-@Composable
-private fun PathHeader(
-    streak: Int,
-    goalMet: Boolean,
-    continueLabel: String?,
-    onContinue: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = DS.surface),
-        shape = RoundedCornerShape(DS.Radius.l),
-        // spec § 3: kartica = surface + 1 dp line (iOS `.dsCard()`).
-        border = BorderStroke(1.dp, DS.line)
+    // Raspored preuzet sa iOS-a (spec § 8): naslov „Put", karta „Nastavi",
+    // kartica niza i dnevnog cilja, pa poglavlja. Kolona do 720 dp, centrirana
+    // (tablet, § 13); na telefonu je ekran uzi pa se nista ne menja.
+    Box(
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier
+                .widthIn(max = PathMaxColumnWidth)
+                .fillMaxWidth()
+                .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
+            verticalArrangement = Arrangement.spacedBy(DS.Space.l)
         ) {
-            // Broj i oznaka su NAMERNO dva odvojena Text-a, ne jedan locF() sa
-            // "%d dana" -- na streak-u 1 to daje "Niz: 1 dana" (sr), "Streak: 1
-            // days" (en), "Серия: 1 дней" (ru), izmereno na uredjaju na bar 3 od
-            // 8 jezika. Mnozina se ne gradi za jedan string; oznaka koja se ne
-            // menja sa brojem nema problem ni na jednom jeziku -- isto resenje
-            // kao iOS (Chessko/Views/PathView.swift, streakCard).
-            // Poravnanje ide kroz `alignByBaseline()` na oba deteta, ne kroz
-            // `verticalAlignment` na redu -- kad su oba prisutna, bazna linija
-            // pobedjuje pa je parametar na redu mrtav.
-            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                Text(
-                    text = locInteger(streak),
-                    color = DS.ink,
-                    // iOS: `.dsTitle` (`Chessko/Views/PathView.swift:288`).
-                    style = Type.title,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.alignByBaseline()
-                )
-                Text(
-                    // Mnozina po broju (spec § 3): „1 dan zaredom", „5 dana zaredom".
-                    text = locPlural("dana zaredom", streak),
-                    color = DS.inkMuted,
-                    // iOS: `.dsBody` (`Chessko/Views/PathView.swift:291`).
-                    style = Type.body,
-                    modifier = Modifier.alignByBaseline()
-                )
-            }
             Text(
-                text = if (goalMet) loc("Cilj za danas je ispunjen") else loc("Cilj za danas nije ispunjen"),
-                color = if (goalMet) DS.success else DS.inkMuted,
-                // iOS: `.dsCaption` (`Chessko/Views/PathView.swift:299`).
-                style = Type.caption
+                text = loc("Put"),
+                color = DS.ink,
+                style = Type.title,
+                modifier = Modifier.padding(top = DS.Space.xs)
             )
 
-            if (continueLabel != null) {
-                // Jedina primarna akcija na ekranu Puta -- accent podloga + onAccent
-                // tekst (nikad Color.White, vidi zamku 2 iz plana).
-                Button(
-                    onClick = onContinue,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = DS.accent,
-                        contentColor = DS.onAccent
-                    ),
-                    shape = RoundedCornerShape(DS.Radius.m)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = loc("Nastavi"), fontWeight = FontWeight.Bold)
-                        // iOS: `.dsCaption` (`Chessko/Views/PathView.swift:259`).
-                        Text(text = continueLabel, style = Type.caption)
-                    }
+            // Nastavak: prvi korak koji nije zavrsen (isti izbor kao iOS `nextStep`).
+            val next = curriculum.allStepIds.firstOrNull { states[it] == StepState.AVAILABLE }
+            val nextStep = next?.let { curriculum.step(it) }
+            if (nextStep != null) {
+                val nextIndex = curriculum.allStepIds.indexOf(nextStep.id) + 1
+                val chapterOfNext = curriculum.chapters.firstOrNull { c -> c.steps.any { it.id == nextStep.id } }
+                ContinueCard(
+                    stepTitle = stepCardTitle(nextStep, lessonRepo, fileLang),
+                    chapterTitle = chapterOfNext?.let { it.title[lang] ?: it.title["en"] ?: it.id },
+                    icon = stepKindIcon(nextStep),
+                    accessibility = locF("Nastavi, korak %d, %s", nextIndex, stepCardTitle(nextStep, lessonRepo, fileLang)),
+                    runnable = routeFor(nextStep) != null,
+                    onClick = { routeFor(nextStep)?.let { route = it } }
+                )
+            } else {
+                PathCompleteCard()
+            }
+
+            StreakAndGoalCard(
+                streak = store.currentStreak,
+                goal = store.dailyGoal,
+                goalMet = store.goalMetToday
+            )
+
+            for (chapter in curriculum.chapters) {
+                val done = chapter.steps.count { states[it.id] == StepState.COMPLETED }
+                val chapterTitle = chapter.title[lang] ?: chapter.title["en"] ?: chapter.id
+                val allLocked = chapter.steps.isNotEmpty() &&
+                    chapter.steps.all { (states[it.id] ?: StepState.LOCKED) == StepState.LOCKED }
+                if (allLocked) {
+                    LockedChapterRow(title = chapterTitle, stepCount = chapter.steps.size)
+                } else {
+                    ChapterSection(
+                        title = chapterTitle,
+                        progress = done to chapter.steps.size,
+                        steps = chapter.steps,
+                        states = states,
+                        lessonRepo = lessonRepo,
+                        fileLang = fileLang,
+                        onOpen = { step -> routeFor(step)?.let { route = it } }
+                    )
                 }
             }
         }
     }
 }
 
+/** Najveca sirina kolone Puta (spec § 8 / § 13: tablet, kolona do 720, centrirana). */
+private val PathMaxColumnWidth = 720.dp
+
+/** Velicina ikone statusa koraka (spec § 8: „status koraka ikonom 24"). */
+private val StepStatusIconSize = 24.dp
+
+/** Plocica ikone vrste koraka — ista mera kao iOS (`PathView.swift`, 28 pt). */
+private val StepKindTileSize = 28.dp
+
+/** Ikona vrste koraka — isti simboli kao iOS `icon(of:)` (book / puzzlepiece / seal / cpu). */
+private fun stepKindIcon(step: CurriculumStep): ImageVector = when (step.kind) {
+    is StepKind.Lesson -> Icons.Filled.MenuBook
+    is StepKind.Practice -> Icons.Filled.Extension
+    is StepKind.Test -> Icons.Filled.Verified
+    is StepKind.Game -> Icons.Filled.Computer
+}
+
 /**
- * Jedno poglavlje: naslov + napredak (X/N) + spisak koraka. Svaki red
- * prikazuje tip koraka i stanje; strelica postoji SAMO ako je korak
- * dostupan/zavrsen I ima rutu (`routeFor(step) != null`).
+ * Dugme „Nastavi" (spec § 8): „Nastavi: Vežba · 5" u jednom redu, poglavlje
+ * ispod kao `Type.caption`; `onAccent` na `accent` (8,53 / 6,71), `Radius.m`.
+ * Jedina primarna akcija na ekranu — nikad `Color.White` (vidi `DS.onAccent`).
+ * `runnable == false` je rezerva za korak bez rute: izgleda neaktivno (`fill`).
+ */
+@Composable
+private fun ContinueCard(
+    stepTitle: String,
+    chapterTitle: String?,
+    icon: ImageVector,
+    accessibility: String,
+    runnable: Boolean,
+    onClick: () -> Unit
+) {
+    val ink = if (runnable) DS.onAccent else DS.inkMuted
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(DS.Radius.m))
+            .background(if (runnable) DS.accent else DS.fill)
+            .then(if (runnable) Modifier.clickable(onClick = onClick) else Modifier)
+            .semantics(mergeDescendants = true) { contentDescription = accessibility }
+            .padding(DS.Space.l),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = ink, modifier = Modifier.size(StepKindTileSize))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
+            Text(
+                text = if (runnable) locF("Nastavi: %s", stepTitle) else "${loc("Uskoro")} · $stepTitle",
+                color = if (runnable) DS.onAccent else DS.ink,
+                style = Type.heading,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (chapterTitle != null) {
+                Text(text = chapterTitle, color = ink, style = Type.caption)
+            }
+        }
+        if (runnable) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = DS.onAccent
+            )
+        }
+    }
+}
+
+@Composable
+private fun PathCompleteCard() {
+    Row(
+        modifier = Modifier.fillMaxWidth().dsCard(DS.Radius.l).padding(DS.Space.l),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
+    ) {
+        Icon(imageVector = Icons.Filled.CheckCircle, contentDescription = null, tint = DS.success)
+        Text(text = loc("Prešao si ceo put!"), color = DS.ink, style = Type.heading)
+    }
+}
+
+/**
+ * Niz dana i dnevni cilj (spec § 8): „1 dan zaredom / 2 dana / 5 dana" i
+ * „Danas: 1 / 1 korak" sa trakom — oba kroz mnozine (`locPlural`). Isto kao
+ * iOS `streakCard`. Broj niza je veliki i odvojen od oznake (bazna linija).
+ */
+@Composable
+private fun StreakAndGoalCard(streak: Int, goal: PathProgress.DailyGoal, goalMet: Boolean) {
+    val goalText = if (goal.countsPuzzles)
+        locPlural("Danas: %d / %d zadatak", goal.goal, goal.done, goal.goal)
+    else
+        locPlural("Danas: %d / %d korak", goal.goal, goal.done, goal.goal)
+    Column(
+        modifier = Modifier.fillMaxWidth().dsCard(DS.Radius.l).padding(DS.Space.l),
+        verticalArrangement = Arrangement.spacedBy(DS.Space.m)
+    ) {
+        // Poravnanje ide kroz `alignByBaseline()` na oba deteta, ne kroz
+        // `verticalAlignment` na redu -- kad su oba prisutna, bazna linija pobedjuje.
+        Row(
+            modifier = Modifier.semantics(mergeDescendants = true) {},
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+        ) {
+            Text(
+                text = locInteger(streak),
+                color = DS.ink,
+                style = Type.title,
+                modifier = Modifier.alignByBaseline()
+            )
+            Text(
+                text = locPlural("dana zaredom", streak),
+                color = DS.inkMuted,
+                style = Type.body,
+                modifier = Modifier.alignByBaseline()
+            )
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = goalText, color = DS.ink, style = Type.body, modifier = Modifier.weight(1f))
+                if (goalMet) {
+                    // Stoji sam (bez teksta istog znacenja) -- zato ima opis.
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = loc("Cilj za danas je ispunjen"),
+                        tint = DS.success,
+                        modifier = Modifier.size(StepStatusIconSize)
+                    )
+                }
+            }
+            PathProgressBar(goal.fraction, if (goalMet) DS.success else DS.accent)
+        }
+    }
+}
+
+/** Traka 4 dp, `tint` na `fill` (spec § 8: `accent` na `fill` 7,08 / 5,69). */
+@Composable
+private fun PathProgressBar(fraction: Float, tint: Color) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(PathProgressBarHeight)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(DS.fill)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(percent = 50))
+                .background(tint)
+        )
+    }
+}
+
+private val PathProgressBarHeight = 4.dp
+
+/**
+ * P3 (spec § 8): poglavlje u kom je sve zakljucano je jedan red — naslov ·
+ * „3 koraka" · katanac. Isto kao iOS `lockedChapter`.
+ */
+@Composable
+private fun LockedChapterRow(title: String, stepCount: Int) {
+    val count = locPlural("%d koraka", stepCount)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .dsCard(DS.Radius.l)
+            .semantics(mergeDescendants = true) { contentDescription = "$title, $count, ${loc("Zaključano")}" }
+            .padding(DS.Space.l),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+    ) {
+        Text(text = title, color = DS.ink, style = Type.heading)
+        Text(text = "· $count", color = DS.inkMuted, style = Type.caption, modifier = Modifier.weight(1f))
+        Icon(imageVector = Icons.Filled.Lock, contentDescription = null, tint = DS.inkMuted)
+    }
+}
+
+/**
+ * Jedno poglavlje: naslov + „1/3" + traka 4 dp + spisak koraka (spec § 8).
  *
  * NAMERNO bez rednog broja po koraku unutar poglavlja: `notation-lesson` je
  * globalno cetvrti korak (`curriculum.allStepIds`), ali u svom poglavlju
- * prvi -- ista kartica bi cim korisnik predje granicu poglavlja nosila dva
- * razlicita broja istovremeno (jedan ovde, drugi na kartici "Nastavi"). Redni
- * broj postoji SAMO na kartici "Nastavi" (`PathHeader`, globalni indeks iz
- * `curriculum.allStepIds`) -- isto mesto gde ga iOS prikazuje
- * (`Chessko/Views/PathView.swift:258`, jedino mesto sa "Korak %lld" na celoj
- * platformi) i tacno gde ga spec 5.1 trazi.
+ * prvi -- ista kartica bi nosila dva razlicita broja istovremeno. Redni broj
+ * postoji SAMO u opisu karte „Nastavi" za citac ekrana, kao na iOS-u.
  */
 @Composable
 private fun ChapterSection(
@@ -245,47 +384,45 @@ private fun ChapterSection(
     fileLang: String,
     onOpen: (CurriculumStep) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = DS.surface),
-        shape = RoundedCornerShape(DS.Radius.l),
-        // spec § 3: kartica = surface + 1 dp line (iOS `.dsCard()`).
-        border = BorderStroke(1.dp, DS.line)
-    ) {
-        Column(modifier = Modifier.padding(vertical = DS.Space.s)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = DS.Space.l, vertical = DS.Space.s),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    color = DS.ink,
-                    // Naslov poglavlja -- iOS: `.dsHeading`
-                    // (`Chessko/Views/PathView.swift:316`).
-                    style = Type.heading,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "${progress.first}/${progress.second}",
-                    color = DS.inkMuted,
-                    // iOS: `.dsCaption` (`Chessko/Views/PathView.swift:322`).
-                    style = Type.caption
-                )
-            }
+    Column(modifier = Modifier.fillMaxWidth().dsCard(DS.Radius.l).padding(bottom = DS.Space.s)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = DS.Space.l, end = DS.Space.l, top = DS.Space.l, bottom = DS.Space.s),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = title, color = DS.ink, style = Type.heading, modifier = Modifier.weight(1f))
+            Text(text = "${progress.first}/${progress.second}", color = DS.inkMuted, style = Type.caption)
+        }
+        Box(modifier = Modifier.padding(start = DS.Space.l, end = DS.Space.l, bottom = DS.Space.s)) {
+            PathProgressBar(
+                if (progress.second == 0) 0f else progress.first.toFloat() / progress.second,
+                DS.accent
+            )
+        }
 
-            for (step in steps) {
-                val state = states[step.id] ?: StepState.LOCKED
-                val hasRoute = routeFor(step) != null
-                StepRow(
-                    state = state,
-                    hasRoute = hasRoute,
-                    typeLabel = stepCardTitle(step, lessonRepo, fileLang),
-                    onClick = { if (state != StepState.LOCKED && hasRoute) onOpen(step) }
+        steps.forEachIndexed { index, step ->
+            val state = states[step.id] ?: StepState.LOCKED
+            if (index > 0) {
+                // Razdelnik se ne crta uz istaknut (trenutni) red — `fill` ploca je sama granica.
+                val prev = states[steps[index - 1].id] ?: StepState.LOCKED
+                val nearCurrent = state == StepState.AVAILABLE || prev == StepState.AVAILABLE
+                Box(
+                    modifier = Modifier
+                        .padding(start = DS.Space.l + StepKindTileSize + DS.Space.m)
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(if (nearCurrent) Color.Transparent else DS.line)
                 )
             }
+            val hasRoute = routeFor(step) != null
+            StepRow(
+                state = state,
+                hasRoute = hasRoute,
+                title = stepCardTitle(step, lessonRepo, fileLang),
+                kindIcon = stepKindIcon(step),
+                onClick = { if (state != StepState.LOCKED && hasRoute) onOpen(step) }
+            )
         }
     }
 }
@@ -306,76 +443,79 @@ private fun stepCardTitle(step: CurriculumStep, lessonRepo: LessonRepository, fi
     }
 
 /**
- * Velicina glifa „›" na kraju reda koraka — **namerno van tipografske skale**.
- * To nije tekst interfejsa nego oznaka da red vodi negde; iOS na istom mestu
- * crta `Image(systemName: "chevron.right")`, dakle ikonu a ne slovo
- * (`Chessko/Views/PathView.swift:407`).
+ * Red koraka (spec § 8, iOS raspored): plocica sa ikonom vrste levo, naslov
+ * (`ink`; zakljucan `inkMuted`), STATUS ikonom 24 desno — zavrseno
+ * `check_circle` u `success`, trenutni `play_circle` u `accent`, zakljucano
+ * `lock` u `inkMuted`. Trenutni korak je istaknut `fill` plocom, `Radius.m`.
  *
- * **Poredjenje velicina NIJE u korist ove konstante, i to se ne precutkuje:**
- * ta iOS ikona stoji na `.dsCaption.weight(.semibold)` = **12**, dok ovaj glif
- * ostaje na 20. Razlog nije izbor nego mera: `›` (`U+203A`) je jedan tanak
- * ugao unutar em kvadrata, pa na 12sp ne bi bio vidljiv kao SF ikona iste
- * nominalne velicine. Vrednost je nepromenjena u odnosu na zateceno stablo,
- * pa ovde nema regresije — ali ni parieta; pravo poravnanje je zamena glifa
- * ikonom (vidi nalaz ispod).
- *
- * NALAZ za neku sledecu fazu, ne za ovu: `›` je `U+203A`, blok koji provera
- * obima Faze 8 nije grepovala (isti propust kao `◀` u `LessonDetailView.kt`,
- * koji je talas ispravki te faze preveo u `Icon`). Prevodjenje u
- * `Icons.AutoMirrored.Filled.KeyboardArrowRight` je izmena ikonografije, ne
- * tipografije, pa ne pripada ovom tasku.
+ * Klik SAMO ako korak nije zakljucan I ima rutu — vidi doc iznad `routeFor`.
+ * Sva cetiri tipa koraka imaju rutu; `hasRoute` je jedino mesto koje bi
+ * uhvatilo buduci tip koraka bez ekrana, umesto da tiho vodi u prazno.
  */
-private val StepChevronSize = 20.sp
-
 @Composable
 private fun StepRow(
     state: StepState,
     hasRoute: Boolean,
-    typeLabel: String,
+    title: String,
+    kindIcon: ImageVector,
     onClick: () -> Unit
 ) {
-    // Strelica SAMO ako korak nije zakljucan I ima rutu — vidi doc iznad
-    // `routeFor`. Od Task-a 7 sva cetiri tipa koraka imaju rutu; provera
-    // ostaje jer je `hasRoute` jedino mesto koje bi uhvatilo buduci tip
-    // koraka bez ekrana, umesto da tiho vodi u prazno.
     val clickable = state != StepState.LOCKED && hasRoute
+    val isCurrent = state == StepState.AVAILABLE
+    val stateLabel = when (state) {
+        StepState.LOCKED -> loc("Zaključano")
+        StepState.COMPLETED -> loc("Završeno")
+        StepState.AVAILABLE -> if (hasRoute) loc("Dostupno") else loc("Uskoro")
+    }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = DS.Space.s)
+            .clip(RoundedCornerShape(DS.Radius.m))
+            .background(if (isCurrent) DS.fill else Color.Transparent)
             .then(if (clickable) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = DS.Space.l, vertical = DS.Space.m),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            // Ikona stanja nema sopstveni opis (dekorativna uz opis reda) —
+            // stanje se izgovara eksplicitno, kao iOS `accessibilityValue`.
+            .semantics(mergeDescendants = true) { stateDescription = stateLabel }
+            .padding(horizontal = DS.Space.s, vertical = DS.Space.m),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
     ) {
-        Column {
-            Text(
-                text = typeLabel,
-                // Tri stanja koraka moraju da se razlikuju i u svetloj temi, ne
-                // samo kroz providnost: zavrseno -> success, dostupno -> ink,
-                // zakljucano -> inkMuted (brief Task 5).
-                color = when (state) {
-                    StepState.COMPLETED -> DS.success
-                    StepState.AVAILABLE -> DS.ink
-                    StepState.LOCKED -> DS.inkMuted
-                },
-                // iOS: `.dsBody` (`Chessko/Views/PathView.swift:390`).
-                style = Type.body,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = when (state) {
-                    StepState.LOCKED -> loc("Zaključano")
-                    StepState.COMPLETED -> loc("Završeno")
-                    StepState.AVAILABLE -> if (hasRoute) loc("Dostupno") else loc("Uskoro")
-                },
-                color = DS.inkMuted,
-                style = Type.caption
+        Box(
+            modifier = Modifier
+                .size(StepKindTileSize)
+                .clip(RoundedCornerShape(DS.Radius.s))
+                .background(if (state == StepState.LOCKED) DS.fill else DS.accent.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = kindIcon,
+                contentDescription = null,
+                tint = if (state == StepState.LOCKED) DS.inkMuted else DS.accent,
+                modifier = Modifier.size(StepKindIconSize)
             )
         }
-
-        if (clickable) {
-            Text(text = "›", color = DS.inkMuted, fontSize = StepChevronSize)
+        Text(
+            text = title,
+            color = if (state == StepState.LOCKED) DS.inkMuted else DS.ink,
+            style = Type.body,
+            fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.weight(1f)
+        )
+        val (statusIcon, statusTint) = when (state) {
+            StepState.COMPLETED -> Icons.Filled.CheckCircle to DS.success
+            StepState.AVAILABLE -> Icons.Filled.PlayCircle to (if (hasRoute) DS.accent else DS.inkMuted)
+            StepState.LOCKED -> Icons.Filled.Lock to DS.inkMuted
         }
+        Icon(
+            imageVector = statusIcon,
+            contentDescription = null,
+            tint = statusTint,
+            modifier = Modifier.size(StepStatusIconSize)
+        )
     }
 }
+
+/** Ikona vrste unutar plocice od 28 — iOS `.dsCaption` (~12–14 pt). */
+private val StepKindIconSize = 16.dp

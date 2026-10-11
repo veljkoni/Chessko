@@ -35,7 +35,25 @@ object PathProgress {
     }
 
     /** Dnevni cilj: jedan zavrsen korak Puta ILI tri resena zadatka (spec 5.4). */
-    fun goalMet(steps: Int, puzzles: Int): Boolean = steps >= 1 || puzzles >= 3
+    const val STEP_GOAL = 1
+    const val PUZZLE_GOAL = 3
+
+    fun goalMet(steps: Int, puzzles: Int): Boolean = steps >= STEP_GOAL || puzzles >= PUZZLE_GOAL
+
+    /**
+     * Sta kartica dnevnog cilja prikazuje (spec § 8: „Danas: 1 / 1 korak" sa
+     * trakom). Cilj ima DVA puta, a traka prati jedan: koraci su podrazumevani,
+     * a zadaci se prikazuju samo kad danas jos nema zavrsenog koraka a ima
+     * resenog zadatka. Invarijanta (test): `done >= goal` tacno kad je `goalMet`.
+     * Isto kao iOS `PathProgress.dailyGoal`.
+     */
+    data class DailyGoal(val countsPuzzles: Boolean, val done: Int, val goal: Int) {
+        val fraction: Float get() = if (goal == 0) 0f else done.toFloat() / goal
+    }
+
+    fun dailyGoal(steps: Int, puzzles: Int): DailyGoal =
+        if (steps == 0 && puzzles > 0) DailyGoal(true, minOf(puzzles, PUZZLE_GOAL), PUZZLE_GOAL)
+        else DailyGoal(false, steps.coerceIn(0, STEP_GOAL), STEP_GOAL)
 
     /**
      * Dani zaredom sa ispunjenim ciljem, zakljucno sa danas.

@@ -34,8 +34,31 @@ enum PathProgress {
     }
 
     /// Dnevni cilj: jedan zavrsen korak Puta ILI tri resena zadatka.
+    static let stepGoal = 1
+    static let puzzleGoal = 3
+
     static func goalMet(steps: Int, puzzles: Int) -> Bool {
-        steps >= 1 || puzzles >= 3
+        steps >= stepGoal || puzzles >= puzzleGoal
+    }
+
+    /// Sta kartica dnevnog cilja prikazuje (spec § 8: „Danas: 1 / 1 korak" sa
+    /// trakom). Cilj ima DVA puta, a traka moze da prati samo jedan: koraci su
+    /// podrazumevani (to je ekran Puta), a zadaci se prikazuju samo kad danas
+    /// jos nema zavrsenog koraka a ima resenog zadatka — inace bi korisnik sa
+    /// tri resena zadatka gledao „0 / 1 korak" pored „Cilj ispunjen".
+    /// Invarijanta (test): `done >= goal` tacno kad je `goalMet`.
+    struct DailyGoal: Equatable {
+        let countsPuzzles: Bool
+        let done: Int
+        let goal: Int
+        var fraction: Double { goal == 0 ? 0 : Double(done) / Double(goal) }
+    }
+
+    static func dailyGoal(steps: Int, puzzles: Int) -> DailyGoal {
+        if steps == 0 && puzzles > 0 {
+            return DailyGoal(countsPuzzles: true, done: min(puzzles, puzzleGoal), goal: puzzleGoal)
+        }
+        return DailyGoal(countsPuzzles: false, done: min(max(steps, 0), stepGoal), goal: stepGoal)
     }
 
     /// Dani zaredom sa ispunjenim ciljem, zakljucno sa danas.
@@ -272,6 +295,12 @@ final class ProgressStore {
         let day = Self.dayKey()
         return PathProgress.goalMet(steps: snapshot.stepsCompletedByDay[day] ?? 0,
                                     puzzles: snapshot.puzzlesSolvedByDay[day] ?? 0)
+    }
+
+    var dailyGoal: PathProgress.DailyGoal {
+        let day = Self.dayKey()
+        return PathProgress.dailyGoal(steps: snapshot.stepsCompletedByDay[day] ?? 0,
+                                      puzzles: snapshot.puzzlesSolvedByDay[day] ?? 0)
     }
 
     var currentStreak: Int {

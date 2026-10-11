@@ -135,8 +135,10 @@ func LocF(_ key: String, _ args: CVarArg...) -> String {
 /// (`PluralRules`, `Logic/LocalFormat.swift`) i čita ključ `<base>#<kategorija>`
 /// iz kataloga. Tekst može, ali ne mora, da sadrži `%lld` (oznaka uz zaseban
 /// veliki broj, npr. „dana zaredom", ga nema). Pad: `#other`, pa sama osnova.
+/// `args` (opciono): argumenti formata kad tekst nosi više brojeva
+/// („Danas: %lld / %lld korak" — kategorija po `n`, cilju); bez njih se formatira `n`.
 @MainActor
-func LocPlural(_ base: String, _ n: Int) -> String {
+func LocPlural(_ base: String, _ n: Int, _ args: CVarArg...) -> String {
     let category = PluralRules.category(languageCode: LocalizationManager.shared.effectiveCode, n: n)
     var key = PluralRules.key(base, category)
     var format = Loc(key)
@@ -145,7 +147,9 @@ func LocPlural(_ base: String, _ n: Int) -> String {
         format = Loc(key)
         if format == key { format = base }
     }
-    return format.contains("%") ? String(format: format, locale: LocalizationManager.shared.locale, n) : format
+    guard format.contains("%") else { return format }
+    return String(format: format, locale: LocalizationManager.shared.locale,
+                  arguments: args.isEmpty ? [n] : args)
 }
 
 /// Decimalni broj u formatu jezika aplikacije („−2,3" / „-2.3").

@@ -241,6 +241,15 @@ class ProgressStore(
             )
         }
 
+    val dailyGoal: PathProgress.DailyGoal
+        get() {
+            val day = PathProgress.dayKey()
+            return PathProgress.dailyGoal(
+                snapshot.stepsCompletedByDay[day] ?: 0,
+                snapshot.puzzlesSolvedByDay[day] ?: 0
+            )
+        }
+
     val currentStreak: Int
         get() {
             val days = (snapshot.stepsCompletedByDay.keys + snapshot.puzzlesSolvedByDay.keys)

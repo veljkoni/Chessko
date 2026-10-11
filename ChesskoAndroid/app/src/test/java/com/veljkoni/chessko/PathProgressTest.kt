@@ -47,6 +47,19 @@ class PathProgressTest {
         assertEquals(true, PathProgress.goalMet(steps = 1, puzzles = 0))
     }
 
+    /** Kartica „Danas: 1 / 1 korak" (spec § 8) — traka puna tacno kad je cilj ispunjen. Isto kao iOS. */
+    @Test
+    fun dailyGoalCardAgreesWithGoalMet() {
+        for (steps in 0..3) for (puzzles in 0..5) {
+            val g = PathProgress.dailyGoal(steps, puzzles)
+            assertEquals("steps $steps puzzles $puzzles", PathProgress.goalMet(steps, puzzles), g.done >= g.goal)
+            assertEquals(true, g.done <= g.goal)
+        }
+        assertEquals(PathProgress.DailyGoal(false, 0, 1), PathProgress.dailyGoal(0, 0))
+        assertEquals(PathProgress.DailyGoal(true, 2, 3), PathProgress.dailyGoal(0, 2))
+        assertEquals(PathProgress.DailyGoal(false, 1, 1), PathProgress.dailyGoal(2, 5))
+    }
+
     @Test
     fun streakCountsConsecutiveDaysEndingToday() {
         val days = setOf("2026-09-11", "2026-09-12", "2026-09-13")

@@ -13,8 +13,8 @@ import SwiftUI
 // zavrsi u lekciji — koja je u tom trenutku gurnuta na navigacioni stek iznad
 // ovog ekrana.
 //
-// Bez bedzeva i konfeta (spec 5.4): streak i procenat poglavlja su podatak,
-// ne nagrada.
+// Bez bedzeva i konfeta (spec 5.4): streak i napredak poglavlja („1/3") su
+// podatak, ne nagrada. Raspored (dizajn § 8) je isti na Androidu.
 
 struct PathView: View {
 
@@ -165,6 +165,10 @@ struct PathView: View {
 
     // MARK: - Body
 
+    /// Najveca sirina kolone Puta na tabletu (spec § 8, § 13: „kolona do 720,
+    /// centrirana"). Na telefonu je ekran uzi, pa se nista ne menja.
+    private static let maxColumnWidth: CGFloat = 720
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -193,6 +197,8 @@ struct PathView: View {
                     }
                     .padding(.horizontal, DS.Space.l)
                     .padding(.vertical, DS.Space.m)
+                    .frame(maxWidth: Self.maxColumnWidth)
+                    .frame(maxWidth: .infinity)
                 }
                 .safeAreaPadding(.bottom, 24)
             }
@@ -219,6 +225,10 @@ struct PathView: View {
 
     // MARK: - Nastavak
 
+    private func chapter(containing step: CurriculumStep) -> Chapter? {
+        curriculum?.chapters.first { $0.steps.contains { $0.id == step.id } }
+    }
+
     @ViewBuilder
     private func continueCard(_ states: [String: StepState]) -> some View {
         if let next = nextStep(states) {
@@ -242,51 +252,68 @@ struct PathView: View {
             .padding(DS.Space.l)
             .frame(maxWidth: .infinity, alignment: .leading)
             .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
         }
     }
 
+    /// Dugme „Nastavi" (spec § 8): „Nastavi: Vežba · 5" u jednom redu, poglavlje
+    /// ispod kao `Type.caption`; `onAccent` na `accent` (8,53 / 6,71), `Radius.m`
+    /// kao svako primarno dugme (§ 3).
+    ///
     /// `runnable` razdvaja izgled od ponasanja: kartica koja nigde ne vodi NE
     /// SME da izgleda isto kao ona koja vodi — to je najistaknutiji element
-    /// ekrana. Sa isporucenim kurikulumom svi tipovi koraka sada imaju pokretac,
-    /// pa je neaktivna grana rezerva za korak bez odredista (vidi `route(for:)`).
-    /// Redovi liste postuju isto pravilo — nemaju strelicu kad su neaktivni.
+    /// ekrana. Sa isporucenim kurikulumom svi tipovi koraka imaju pokretac, pa
+    /// je neaktivna grana rezerva za korak bez odredista (vidi `route(for:)`).
     private func continueLabel(_ next: (index: Int, step: CurriculumStep),
                                runnable: Bool) -> some View {
         let ink = runnable ? DS.onAccent : DS.inkMuted
+        let stepTitle = title(of: next.step)
+        let chapterTitle = chapter(containing: next.step).map { title(of: $0) }
         return HStack(alignment: .center, spacing: DS.Space.m) {
+            Image(systemName: icon(of: next.step))
+                .font(.dsHeading)
+                .foregroundStyle(ink)
+                .frame(width: 28)
             VStack(alignment: .leading, spacing: DS.Space.xs) {
-                Text(runnable ? Loc("Nastavi") : Loc("Uskoro"))
-                    .font(.dsCaption.weight(.semibold))
-                    .foregroundStyle(ink.opacity(0.85))
-                Text(LocF("Korak %lld", next.index))
-                    .font(.dsCaption)
-                    .foregroundStyle(ink.opacity(0.85))
-                Text(title(of: next.step))
+                Text(runnable ? LocF("Nastavi: %@", stepTitle)
+                              : "\(Loc("Uskoro")) · \(stepTitle)")
                     .font(.dsHeading.weight(.bold))
                     .foregroundStyle(runnable ? DS.onAccent : DS.ink)
-                    .multilineTextAlignment(.leading)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                if let chapterTitle {
+                    Text(chapterTitle)
+                        .font(.dsCaption)
+                        .foregroundStyle(ink)
+                }
             }
             Spacer(minLength: 0)
-            Image(systemName: icon(of: next.step))
-                .font(.dsTitle)
-                .foregroundStyle(ink.opacity(0.85))
+            if runnable {
+                Image(systemName: "chevron.right")
+                    .font(.dsCaption.weight(.semibold))
+                    .foregroundStyle(DS.onAccent)
+            }
         }
         .padding(DS.Space.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(runnable ? AnyShapeStyle(DS.accent) : AnyShapeStyle(DS.fill),
-                    in: RoundedRectangle(cornerRadius: DS.Radius.l))
+                    in: RoundedRectangle(cornerRadius: DS.Radius.m))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(runnable
-            ? LocF("Nastavi, korak %lld, %@", next.index, title(of: next.step))
-            : LocF("Korak %lld, %@, uskoro dostupno", next.index, title(of: next.step)))
+            ? LocF("Nastavi, korak %lld, %@", next.index, stepTitle)
+            : LocF("Korak %lld, %@, uskoro dostupno", next.index, stepTitle))
     }
 
     // MARK: - Streak i dnevni cilj
 
+    /// Niz dana i dnevni cilj (spec § 8): „1 dan zaredom / 2 dana / 5 dana" i
+    /// „Danas: 1 / 1 korak" sa trakom — oba kroz mnozine (`LocPlural`).
     private var streakCard: some View {
+        let goal = store.dailyGoal
         let goalMet = store.goalMetToday
-        return VStack(alignment: .leading, spacing: DS.Space.s) {
+        let goalText = goal.countsPuzzles
+            ? LocPlural("Danas: %lld / %lld zadatak", goal.goal, goal.done, goal.goal)
+            : LocPlural("Danas: %lld / %lld korak", goal.goal, goal.done, goal.goal)
+        return VStack(alignment: .leading, spacing: DS.Space.m) {
             HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
                 Text(store.currentStreak.formatted(.number.locale(LocalizationManager.shared.locale)))
                     .font(.dsTitle)
@@ -297,18 +324,30 @@ struct PathView: View {
                     .foregroundStyle(DS.inkMuted)
                 Spacer(minLength: 0)
             }
-            HStack(spacing: DS.Space.xs) {
-                Image(systemName: goalMet ? "checkmark.circle.fill" : "circle")
-                Text(goalMet ? Loc("Cilj za danas ispunjen") : Loc("Cilj za danas nije ispunjen"))
+            .accessibilityElement(children: .combine)
+
+            VStack(alignment: .leading, spacing: DS.Space.s) {
+                HStack(spacing: DS.Space.s) {
+                    Text(goalText)
+                        .font(.dsBody)
+                        .foregroundStyle(DS.ink)
+                        .monospacedDigit()
+                    Spacer(minLength: 0)
+                    if goalMet {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.dsBody)
+                            .foregroundStyle(DS.success)
+                    }
+                }
+                progressBar(goal.fraction, tint: goalMet ? DS.success : DS.accent)
             }
-            .font(.dsCaption)
-            .foregroundStyle(goalMet ? DS.success : DS.inkMuted)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(goalText)
+            .accessibilityValue(goalMet ? Loc("Cilj za danas ispunjen") : Loc("Cilj za danas nije ispunjen"))
         }
         .padding(DS.Space.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Poglavlja
@@ -316,49 +355,88 @@ struct PathView: View {
     @ViewBuilder
     private func chapters(_ states: [String: StepState]) -> some View {
         ForEach(curriculum?.chapters ?? [], id: \.id) { chapter in
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(title(of: chapter))
-                        .font(.dsHeading)
-                        .foregroundStyle(DS.ink)
-                    Spacer(minLength: DS.Space.s)
-                    Text(completion(of: chapter, states)
-                            .formatted(.percent.locale(LocalizationManager.shared.locale)
-                                               .precision(.fractionLength(0))))
-                        .font(.dsCaption)
-                        .foregroundStyle(DS.inkMuted)
-                        .monospacedDigit()
-                }
-                .padding(.horizontal, DS.Space.l)
-                .padding(.top, DS.Space.l)
-                .padding(.bottom, DS.Space.m)
-
-                // Tanka traka napretka. Nije bedz — ista informacija kao
-                // procenat pored naslova, samo citljiva jednim pogledom.
-                progressBar(completion(of: chapter, states))
-                    .padding(.horizontal, DS.Space.l)
-                    .padding(.bottom, DS.Space.s)
-
-                ForEach(Array(chapter.steps.enumerated()), id: \.element.id) { index, step in
-                    if index > 0 {
-                        Rectangle()
-                            .fill(DS.line)
-                            .frame(height: 1)
-                            .padding(.leading, DS.Space.l + 28 + DS.Space.m)
-                    }
-                    stepRow(step, state: states[step.id] ?? .locked)
+            let done = chapter.steps.filter { states[$0.id] == .completed }.count
+            let allLocked = !chapter.steps.isEmpty
+                && chapter.steps.allSatisfy { (states[$0.id] ?? .locked) == .locked }
+            Group {
+                if allLocked {
+                    lockedChapter(chapter)
+                } else {
+                    openChapter(chapter, done: done, states)
                 }
             }
             .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
         }
     }
 
-    private func progressBar(_ value: Double) -> some View {
+    /// P3 (spec § 8): poglavlje u kom je sve zakljucano je jedan red —
+    /// naslov · „3 koraka" · katanac. Spisak koraka koje jos ne moze da otvori
+    /// samo produzava ekran.
+    private func lockedChapter(_ chapter: Chapter) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+            Text(title(of: chapter))
+                .font(.dsHeading)
+                .foregroundStyle(DS.ink)
+            Text(verbatim: "· \(LocPlural("%lld koraka", chapter.steps.count))")
+                .font(.dsCaption)
+                .foregroundStyle(DS.inkMuted)
+            Spacer(minLength: DS.Space.s)
+            Image(systemName: "lock.fill")
+                .font(.dsBody)
+                .foregroundStyle(DS.inkMuted)
+        }
+        .padding(DS.Space.l)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(String("\(title(of: chapter)), \(LocPlural("%lld koraka", chapter.steps.count))"))
+        .accessibilityValue(Loc("Zaključano"))
+    }
+
+    private func openChapter(_ chapter: Chapter, done: Int,
+                             _ states: [String: StepState]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title(of: chapter))
+                    .font(.dsHeading)
+                    .foregroundStyle(DS.ink)
+                Spacer(minLength: DS.Space.s)
+                // „1/3" na obe platforme (spec § 8; iOS je ranije pisao „0%").
+                Text(verbatim: "\(done)/\(chapter.steps.count)")
+                    .font(.dsCaption)
+                    .foregroundStyle(DS.inkMuted)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, DS.Space.l)
+            .padding(.top, DS.Space.l)
+            .padding(.bottom, DS.Space.s)
+
+            // Traka 4 pt ispod naslova, `accent` na `fill` (7,08 / 5,69).
+            progressBar(completion(of: chapter, states), tint: DS.accent)
+                .padding(.horizontal, DS.Space.l)
+                .padding(.bottom, DS.Space.s)
+
+            ForEach(Array(chapter.steps.enumerated()), id: \.element.id) { index, step in
+                let state = states[step.id] ?? .locked
+                if index > 0 {
+                    // Razdelnik se ne crta uz istaknut (trenutni) red — `fill`
+                    // ploca je sama granica.
+                    let prev = states[chapter.steps[index - 1].id] ?? .locked
+                    Rectangle()
+                        .fill(state == .available || prev == .available ? Color.clear : DS.line)
+                        .frame(height: 1)
+                        .padding(.leading, DS.Space.l + 28 + DS.Space.m)
+                }
+                stepRow(step, state: state)
+            }
+        }
+        .padding(.bottom, DS.Space.s)
+    }
+
+    private func progressBar(_ value: Double, tint: Color) -> some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule().fill(DS.fill)
-                Capsule().fill(DS.accent)
+                Capsule().fill(tint)
                     .frame(width: max(0, min(1, value)) * geo.size.width)
             }
         }
@@ -370,18 +448,23 @@ struct PathView: View {
     private func stepRow(_ step: CurriculumStep, state: StepState) -> some View {
         if state != .locked, let route = route(for: step) {
             NavigationLink(value: route) {
-                stepLabel(step, state: state, showsChevron: true)
+                stepLabel(step, state: state, runnable: true)
             }
             .buttonStyle(.plain)
         } else {
             // Zakljucan korak nije dodirljiv; isto vazi za korak bez odredista
             // (vidi `route(for:)`).
-            stepLabel(step, state: state, showsChevron: false)
+            stepLabel(step, state: state, runnable: false)
         }
     }
 
-    private func stepLabel(_ step: CurriculumStep, state: StepState, showsChevron: Bool) -> some View {
-        HStack(spacing: DS.Space.m) {
+    /// Red koraka (spec § 8): ikona vrste levo, naslov (`ink`; zakljucan
+    /// `inkMuted`), a STATUS ikonom 24 desno — zavrseno `checkmark.circle.fill`
+    /// u `success`, trenutni `play.circle.fill` u `accent`, zakljucano `lock` u
+    /// `inkMuted`. Trenutni korak je istaknut `fill` plocom, `Radius.m`.
+    private func stepLabel(_ step: CurriculumStep, state: StepState, runnable: Bool) -> some View {
+        let isCurrent = state == .available
+        return HStack(spacing: DS.Space.m) {
             ZStack {
                 RoundedRectangle(cornerRadius: DS.Radius.s)
                     .fill(state == .locked ? DS.fill : DS.accent.opacity(0.16))
@@ -392,39 +475,41 @@ struct PathView: View {
             }
 
             Text(title(of: step))
-                .font(.dsBody)
+                .font(isCurrent ? .dsBody.weight(.semibold) : .dsBody)
                 .foregroundStyle(state == .locked ? DS.inkMuted : DS.ink)
                 .multilineTextAlignment(.leading)
 
             Spacer(minLength: DS.Space.s)
 
-            switch state {
-            case .completed:
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.dsBody)
-                    .foregroundStyle(DS.success)
-            case .locked:
-                Image(systemName: "lock.fill")
-                    .font(.dsCaption)
-                    .foregroundStyle(DS.inkMuted)
-            case .available:
-                if showsChevron {
-                    Image(systemName: "chevron.right")
-                        .font(.dsCaption.weight(.semibold))
-                        .foregroundStyle(DS.inkMuted)
-                }
-            }
+            statusIcon(state, runnable: runnable)
+                .font(.system(size: 24))
+                .frame(width: 24, height: 24)
         }
-        .padding(.horizontal, DS.Space.l)
+        .padding(.horizontal, DS.Space.s)
         .padding(.vertical, DS.Space.m)
+        .background(isCurrent ? DS.fill : Color.clear,
+                    in: RoundedRectangle(cornerRadius: DS.Radius.m))
+        .padding(.horizontal, DS.Space.s)
         .contentShape(Rectangle())
-        // `.combine` proguta katanac i kvacicu, pa bi VoiceOver zakljucan korak
+        // `.combine` proguta ikonu stanja, pa bi VoiceOver zakljucan korak
         // procitao isto kao dostupan. Stanje se zato izgovara eksplicitno.
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title(of: step))
         .accessibilityValue(accessibilityState(state))
         .accessibilityHint(state == .locked
                            ? Loc("Zaključano — završi prethodne korake") : "")
+    }
+
+    @ViewBuilder
+    private func statusIcon(_ state: StepState, runnable: Bool) -> some View {
+        switch state {
+        case .completed:
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(DS.success)
+        case .available:
+            Image(systemName: "play.circle.fill").foregroundStyle(runnable ? DS.accent : DS.inkMuted)
+        case .locked:
+            Image(systemName: "lock.fill").foregroundStyle(DS.inkMuted)
+        }
     }
 
     private func accessibilityState(_ state: StepState) -> String {
@@ -446,7 +531,6 @@ struct PathView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(DS.Space.l)
             .dsCard(radius: DS.Radius.l) // spec § 3: surface + 1 pt line
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.l).strokeBorder(DS.line, lineWidth: 1))
     }
 }
 

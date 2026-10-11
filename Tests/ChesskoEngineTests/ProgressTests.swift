@@ -43,6 +43,22 @@ import Foundation
     #expect(PathProgress.goalMet(steps: 0, puzzles: 0) == false)
 }
 
+/// Kartica „Danas: 1 / 1 korak" (spec § 8) ne sme da tvrdi suprotno od cilja:
+/// traka je puna tacno kad je cilj ispunjen, za svaku kombinaciju.
+@Test func dailyGoalCardAgreesWithGoalMet() {
+    for steps in 0...3 {
+        for puzzles in 0...5 {
+            let g = PathProgress.dailyGoal(steps: steps, puzzles: puzzles)
+            #expect((g.done >= g.goal) == PathProgress.goalMet(steps: steps, puzzles: puzzles),
+                    "steps \(steps), puzzles \(puzzles)")
+            #expect(g.done <= g.goal)
+        }
+    }
+    #expect(PathProgress.dailyGoal(steps: 0, puzzles: 0) == .init(countsPuzzles: false, done: 0, goal: 1))
+    #expect(PathProgress.dailyGoal(steps: 0, puzzles: 2) == .init(countsPuzzles: true, done: 2, goal: 3))
+    #expect(PathProgress.dailyGoal(steps: 2, puzzles: 5) == .init(countsPuzzles: false, done: 1, goal: 1))
+}
+
 // MARK: - Streak
 
 @Test func streakCountsConsecutiveDaysEndingToday() {
