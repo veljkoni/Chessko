@@ -1,5 +1,7 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.DialogShape
+import com.veljkoni.chessko.ui.theme.dsCard
 import com.veljkoni.chessko.ui.theme.ButtonShape
 import android.app.Application
 import androidx.compose.foundation.background
@@ -135,7 +137,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                 fontWeight = FontWeight.Bold
             )
             Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                Button(shape = ButtonShape, 
+                Button(
+                    shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                     onClick = { viewModel.undo() },
                     enabled = viewModel.canUndo,
                     colors = ButtonDefaults.buttonColors(
@@ -174,7 +177,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                     )
                 }
                 if (viewModel.canResign) {
-                    Button(shape = ButtonShape, 
+                    Button(
+                        shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                         onClick = { showResignConfirm = true },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Transparent,
@@ -192,7 +196,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                         )
                     }
                 }
-                Button(shape = ButtonShape, 
+                Button(
+                    shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                     onClick = onClose,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
@@ -283,7 +288,7 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                 }
             },
             containerColor = DS.surface,
-            shape = RoundedCornerShape(DS.Radius.l)
+            shape = DialogShape
         )
     }
 }
@@ -295,8 +300,9 @@ private fun OpponentCard(viewModel: GameViewModel) {
         horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.fill)
+            // spec § 3: `fill` nije kartica — surface + 1 dp line (iOS `opponentCard` `.dsCard()`).
+            // `StatusCard` ispod ostaje `fill`: to je okvir uputstva (§ 7, Task 5).
+            .dsCard()
             .padding(horizontal = 14.dp, vertical = DS.Space.m)
     ) {
         // Faza 8, Task 3: emoji -> Icon. Ikona stoji NEPOSREDNO uz vidljiv
@@ -361,7 +367,8 @@ private fun StepGameFooter(
             // Korak je vec upisan kao zavrsen (vidi komentar na mestu poziva) --
             // ovo dugme je cisto dodatna informacija, ne uslov za nastavak Puta.
             AnalysisButton(viewModel = viewModel, onClick = onAnalyze)
-            Button(shape = ButtonShape, 
+            Button(
+                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                 onClick = onClose,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)

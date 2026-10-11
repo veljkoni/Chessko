@@ -124,7 +124,8 @@ fun PuzzleView(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(DS.Space.m))
-                            Button(shape = ButtonShape, 
+                            Button(
+                                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                                 onClick = { viewModel.loadDailyPuzzle() },
                                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
                             ) {
@@ -260,7 +261,8 @@ fun PuzzleView(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(DS.Space.l))
-                            Button(shape = ButtonShape, 
+                            Button(
+                                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                                 onClick = { viewModel.loadDailyPuzzle() },
                                 colors = ButtonDefaults.buttonColors(containerColor = DS.accent)
                             ) {
@@ -347,7 +349,8 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Prev button
-        Button(shape = ButtonShape, 
+        Button(
+            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
             onClick = { viewModel.goToPrevious() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
@@ -405,7 +408,8 @@ fun DateNavigationRow(viewModel: PuzzleViewModel) {
         }
 
         // Next button
-        Button(shape = ButtonShape, 
+        Button(
+            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
             onClick = { viewModel.goToNext() },
             enabled = viewModel.canGoNext,
             colors = ButtonDefaults.buttonColors(
@@ -527,7 +531,8 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
         // Vezbanje bez kraja: uvek dostupno kad je zadatak resen, u OBA rezima
         // (dnevni i vezbovni) — iznad ostalih kontrola, kao primarna akcija.
         if (viewModel.phase == PuzzlePhase.SOLVED) {
-            Button(shape = ButtonShape, 
+            Button(
+                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                 onClick = { viewModel.nextPuzzle() },
                 modifier = Modifier.fillMaxWidth()
             ) {

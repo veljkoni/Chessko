@@ -257,7 +257,8 @@ fun RowScope.BottomNavItem(
 ) {
     val contentColor = if (isSelected) DS.accent else DS.inkMuted
 
-    Button(shape = ButtonShape, 
+    Button(
+        shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,

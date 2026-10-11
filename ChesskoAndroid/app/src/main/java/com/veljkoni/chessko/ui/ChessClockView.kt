@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.DialogShape
 import com.veljkoni.chessko.ui.theme.ButtonShape
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
@@ -591,7 +592,7 @@ fun PresetChooserDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(DS.Radius.l),
+            shape = DialogShape,
             color = DS.surface,
             modifier = Modifier.padding(DS.Space.l)
         ) {
@@ -727,7 +728,7 @@ fun InfoDialog(onDismiss: () -> Unit) {
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(DS.Radius.l),
+            shape = DialogShape,
             color = DS.surface,
             modifier = Modifier.padding(DS.Space.l)
         ) {
@@ -781,7 +782,8 @@ fun InfoDialog(onDismiss: () -> Unit) {
                     )
                 }
 
-                Button(shape = ButtonShape, 
+                Button(
+                    shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = DS.accent),
                     modifier = Modifier.fillMaxWidth()

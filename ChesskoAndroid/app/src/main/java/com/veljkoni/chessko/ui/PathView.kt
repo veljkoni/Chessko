@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -155,7 +156,9 @@ private fun PathHeader(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = DS.surface),
-        shape = RoundedCornerShape(DS.Radius.l)
+        shape = RoundedCornerShape(DS.Radius.l),
+        // spec § 3: kartica = surface + 1 dp line (iOS `.dsCard()`).
+        border = BorderStroke(1.dp, DS.line)
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -245,7 +248,9 @@ private fun ChapterSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = DS.surface),
-        shape = RoundedCornerShape(DS.Radius.l)
+        shape = RoundedCornerShape(DS.Radius.l),
+        // spec § 3: kartica = surface + 1 dp line (iOS `.dsCard()`).
+        border = BorderStroke(1.dp, DS.line)
     ) {
         Column(modifier = Modifier.padding(vertical = DS.Space.s)) {
             Row(

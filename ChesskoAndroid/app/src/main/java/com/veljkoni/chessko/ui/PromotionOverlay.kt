@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.DialogShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -92,7 +93,7 @@ fun PromotionOverlay(viewModel: GameViewModel) {
         // (`MainActivity.kt:164,280,480`, `StepGameView.kt:222`, `SettingsView.kt:176`).
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
+                .clip(DialogShape) // spec § 3: dijalog `Radius.l` (bilo 20.dp)
                 .background(DS.surface)
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

@@ -92,7 +92,8 @@ fun StepPracticeView(step: CurriculumStep, onClose: () -> Unit) {
                 style = Type.heading,
                 fontWeight = FontWeight.Bold
             )
-            Button(shape = ButtonShape, 
+            Button(
+                shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                 onClick = onClose,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent,
@@ -263,7 +264,8 @@ private fun StepFooter(progress: Pair<Int, Int>, stepFailed: Boolean, onClose: (
             )
             Text(text = loc("Korak je završen"), color = DS.ink, fontWeight = FontWeight.SemiBold)
         }
-        Button(shape = ButtonShape, 
+        Button(
+            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
             onClick = onClose,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = DS.accent, contentColor = DS.onAccent)

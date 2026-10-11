@@ -1,5 +1,6 @@
 package com.veljkoni.chessko
 
+import com.veljkoni.chessko.ui.theme.DialogShape
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.logic.locF
 
@@ -184,7 +185,7 @@ class MainActivity : ComponentActivity() {
                 if (showNewGameMenu) {
                     Dialog(onDismissRequest = { showNewGameMenu = false }) {
                         Surface(
-                            shape = RoundedCornerShape(DS.Radius.l),
+                            shape = DialogShape,
                             color = DS.surface,
                             modifier = Modifier.padding(DS.Space.l)
                         ) {
@@ -301,7 +302,7 @@ class MainActivity : ComponentActivity() {
                 if (showColorPicker) {
                     Dialog(onDismissRequest = { showColorPicker = false }) {
                         Surface(
-                            shape = RoundedCornerShape(DS.Radius.l),
+                            shape = DialogShape,
                             color = DS.surface,
                             modifier = Modifier.padding(DS.Space.l)
                         ) {
@@ -462,7 +463,10 @@ class MainActivity : ComponentActivity() {
                                 gameViewModel.resetGame()
                                 showResetConfirm = false
                             }) {
-                                Text(text = loc("Potvrdi"), color = DS.accent, fontWeight = FontWeight.Bold)
+                                // Destruktivna potvrda (partija se gubi; iOS „Napusti" je `.destructive`):
+                                // tekst-dugme u `DS.danger`, ne puno `accent` dugme — presuda kontrolora,
+                                // spec § 3/§ 5.
+                                Text(text = loc("Potvrdi"), color = DS.danger, fontWeight = FontWeight.Bold)
                             }
                         },
                         dismissButton = {
@@ -472,7 +476,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         containerColor = DS.surface,
-                        shape = RoundedCornerShape(DS.Radius.l)
+                        shape = DialogShape
                     )
                 }
 
@@ -495,7 +499,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         containerColor = DS.surface,
-                        shape = RoundedCornerShape(DS.Radius.l)
+                        shape = DialogShape
                     )
                 }
 
@@ -513,7 +517,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Surface(
                             // spec § 3: dijalog = `surface` + `Radius.l` (bilo 20.dp).
-                            shape = RoundedCornerShape(DS.Radius.l),
+                            shape = DialogShape,
                             color = DS.surface,
                             tonalElevation = 8.dp,
                             modifier = Modifier

@@ -567,12 +567,15 @@ struct GameView: View {
         if viewModel.isGameOver && !dismissGameOverOverlay {
             ZStack {
                 DS.scrim.ignoresSafeArea()
+                // spec § 3: sopstveni dijalog = `DS.surface` + `Radius.l`; primarno dugme
+                // `accent` + `onAccent` (`Radius.m`), sporedno sa ispunom `fill` + `ink` —
+                // isti izgled kao Android dijalog kraja partije (`MainActivity.kt`).
                 VStack(spacing: 18) {
                     Text(gameOverEmoji)
                         .font(.system(size: 60))
                     Text(viewModel.statusMessage)
                         .font(.title2.weight(.semibold))
-                        .foregroundStyle(DS.onScrim)
+                        .foregroundStyle(DS.ink)
                         .multilineTextAlignment(.center)
 
                     HStack(spacing: 12) {
@@ -585,9 +588,9 @@ struct GameView: View {
                                 .font(.subheadline.weight(.semibold))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
-                                .background(DS.onScrim.opacity(0.15))
-                                .foregroundStyle(DS.onScrim)
-                                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m)) // spec § 3: nigde „stadion"
+                                .background(DS.fill)
+                                .foregroundStyle(DS.ink)
+                                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m)) // nigde „stadion"
                         }
 
                         Button {
@@ -597,13 +600,15 @@ struct GameView: View {
                                 .font(.subheadline.weight(.bold))
                                 .padding(.horizontal, 20)
                                 .padding(.vertical, 10)
-                                .background(DS.onScrim)
-                                .foregroundStyle(DS.inkFixed)
+                                .background(DS.accent)
+                                .foregroundStyle(DS.onAccent)
                                 .clipShape(RoundedRectangle(cornerRadius: DS.Radius.m))
                         }
                     }
                 }
                 .padding(28)
+                .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.l, style: .continuous))
+                .padding(.horizontal, DS.Space.xl)
             }
             .transition(.opacity)
         }

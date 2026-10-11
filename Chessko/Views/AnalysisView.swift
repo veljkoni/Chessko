@@ -141,7 +141,7 @@ struct AnalysisView: View {
                     }
                     .padding(.vertical, DS.Space.xs)
                     .padding(.horizontal, DS.Space.s)
-                    .background(DS.surface, in: RoundedRectangle(cornerRadius: DS.Radius.s))
+                    .dsCard(radius: DS.Radius.s) // spec § 3: surface + 1 pt line (Android isto)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text(verbatim: "\(move.displayNotation), \(label(for: move.moveClass))"))

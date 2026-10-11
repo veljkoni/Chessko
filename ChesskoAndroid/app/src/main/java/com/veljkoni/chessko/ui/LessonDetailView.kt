@@ -216,7 +216,8 @@ fun LessonDetailView(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         HorizontalDivider(color = DS.line)
-                        Button(shape = ButtonShape, 
+                        Button(
+                            shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
                             onClick = onComplete,
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = accent)

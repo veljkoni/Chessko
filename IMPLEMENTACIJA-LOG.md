@@ -366,8 +366,14 @@ Opšti rizici:
   u `iOS/`. iPad (crni sadržaj ispod trake) rešen istim korenom.
 - [x] **Kartica = `surface` + 1 pt `line`.** Nova komponenta na obe: iOS `View.dsCard(radius:)`
   (`DesignSystem.swift`), Android `Modifier.dsCard(radius)` + `DSCardGroup` + `DSRowDivider`
-  (`AND/ui/theme/Components.kt`, nov fajl). Primenjeno na sve postojeće ad hoc `surface` kartice:
-  iOS `AnalysisView` (2), `PathView` (4), `StepGameView` (1); Android `SettingsView` (4 kartice).
+  (`AND/ui/theme/Components.kt`, nov fajl). Primenjeno (posle fix runde 1, paritet po ulozi):
+  iOS `AnalysisView` (2 kartice + čip poteza), `PathView` (4), `StepGameView` protivnik (1);
+  Android `SettingsView` (4), `AnalysisView` (`AccuracyBox`, `TurningPointCard`, `MoveChip`),
+  `PathView` (2 `Card`-a dobila `border = BorderStroke(1.dp, DS.line)`), `StepGameView`
+  `OpponentCard` (bio `DS.fill` kartica). **Prvi commit je tvrdio „sve postojeće kartice" sa samo
+  4 Android mesta — netačno; ispravljeno u fix rundi 1.** Namerno nisu dirane: kartice vežbi u
+  lekciji (Android `LearnView.kt` 5× `surface`, iOS `primary.opacity(0.04)`) — Task 8, i
+  `StatusCard`/`StatusBanner` (okvir uputstva ostaje `fill`, § 7 — Task 5).
   Komentari „ivica uklonjena (1,285)" iz 6d-2 su obrisani — spec tu presudu obrće (ivica je
   dekorativna, 1,16/1,32 nad ground, i namerno ne prelazi 3:1). iOS `List` sekcije u Podešavanjima
   su `surface` redovi bez ivice (inset grouped lista ne prima stroke) → Task 10.
@@ -404,7 +410,20 @@ Opšti rizici:
   `MaterialTheme.shapes`), pa je 14 `Button`-a bez sopstvenog oblika dobilo `shape = ButtonShape`
   (`Radius.m`); 20 je već imalo eksplicitan oblik (10.dp/`Radius.m`/`Radius.s` — ekranski taskovi).
   Pomoćnici `DialogShape`, `ButtonShape`, `dsPrimaryButtonColors`, `dsSecondaryButtonColors` u
-  `Components.kt` (za Task 4+). iOS: sistemski `.alert` ostaje (odluka kontrolora) — sve četiri
+  `Components.kt` (za Task 4+).
+  **Presuda kontrolora (fix runda 1) o primarnom dugmetu dijaloga:** nedestruktivna potvrda =
+  puno `Button(shape = ButtonShape, colors = dsPrimaryButtonColors())`; destruktivna potvrda
+  (Predaj, Resetuj statistiku, Napusti partiju) ostaje tekst-dugme u `DS.danger` (§ 5: Predaj
+  6,54/6,69); sporedna = tekst-dugme u `accent`. Primena: sva četiri Android `AlertDialog`-a su
+  destruktivna — „Potvrdi" u resetu partije prešao `accent → danger` (iOS isti dijalog: „Napusti"
+  `.destructive`); dijalog kraja partije već ima puno primarno (`accent`) i sporedno sa ispunom
+  (`fill`+`ink`), oba `Radius.m`. Svi Android dijalozi koriste `DialogShape` (9 mesta +
+  `PromotionOverlay` kartica, bila 20.dp). iOS sopstveni dijalog kraja partije (`GameView`
+  `gameOverOverlay`) prešao sa teksta na scrim-u na `surface` + `Radius.l` karticu: naslov `ink`,
+  „Nova igra" `accent`+`onAccent`, „Pregledaj partiju" `fill`+`ink`. iOS kartica promocije
+  (`.ultraThinMaterial`) NIJE dirana: pločice su § 0 izuzetak (`onScrim@15%`) i na `surface` u
+  svetloj temi bi nestale — Task 4 rešava karticu zajedno sa pločicom (Android ima fiksnu `#708090`).
+  iOS: sistemski `.alert` ostaje (odluka kontrolora) — sve četiri
   imaju `.destructive` + `.cancel` uloge (provereno); `Capsule()` dugmad → `Radius.m`
   (kraj partije ×2, „Pokušaj ponovo" na grešci učitavanja, koji je uz to sa `primary` +
   `systemBackground` prešao na `accent` + `onAccent`). Sopstveni preklop kraja partije

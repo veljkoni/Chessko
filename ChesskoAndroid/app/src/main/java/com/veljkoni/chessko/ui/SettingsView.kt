@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.DialogShape
 import com.veljkoni.chessko.ui.theme.DSCardGroup
 import com.veljkoni.chessko.ui.theme.DSRowDivider
 import com.veljkoni.chessko.ui.theme.DSSectionHeader
@@ -186,7 +187,7 @@ fun SettingsView(
                         }
                     },
                     containerColor = DS.surface,
-                    shape = RoundedCornerShape(DS.Radius.l)
+                    shape = DialogShape
                 )
             }
 
@@ -696,28 +697,21 @@ fun SettingsToggle(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            // ISKLJUCENO stanje se NE sme prepustiti M3 podrazumevanim vrednostima.
-            // `SwitchTokens` vodi palac i ivicu na `Outline`, a traku na
-            // `SurfaceContainerHighest`; `Theme.kt` to mapira na `DS.line` odnosno
-            // `DS.fill`, a taj par meri **1,067 (svetla) / 1,071 (tamna)** — palac je
-            // bukvalno iste boje kao traka. Red ispod (`.background(DS.fill)`) je jos
-            // jednom ista boja, pa se ceo iskljucen prekidac gubi u sopstvenoj podlozi:
-            // ne vidi se ni gde da se tapne.
+            // ISKLJUCENO stanje se NE sme prepustiti M3 podrazumevanim vrednostima:
+            // `SwitchTokens` vode palac i ivicu na `Outline` (= `DS.line`), a traku na
+            // `SurfaceContainerHighest` (= `DS.fill`) — `line/fill` je 1,067 / 1,071,
+            // nevidljiv prekidac (Faza 6d-1; par cuva `ContrastTest`).
             //
-            // Pouka koja je to propustila: i komentar u `Theme.kt` i pregled Task-a 6
-            // proverili su da su uloge MAPIRANE — i to tacno — ali nijedno nije
-            // proverilo da su mapirane vrednosti MEDJUSOBNO razlicite. Analiziran je
-            // token, ne par. Od ove ispravke par `line`/`fill` cuva `ContrastTest`
-            // (blok `nonTextPairsOverFillAreDistinguishable`).
-            //
-            // Izmereno posle popravke (WCAG 2.1, ista formula kao `ContrastTest`):
-            //   palac / traka  `inkMuted` / `surface` = 4,83 (svetla) / 5,43 (tamna)
-            //   palac / red    `inkMuted` / `fill`    = 4,01 (svetla) / 4,81 (tamna)
-            //   ivica / red    isti par               = 4,01 / 4,81
-            // Sve preko WCAG praga 3:1 za ne-tekstualni kontrast, u obe teme.
+            // Od dizajnerskog pregleda (spec § 3) red vise NIJE `DS.fill` nego sedi u
+            // `DSCardGroup` na `DS.surface`. Iskljucena traka je takodje `DS.surface`,
+            // dakle traka == red i sama traka se ne razlikuje od podloge. Zato ivica
+            // ostaje `inkMuted`: ona (i palac iste boje) crta oblik prekidaca nad redom.
+            // Izmereno sa novim `inkMuted` (`#5E6573`, WCAG 2.1 kao `ContrastTest`):
+            //   palac / ivica nad trakom i redom  `inkMuted` / `surface` = 5,86 (svetla) / 5,43 (tamna)
+            // Iznad praga 3:1 za ne-tekstualni kontrast u obe teme.
             //
             // UKLJUCENO stanje ostaje na podrazumevanom (`accent` traka, `onAccent`
-            // palac = 8,53 / 6,71) — ono je od pocetka bilo tacno.
+            // palac = 8,53 / 6,71).
             colors = SwitchDefaults.colors(
                 uncheckedThumbColor = DS.inkMuted,
                 uncheckedTrackColor = DS.surface,

@@ -44,8 +44,9 @@ object Loc {
 
     /**
      * Mnozina (dizajnerski pregled, spec § 3): kategoriju bira `PluralRules`
-     * (`LocalFormat.kt`) po jeziku aplikacije, tekst je ovde. Jezik bez neke
-     * kategorije pada na svoju `OTHER` formu, pa na srpski. Tekst moze, ali ne
+     * (`LocalFormat.kt`) po jeziku aplikacije, tekst je ovde. Kategorija koje
+     * jezik nema pada na njegovu `OTHER` formu; jezik kog nema u unosu pada na
+     * engleski, pa na srpski (isti red kao `get`). Tekst moze, ali ne
      * mora, da sadrzi `%d` (oznaka uz zaseban veliki broj, npr. „dana zaredom",
      * ga nema). Isti kljucevi i iste forme kao iOS katalog
      * (`<osnova>#one|few|many|other`).

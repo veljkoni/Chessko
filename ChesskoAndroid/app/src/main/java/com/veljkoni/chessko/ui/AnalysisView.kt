@@ -1,5 +1,6 @@
 package com.veljkoni.chessko.ui
 
+import com.veljkoni.chessko.ui.theme.dsCard
 import com.veljkoni.chessko.logic.locPercent
 import com.veljkoni.chessko.logic.loc
 
@@ -248,8 +249,7 @@ private fun AccuracyRow(result: GameAnalysis) {
 private fun AccuracyBox(title: String, value: Double, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.surface)
+            .dsCard() // spec § 3: surface + 1 dp line (iOS `.dsCard()`)
             .padding(DS.Space.m),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -278,8 +278,7 @@ private fun TurningPointCard(move: AnalyzedMove, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.m))
-            .background(DS.surface)
+            .dsCard() // spec § 3: surface + 1 dp line (iOS `.dsCard()`)
             .clickable(onClick = onClick)
             .padding(14.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
@@ -345,8 +344,7 @@ private fun MoveChip(move: AnalyzedMove, modifier: Modifier = Modifier, onClick:
     val description = "${move.displayNotation}, ${classLabel(move.moveClass)}"
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(DS.Radius.s))
-            .background(DS.surface)
+            .dsCard(radius = DS.Radius.s) // spec § 3: surface + 1 dp line (iOS isto)
             .clickable(onClick = onClick)
             .padding(horizontal = DS.Space.s, vertical = 6.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
