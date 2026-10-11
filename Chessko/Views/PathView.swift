@@ -197,6 +197,10 @@ struct PathView: View {
                 .safeAreaPadding(.bottom, 24)
             }
             .toolbar(.hidden, for: .navigationBar)
+            // Traka je skrivena, ali naslov daje labelu dugmetu „nazad" na
+            // ekranima koraka: „< Put" u `accent` (spec § 4), umesto sistemskog
+            // „Back" na jeziku telefona umesto jezika aplikacije.
+            .navigationTitle(Loc("Put"))
             // Odrediste se razresava iz VREDNOSTI koja je gurnuta pri dodiru,
             // pa se gurnuti ekran ne menja kad se lista ispod osvezi.
             .navigationDestination(for: StepRoute.self) { route in

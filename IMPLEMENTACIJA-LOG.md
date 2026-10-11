@@ -476,7 +476,117 @@ Opšti rizici:
 
 ## Task 3 — Navigacija i hrom (§ 4) + ikone (§ 10)
 
-_(popunjava Task 3)_
+### Urađeno po stavkama
+
+**§ 4 Navigacija i hrom**
+- [x] **P1 · Android — celoekranski prikazi.** Analiza, Podešavanja i Šahovski sat više nisu
+  `Dialog(usePlatformDefaultWidth = false)` nego **celoekranska odredišta** iznad donje trake:
+  nov `AND/ui/FullScreen.kt` (`FullScreenHostLayout`, `FullScreenDestination`, `FullScreenHost`).
+  Pozivna mesta: `AND/MainActivity.kt` (Podešavanja, Sat, Analiza) i `AND/ui/StepGameView.kt`
+  (Analiza iz `game` koraka). Izabrana je spec-ova „najbolja" varijanta (zasebno odredište bez
+  donje trake), ne dijalog — vidi „Odluke".
+- [x] **P1 · Android — inseti donje trake.** Ručno pravljen `Row` visine 68 dp (bez inseta) →
+  M3 `NavigationBar(windowInsets = NavigationBarDefaults.windowInsets)`, pa ručka za gestove i
+  trodugmasta navigacija ulaze u visinu trake umesto da seku labelu. (Nije provereno na uređaju
+  — bez emulatora do Task-a 13.)
+- [x] **P2 · Android — `NavigationRail`** na širini prozora ≥ 840 dp (`useNavigationRail()`,
+  `NAVIGATION_RAIL_MIN_WIDTH_DP` u `AND/ui/AppNavigation.kt`), ispod toga donja traka. Izabran
+  tab: `accent` ikona i labela na `fill` indikatoru (7,08 / 5,69); neizabran `inkMuted`. Ista
+  pravila i na donjoj traci (ranije: bez indikatora).
+- [x] **P2 · obe — ikone tabova** (vidi § 10 ispod). iOS staklena traka ostaje.
+- [x] **P2 · obe — app bar u Lekciji.** Android (`AND/ui/LessonDetailView.kt`): `navBar` traka,
+  `← Put` tekst-dugme u `accent` (bilo plutajuće „← Put" na `fill` pločici — uklonjeno), naslov
+  `Type.body` medium (iz koraka: naslov lekcije, inače „Lekcija N" — isto pravilo kao iOS),
+  `line` ispod tek kad sadržaj klizi. Usput: `BackHandler` — sistemsko „nazad" iz lekcije je
+  izlazilo iz aplikacije. iOS (`iOS/Views/LessonDetailView.swift`): naslov kao `principal`
+  stavka `.dsBody.weight(.medium)` (sistemski inline naslov je headline semibold), podloga trake
+  `DS.navBar`; labela dugmeta nazad je „Put" jer `PathView` sada nosi `.navigationTitle(Loc("Put"))`
+  (traka je i dalje skrivena; ranije je pisalo sistemsko „Back" na jeziku telefona). Isto važi i
+  za ekrane vežbe/testa/partije gurnute sa Puta.
+- [x] **P3 · obe — naslov „Chessko".** Android obe grane (portret i pejzaž) `Type.title` bold →
+  `Type.heading` semibold. iOS: već je inline `navigationTitle` = headline 17 semibold — bez
+  izmene.
+
+**§ 10 Ikone**
+- [x] **Ikonica aplikacije I1 (iOS).** `AppIcon.appiconset`: tri stare slike obrisane, nove
+  `AppIcon-1024.png` / `-dark.png` / `-tinted.png` (Any / Dark / Tinted, RGB bez alfe — provereno
+  `file`). U izgrađenom `Assets.car` (`assetutil --info`): AppIcon u tri izgleda
+  (bez/`UIAppearanceDark`/`ISAppearanceTintable`).
+- [x] **Ikonica aplikacije I1 (Android).** `mipmap-anydpi/ic_launcher.xml` i `ic_launcher_round.xml`
+  = adaptivna ikona iz materijala (background boja, foreground, monochrome);
+  `res/drawable/ic_launcher_foreground.xml`, `ic_launcher_monochrome.xml`;
+  `res/values/ic_launcher_background.xml` (`#2E4A8A`). Stare rasterske verzije obrisane: 15
+  `drawable-*dpi/ic_launcher_*.png` (inače bi gustinski PNG pobedio nov vektor istog imena) i 10
+  `mipmap-*dpi/ic_launcher*.png` (koriste se samo ispod API 26, a `minSdk = 26`). Play Store ikona
+  `res/ic_launcher-playstore.png` zamenjena sa `play-store-512.png` (zadržana zatečena putanja).
+- [x] **Tab Igra — sopstveni skakač.** Android: `res/drawable/ic_tab_igra.xml` /
+  `ic_tab_igra_fill.xml` iz materijala; `?attr/colorControlNormal` zamenjen sa `#FF000000`
+  (boju ionako daje `tint` ikone; atribut teme se iz Compose `painterResource`-a ne mora rešiti
+  isto kao u View sistemu). iOS: **SF custom symbol se ne može napraviti iz CLI-ja** → po
+  rezervnom putu spec-a: `chessko.knight.imageset` i `chessko.knight.fill.imageset` (SVG iz
+  `ikone/tab/`, očišćen od c2pa metapodataka; *Preserve Vector Data*, *template*). U `Assets.car`
+  potvrđeno: `chessko.knight` i `chessko.knight.fill` kao Vector + Image. `TODO(design § 10)` u
+  `iOS/ContentView.swift` — pravi custom symbol; ime asseta je već ono koje spec traži, pa
+  zamena `.imageset` → `.symbolset` ne dira kod.
+- [x] **Tab Zadaci.** iOS `puzzlepiece` / `puzzlepiece.fill`; Android `Icons.Outlined.Extension`
+  / `Icons.Rounded.Extension`.
+- [x] **Tab Put.** iOS `point.topleft.down.to.point.bottomright.curvepath` / `.fill` —
+  **dostupnost proverena**: `name_availability.plist` (SF Symbols) daje godinu 2023 = **iOS 17.0**
+  za oba imena; cilj je iOS 18 → dostupno. Android: `Icons.Outlined.Route` / `Icons.Rounded.Route`
+  — **postoje u `material-icons-extended` koji je već na classpath-u** (provereno u
+  `material-icons-extended-release-api.jar`: `filled|outlined|rounded/RouteKt`), pa ručni vektor
+  `route` nije bio potreban (spec ga dozvoljava samo „ako ga nema").
+- [x] **Stanja:** izabran = pun oblik `accent`, neizabran = obris `inkMuted`. iOS: `TabView(selection:)`
+  bira ime ikone po izabranom tabu, `.environment(\.symbolVariants, .none)` sprečava da sistemska
+  traka sama napuni obris, `UITabBar.appearance().unselectedItemTintColor = UIColor(DS.inkMuted)`
+  (dinamička boja) u `ContentView.init`. Labele iz prevoda (postojeći ključevi „Igra/Zadaci/Put").
+
+### Odluke
+- **Celoekranska odredišta kao sloj, ne `NavHost` i ne dijalog.** `androidx.navigation` bi bio
+  nova zavisnost. Dijalog sa `decorFitsSystemWindows = false` je rezervni put iz spec-a, ali nosi
+  sopstveni prozor (boje sistemskih ikona, zatamnjenje). Sloj u istom prozoru aktivnosti je
+  iznad `Scaffold`-a (pa i donje trake) i ispod sistemskih traka; aktivnost je već edge-to-edge.
+  Ispod sloja `Scaffold` ostaje u kompoziciji (stanje partije se ne gubi — isto kao sa dijalogom),
+  dodiri ne prolaze (sloj ima pokazivački čvor), TalkBack ga ne čita (`clearAndSetSemantics`).
+  Ikone statusne/navigacione trake se biraju po svetlini podloge odredišta i vraćaju pri
+  zatvaranju — sat (crna podloga) u svetloj temi inače nosi nevidljive tamne ikone.
+- **Kako se koristi (Task 6 Analiza, 9 Sat, 10 Podešavanja):**
+  `if (show) FullScreenDestination(onDismiss = { show = false }) { Ekran(onClose = { show = false }) }`
+  — isti oblik kao `Dialog`, radi sa bilo koje dubine stabla (host se daje kroz
+  `LocalFullScreenHost`; i sadržaj odredišta ga vidi, pa odredište može da otvori sledeće).
+  Ekran crta sopstveno zaglavlje i **ne dodaje insete** (kontejner daje `safeDrawing` padding i
+  troši insete, pa unutrašnji `TopAppBar` ne duplira statusnu traku). Parametri:
+  `background` (podloga ivica-do-ivice, podrazumevano `DS.ground`; sat prosleđuje `Color.Black`
+  da se poklopi sa svojim korenom) i `applySafeDrawingInsets = false` za ekran koji mora da crta
+  do ivice (npr. polovine sata) i sam postavlja insete. Sistemsko „nazad" zatvara gornje
+  odredište. Bez hosta (izolovan Compose test) pada na `Dialog(decorFitsSystemWindows = false)`.
+- **Rail prag kroz `LocalConfiguration.screenWidthDp`**, ne `material3-window-size-class`
+  (nova zavisnost). `screenWidthDp` je širina prozora i u multi-window režimu. Task 11 (tablet,
+  `railWidth` u `boardSide`) čita `useNavigationRail()`; širina M3 rail-a je 80 dp.
+- **iOS app bar Lekcije: podloga `navBar` tek kad sadržaj klizi.** Uz automatsku vidljivost
+  pozadine iOS na vrhu sadržaja crta traku providnom (scroll edge → `ground`), a pri klizanju
+  `navBar` + liniju ispod — tačno „line ispod kad sadržaj klizi". Uvek vidljiva `navBar` podloga
+  bi crtala i liniju uvek. Linija je sistemska senka trake, ne `DS.line` (UIKit appearance za to
+  bi bio prvi takav kod u projektu) — razlika od nijanse.
+- **Android `mipmap-anydpi` umesto `mipmap-anydpi-v26`** iz spec tabele: sa `minSdk = 26` je
+  ekvivalentno; zatečena fascikla zadržana.
+- **Android labela taba ostaje `Type.label`** (kao zatečeno), indikator `fill` i na donjoj traci
+  (spec ga navodi za rail; ista komponenta, isti par 7,08 / 5,69).
+
+### TODO(design § N)
+- `TODO(design § 10)` — `iOS/ContentView.swift`: pravi SF custom symbol za skakača
+  (`chessko.knight` / `.fill` iz SF Symbols aplikacije → *Template*); danas SVG template slika.
+
+### Neurađeno / za kasnije taskove
+- Sadržaj tri celoekranska ekrana (zaglavlja, „Zatvori"/„Gotovo", raspored) nije diran — Task 6/9/10.
+  Sat zadržava sopstveni crni koren; Task 9 odlučuje da li polovine idu ispod sistemskih traka
+  (`applySafeDrawingInsets = false`).
+- iOS `unselectedItemTintColor` na staklenoj traci iOS 26 — da li ga sistem poštuje, proverava
+  vlasnik vizuelno (na iOS 18 radi).
+- Vizuelna provera ikonica (launcher, tabovi), inseta i rail-a — bez emulatora/simulatora do kraja.
+
+### Novi stringovi
+- Nema (koriste se postojeći ključevi „Igra", „Zadaci", „Put", „Lekcija %d/%lld").
 
 ## Task 4 — Zajedničke komponente + Igra (§ 18 korak 4, § 5)
 

@@ -73,11 +73,28 @@ struct LessonDetailView: View {
         // "Lekcija N": Put broji korake (lekcija otvaranja je korak 4), a ovaj
         // ekran je brojao lekcije (ista lekcija je lekcija 2). Korisnik bi na
         // dva uzastopna ekrana video dva razlicita broja za istu stvar.
-        .navigationTitle(stepId != nil
-            ? (document?.title ?? "")
-            : (lessonNumber.map { LocF("Lekcija %lld", $0) } ?? (document?.title ?? "")))
+        .navigationTitle(barTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(DS.ground, for: .navigationBar)
+        // App bar lekcije (spec § 4): naslov `Type.body` medium (sistemski inline
+        // naslov je headline 17 semibold), nazad + „Put" u `accent` (tint
+        // `TabView`-a; labelu daje naslov `PathView`-a). `navBar` podloga se
+        // pojavljuje kad sadrzaj klizi, zajedno sa linijom ispod — iOS na vrhu
+        // sadrzaja traku crta providnom (scroll edge), pa je tu podloga `ground`.
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(barTitle)
+                    .font(.dsBody.weight(.medium))
+                    .foregroundStyle(DS.ink)
+                    .lineLimit(1)
+            }
+        }
+        .toolbarBackground(DS.navBar, for: .navigationBar)
+    }
+
+    private var barTitle: String {
+        stepId != nil
+            ? (document?.title ?? "")
+            : (lessonNumber.map { LocF("Lekcija %lld", $0) } ?? (document?.title ?? ""))
     }
 
     // MARK: - Zavrsetak koraka Puta

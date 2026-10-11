@@ -256,10 +256,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
     // NIKAD ne stoji na putu zavrsetka koraka -- ako motor nije dostupan,
     // korak je vec zavrsen, samo dugme ostaje bez efekta.
     if (showAnalysis) {
-        Dialog(
-            onDismissRequest = { showAnalysis = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
+        // spec § 4: preko celog prozora, iznad donje trake (`FullScreen.kt`).
+        FullScreenDestination(onDismiss = { showAnalysis = false }) {
             AnalysisView(viewModel = viewModel, onClose = { showAnalysis = false })
         }
     }

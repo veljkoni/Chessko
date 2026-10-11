@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
@@ -49,9 +50,6 @@ import com.veljkoni.chessko.ui.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Timer
@@ -106,6 +104,9 @@ class MainActivity : ComponentActivity() {
                 var languageKey by remember { mutableStateOf(settingsManager.languageCode) }
 
                 key(languageKey) {
+                // spec § 4: Analiza, Podesavanja i Sat se otvaraju PREKO celog prozora
+                // (`ui/FullScreen.kt`), iznad donje trake -- ne kao dijalog ispod nje.
+                FullScreenHostLayout {
                     val gameViewModel = remember { GameViewModel(context.applicationContext as Application) }
                     val puzzleViewModel = remember { PuzzleViewModel(context.applicationContext as Application) }
 
@@ -170,10 +171,7 @@ class MainActivity : ComponentActivity() {
                 var activeTab by remember { mutableStateOf(0) }
 
                 if (showSettings) {
-                    Dialog(
-                        onDismissRequest = { showSettings = false },
-                        properties = DialogProperties(usePlatformDefaultWidth = false)
-                    ) {
+                    FullScreenDestination(onDismiss = { showSettings = false }) {
                         SettingsView(
                             gameViewModel = gameViewModel,
                             onDismiss = { showSettings = false },
@@ -436,19 +434,18 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (showChessClock) {
-                    Dialog(
-                        onDismissRequest = { showChessClock = false },
-                        properties = DialogProperties(usePlatformDefaultWidth = false)
+                    // Koren sata je crn (polovine, § 0) -- ista podloga ispod sistemskih
+                    // traka, i svetle ikone statusne trake i u svetloj temi.
+                    FullScreenDestination(
+                        onDismiss = { showChessClock = false },
+                        background = Color.Black
                     ) {
                         ChessClockView(onDismiss = { showChessClock = false })
                     }
                 }
 
                 if (showAnalysis) {
-                    Dialog(
-                        onDismissRequest = { showAnalysis = false },
-                        properties = DialogProperties(usePlatformDefaultWidth = false)
-                    ) {
+                    FullScreenDestination(onDismiss = { showAnalysis = false }) {
                         AnalysisView(viewModel = gameViewModel, onClose = { showAnalysis = false })
                     }
                 }
@@ -662,35 +659,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // spec § 4: donja traka ispod 840 dp, `NavigationRail` od 840 dp.
+                val useRail = useNavigationRail()
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(68.dp)
-                                .background(DS.navBar)
-                                .padding(vertical = DS.Space.xs),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            BottomNavItem(
-                                icon = Icons.Default.PlayArrow,
-                                label = loc("Igra"),
-                                isSelected = activeTab == 0,
-                                onClick = { activeTab = 0 }
-                            )
-                            BottomNavItem(
-                                icon = Icons.Default.Extension,
-                                label = loc("Zadaci"),
-                                isSelected = activeTab == 1,
-                                onClick = { activeTab = 1 }
-                            )
-                            BottomNavItem(
-                                icon = Icons.Filled.Map,
-                                label = loc("Put"),
-                                isSelected = activeTab == 2,
-                                onClick = { activeTab = 2 }
+                        if (!useRail) {
+                            ChesskoNavigationBar(
+                                selected = ChesskoTab.entries[activeTab],
+                                onSelect = { activeTab = it.ordinal }
                             )
                         }
                     }
@@ -698,11 +675,26 @@ class MainActivity : ComponentActivity() {
                     // Pozadina ekrana -- ravna DS.ground umesto fiksnog tamnog gradijenta
                     // (brief Task-a 2: "pozadina ekrana -> DS.ground"), da bi svetla tema
                     // stvarno posvetlila i ovaj deo ekrana.
+                    val layoutDirection = LocalLayoutDirection.current
+                    Row(modifier = Modifier.fillMaxSize().background(DS.ground)) {
+                    if (useRail) {
+                        // Rail sam nosi insete svoje (pocetne) ivice i vertikale.
+                        ChesskoNavigationRail(
+                            selected = ChesskoTab.entries[activeTab],
+                            onSelect = { activeTab = it.ordinal }
+                        )
+                    }
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(DS.ground)
-                            .padding(innerPadding)
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(
+                                if (useRail) PaddingValues(
+                                    top = innerPadding.calculateTopPadding(),
+                                    bottom = innerPadding.calculateBottomPadding(),
+                                    end = innerPadding.calculateEndPadding(layoutDirection)
+                                ) else innerPadding
+                            )
                     ) {
                         when (activeTab) {
                             0 -> {
@@ -822,11 +814,11 @@ class MainActivity : ComponentActivity() {
                                                 Text(
                                                     text = loc("Chessko"),
                                                     color = DS.ink,
-                                                    // Naslov aplikacije -> `title`. Pejzazna
-                                                    // grana je stajala na 20, portretna na 22 --
-                                                    // ista uloga, dve vrednosti; sada jedna.
-                                                    style = Type.title,
-                                                    fontWeight = FontWeight.Bold,
+                                                    // spec § 4 (P3): naslov u zaglavlju je
+                                                    // `Type.heading` semibold na obe platforme
+                                                    // (iOS inline naslov = headline 17 semibold).
+                                                    style = Type.heading,
+                                                    fontWeight = FontWeight.SemiBold,
                                                     textAlign = TextAlign.Center,
                                                     modifier = Modifier.weight(1f)
                                                 )
@@ -975,8 +967,9 @@ class MainActivity : ComponentActivity() {
                                                 Text(
                                                     text = loc("Chessko"),
                                                     color = DS.ink,
-                                                    style = Type.title,
-                                                    fontWeight = FontWeight.Bold,
+                                                    // spec § 4 (P3): `Type.heading` semibold, kao pejzaz i iOS.
+                                                    style = Type.heading,
+                                                    fontWeight = FontWeight.SemiBold,
                                                     textAlign = TextAlign.Center,
                                                     modifier = Modifier.weight(1f)
                                                 )
@@ -1170,7 +1163,9 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                    } // Row (rail + sadrzaj)
                 }
+                } // FullScreenHostLayout
             }
         }
     }

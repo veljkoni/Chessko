@@ -248,47 +248,7 @@ fun StatusBanner(message: String) {
     }
 }
 
-@Composable
-fun RowScope.BottomNavItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val contentColor = if (isSelected) DS.accent else DS.inkMuted
-
-    Button(
-        shape = ButtonShape, // spec § 3: Radius.m, nigde „stadion"
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = contentColor
-        ),
-        modifier = Modifier.weight(1f),
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = contentColor
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = label,
-                color = contentColor,
-                // Oznaka uz ikonu u donjoj navigaciji -> `label`.
-                style = Type.label,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-            )
-        }
-    }
-}
-
+// `BottomNavItem` je zamenjen M3 `NavigationBar`/`NavigationRail` (`AppNavigation.kt`, spec § 4).
 
 fun getPlayerName(viewModel: GameViewModel, color: PieceColor): String {
     return if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {

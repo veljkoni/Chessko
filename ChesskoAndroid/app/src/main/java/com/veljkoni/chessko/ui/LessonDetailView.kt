@@ -9,12 +9,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,66 +78,65 @@ fun LessonDetailView(
         repo.discoveredLessonIds().indexOf(lessonId).let { if (it >= 0) it + 1 else null }
     }
 
-    // `padding(16.dp)` je ranije davao `LearnView`-ov spoljni `Box`, deljen sa
-    // spiskom lekcija. Ovaj ekran sada zivi i van `LearnView`-a (otvara ga
-    // `PathView`, bez ijednog Box-a oko sebe), pa marginu mora da nosi SAM —
-    // inace sadrzaj (i tabla) idu ivica-do-ivice ekrana kad se otvori iz Puta.
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(DS.Space.l)
-    ) {
-        // Back Button Toolbar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = onClose,
-                colors = ButtonDefaults.buttonColors(
-                    // Isti par kao `StepGameView`/`OpponentCard`: providna bela
-                    // podloga na neutralnom ekranu -> `DS.fill` + `DS.ink`
-                    // (pokriveno sa `textOnFillMeetsAA`).
-                    containerColor = DS.fill,
-                    contentColor = DS.ink
-                ),
-                shape = RoundedCornerShape(DS.Radius.s),
-                contentPadding = PaddingValues(horizontal = DS.Space.m, vertical = 6.dp)
-            ) {
-                // Dugme vodi na Put (spisak lekcija je ova grana obrisala -- vidi
-                // header komentar fajla), pa mora i da ga IMENUJE. Postojeci kljuc
-                // "Put" (vec koriscen u `PathView`/`StepPracticeView`), ne "Lekcije".
-                //
-                // Faza 8, talas ispravki: `"◀ " + loc(...)` -> `Row { Icon; Text }`.
-                // Tacno obrazac „glif zalepljen na tekst" koji faza prevodi, samo u
-                // bloku (`U+25C0`) koji njena provera obima nije grepovala. Ikona je
-                // DEKORATIVNA — „Put" odmah do nje nosi celo znacenje. `AutoMirrored`
-                // jer je strelica smerna: u RTL rasporedu mora da pokazuje udesno.
-                // Boja se nasledjuje iz `ButtonDefaults` (`DS.ink` na `DS.fill`,
-                // pokriveno sa `ContrastTest.textOnFillMeetsAA`).
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(DS.Space.xs)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    // Tekst uz ikonu na zbijenom dugmetu -> `Type.label`, ista uloga
-                    // (i ista velicina) kao „Vrati"/„Predaj"/„Podeli" u `ActionsRow`.
-                    Text(text = loc("Put"), style = Type.label, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
+    val scrollState = rememberScrollState()
+    val contentScrolled by remember { derivedStateOf { scrollState.value > 0 } }
+    // Sistemsko „nazad" vodi na Put, isto kao dugme u app baru (ranije je
+    // izlazilo iz aplikacije, jer ruta Puta nije imala `BackHandler`).
+    BackHandler(onBack = onClose)
 
-        Spacer(modifier = Modifier.height(DS.Space.m))
+    // Naslov u app baru: iz koraka Puta naslov lekcije (Put broji korake, ne
+    // lekcije), inace „Lekcija N" — isto pravilo kao iOS `LessonDetailView.navigationTitle`.
+    val barTitle = if (onComplete != null || number == null) (doc?.title ?: "") else locF("Lekcija %d", number)
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // App bar lekcije (spec § 4): `navBar` podloga, nazad + „Put" u `accent`
+        // (8,53 / 6,65), naslov `Type.body` medium, `line` ispod tek kad sadrzaj
+        // klizi. Zamenjuje plutajuce „← Put" na `fill` plocici.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(DS.navBar)
+                .heightIn(min = 48.dp)
+                .padding(horizontal = DS.Space.xs),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            TextButton(onClick = onClose) {
+                // Ikona je DEKORATIVNA — „Put" odmah do nje nosi celo znacenje.
+                // `AutoMirrored` jer je strelica smerna (RTL).
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = DS.accent,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(DS.Space.xs))
+                Text(text = loc("Put"), color = DS.accent, style = Type.body)
+            }
+            Text(
+                text = barTitle,
+                color = DS.ink,
+                style = Type.body,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center)
+                    // Prostor za „← Put" sa obe strane, da naslov ostane centriran.
+                    .padding(horizontal = 96.dp)
+            )
+        }
+        if (contentScrolled) {
+            HorizontalDivider(color = DS.line)
+        }
 
         // Scrollable Lesson Content
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState)
+                .padding(horizontal = DS.Space.l),
             verticalArrangement = Arrangement.spacedBy(DS.Space.l)
         ) {
             if (doc == null) {
