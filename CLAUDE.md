@@ -3422,3 +3422,9 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   aritmetičke. Jedan promašaj više se ne razvodnjava kroz dobre poteze (partija od 9 poteza sa
   ostavljenom damom: 89,5 % → 44,3 %). Tačnost po potezu i prag od 5 poteza nepromenjeni. Nova
   `volatilityWeights` na obe platforme, po jedan nov test (`swift test` 111, Android JVM 148, 0 padova).
+- **2026-10-12** — Android izdanje 2.1 za testere: `versionCode 4`, `versionName "2.1"` (sadrži dizajnerski
+  pregled, eval traku isključenu podrazumevano i Lichess tačnost). JVM 148/148 iz XML-a; `bundleRelease` +
+  `packageReleaseUniversalApk`: nije `debuggable`, `puzzles.sqlite` `Stored`; na emulatoru sveža instalacija bez
+  `FATAL EXCEPTION`, Stockfish `readyok`, AI odgovor (1. e4 Sf6). Nepotpisan bundle je
+  `ChesskoAndroid/app/build/outputs/bundle/release/app-release.aab`; potpis (`appbundle.jks`, alias `key0`) radi
+  vlasnik u Android Studiju.
