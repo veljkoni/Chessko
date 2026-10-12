@@ -277,10 +277,26 @@ private func scores(start: Int, losses: [Int]) -> [EngineScore] {
     )
     #expect(analysis.moves[9].moveClass == .blunder)
     #expect(analysis.blackAccuracy != 0)
-    // Strana koja je odigrala osam dobrih poteza i jedan loš nije „0 % tačna".
-    #expect(analysis.blackAccuracy > 50)
     #expect(analysis.blackAccuracy < analysis.whiteAccuracy)
     #expect(analysis.whiteAccuracy > 90)
+    // Lichess `gameAccuracy` (harmonijska + ponderisana sredina). Vrednosti su iz
+    // nezavisne Python reference tog algoritma, ne iz ovog koda. Aritmetička
+    // sredina (stanje do 2026-10) bi dala 89,46 — promašaj bi se razvodnio.
+    #expect(abs(analysis.blackAccuracy - 44.27) < 0.05)
+    #expect(abs(analysis.whiteAccuracy - 99.71) < 0.05)
+}
+
+/// Tačno jedna težina po potezu, uvek u Lichess opsegu 0,5…12.
+@Test func volatilityWeightsHaveOnePerMoveAndStayInRange() {
+    for moveCount in [1, 2, 9, 25, 120] {
+        let losses = (0..<moveCount).map { $0 % 7 == 3 ? 400 : 5 }
+        let weights = GameAnalysis.volatilityWeights(scores: scores(start: 30, losses: losses))
+        #expect(weights.count == moveCount)
+        #expect(weights.allSatisfy { $0 >= 0.5 && $0 <= 12 })
+    }
+    // Mirna partija: sve težine na donjoj granici.
+    let calm = GameAnalysis.volatilityWeights(scores: scores(start: 0, losses: Array(repeating: 0, count: 20)))
+    #expect(calm.allSatisfy { $0 == 0.5 })
 }
 
 /// Promašaj u izgubljenoj poziciji košta manje od istog promašaja u izjednačenoj —

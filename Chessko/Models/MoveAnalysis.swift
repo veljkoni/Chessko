@@ -155,9 +155,9 @@ struct GameAnalysis: Sendable, Equatable {
     }
 
     /// Ispod ovoliko SOPSTVENIH poteza strana nema prikazanu tačnost („—" i
-    /// „Premalo poteza za procenu tačnosti."). Tačnost je prosek po potezu, pa je
+    /// „Premalo poteza za procenu tačnosti."). Tačnost se sklapa iz poteza, pa je
     /// kod 4 poteza jedan potez četvrtina rezultata, a prvi potezi su skoro uvek
-    /// otvaranje sa gubitkom ~0. Od 5 poteza nijedan potez ne nosi više od 20 %.
+    /// otvaranje sa gubitkom ~0.
     static let minMovesForAccuracy = 5
 
     /// Procenat pobede (0…100) iz centipiona, Lichess `WinPercent.fromCentiPawns`:
@@ -184,6 +184,30 @@ struct GameAnalysis: Sendable, Equatable {
     static func accuracy(winPercentLoss: Double) -> Double {
         let raw = 103.1668 * exp(-0.04354 * winPercentLoss) - 3.1669
         return min(100, max(0, raw))
+    }
+
+    /// Težina svakog poteza po Lichess-u: standardna devijacija (populaciona)
+    /// procenta pobede BELOG u kliznom prozoru pozicija, ograničena na 0,5…12.
+    /// Prozor je N/10 poteza, ograničen na 2…8; prvih `prozor − 2` poteza dobija
+    /// prvi prozor. Oštar deo partije (šanse se ljuljaju) nosi više od mirnog.
+    /// Vraća tačno N težina za N+1 ocena; `weights[i]` pripada potezu `i`.
+    static func volatilityWeights(scores: [EngineScore]) -> [Double] {
+        let moveCount = scores.count - 1
+        guard moveCount > 0 else { return [] }
+        // `scores[i]` je iz ugla strane na potezu; na parnom indeksu to je beli.
+        let white = scores.indices.map { i in
+            winPercent(centipawns: i % 2 == 0 ? scores[i].centipawns : -scores[i].centipawns)
+        }
+        let size = min(8, max(2, moveCount / 10))
+        var windows = Array(repeating: Array(white.prefix(size)), count: max(0, min(size, white.count) - 2))
+        for start in 0...(white.count - size) {
+            windows.append(Array(white[start..<(start + size)]))
+        }
+        return windows.prefix(moveCount).map { xs in
+            let mean = xs.reduce(0, +) / Double(xs.count)
+            let variance = xs.reduce(0.0) { $0 + ($1 - mean) * ($1 - mean) } / Double(xs.count)
+            return min(12, max(0.5, variance.squareRoot()))
+        }
     }
 
     /// Sklapa analizu iz N notacija i N+1 ocena.
@@ -222,17 +246,27 @@ struct GameAnalysis: Sendable, Equatable {
             ))
         }
 
-        // Tačnost strane = prosek tačnosti njenih poteza (svaki iz gubitka
-        // procenta pobede). Lichess uz to meša harmonijsku sredinu i težine po
-        // nestabilnosti pozicije; aritmetička sredina je namerno jednostavnija i
-        // blaža prema jednom promašaju, a ista je na obe platforme.
+        let weights = volatilityWeights(scores: scores)
+
+        // Tačnost strane = Lichess `AccuracyPercent.gameAccuracy`: polovina je
+        // sredina ponderisana nestabilnošću pozicije, polovina HARMONIJSKA
+        // sredina. Harmonijska je ta koja ne da jednom promašaju da se razvodni
+        // kroz mnogo dobrih poteza — do 2026-10 ovde je bila aritmetička sredina
+        // i ostavljena dama u partiji od 9 poteza davala je ~89 % (sada ~44 %).
         func accuracyFor(white: Bool) -> Double {
-            let side = moves.filter { $0.byWhite == white }
-            guard !side.isEmpty else { return 100 }
-            let sum = side.reduce(0.0) {
-                $0 + accuracy(winPercentLoss: winPercentLoss(before: $1.scoreBefore, after: $1.scoreAfter))
+            var accuracies: [Double] = []
+            var sideWeights: [Double] = []
+            for move in moves where move.byWhite == white {
+                accuracies.append(accuracy(winPercentLoss: winPercentLoss(before: move.scoreBefore, after: move.scoreAfter)))
+                sideWeights.append(weights[move.ply])
             }
-            return sum / Double(side.count)
+            guard !accuracies.isEmpty else { return 100 }
+            let weighted = zip(accuracies, sideWeights).reduce(0.0) { $0 + $1.0 * $1.1 }
+                / sideWeights.reduce(0, +)
+            // Lichess `Maths.harmonicMean` računa sa najmanje 1, da potez sa 0 %
+            // ne da deljenje nulom.
+            let harmonic = Double(accuracies.count) / accuracies.reduce(0.0) { $0 + 1 / max(1, $1) }
+            return (weighted + harmonic) / 2
         }
 
         return GameAnalysis(

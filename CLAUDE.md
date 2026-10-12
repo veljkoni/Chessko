@@ -45,14 +45,14 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (**110 testova**, stanje posle dizajnerskog pregleda 2026-10): 7 perft testova za svih 6
+Pokriveno (**111 testova**, stanje posle dizajnerskog pregleda 2026-10): 7 perft testova za svih 6
 standardnih pozicija (uključujući početnu do dubine 5, 4.865.609 čvorova, ~75–85s), 4 testa prava
 rokade (uzimanje topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
 14 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu — vidi ispod),
 5 testova Elo rejtinga, 6 testova sadržaja lekcija (12 tipova blokova, round-trip, glasan pad na
 nepoznat tip, prolaz kroz sve lekcijske JSON-e, `LessonSymbol.resolve`), 7 testova kurikuluma
 (uključujući onaj koji tvrdi da kurikulum ne laže), 18 testova napretka (`ProgressStore`, dnevni
-cilj, streak, kartica cilja), 32 testa analize partije (`MoveAnalysisTests` — ocene, klase poteza,
+cilj, streak, kartica cilja), 33 testa analize partije (`MoveAnalysisTests` — ocene, klase poteza,
 tačnost iz gubitka procenta pobede, rečenica za početnike, parser UCI ocene), 8 testova lokalnog
 formata i množina (`LocalFormatTests`), 8 testova strane table (`BoardSizingTests`, § 13 tabela) i
 1 test kataloga (`LocCatalogTests` — svaki `Loc("…")`/`LocF("…")` literal mora postojati u
@@ -480,7 +480,7 @@ gubitku u centipionima i prikazuje ekran sa procentom tačnosti, trakom poteza u
 prelomnim potezom. Dostupno je i iz `game` koraka Puta.
 
 - **Matematika je odvojena od motora.** `Models/MoveAnalysis.swift` je Foundation-only,
-  kompajlira se i u SwiftPM paket i pokriven je sa 23 testa (uz još 9 za parser, ukupno 32
+  kompajlira se i u SwiftPM paket i pokriven je sa 24 testa (uz još 9 za parser, ukupno 33
   u `MoveAnalysisTests.swift`). Motor je zamenljiv; pravila
   klasifikacije nisu. `Logic/UCIScoreParser.swift` je iz istog razloga izdvojen iz
   `StockfishBridge`-a — `actor` koji uvozi `ChessKitEngine` ne može u testni paket, a
@@ -503,8 +503,12 @@ prelomnim potezom. Dostupno je i iz `game` koraka Puta.
   primenjivala na prosečan `cpLoss`; u pogrešnim jedinicama pada na 0 već kod proseka ≈ 80 cp, pa je
   jedan promašaj u partiji od 9 poteza davao „0,0 %" (greška iz spec-a v2, preneta na obe
   platforme). Sada: `winPercent(cp)` (Lichess `fromCentiPawns`, cp ±1000) → gubitak procenta pobede
-  po potezu → tačnost po potezu istom formulom → strana = **aritmetička sredina** svojih poteza (bez
-  Lichess-ove harmonijske sredine i težina — blaže ocene, ~89 % za jedan promašaj). Ispod **5
+  po potezu → tačnost po potezu istom formulom → strana = **Lichess `gameAccuracy`**: polovina sredina
+  ponderisana nestabilnošću (populaciona std. devijacija procenta pobede belog u kliznom prozoru od
+  N/10 poteza, 2…8, težina 0,5…12 — `volatilityWeights`), polovina **harmonijska** sredina (svaka
+  vrednost najmanje 1). Do 2026-10-12 je bila aritmetička sredina, pa se promašaj razvodnjavao: partija
+  od 9 poteza sa ostavljenom damom davala je 89,5 %, sada 44,3 % (vrednost iz nezavisne Python
+  reference, pinovana u testu na obe platforme). Ispod **5
   sopstvenih poteza** strana dobija „—" i napomenu „Premalo poteza za procenu tačnosti.". Isto na
   obe platforme (`MoveAnalysis.swift` / `MoveAnalysis.kt`), repro test na obe.
 - **Prelomni potez** je najveći gubitak, ali samo ako je ≥ 100 i ako potez **nije** klase
@@ -846,11 +850,11 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **10 — razmaci i tipografija** (spec 5.6) | **da, uz presudu** | `DS.Space` 169 / `DS.Radius` 65 / `DS.maxBoardSide` 6 / skala 159 pozivnih mesta; 285 `.dp` literala ostaje namerno po ulozi — vidi „Android dizajn sistem" |
 | **Dizajnerski pregled** (2026-10, obe platforme) | **da** | spec `docs/design/CHESSKO-IMPLEMENTACIJA.md` § 2–§ 17; 6 tema / 5 stilova (odluka vlasnika); `BoardSizing` do 800 na tabletu; celoekranska Analiza/Podešavanja/Sat; vidi `IMPLEMENTACIJA-LOG.md` → „Završni izveštaj" |
 
-Testovi (posle dizajnerskog pregleda, 2026-10-12): **147 JVM** (`./gradlew testDebugUnitTest` —
+Testovi (posle dizajnerskog pregleda, 2026-10-12): **148 JVM** (`./gradlew testDebugUnitTest` —
 `AppearanceCatalogTest` 5, `BoardSizingTest` 8, `BoardWidthCapTest` 2, `ContrastTest` 19, `EngineTest` 9,
 `EvaluationLabelTest` 3, `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5,
 `GameStateStatusFromPositionTest` 5, `LessonBoardsOptOutOfSwipeTest` 2, `LocTest` 7,
-`MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 33, `PathProgressTest` 10, `PluralRulesTest` 7,
+`MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 34, `PathProgressTest` 10, `PluralRulesTest` 7,
 `PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9, `SpacingTokensTest` 1, `StepWindowTest` 3,
 `TypographyScaleTest` 1, `UCIScoreParserTest` 9) + **55 instrumentisanih**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
@@ -3409,3 +3413,12 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
     fajlovima u „Testovi" i „Stanje Android porta".
   - **Vizuelno ništa nije provereno** — ni simulator ni emulator za izgled, po presudi; vlasnik ponovo
     snima (telefon + tablet, obe teme, sr/ru/de/hi za Igru, Podešavanja, Sat i Lekciju).
+
+- **2026-10-12** — Eval traka je podrazumevano isključena na obe platforme (`ab52ebd`; ko je
+  prekidač već sam podesio zadržava izbor). Grana `v2/dizajn-pregled` spojena u `main` lokalno
+  (fast-forward), nije poslata na GitHub.
+- **2026-10-12** — Tačnost strane u analizi partije računa se kao na Lichess-u (odluka vlasnika,
+  opcija 1 od 3): pola sredina ponderisana nestabilnošću pozicije, pola harmonijska sredina, umesto
+  aritmetičke. Jedan promašaj više se ne razvodnjava kroz dobre poteze (partija od 9 poteza sa
+  ostavljenom damom: 89,5 % → 44,3 %). Tačnost po potezu i prag od 5 poteza nepromenjeni. Nova
+  `volatilityWeights` na obe platforme, po jedan nov test (`swift test` 111, Android JVM 148, 0 padova).

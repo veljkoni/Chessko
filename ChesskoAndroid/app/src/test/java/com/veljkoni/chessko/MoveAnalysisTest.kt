@@ -354,9 +354,27 @@ class MoveAnalysisTest {
         )
         assertEquals(MoveClass.BLUNDER, analysis.moves[9].moveClass)
         assertTrue("crni ${analysis.blackAccuracy}", analysis.blackAccuracy != 0.0)
-        assertTrue("crni ${analysis.blackAccuracy}", analysis.blackAccuracy > 50.0)
         assertTrue(analysis.blackAccuracy < analysis.whiteAccuracy)
         assertTrue(analysis.whiteAccuracy > 90.0)
+        // Lichess `gameAccuracy` (harmonijska + ponderisana sredina). Vrednosti su
+        // iz nezavisne Python reference tog algoritma, ne iz ovog koda. Aritmeticka
+        // sredina (stanje do 2026-10) bi dala 89,46 — promasaj bi se razvodnio.
+        assertEquals(44.27, analysis.blackAccuracy, 0.05)
+        assertEquals(99.71, analysis.whiteAccuracy, 0.05)
+    }
+
+    /** Tacno jedna tezina po potezu, uvek u Lichess opsegu 0,5…12. */
+    @Test
+    fun volatilityWeightsHaveOnePerMoveAndStayInRange() {
+        for (moveCount in listOf(1, 2, 9, 25, 120)) {
+            val losses = List(moveCount) { if (it % 7 == 3) 400 else 5 }
+            val weights = GameAnalysis.volatilityWeights(scoresFrom(30, losses))
+            assertEquals(moveCount, weights.size)
+            assertTrue(weights.all { it in 0.5..12.0 })
+        }
+        // Mirna partija: sve tezine na donjoj granici.
+        val calm = GameAnalysis.volatilityWeights(scoresFrom(0, List(20) { 0 }))
+        assertTrue(calm.all { it == 0.5 })
     }
 
     /** Promasaj u izgubljenoj poziciji kosta manje nego u izjednacenoj (procenat pobede). */

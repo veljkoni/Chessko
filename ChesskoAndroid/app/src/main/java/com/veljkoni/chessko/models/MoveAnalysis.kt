@@ -4,6 +4,7 @@ import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 // MARK: - Analiza partije: model i matematika
 //
@@ -154,9 +155,9 @@ data class GameAnalysis(
 
         /**
          * Ispod ovoliko SOPSTVENIH poteza strana nema prikazanu tacnost („—" i
-         * „Premalo poteza za procenu tačnosti."). Tacnost je prosek po potezu, pa
+         * „Premalo poteza za procenu tačnosti."). Tacnost se sklapa iz poteza, pa
          * je kod 4 poteza jedan potez cetvrtina rezultata, a prvi potezi su skoro
-         * uvek otvaranje sa gubitkom ~0. Od 5 poteza nijedan ne nosi vise od 20 %.
+         * uvek otvaranje sa gubitkom ~0.
          */
         const val MIN_MOVES_FOR_ACCURACY = 5
 
@@ -189,6 +190,32 @@ data class GameAnalysis(
         fun accuracy(winPercentLoss: Double): Double {
             val raw = 103.1668 * exp(-0.04354 * winPercentLoss) - 3.1669
             return min(100.0, max(0.0, raw))
+        }
+
+        /**
+         * Tezina svakog poteza po Lichess-u: standardna devijacija (populaciona)
+         * procenta pobede BELOG u kliznom prozoru pozicija, ogranicena na 0,5…12.
+         * Prozor je N/10 poteza, ogranicen na 2…8; prvih `prozor − 2` poteza dobija
+         * prvi prozor. Ostar deo partije (sanse se ljuljaju) nosi vise od mirnog.
+         * Vraca tacno N tezina za N+1 ocena; `weights[i]` pripada potezu `i`.
+         * iOS: `GameAnalysis.volatilityWeights(scores:)`.
+         */
+        fun volatilityWeights(scores: List<EngineScore>): List<Double> {
+            val moveCount = scores.size - 1
+            if (moveCount <= 0) return emptyList()
+            // `scores[i]` je iz ugla strane na potezu; na parnom indeksu to je beli.
+            val white = scores.indices.map { i ->
+                winPercent(if (i % 2 == 0) scores[i].centipawns else -scores[i].centipawns)
+            }
+            val size = (moveCount / 10).coerceIn(2, 8)
+            val windows = ArrayList<List<Double>>()
+            repeat(max(0, min(size, white.size) - 2)) { windows.add(white.take(size)) }
+            for (start in 0..(white.size - size)) windows.add(white.subList(start, start + size))
+            return windows.take(moveCount).map { xs ->
+                val mean = xs.average()
+                val variance = xs.sumOf { (it - mean) * (it - mean) } / xs.size
+                sqrt(variance).coerceIn(0.5, 12.0)
+            }
         }
 
         /**
@@ -231,14 +258,24 @@ data class GameAnalysis(
                 )
             }
 
-            // Tacnost strane = prosek tacnosti njenih poteza (svaki iz gubitka
-            // procenta pobede). Lichess uz to mesa harmonijsku sredinu i tezine po
-            // nestabilnosti pozicije; aritmeticka sredina je namerno jednostavnija
-            // i blaza prema jednom promasaju, a ista je na obe platforme.
+            val weights = volatilityWeights(scores)
+
+            // Tacnost strane = Lichess `AccuracyPercent.gameAccuracy`: polovina je
+            // sredina ponderisana nestabilnoscu pozicije, polovina HARMONIJSKA
+            // sredina. Harmonijska je ta koja ne da jednom promasaju da se razvodni
+            // kroz mnogo dobrih poteza — do 2026-10 ovde je bila aritmeticka sredina
+            // i ostavljena dama u partiji od 9 poteza davala je ~89 % (sada ~44 %).
+            // iOS: isto mesto u `GameAnalysis.build`.
             fun accuracyFor(white: Boolean): Double {
                 val side = moves.filter { it.byWhite == white }
                 if (side.isEmpty()) return 100.0
-                return side.sumOf { accuracy(winPercentLoss(it.scoreBefore, it.scoreAfter)) } / side.size
+                val accuracies = side.map { accuracy(winPercentLoss(it.scoreBefore, it.scoreAfter)) }
+                val sideWeights = side.map { weights[it.ply] }
+                val weighted = accuracies.indices.sumOf { accuracies[it] * sideWeights[it] } / sideWeights.sum()
+                // Lichess `Maths.harmonicMean` racuna sa najmanje 1, da potez sa 0 %
+                // ne da deljenje nulom.
+                val harmonic = accuracies.size / accuracies.sumOf { 1.0 / max(1.0, it) }
+                return (weighted + harmonic) / 2
             }
 
             return GameAnalysis(
