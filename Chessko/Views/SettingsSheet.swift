@@ -468,14 +468,6 @@ struct SettingsSheet: View {
         .accessibilityAddTraits(colorScheme == value ? .isSelected : [])
     }
 
-    private var currentDifficultyLabel: String {
-        if gameViewModel.difficulty == .stockfish {
-            return gameViewModel.stockfishLevel.label
-        } else {
-            return gameViewModel.difficulty.label
-        }
-    }
-
     private var currentLanguageLabel: String {
         if let code = localization.languageCode,
            let lang = AppLanguage.all.first(where: { $0.code == code }) {

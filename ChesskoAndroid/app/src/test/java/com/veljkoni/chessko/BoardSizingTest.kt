@@ -76,6 +76,6 @@ class BoardSizingTest {
     @Test
     fun designSystemCapsComeFromBoardSizing() {
         assertEquals(BoardSizing.PHONE_MAX_SIDE, DS.maxBoardSide.value, 0f)
-        assertEquals(BoardSizing.TABLET_MAX_SIDE, DS.maxBoardSideTablet.value, 0f)
+        assertEquals(800f, BoardSizing.TABLET_MAX_SIDE, 0f)
     }
 }

@@ -99,7 +99,6 @@ fun evaluationOf(score: Double, mateIn: Int?): Evaluation = EvaluationLabel.of(s
 fun PlayerCard(
     color: PieceColor,
     name: String,
-    boardTheme: BoardTheme,
     pieceStyle: PieceStyle,
     modifier: Modifier = Modifier,
     subtitle: String? = null,

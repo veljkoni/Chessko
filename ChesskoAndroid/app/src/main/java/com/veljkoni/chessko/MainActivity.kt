@@ -686,7 +686,6 @@ class MainActivity : ComponentActivity() {
                                     GameOpponentCard(
                                         viewModel = gameViewModel,
                                         color = topColor,
-                                        boardTheme = activeTheme,
                                         pieceStyle = activeStyle,
                                         onPlayFriend = {
                                             requestNewGame { gameViewModel.newGame(GameMode.LOCAL_FRIEND, PieceColor.WHITE) }
@@ -700,7 +699,6 @@ class MainActivity : ComponentActivity() {
                                     GamePlayerCard(
                                         viewModel = gameViewModel,
                                         color = bottomColor,
-                                        boardTheme = activeTheme,
                                         pieceStyle = activeStyle
                                     )
                                 }
@@ -1112,7 +1110,6 @@ private fun opponentElo(difficulty: GameDifficulty, level: StockfishLevel): Stri
 private fun GameOpponentCard(
     viewModel: GameViewModel,
     color: PieceColor,
-    boardTheme: BoardTheme,
     pieceStyle: PieceStyle,
     onPlayFriend: () -> Unit,
     onPlayComputer: () -> Unit
@@ -1137,7 +1134,6 @@ private fun GameOpponentCard(
         PlayerCard(
             color = color,
             name = getPlayerName(viewModel, color),
-            boardTheme = boardTheme,
             pieceStyle = pieceStyle,
             subtitle = subtitle,
             status = status,
@@ -1239,7 +1235,6 @@ private fun GameOpponentCard(
 private fun GamePlayerCard(
     viewModel: GameViewModel,
     color: PieceColor,
-    boardTheme: BoardTheme,
     pieceStyle: PieceStyle
 ) {
     val computer = isComputerSide(viewModel, color)
@@ -1253,7 +1248,6 @@ private fun GamePlayerCard(
     PlayerCard(
         color = color,
         name = getPlayerName(viewModel, color),
-        boardTheme = boardTheme,
         pieceStyle = pieceStyle,
         status = status,
         isActive = active,

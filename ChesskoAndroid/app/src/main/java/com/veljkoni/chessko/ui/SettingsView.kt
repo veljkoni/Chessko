@@ -68,7 +68,6 @@ import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Public
 import com.veljkoni.chessko.logic.GameDifficulty
-import com.veljkoni.chessko.logic.StockfishLevel
 import com.veljkoni.chessko.logic.StatsManager
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type

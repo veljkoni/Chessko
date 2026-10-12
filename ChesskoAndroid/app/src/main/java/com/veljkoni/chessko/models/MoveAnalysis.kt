@@ -249,15 +249,6 @@ data class GameAnalysis(
         }
     }
 
-    /**
-     * `.best` se ISKLJUCUJE. `classify` daje `.best` cim je odigran potez
-     * motora, bez obzira na izmeren gubitak — a gubitak ume da ispadne
-     * veliki i za potez motora, jer se pozicija pre poteza i pozicija posle
-     * njega pretrazuju nezavisno, iz razlicitih cvorova. Bez ovog filtera
-     * kartica ume da kaze „Prelomni potez 15…Sxd7 (−1000)" i da je pritom
-     * oboji akcentom, kao najbolji potez u partiji. Potez koji bi i motor
-     * odigrao nije prelomni potez, ma sta merenje reklo.
-     */
     /** Broj poteza jedne strane. */
     fun moveCount(white: Boolean): Int = moves.count { it.byWhite == white }
 
@@ -270,6 +261,15 @@ data class GameAnalysis(
         return if (white) whiteAccuracy else blackAccuracy
     }
 
+    /**
+     * `.best` se ISKLJUCUJE. `classify` daje `.best` cim je odigran potez
+     * motora, bez obzira na izmeren gubitak — a gubitak ume da ispadne
+     * veliki i za potez motora, jer se pozicija pre poteza i pozicija posle
+     * njega pretrazuju nezavisno, iz razlicitih cvorova. Bez ovog filtera
+     * kartica ume da kaze „Prelomni potez 15…Sxd7 (−1000)" i da je pritom
+     * oboji akcentom, kao najbolji potez u partiji. Potez koji bi i motor
+     * odigrao nije prelomni potez, ma sta merenje reklo.
+     */
     val turningPoint: AnalyzedMove?
         get() {
             val worst = moves.filter { it.moveClass != MoveClass.BEST }

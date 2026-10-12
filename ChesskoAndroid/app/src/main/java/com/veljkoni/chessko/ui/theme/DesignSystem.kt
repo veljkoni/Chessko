@@ -331,9 +331,8 @@ object DS {
 
     /**
      * Najveca stranica table na TELEFONU (i u uskom prozoru). Tablet ide do
-     * `maxBoardSideTablet` (spec § 13). Obe vrednosti zive u `logic/BoardSizing`
+     * `BoardSizing.TABLET_MAX_SIDE` (spec § 13). Obe vrednosti zive u `logic/BoardSizing`
      * (JVM test); ekrani zovu `BoardSizing.boardSide`.
      */
     val maxBoardSide: Dp = BoardSizing.PHONE_MAX_SIDE.dp
-    val maxBoardSideTablet: Dp = BoardSizing.TABLET_MAX_SIDE.dp
 }

@@ -205,8 +205,8 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                             .padding(vertical = DS.Space.xl),
                         verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                     ) {
-                        StepOpponentCard(viewModel, activeTheme, activeStyle)
-                        StepPlayerCard(viewModel, activeTheme, activeStyle)
+                        StepOpponentCard(viewModel, activeStyle)
+                        StepPlayerCard(viewModel, activeStyle)
                         footer()
                     }
                 }
@@ -228,9 +228,9 @@ fun StepGameView(difficulty: String, startFEN: String?, stepId: String, onClose:
                         verticalArrangement = Arrangement.spacedBy(DS.Space.m),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        StepOpponentCard(viewModel, activeTheme, activeStyle)
+                        StepOpponentCard(viewModel, activeStyle)
                         board()
-                        StepPlayerCard(viewModel, activeTheme, activeStyle)
+                        StepPlayerCard(viewModel, activeStyle)
                         footer()
                     }
                 }
@@ -286,13 +286,12 @@ private fun stepCaptured(viewModel: GameViewModel, color: PieceColor) =
 
 /** Kartica protivnika „Računar · Početnik" — bez strelice: nivo zadaje korak. */
 @Composable
-private fun StepOpponentCard(viewModel: GameViewModel, boardTheme: BoardTheme, pieceStyle: PieceStyle) {
+private fun StepOpponentCard(viewModel: GameViewModel, pieceStyle: PieceStyle) {
     val color = if (viewModel.playerColor == PieceColor.WHITE) PieceColor.BLACK else PieceColor.WHITE
     val active = stepActive(viewModel, color)
     PlayerCard(
         color = color,
         name = loc("Računar"),
-        boardTheme = boardTheme,
         pieceStyle = pieceStyle,
         subtitle = viewModel.difficulty.label,
         status = if (active && viewModel.isThinking) PlayerCardStatus.Thinking else null,
@@ -304,7 +303,7 @@ private fun StepOpponentCard(viewModel: GameViewModel, boardTheme: BoardTheme, p
 
 /** Kartica igraca: „Na potezu" (+ „· Šah"), kraj partije kao `Type.body`. */
 @Composable
-private fun StepPlayerCard(viewModel: GameViewModel, boardTheme: BoardTheme, pieceStyle: PieceStyle) {
+private fun StepPlayerCard(viewModel: GameViewModel, pieceStyle: PieceStyle) {
     val color = viewModel.playerColor
     val active = stepActive(viewModel, color)
     val status: PlayerCardStatus? = when {
@@ -317,7 +316,6 @@ private fun StepPlayerCard(viewModel: GameViewModel, boardTheme: BoardTheme, pie
     PlayerCard(
         color = color,
         name = loc("Ti"),
-        boardTheme = boardTheme,
         pieceStyle = pieceStyle,
         status = status,
         isActive = active,

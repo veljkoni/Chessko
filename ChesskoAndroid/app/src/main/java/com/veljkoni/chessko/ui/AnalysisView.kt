@@ -48,8 +48,8 @@ import kotlin.math.max
 // Prenosi `Chessko/Views/AnalysisView.swift`. Cist prikaz gotovog
 // `GameAnalysis`-a — ovaj fajl ne racuna nista, sve brojke stizu vec gotove
 // iz `AnalysisViewModel`/`GameAnalysis` (Task 1 i 4, oba testirana bez
-// ijednog `android.*` uvoza). Jedino sto ovaj fajl zna, a model ne, jeste
-// kako klasa poteza izgleda: boja i naziv.
+// ijednog `android.*` uvoza). Kako klasa poteza izgleda (simbol + ispuna)
+// zna `MoveClassBadge` (`GameComponents.kt`); ovaj fajl samo slaze ekran.
 //
 // **Sopstveni `AnalysisViewModel`, ne deljen.** Pravi se preko `remember`,
 // NE preko `viewModel()`/`ViewModelStoreOwner` — ovaj ekran se otvara kao

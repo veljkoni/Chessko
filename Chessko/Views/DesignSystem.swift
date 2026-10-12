@@ -68,10 +68,9 @@ enum DS {
     }
 
     /// Najveca stranica table na TELEFONU (i u uskom prozoru na tabletu). Tablet
-    /// ide do `maxBoardSideTablet` (spec § 13). Obe vrednosti zive u
+    /// ide do `BoardSizing.tabletMaxSide` (spec § 13). Obe vrednosti zive u
     /// `BoardSizing` (testirano u `swift test`); ekrani zovu `BoardSizing.boardSide`.
     static let maxBoardSide: CGFloat = BoardSizing.phoneMaxSide
-    static let maxBoardSideTablet: CGFloat = BoardSizing.tabletMaxSide
 
     // MARK: Radijusi
 

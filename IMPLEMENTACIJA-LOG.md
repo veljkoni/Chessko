@@ -1549,7 +1549,7 @@ iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; And
   `Localizable.xcstrings` (hirurški, jedna vrednost) i `AND/logic/Loc.kt`. Usput proveren ceo ruski
   na obe platforme na latinična slova usred ćirilice: jedini preostali pogoci su šahovska notacija u
   lekcijskim opisima otvaranja („2.Кf3"), što je ispravno.
-- [x] **Ruski za 5 stilova / „Игровая комната"** — od četiri neprevedena Android stila tri su
+- [x] **Ruski za 5 stilova / „Игровая комната"** — od pet neprevedenih Android stila (Klasični/Neonski/Drvene/Metalne/Ravne) četiri su
   obrisana odlukom vlasnika (Task 12), „Klasični" je dobio prevod (Task 12). Mreža je adaptivna sa
   dve rezervisane linije labele (Task 10), pa „Игровая комната" ne pomera red — **potvrda tek na
   ponovnom snimanju**.
@@ -1898,3 +1898,13 @@ vežba/test/partija, Put, Lekcija, Sat + izbor vremena + objašnjenje, Podešava
 12. iOS `Menu` sa karticom protivnika kao labelom (da li sistem tintuje sadržaj), visina liste poteza na
     iPhone SE, pejzažni panel na niskim telefonima.
 13. Kalendar Zadataka (iOS) — izabran dan na accent tinti (Task 13).
+
+## Završni talas ispravki
+
+Posle završnog pregleda cele grane: ispravljene tri netačne tvrdnje u dokumentaciji („pet od šest" parova
+iznad AA, 32 testa u `MoveAnalysisTests`, pet neprevedenih Android stila od kojih su četiri obrisana),
+naziv Android konstante `BoardSizing.PHONE_MAX_SIDE` u `CLAUDE.md`, KDoc za `.best` isključenje vraćen
+iznad `turningPoint` i zastareo zaglavni komentar `AnalysisView.kt` (klasu poteza crta `MoveClassBadge`).
+Uklonjen mrtav kod: `DS.maxBoardSideTablet` (iOS i Android; test se poziva na
+`BoardSizing.TABLET_MAX_SIDE`), iOS `currentDifficultyLabel`, parametar `boardTheme` iz Android
+`PlayerCard` i lanca koji ga prosleđuje, neiskorišćen uvoz `StockfishLevel` u `SettingsView.kt`.

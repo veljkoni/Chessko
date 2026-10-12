@@ -234,8 +234,8 @@ izuzetak.
 > **Dizajnerski pregled (2026-10, § 13) je ovo zamenio jednom funkcijom.** Strana table se na obe
 > platforme računa u `BoardSizing.boardSide` (iOS `Chessko/Models/BoardSizing.swift`, Android
 > `logic/BoardSizing.kt` + omotač `ui/BoardLayout.kt`): telefon do 560 (`DS.maxBoardSide`, sada izveden
-> iz `BoardSizing.phoneMaxSide`), tablet (prozor ≥ 600 i visina ≥ 480 / vertikalno `regular`) **560–800**
-> po visini ekrana (`DS.maxBoardSideTablet`). Svih šest igračkih ekrana i lekcija (kroz
+> iz `BoardSizing.phoneMaxSide` na iOS-u, `BoardSizing.PHONE_MAX_SIDE` na Androidu), tablet (prozor ≥ 600 i visina ≥ 480 / vertikalno `regular`) **560–800**
+> po visini ekrana (`BoardSizing.tabletMaxSide` / `TABLET_MAX_SIDE`). Svih šest igračkih ekrana i lekcija (kroz
 > `LocalLessonBoardMaxSide` / `\.lessonBoardMaxSide`) idu kroz nju; nijedan ekran više ne nosi
 > `DS.maxBoardSide` direktno. `BoardWidthCapTest` je svesno izmenjen: svaki ekran mora da zove
 > zajedničku `boardSide(` i **ne sme** da nosi `DS.maxBoardSide`; vrednosti tabele § 13 pokrivaju
@@ -480,7 +480,7 @@ gubitku u centipionima i prikazuje ekran sa procentom tačnosti, trakom poteza u
 prelomnim potezom. Dostupno je i iz `game` koraka Puta.
 
 - **Matematika je odvojena od motora.** `Models/MoveAnalysis.swift` je Foundation-only,
-  kompajlira se i u SwiftPM paket i pokriven je sa 17 testova (uz još 9 za parser, ukupno 26
+  kompajlira se i u SwiftPM paket i pokriven je sa 23 testa (uz još 9 za parser, ukupno 32
   u `MoveAnalysisTests.swift`). Motor je zamenljiv; pravila
   klasifikacije nisu. `Logic/UCIScoreParser.swift` je iz istog razloga izdvojen iz
   `StockfishBridge`-a — `actor` koji uvozi `ChessKitEngine` ne može u testni paket, a
@@ -954,7 +954,7 @@ Testovi (posle dizajnerskog pregleda, 2026-10-12): **147 JVM** (`./gradlew testD
 ## Poznata ograničenja / TODO kandidati
 
 - **ZASTARELO posle dizajnerskog pregleda (2026-10, § 2):** sa `inkMuted #5E6573` i `warning #865F21`
-  svih šest tekstualnih parova ispod je prešlo AA (5,28 / 4,86 / 5,72 / 4,75 / 5,16) i tvrdi ih
+  pet od šest tekstualnih parova ispod je prešlo AA (5,28 / 4,86 / 5,72 / 4,75 / 5,16) i tvrdi ih
   `ContrastTest.designReviewTokensLiftFormerSubAAPairsAboveAA`; u `knownSubAAPairsDoNotGetWorse` je
   ostao samo `success`/`fill` (4,18). Ikona kutije pravila je sada nad `warning@10%` preko
   **`surface`** i meri ~4,99 (svetla) — prag 3:1 prelazi. Ostatak unosa je istorija.
