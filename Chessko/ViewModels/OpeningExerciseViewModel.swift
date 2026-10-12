@@ -59,13 +59,6 @@ final class OpeningExerciseViewModel {
         phase != .solved && gameState.currentTurn == .white && animatingPiece == nil
     }
 
-    var progressLabel: String {
-        let whiteMoves = line.uciMoves.indices.filter { $0 % 2 == 0 }
-        let done = whiteMoves.filter { $0 < movePointer }.count
-        let total = whiteMoves.count
-        return LocF("%lld/%lld poteza", done, total)
-    }
-
     var statusMessage: String {
         switch phase {
         // Poruke stizu iz JSON-a vec prevedene (Faza 3) — bez `Loc()`.

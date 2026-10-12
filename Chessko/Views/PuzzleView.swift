@@ -261,10 +261,10 @@ struct PuzzleView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 6)
                             .background(
-                                calendarDate == date
-                                    ? DS.accent.opacity(0.15)
-                                    : Color.secondary.opacity(0.08),
-                                in: RoundedRectangle(cornerRadius: 8)
+                                // § 3 / § 17: bez sistemske boje kao podloge — izabran
+                                // dan na izvedenoj accent tinti, ostali `fill` (Task 13).
+                                calendarDate == date ? DS.selectionTint : DS.fill,
+                                in: RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous)
                             )
                         }
                         .foregroundStyle(DS.ink)
@@ -400,7 +400,7 @@ struct PuzzleView: View {
 
                 // Sve ispod je vezano za DNEVNI zadatak. U `.practice` rezimu
                 // "Sledeći dan" bi korisnika tiho izbacio iz vezbanja u tudji
-                // datum, a poruka "Završio si zadatak za danas!" bi lagala —
+                // datum, a poruka "Zadatak za danas je rešen!" bi lagala —
                 // resen vezbovni zadatak ne oznacava dan resenim (kvacica u
                 // toolbaru bi na istom ekranu tvrdila suprotno).
                 if viewModel.mode == .daily {
@@ -415,7 +415,7 @@ struct PuzzleView: View {
                         HStack(spacing: DS.Space.s) {
                             Image(systemName: "star.fill")
                                 .foregroundStyle(DS.warning)
-                            Text(Loc("Završio si zadatak za danas!"))
+                            Text(Loc("Zadatak za danas je rešen!"))
                                 .font(.dsBody.weight(.medium))
                                 .foregroundStyle(DS.ink)
                         }

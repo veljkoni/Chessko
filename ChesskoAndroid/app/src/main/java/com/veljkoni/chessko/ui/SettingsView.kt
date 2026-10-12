@@ -132,7 +132,7 @@ fun SettingsView(
         AlertDialog(
             onDismissRequest = { showResetStatsConfirm = false },
             title = { Text(text = loc("Potvrda"), color = DS.ink, fontWeight = FontWeight.Bold) },
-            text = { Text(text = loc("Da li želite da resetujete sve statistike?"), color = DS.ink) },
+            text = { Text(text = loc("Da li želiš da resetuješ celu statistiku?"), color = DS.ink) },
             confirmButton = {
                 TextButton(onClick = {
                     stats.resetStats()

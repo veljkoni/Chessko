@@ -340,7 +340,8 @@ fun ActionBarButton(
     Box(
         modifier = modifier
             .alpha(if (enabled) 1f else 0.38f)
-            .height(48.dp)
+            // Najmanja visina, ne fiksna (spec § 16: veći font / hindi ne sme da se seče).
+            .heightIn(min = 48.dp)
             .clip(ButtonShape)
             .background(DS.fill)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick),

@@ -1543,4 +1543,358 @@ iOS katalog hirurški (+689 linija, 0 obrisanih) + `build_localizations.py`; And
 
 ## Task 13 — Lokalizacija, provere i završni izveštaj (§ 16, § 17, § 19)
 
-_(popunjava Task 13)_
+### Urađeno po stavkama § 16 (obe platforme)
+
+- [x] **Ruski „Внешний vuд доски" → „Внешний вид доски"** — `build_localizations.py`,
+  `Localizable.xcstrings` (hirurški, jedna vrednost) i `AND/logic/Loc.kt`. Usput proveren ceo ruski
+  na obe platforme na latinična slova usred ćirilice: jedini preostali pogoci su šahovska notacija u
+  lekcijskim opisima otvaranja („2.Кf3"), što je ispravno.
+- [x] **Ruski za 5 stilova / „Игровая комната"** — od četiri neprevedena Android stila tri su
+  obrisana odlukom vlasnika (Task 12), „Klasični" je dobio prevod (Task 12). Mreža je adaptivna sa
+  dve rezervisane linije labele (Task 10), pa „Игровая комната" ne pomera red — **potvrda tek na
+  ponovnom snimanju**.
+- [x] **Množine** — mehanizam iz Task-a 2 (`LocPlural` / `locPlural`, `<osnova>#one|few|many|other`).
+  Prošao sam SVE ključeve sa `%lld`/`%d` na obe platforme: broj uz imenicu sa slaganjem imaju samo
+  dani niza, mogući potezi, koraci (Danas / zaključano poglavlje), zadaci (Danas) i pioni (Analiza) —
+  svi su već kroz množinu. Ostali su oblik „oznaka broj" („Korak %lld", „Zadatak %lld od %lld",
+  „Potez %d od %d", „Poteza: %d", „Mat u %lld", „Vežba · %lld", „%lld po strani") i ne traže slaganje.
+  Dva ključa sa slaganjem bez pozivaoca su obrisana (vidi niže: `%lld/%lld poteza`,
+  `%lld lekcije od osnova do završnice`). Interpolacije broja u tekst van ključeva: 0 (grep obe).
+- [x] **„ti" svuda (srpski).** Jedini živ ključ na „Vi" bio je dijalog resetovanja statistike
+  („Da li želite da resetujete sve statistike?") → nov ključ **„Da li želiš da resetuješ celu
+  statistiku?"** (obe platforme, 8 jezika; nemački „Möchtest du…", francuski „Veux-tu…", ruski
+  bezlično „Сбросить всю статистику?", hindi „सभी सांख्यिकी रीसेट करें?"). Dijalozi predaje su na „ti"
+  od Task-a 4/5; njihovi stari „Vi" ključevi su ostali bez pozivaoca i obrisani su ovde.
+  Odluka za prevode: vidi „Odluke".
+- [x] **Rodno neutralne poruke o ishodu.** Ishod partije je neutralan od Task-a 4 („Mat · pobeda
+  belih/crnih"). Ovde: dve preostale žive muške poruke ishoda → neutralne, obe platforme, 8 jezika:
+  „Završio si zadatak za danas!" → **„Zadatak za danas je rešen!"**, „Prešao si ceo put!" →
+  **„Ceo put je pređen!"**. Stare muške poruke partije („Mat! Pobedio si! 🎉", „Predaja! Izgubio
+  si." …) nisu imale pozivaoca i obrisane su. Grep srpskog posle izmene: 0 živih ključeva sa
+  „-o si" oblikom.
+- [x] **Decimalni zarez i procenti** — `LocalFormat` (Task 2) pokriva tačnost, uspešnost, procenu,
+  gubitak u Analizi. Preostali `String.format` / `String(format:)`: cifre sata (`m:ss`, vreme, ne
+  decimalni broj — vidi „Odluke") i celobrojni `Potez %d od %d`. Nema nijednog `"%.1f"` u UI-ju.
+- [x] **Bez „Premium"** — grep po kodu, katalogu, `Loc.kt`, lekcijama i `build_localizations.py`:
+  0 (jedini pogodak je komentar „Bez reči Premium" u `MainActivity.kt`).
+- [x] **Nijedna visina reda nije fiksna** — prošao sam sve `.frame(height:)` (iOS) i
+  `Modifier.height(...)` (Android). Fiksnu visinu uz prevodiv tekst imala su samo dugmad visine 48:
+  akciona traka Igre (iOS `DSActionButtonLabel`, Android `ActionBarButton`), primarno i sporedno
+  dugme dijaloga kraja partije (Android) i `AnalysisButton` (Android) → **najmanja visina 48**
+  (`.frame(minHeight: 48)` / `heightIn(min = 48.dp)`). Ostale fiksne visine nose cifre/notaciju
+  (red liste poteza 36, ćelija 28 — notacija se ne prevodi), ikone, linije ili tablu.
+
+### § 17 i § 19 nad kodom — izmene
+
+- **iOS kalendar Zadataka** — dan u kalendaru je i dalje imao `Color.secondary.opacity(0.08)` kao
+  podlogu (promaklo Task-u 2 i 5) → `DS.fill`, izabran dan `DS.selectionTint` (izvedena accent
+  tinta), `Radius.s`.
+- **„–" kao prazno stanje uzetih figura** — `CapturedPiecesView` (obe) je još crtao „–" (iOS uz
+  sistemsku `.tertiary` boju). Nedostižno kroz današnje pozivaoce (kartica igrača red crta samo kad
+  ima figura), ali § 5/§ 19 kažu „nigde" → grana uklonjena na obe, ostaje samo visina reda.
+
+### Mrtvi ključevi i komponente (spiskovi iz Task-ova 4, 5, 9, 10 + ono što je § 16 oslobodio)
+
+Svaki ključ je proveren pre brisanja: literal ne postoji ni u jednom `.swift`/`.kt` izvoru (van
+rečnika), ni u lekcijskom JSON-u, ni kao vrednost enuma/promenljive (dinamički `Loc(x)` bi
+literal i dalje nosio negde u izvoru). `LocCatalogTests` i `LocTest` zeleni posle brisanja;
+generator i katalog provereni skriptom — isti skup ključeva i iste vrednosti (0 razlika).
+
+- **iOS katalog + `build_localizations.py`** (18 obrisano, 3 dodata): „Mat! Izgubio si.",
+  „Mat! Pobedio si! 🎉", „Mat! Beli/Crni je pobedio! 🎉", „Predaja! Izgubio si.",
+  „Predaja! Pobedio si! 🎉", „Predaja! Beli/Crni je pobedio.", „Pregledaj partiju",
+  „Da li ste sigurni da želite da predate (trenutnu) partiju?" (2), „Predaja partije",
+  „Nastavi igru", „%lld/%lld poteza" (uz mrtav `OpeningExerciseViewModel.progressLabel`, koji
+  nijedan ekran nije prikazivao), „%lld lekcije od osnova do završnice", i zamenjeni
+  „Da li želite da resetujete sve statistike?", „Završio si zadatak za danas!",
+  „Prešao si ceo put!".
+- **Android `Loc.kt`** (26 obrisano, 3 dodata): isti skup gde je postojao, plus „%d/%d poteza",
+  „Izgled aplikacije", „Efekti", „Reset", „Napad na dam", „Napad na kral", „Izaberi",
+  „Rejting: " (i iz liste u `LocTest.puzzleScreenChromeIsTranslated`), „Prijatelj",
+  „Nema odigranih poteza", „Da li ste sigurni? Trenutna partija će biti izgubljena.".
+- **Android `StatusBanner`** (`AND/ui/UiComponents.kt`) — bez pozivaoca od Task-a 5, obrisan.
+- Emoji 🎉 u obrisanim ključevima: nijedna vidljiva poruka se ne menja (ključevi nisu imali
+  pozivaoca); 🎉 u živim porukama („Bravo! Mat! 🎉") ostaje (§ 0).
+
+### Testovi (Task 13)
+
+- `xcodebuild … build` — **BUILD SUCCEEDED**; `swift test` — **110 testova, 0 padova**
+  (BoardSizing 8, Castling 4, Curriculum 7, LessonContent 6, LocalFormat 8, LocCatalog 1,
+  MoveAnalysis 32, Perft 7, Progress 18, PuzzleRepository 14, Rating 5).
+- `./gradlew assembleDebug testDebugUnitTest` — **147 JVM testova, 0 padova, 0 grešaka** (iz XML-a):
+  AppearanceCatalog 5, BoardSizing 8, BoardWidthCap 2, Contrast 19, Engine 9, EvaluationLabel 3,
+  ExampleUnit 1, GameStateFenHalfmove 5, GameStateStatusFromPosition 5, LessonBoardsOptOutOfSwipe 2,
+  Loc 7, MainActivitySoundWiring 1, MoveAnalysis 33, PathProgress 10, PluralRules 7,
+  PuzzleDateFormat 7, PuzzleRating 9, SpacingTokens 1, StepWindow 3, TypographyScale 1,
+  UCIScoreParser 9.
+- `./gradlew connectedDebugAndroidTest` — **55 instrumentisanih, 0 padova, 0 grešaka** (iz
+  `app/build/outputs/androidTest-results/connected/debug/TEST-Medium_Phone_API_36.1(AVD) - 16.xml`,
+  mtime 12. 10. 2026. 01:56:08; `git rev-parse HEAD` pre prolaza = `2f60d5a` + radno stablo ovog
+  taska): Curriculum 6, ExampleInstrumented 1, GameViewModelActivityRecreation 1, LessonContent 9,
+  **LessonGlyphMap 3** (uključujući `shippedIconsAreTintableNeverFullColorEmoji` iz Task-a 8 — prvi
+  put izvršen, prolazi), LessonRepository 6, ProgressStore 10, PuzzleRepository 10,
+  SoundReleaseOnLanguageKeyChange 1, StatsFacade 4, StockfishEvaluate 4.
+  Prvi pokušaj je javio `BUILD SUCCESSFUL` a nije pokrenuo nijedan test
+  (`INSTALL_FAILED_INSUFFICIENT_STORAGE`, 608 MB slobodno na emulatoru — tačno zamka iz `CLAUDE.md`);
+  posle `pm trim-caches` (682 MB) drugi prolaz je instalirao i izvršio svih 55. Tuđ paket na
+  emulatoru (`com.veljkoni.lernegy`) nije diran.
+  Emulator: dignut 01:54:44 (`-no-window -no-audio -no-boot-anim -gpu host -cores 2 -memory 2048`,
+  `nice -n 10`), ugašen 01:56:38 (`adb emu kill`, `./gradlew --stop`, `pgrep -f qemu-system` →
+  prazno). **Posle tog prolaza** su izmenjeni samo `CapturedPiecesView` (obe) i kalendar Zadataka
+  (iOS) — nijedan instrumentisani test ih ne iscrtava; JVM i `swift test` su ponovljeni posle njih.
+
+### Novi stringovi (8 jezika, obe platforme)
+- „Da li želiš da resetuješ celu statistiku?", „Zadatak za danas je rešen!", „Ceo put je pređen!".
+  Nesigurno (bez izvornog govornika): hi „आज की पहेली हल हो गई!", „पूरा पथ पूरा हुआ!",
+  „सभी सांख्यिकी रीसेट करें?"; zh „今天的谜题已完成！", „整条路径已完成！".
+
+### Odluke (Task 13)
+- **„ti" se odnosi na srpski glas aplikacije; prevodi zadržavaju svoj registar** tamo gde bi prelazak
+  na neformalno obraćanje uveo rod: ruski „Вы проиграли/Ваш ход" i hindi „आप …" su bezrodni, a
+  „ты проиграл/проиграла" i hindi glagoli uz „तुम" nose rod — to bi prekršilo susednu stavku § 16
+  („rodno neutralno"). Novi tekstovi u ruskom/hindiju su bezlični. Nemački/francuski/italijanski
+  koriste „du/tu/tu" gde je tekst diran; zatečeni francuski „vous" u ostalim živim porukama nije
+  sistematski prepisivan (5 živih ključeva u iOS katalogu, 17 unosa u `Loc.kt`; bez izvornog
+  govornika) — rezidual.
+- **Cifre sata ostaju „m:ss.d"** sa tačkom pred desetinkom: to je zapis vremena (kao na fizičkim
+  satovima i na iOS-u i ranije), ne decimalni broj, a polovine sata su § 0.
+- **„Završio si…"/„Prešao si…" su rodno neutralizovani iako nisu ishod partije** — oba su poruke o
+  ishodu (zadatak rešen, put pređen) i jedine muške žive poruke u aplikaciji.
+
+---
+
+## Završni izveštaj (dizajnerski pregled pred izdanje)
+
+Grana `v2/dizajn-pregled`, 13 taskova, 13 commit-a sa ispravkama posle pregleda (`2d7528e` …
+Task 13). Spec: `docs/design/CHESSKO-IMPLEMENTACIJA.md`. Vizuelna kontrola nije rađena ni u jednom
+tasku (presuda: bez simulatora/emulatora do kraja; Task 13 je emulator koristio samo za
+instrumentisane testove, bez snimaka) — **sve što zavisi od izgleda na uređaju čeka ponovno
+snimanje** (spisak na kraju).
+
+### Odluka vlasnika koja menja spec
+
+**Spec § 0, § 11 i § 12 kažu da se 8 postojećih tema i 8 stilova ne diraju i da se dodaju 2 + 2.
+Vlasnik je to proglasio greškom u specifikaciji (11. 10. 2026.) i odlučio: brišu se teme Polarna,
+Smaragd, Pesak, Sajber i stilovi Neonski, Drvene, Metalne, Ravne, Tanke.** Rezultat: **6 tema**
+(Klasična, Šumska, Drvo, Ugalj, Žalfija, Glina) i **5 stilova** (Klasični, Igraonica, Staklene,
+Reljef, Rez), na obe platforme (Task 12). Sačuvana obrisana vrednost pada na Klasičnu/Klasični i
+mreža je prikazuje izabranom.
+
+### Urađeno / neurađeno po sekcijama
+
+| § | Status | Neurađeno ili odstupanje (razlog u „Odluke") |
+|---|---|---|
+| 2 Tokeni | **urađeno** | `inkMuted` `#5E6573`, `warning` `#865F21` (svetla); izvedene tinte iz tokena |
+| 3 Globalna pravila | **urađeno** | iOS sistemski `.alert` ostaje (ne može `surface`/`Radius.l`); iOS kartica promocije ostaje materijal |
+| 4 Navigacija i hrom | **urađeno** | iOS app bar Lekcije: `navBar` tek pri klizanju + sistemska linija umesto `DS.line`; celoekranski sloj i inseti neprovereni na uređaju |
+| 5 Igra | **urađeno** | iOS „Nova igra" u kraju partije otvara birač boje i u partiji u dvoje (zatečeno) |
+| 6 Analiza | **urađeno osim P3** | P3 mini-tabla izabranog poteza nije rađena (tap otvara potez na velikoj tabli) |
+| 7 Zadaci i koraci | **urađeno osim P3** | P3 „Zadatak 1940 / Tvoj Elo 800" nije rađeno; napomena koraka partije ispod kartice igrača, ne odmah ispod table; Android nema kalendar (zatečeno) |
+| 8 Put | **urađeno osim jedne P3** | P3 nazivi „Vežba: 5 zadataka" / „Partija protiv računara" preskočeni (sudar sa „Nastavi: Vežba · 5") |
+| 9 Lekcija | **urađeno** | glif uzima boju mesta (ne svuda `ink`); 👑 → ♔ i gde lekcija misli na Damu |
+| 10 Ikone | **urađeno** | iOS skakač je SVG template slika, ne pravi SF custom symbol — `TODO(design § 10)` |
+| 11 Teme | **urađeno** (uz odluku vlasnika) | — |
+| 12 Stilovi | **urađeno** (uz odluku vlasnika) | Android SVG kroz Coil, ne VectorDrawable; Reljef senka (`clipPath`) neproverena na uređaju |
+| 13 Tablet | **urađeno** | hrom za formulu pretpostavljen (vidi Odluke); leva ivica Igre i Zadataka razlikuje se za pola eval trake |
+| 14 Sat | **urađeno** | iOS izbor vremena je sopstveni sheet, ne sistemski meni |
+| 15 Podešavanja | **urađeno** | Android bez `appcompat` i bez `locales_config.xml` (nema unosa u sistemskom izboru jezika aplikacije) |
+| 16 Lokalizacija | **urađeno** (Task 13) | francuski „vous" u 5 živih iOS ključeva / 17 Android unosa nije prepisan |
+| 17 Provere | **urađeno** | vidi „§ 17" ispod |
+
+### Odluke kontrolora (sve `Ruling:` iz SDD knjige, prevedeno)
+
+1. Spec zadržava 8 tema i 8 stilova i dodaje 2 + 2 — prvobitno praćen spec. **Zamenjeno odlukom
+   vlasnika** (brisanje 4 teme i 5 stilova, vidi gore); plan i globalna ograničenja izmenjeni,
+   Task 12 prvo briše.
+2. Faza 4 iz § 18 podeljena u tri taska i tri commit-a (Igra, Zadaci, Analiza) — cena: jedna faza =
+   tri commit-a umesto jednog.
+3. Bez emulatora/simulatora u Task-ovima 1–12; vizuelna provera je vlasnikovo ponovno snimanje —
+   cena: greške rasporeda vidljive samo na uređaju mogu stići do snimanja.
+4. Raspored lekcije na tabletu (Task 8) koristi zatečenu veličinu table; Task 11 ubacuje zajedničku
+   funkciju i za lekcije — cena: Task 11 ponovo dira lekcijski fajl.
+5. iOS dijalozi: gde je sistemski `.alert`/`.confirmationDialog`, ostaje sistemski (HIG, ne može se
+   restilizovati); primenjena § 3 pravila teksta i uloga (ti, destruktivno = `.destructive`,
+   „Otkaži" = `.cancel`); sopstveni preklopi/sheet-ovi dobijaju § 3 izgled — cena: iOS sistemski
+   dijalozi izgledaju nativno, ne kao Android.
+6. Android jezik „Sistem": bez `appcompat` (nova zavisnost zabranjena), kroz postojeći `Loc`
+   mehanizam; `locales_config.xml` + `LocaleManager` samo ako staje bez biblioteke — cena: nema
+   unosa po aplikaciji u sistemskim podešavanjima na starijim Androidima.
+7. `BoardWidthCapTest` i test lekcijske granice smeju da se menjaju u Task-ovima 8/11, jer § 9/§ 13
+   traže granicu i za lekcijsku tablu.
+8. Novi Android stilovi idu kao SVG u `assets/pieces/` kroz postojeći Coil put (ne VectorDrawable iz
+   § 12) — cena: Reljef senka može da se iscrta pogrešno; neprovereno do snimanja.
+9. Množine kroz sopstvena CLDR pravila + ključeve `<osnova>#one|few|many|other` na obe platforme
+   (testirano), ne nativni `stringsdict`/Android `plurals` — nativna iOS množina kroz zamenjen
+   `Bundle.main` ne može se dokazati bez simulatora, a Android `Loc` nema resurse — cena:
+   nestandardan mehanizam; prevodioci ključeve uređuju ručno.
+10. Dugmad dijaloga: nedestruktivno primarno = puno `accent` dugme `Radius.m`; destruktivna potvrda
+    = tekst-dugme u `danger` (§ 5 „Predaj"); sporedno = tekst u `accent` — cena: destruktivne radnje
+    manje istaknute od spec-ove reči „primarno dugme".
+11. iOS app bar Lekcije: `navBar` podloga tek kad sadržaj klizi + sistemska linija senke umesto
+    `DS.line` (sistemsko ponašanje trake na iOS 18/26) — cena: sitna razlika od § 4.
+12. iOS kartica promocije zadržava `.ultraThinMaterial` — § 0 pločicu promocije drži fiksnom, a na
+    `surface` bi pločice nestale — cena: jedan iOS preklop van § 3 izgleda dijaloga.
+13. iOS zlatni čip mata (`#FFD700` na `#1E293B`) dozvoljen — preslikava § 0 fiksnu zlatnu oznaku mata
+    koja već postoji na Androidu, iste vrednosti — cena: dve fiksne boje na iOS-u.
+14. Napomena „Korak se završava…" u koraku partije stoji ispod kartice igrača (redosled
+    protivnik → tabla → igrač kao u Igri), ne odmah ispod table (§ 7) — cena: manje odstupanje u
+    položaju.
+15. Tačnost = aritmetička sredina Lichess tačnosti po potezu iz gubitka procenta pobede (bez
+    harmonijske sredine i težina nestabilnosti); ispod 5 sopstvenih poteza „—" — jednostavnije od
+    Lichess-a, blaže ocene (~89 % naspram Lichess ~70 % za jedan promašaj) — cena: vlasnik možda želi
+    strože; menja se samo `accuracyFor` na obe platforme.
+16. P3 nazivi koraka „Vežba: 5 zadataka" / „Partija protiv računara" preskočeni — dugme bi glasilo
+    „Nastavi: Vežba: 5 zadataka" — cena: neispunjena P3 stavka.
+17. Lekcijski glifovi uzimaju boju mesta (ikona sekcije `inkMuted`, ikona kutije `warning`, u tekstu
+    `ink`), ne `ink` svuda — sukob § 9 tabele i rečenice o glifu rešen po tabeli — cena: boja glifa se
+    razlikuje od reči „Boja ink".
+18. `crown.fill` → ♔ svuda (i gde lekcija misli na Damu) — jedan simbol po SF imenu, JSON nepromenjen —
+    cena: glif Kralja na kutijama o dami/promociji.
+19. iOS izbor vremenske kontrole: ugnežđen sistemski `Menu` zamenjen sopstvenim sheet-om
+    `ChessClockPresetSheet` — § 14 (red kao dugme, kvačica, ivica 2 pt) nemoguće na `UIMenu` — cena:
+    nenativan birač na iOS-u.
+20. Bez `locales_config.xml` na Androidu — jezik aplikacije ide samo kroz `Loc`, pa bi sistemski izbor
+    po aplikaciji bio bez efekta — cena: nema unosa jezika aplikacije u podešavanjima Androida 13+.
+21. Tekst ispod „Sistem" pokazuje jezik u koji bi se „Sistem" razrešio na ovom uređaju (jednak
+    trenutnom jeziku kad je „Sistem" izabran) — cena: doslovno čitanje § 15 („trenutni jezik") se
+    razlikuje kad je izabran konkretan jezik.
+22. Ulazi hroma za `boardSide` pretpostavljeni (Pixel Tablet gore 88 / dole 80 / rail 80; iPad gore 98
+    — izvedeno iz same tabele / dole 20) da bi se reprodukovala § 13 tabela; zapisana odstupanja:
+    rezerva visine na telefonu, tablet traži i visinu ≥ 480 / vertikalno `regular`, donja granica 200
+    uklonjena, Android korak `chromeTop 56` — cena: stvarni uređaji mogu odstupati od tabele do
+    snimanja.
+23. § 17 avatar — nije greška u kodu (avatar crta kralja nezavisno od pozicije); na snimku 44 SVG-ovi
+    se u toj emulatorskoj sesiji nisu učitali; dodato samo beleženje `onError` — cena: ako se ponovi
+    na uređaju, uzrok je i dalje nepoznat (ali sada u logcat-u).
+
+Odluke pojedinih taskova (van knjige) su u njihovim odeljcima „Odluke" iznad; Task 13 dodaje tri
+(„ti" i registar prevoda, cifre sata, neutralizovane poruke zadatka/puta).
+
+### `TODO(design § N)` u kodu (grep obe platforme, `Tests`, `Package.swift`)
+
+- `Chessko/ContentView.swift:34` — `TODO(design § 10)`: pravi SF custom symbol za skakača
+  (`chessko.knight` / `.fill` iz SF Symbols aplikacije, *Template*); danas SVG template slika. Ime
+  asseta je već ono iz spec-a, pa zamena `.imageset` → `.symbolset` ne dira kod.
+
+Nijedan drugi (`TODO(design § 13)` iz Task-a 8 uklonio je Task 11).
+
+### § 17 — nalazi
+
+1. **Tačnost „0,0 %" posle 8–9 poteza — prava greška u formuli, popravljena na obe (Task 6).** Lichess
+   konstante `103,1668 · e^(−0,04354 · x) − 3,1669` su primenjene na **prosečan gubitak u
+   centipionima**, a kalibrisane su za **gubitak procenta pobede** (0–100). U pogrešnim jedinicama
+   formula pada na nulu već kod proseka ≈ 80 cp, pa jedan promašaj od 900 cp u 9 poteza obara celu
+   stranu na 0,0 %. Greška je iz spec-a v2 (`docs/superpowers/specs/2026-09-05-chessko-v2-design.md:278`)
+   i doslovno je preneta na obe platforme. Popravka: `winPercent(cp)` (Lichess `fromCentiPawns`),
+   gubitak procenta pobede po potezu, tačnost po potezu, strana = aritmetička sredina; ispod 5
+   sopstvenih poteza „—" + napomena. Repro test na obe pre izmene pao (crni 0,0 %), posle: crni 89,5 %.
+2. **Prazan avatar „Ti" na tabletu (snimak 44) — nije greška u kodu (Task 11).** Avatar uvek crta
+   `ChessPiece(king, boja igrača)`, ne čita poziciju; na istom snimku je prazan i ceo beli prvi red
+   table (isti SVG fajlovi, isti Coil), a na pravom tabletu (92, 102, 107) se sve crta. Snimak je
+   pravljen uz `wm size`/`wm density` promenjene u toku rada → neuspelo učitavanje SVG-a u toj sesiji.
+   Android `PlayerCard` sada beleži grešku učitavanja (`AsyncImage(onError = Log.w(...))`).
+3. **iOS sistemske boje kao podloga — spisak posle Task-a 2 i Task-a 13** (grep `systemBackground`,
+   `systemGroupedBackground`, `secondarySystem*`, materijali, `Color.primary/secondary`, `.tertiary`,
+   `UIColor.system*`):
+   - Koreni R1 (`AppBackgroundView` = `systemGroupedBackground`) i R2 (`Color.appBackground #EDF0F7`)
+     uklonjeni u Task-u 2 → `DS.ground` na svih 6 + 5 pozivnih mesta; Podešavanja, sat, info sat,
+     kalendar → `DS.ground`. Ekranski `Color.primary.opacity(…)` podloge očistili Task-ovi 4, 5, 8, 9, 10.
+   - Task 13 je našao i očistio još dva: dan u kalendaru Zadataka (`Color.secondary.opacity(0.08)`
+     → `DS.fill` / `DS.selectionTint`) i „–" u `CapturedPiecesView` (`.tertiary`).
+   - **Preostalo, namerno:** `GameView.swift` birač boje pri novoj igri `.ultraThinMaterial` (§ 0 —
+     ne dira se); `PromotionOverlay.swift` kartica `.ultraThinMaterial` (odluka 12);
+     `ChessClockView.swift` `Color(uiColor: .systemRed)` — tekst isteklog vremena na beloj polovini
+     sata (tekst, ne podloga; polovine su § 0; Android na istom mestu ima `#EF4444`).
+   - Ostali pogoci su definicije tokena (`DS.scrim`/`onScrim`), traka sata (`Color.white@12 %`, fiksno
+     tamna po § 14) i krug strane u okviru uputstva (`.white`/`.black` = strana u igri).
+4. **Radijalni gradijent Polarne/Sajbera.** Spec kaže „iOS gradijent, Android ravna boja — ne menjati,
+   samo zabeležiti". Task 1 je utvrdio da **gradijent postoji na obe platforme** (iOS
+   `SquareView.swift`, Android `BoardView.kt`) — tvrdnja spec-a je bila netačna. Obe teme su obrisane
+   odlukom vlasnika (Task 12) zajedno sa granom gradijenta, pa razlike više nema: sve teme su ravna
+   boja na obe platforme.
+
+### § 19 — kontrolna lista nad kodom
+
+| Stavka | Šta se tvrdi iz koda | Šta čeka snimanje |
+|---|---|---|
+| Tekst ≥ 4,5, ikona/ivica sa značenjem ≥ 3 | Tokeni po § 2; `ContrastTest` (19) meri parove obe teme WCAG formulom, uključujući nove kutije, okvir uputstva, traku sata; jedini sub-AA par tokena je `success`/`fill` 4,18 (pinovan, bez tekstualne upotrebe — ikona „rešeno" na `fill` je ≥ 3) | stvarni kompoziti na ekranu (providne tinte, materijali na iOS-u) |
+| Nijedna sistemska boja kao podloga (iOS); ista paleta u tamnoj | grep posle Task-a 13 (vidi § 17 tačka 3) — preostala 3 mesta su namerna; paleta je jedan izvor po platformi, vrednosti identične | iOS 26 staklena traka tabova (boja neizabranog taba) |
+| Android: donja traka se ne vidi ispod Analize, Podešavanja i Sata; ručka ne seče labele | `FullScreenDestination` sloj iznad `Scaffold`-a; M3 `NavigationBar` sa `windowInsets` | ceo sloj: dodiri, inseti, boja ikona statusne trake, traka statusne linije u Lekciji |
+| Nijedan status ne liči na dugme; nijedan red „–" | `StatusBanner`/`PuzzleStatusBanner`/`statusCard` uklonjeni → `InstructionBox`/kartica igrača; „–" uklonjen iz kartice igrača (Task 4) i iz `CapturedPiecesView` (Task 13); grep `"–"` u UI: 0 | — |
+| Ništa se ne lomi usred reči i ne seče (ru/de/hi) | Android `Hyphens.None` + `LineBreak.Heading` (mreža, segmenti sata), rezervisane 2 linije; iOS `lineLimit(2, reservesSpace:)` + `minimumScaleFactor`; dugmad visine 48 sada najmanje 48 (Task 13) | **sve** — iOS nema `Hyphens` ekvivalent; Android cifre sata nemaju smanjenje (iOS ima `minimumScaleFactor`) |
+| Tablet po § 13, sadržaj od vrha, bez razvučenih kartica | `BoardSizing` (8 + 8 testova reprodukuje § 13 tabelu); kolona = širina table; pejzaž tabla + panel 400; nijedno centriranje po visini | stvarni hrom uređaja, sva četiri položaja iPad/Pixel Tablet, lekcija u dve kolone |
+| Ništa iz „Šta se NE dira" nije promenjeno | boje 6 preostalih tema i oznake na tabli netaknute; hex polovina sata (`#8C2525/#121212/#2C2C2E/#FADAD8/#E5E5EA`) prisutni na obe; strane eval trake, zlatna oznaka mata, pločica promocije, birač boje netaknuti (izmene u tim fajlovima: samo lokalni format broja i oblik kartice); emoji u živim porukama ostaju | **izuzetak po odluci vlasnika:** obrisane 4 teme i 5 stilova |
+
+### Poznati reziduali (odložene sitnice iz pregleda, nepopravljene)
+
+- Task 1: zaglavlje tabele 1.2 kaže „33 reda", a tabela ima drugi broj redova.
+- Task 2: grupisanje cifara se razlikuje (iOS decimalni zadržava grupisanje, Android isključeno);
+  znakovi iz spec-a („0,0 %" sa razmakom, U+2212) naspram CLDR („0,0%", crtica) nisu provereni na
+  uređaju za svaki jezik.
+- Task 3: neprovereno na uređaju — Android celoekranski sloj (dodiri, inseti, boja ikona statusne
+  trake), traka statusne linije u Lekciji; iOS 26 staklena traka — boja neizabranog taba.
+- Task 4: iOS „Nova igra" u kraju partije otvara birač boje i u partiji u dvoje (zatečeno);
+  negativna oznaka procene testirana samo za `en` (sr/ru znak minus netestiran); neprovereno: iOS
+  `Menu` sa karticom kao labelom (tint), pejzažni paneli koji skroluju.
+- Task 5: P3 „Zadatak 1940 / Tvoj Elo"; Android kalendar Zadataka ne postoji (zatečeno).
+- Task 6: viseći KDoc u `MoveAnalysis.kt` (komentar `.best` iznad `moveCount`); zastarelo zaglavlje
+  `AnalysisView.kt:51`; vrednosti pariteta (89,457 / 99,716) nisu pinovane u testovima; „oko 2 piona"
+  cifrom umesto rečima iz spec-a.
+- Task 7: Android `StreakAndGoalCard` ne izgovara stanje cilja (iOS `accessibilityValue`); Android
+  `ContinueCard` tekst za čitač kad korak nije pokretljiv; veličine ikona (Nastavi 28 dp naspram iOS
+  glifa naslova; vrsta koraka 16 dp naspram caption); `Icons.Filled.MenuBook` zastareo →
+  `AutoMirrored`; oznaka cilja menja metu „1 korak" → „3 zadatka" posle prvog zadatka.
+- Task 8: rotacija iPad-a resetuje stanje vežbe u lekciji (dva stabla pogleda); oznaka table u dve
+  kolone izgleda tapabilno (accent + strelica) a nije; Android `MateExerciseCard` remi → ivica
+  `danger` naspram iOS `line`; iOS sakrivena tabla u `ZStack`-u drži visinu; podnaslov lekcije
+  `body`/`inkMuted`.
+- Task 9: iOS sheet „Zatvori" `foregroundStyle` naspram `.tint` u toolbaru; nema testa za iOS ključeve
+  kategorija sata (`Loc` kroz promenljivu); Android cifre sata se seku bez smanjenja (iOS
+  `minimumScaleFactor`); neizabran red preseta ima nevidljivu `line` ivicu (dekorativno). („Izaberi"
+  ključ obrisan u Task-u 13.)
+- Task 10: iOS redovi prekidača niži (`Space.s` naspram `Space.m`); Android rezerva labele u dva
+  koraka (caption → label), ne kontinualno; zatečeno: linkovi „O aplikaciji" (Android puni, iOS
+  `Link`), izabrana labela pločice Bold naspram semibold, neiskorišćeni `currentDifficultyLabel` (iOS)
+  i uvoz `StockfishLevel` (Android).
+- Task 11: telefonski portret Igre se sa isključenom eval trakom sužava više nego što je zapisano
+  (iOS 377 → 361, Android 411 → 379) — spec kaže telefon bez promene; `BoardWidthCapTest` zadovoljavaju
+  definicije omotača (ne hvata zaobilaženje); `DS.maxBoardSideTablet` neiskorišćen; telefonski redovi
+  testa nisu preslikani između platformi; leva ivica Igre i Zadataka razlikuje se za ~pola eval trake.
+- Task 12: Android `PlayerCard(boardTheme)` mrtav parametar; nema iOS testa za
+  `migrateRemovedAppearance`; `logic/SettingsManager` uvozi `ui` enume (slojevi); Reljef SVG-ovi nose
+  C2PA metapodatke (~7 KB po fajlu).
+- Task 13: francuski „vous" (5 iOS ključeva / 17 Android unosa) pored „tu" u drugim porukama.
+
+### Spisak za ponovno snimanje
+
+**Uređaji i teme:** iPhone i Android telefon — svetla i tamna; iPad (portret i pejzaž) i Android
+tablet (portret i pejzaž; po mogućstvu pravi Pixel Tablet, ne `wm size`) — svetla i tamna.
+**Jezici:** srpski, ruski, nemački, hindi — bar za **Igru, Podešavanja, Sat i Lekciju**.
+Isti kadrovi kao u folderu `chessko-dizajn-snimci/` (Igra, kraj partije, Analiza, Zadaci, koraci
+vežba/test/partija, Put, Lekcija, Sat + izbor vremena + objašnjenje, Podešavanja + lista jezika).
+
+**Posebno pogledati (neprovereno na uređaju, iz knjige i logova):**
+1. Android celoekranski sloj (Analiza, Podešavanja, Sat): da se donja traka ne vidi, dodiri ne
+   prolaze, inseti, boja ikona statusne trake (sat na crnoj podlozi u svetloj temi), sistemsko „nazad".
+2. Android ručka za gestove / trodugmasta navigacija ne seče labele donje trake; `NavigationRail`
+   na ≥ 840 dp.
+3. Android traka statusne linije iznad app bara Lekcije (`navBar` iz `drawBehind`) i naslov app bara
+   na fr/it/ru/de (dugačko „← Put").
+4. iOS 26 staklena traka tabova — boja neizabranog taba (`unselectedItemTintColor`), skakač kao
+   template slika u oba stanja.
+5. Reljef senka (`clipPath`) — Android (AndroidSVG/Coil) i iOS (CoreSVG), polje 36 pt i 100 pt.
+6. Prelamanje labela u ru/de/hi: mreža tema/stilova („Игровая комната", „Классическая"), segmenti sata
+   („Классика"), akciona traka Igre na < 360 pt, „Na potezu · Šah", zaglavlje Zadataka sa datumom na
+   ruskom, dugme „Nastavi: …" na Putu, kartica prelomnog poteza.
+7. Tablet rasporedi: Igra/Zadaci/korak vežbe/korak partije u oba položaja (par tabla + panel 400,
+   kolona u portretu, sadržaj od vrha), stvarne strane table naspram § 13 tabele (pretpostavljeni hrom).
+8. Lekcija na tabletu u dve kolone (prag „poslednja oznaka iznad sredine", širine kolona) i **rotacija
+   iPad-a u lekciji** (poznato: resetuje stanje vežbe).
+9. Avatar „Ti" na tabletu i logcat `PlayerCard` ako je prazan.
+10. Glifovi ♔♖♘♗ uz U+FE0E na Androidu (tekstualna, ne emoji prezentacija) i dvoslojna podloga kutije
+    pravila; prored tela lekcije 1,5.
+11. Cifre sata na uskom Android telefonu (sečenje bez smanjenja), NBSP u „3 + 2", tamna traka sata u
+    svetloj temi na iOS-u.
+12. iOS `Menu` sa karticom protivnika kao labelom (da li sistem tintuje sadržaj), visina liste poteza na
+    iPhone SE, pejzažni panel na niskim telefonima.
+13. Kalendar Zadataka (iOS) — izabran dan na accent tinti (Task 13).

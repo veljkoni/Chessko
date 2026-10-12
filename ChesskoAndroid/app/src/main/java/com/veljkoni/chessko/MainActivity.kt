@@ -580,7 +580,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(48.dp),
+                                        .heightIn(min = 48.dp),
                                     shape = ButtonShape,
                                     colors = dsPrimaryButtonColors()
                                 ) {
@@ -595,7 +595,7 @@ class MainActivity : ComponentActivity() {
                                         },
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(48.dp),
+                                            .heightIn(min = 48.dp),
                                         shape = ButtonShape,
                                         colors = dsSecondaryButtonColors()
                                     ) {

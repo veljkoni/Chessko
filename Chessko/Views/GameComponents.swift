@@ -310,7 +310,8 @@ struct DSInstructionBox: View {
 // MARK: - Akciona traka
 
 /// Jedno dugme akcione trake: `fill`, `Radius.m`, visina 48. Na uskom ekranu
-/// (< 360 pt) ikona iznad labele (`Type.label`).
+/// (< 360 pt) ikona iznad labele (`Type.label`). Visina je najmanja, ne fiksna
+/// (spec § 16: veći sistemski font ili viši glifovi hindija ne smeju da se seku).
 struct DSActionButtonLabel: View {
     let systemImage: String
     let title: String
@@ -341,7 +342,7 @@ struct DSActionButtonLabel: View {
         }
         .foregroundStyle(tint)
         .frame(maxWidth: .infinity)
-        .frame(height: 48)
+        .frame(minHeight: 48)
         .background(DS.fill, in: RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous))
     }

@@ -530,7 +530,7 @@ fun PuzzleActionsRow(viewModel: PuzzleViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = DS.warning, modifier = Modifier.size(18.dp))
-                        Text(text = loc("Završio si zadatak za danas!"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
+                        Text(text = loc("Zadatak za danas je rešen!"), color = DS.ink, style = Type.body, fontWeight = FontWeight.Medium)
                     }
                 }
             }

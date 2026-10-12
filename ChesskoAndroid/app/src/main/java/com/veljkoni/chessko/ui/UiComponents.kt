@@ -22,7 +22,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.ImageLoader
 import coil.compose.AsyncImage
@@ -63,28 +62,6 @@ fun ThinkingDots() {
         Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(DS.ink.copy(alpha = dotAlpha(0))))
         Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(DS.ink.copy(alpha = dotAlpha(200))))
         Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(DS.ink.copy(alpha = dotAlpha(400))))
-    }
-}
-
-@Composable
-fun StatusBanner(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(DS.Radius.s))
-            .background(DS.fill)
-            .padding(vertical = 10.dp, horizontal = DS.Space.m),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = message,
-            color = DS.ink,
-            // Recenica o stanju partije -> `body`, isto kao status kartica koraka
-            // (iOS `.dsBody`, `Chessko/Views/StepGameView.swift:229`).
-            style = Type.body,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
-        )
     }
 }
 
@@ -136,7 +113,7 @@ fun AnalysisButton(viewModel: GameViewModel, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .heightIn(min = 48.dp),
         shape = RoundedCornerShape(DS.Radius.m),
         colors = ButtonDefaults.buttonColors(
             containerColor = DS.accent,

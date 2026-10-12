@@ -266,7 +266,7 @@ private fun PathCompleteCard() {
         horizontalArrangement = Arrangement.spacedBy(DS.Space.m)
     ) {
         Icon(imageVector = Icons.Filled.CheckCircle, contentDescription = null, tint = DS.success)
-        Text(text = loc("Prešao si ceo put!"), color = DS.ink, style = Type.heading)
+        Text(text = loc("Ceo put je pređen!"), color = DS.ink, style = Type.heading)
     }
 }
 

@@ -88,7 +88,7 @@ class LocTest {
     fun puzzleScreenChromeIsTranslated() {
         // Bas stringovi iz spec-a 4.5.
         Loc.setLanguage("en")
-        for (key in listOf("Rejting: ", "Prikaži rešenje", "Pokušaj ponovo",
+        for (key in listOf("Prikaži rešenje", "Pokušaj ponovo",
                            "Greška pri učitavanju zadatka", "Sledeći zadatak")) {
             assertTrue("kljuc nije preveden na engleski: $key", loc(key) != key)
         }

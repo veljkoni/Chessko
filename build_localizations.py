@@ -92,13 +92,9 @@ add("Ti", "You", "Vous", "Du", "Tu", "Вы", "你", "आप")
 # im pravi isti simbol pa build puca. GameView zato koristi `.capitalized`.
 add("Beli igra", "White to move", "Aux blancs de jouer", "Weiß am Zug", "Muove il Bianco", "Ход белых", "白方走棋", "सफ़ेद की चाल")
 add("Crni igra", "Black to move", "Aux noirs de jouer", "Schwarz am Zug", "Muove il Nero", "Ход чёрных", "黑方走棋", "काली की चाल")
-add("Mat! Beli je pobedio! 🎉", "Checkmate! White wins! 🎉", "Échec et mat ! Les blancs gagnent ! 🎉", "Schachmatt! Weiß gewinnt! 🎉", "Scacco matto! Vince il Bianco! 🎉", "Мат! Белые победили! 🎉", "将死！白方获胜！🎉", "शहमात! सफ़ेद जीता! 🎉")
-add("Mat! Crni je pobedio! 🎉", "Checkmate! Black wins! 🎉", "Échec et mat ! Les noirs gagnent ! 🎉", "Schachmatt! Schwarz gewinnt! 🎉", "Scacco matto! Vince il Nero! 🎉", "Мат! Чёрные победили! 🎉", "将死！黑方获胜！🎉", "शहमात! काला जीता! 🎉")
 add("Šah! Beli kralj je napadnut.", "Check! The white king is under attack.", "Échec ! Le roi blanc est attaqué.", "Schach! Der weiße König wird angegriffen.", "Scacco! Il re bianco è sotto attacco.", "Шах! Белый король под боем.", "将军！白王受到攻击。", "शह! सफ़ेद राजा पर हमला है।")
 add("Šah! Crni kralj je napadnut.", "Check! The black king is under attack.", "Échec ! Le roi noir est attaqué.", "Schach! Der schwarze König wird angegriffen.", "Scacco! Il re nero è sotto attacco.", "Шах! Чёрный король под боем.", "将军！黑王受到攻击。", "शह! काले राजा पर हमला है।")
 add("Predati partiju?", "Resign the game?", "Abandonner la partie ?", "Partie aufgeben?", "Abbandonare la partita?", "Сдать партию?", "认输？", "बाज़ी छोड़ें?")
-add("Da li ste sigurni da želite da predate trenutnu partiju?", "Are you sure you want to resign the current game?", "Voulez-vous vraiment abandonner la partie en cours ?", "Möchtest du die laufende Partie wirklich aufgeben?", "Vuoi davvero abbandonare la partita in corso?", "Вы уверены, что хотите сдать текущую партию?", "确定要认输当前对局吗？", "क्या आप वाकई मौजूदा बाज़ी छोड़ना चाहते हैं?")
-add("Pregledaj partiju", "Review the game", "Revoir la partie", "Partie analysieren", "Rivedi la partita", "Разобрать партию", "复盘对局", "बाज़ी की समीक्षा करें")
 add("Potvrda", "Confirm", "Confirmer", "Bestätigen", "Conferma", "Подтвердить", "确认", "पुष्टि करें")
 add("Resetuj", "Reset", "Réinitialiser", "Zurücksetzen", "Reimposta", "Сбросить", "重置", "रीसेट करें")
 add("Zatvori", "Close", "Fermer", "Schließen", "Chiudi", "Закрыть", "关闭", "बंद करें")
@@ -114,8 +110,6 @@ add("Tvoj potez", "Your move", "À vous de jouer", "Du bist am Zug", "Tocca a te
 add("Računar razmišlja...", "Computer is thinking…", "L’ordinateur réfléchit…", "Computer denkt nach…", "Il computer sta pensando…", "Компьютер думает…", "电脑思考中…", "कंप्यूटर सोच रहा है…")
 add("Šah! Tvoj kralj je napadnut.", "Check! Your king is under attack.", "Échec ! Votre roi est attaqué.", "Schach! Dein König wird angegriffen.", "Scacco! Il tuo re è sotto attacco.", "Шах! Ваш король под атакой.", "将军！你的国王被攻击。", "शह! आपके राजा पर हमला है।")
 add("Šah! Napadaš kralja.", "Check! You attack the king.", "Échec ! Vous attaquez le roi.", "Schach! Du greifst den König an.", "Scacco! Attacchi il re.", "Шах! Вы атакуете короля.", "将军！你在攻击对方国王。", "शह! आप राजा पर हमला कर रहे हैं।")
-add("Mat! Izgubio si.", "Checkmate! You lost.", "Échec et mat ! Vous avez perdu.", "Schachmatt! Du hast verloren.", "Scacco matto! Hai perso.", "Мат! Вы проиграли.", "将死！你输了。", "शहमात! आप हार गए।")
-add("Mat! Pobedio si! 🎉", "Checkmate! You won! 🎉", "Échec et mat ! Vous avez gagné ! 🎉", "Schachmatt! Du hast gewonnen! 🎉", "Scacco matto! Hai vinto! 🎉", "Мат! Вы выиграли! 🎉", "将死！你赢了！🎉", "शहमात! आप जीत गए! 🎉")
 add("Pat – remi!", "Stalemate – draw!", "Pat – nulle !", "Patt – remis!", "Stallo – patta!", "Пат – ничья!", "逼和——平局！", "गतिरोध – ड्रॉ!")
 add("Remi – pravilo 50 poteza.", "Draw – fifty-move rule.", "Nulle – règle des 50 coups.", "Remis – 50-Züge-Regel.", "Patta – regola delle 50 mosse.", "Ничья – правило 50 ходов.", "平局——50回合规则。", "ड्रॉ – पचास-चाल नियम।")
 add("Remi – ponavljanje pozicije.", "Draw – repetition.", "Nulle – répétition.", "Remis – Stellungswiederholung.", "Patta – ripetizione.", "Ничья – повторение позиции.", "平局——重复局面。", "ड्रॉ – पुनरावृत्ति।")
@@ -138,7 +132,7 @@ add("Rešenje...", "Solution…", "Solution…", "Lösung…", "Soluzione…", "
 add("Prikaži rešenje", "Show solution", "Voir la solution", "Lösung anzeigen", "Mostra soluzione", "Показать решение", "显示解答", "समाधान दिखाएँ")
 add("Sledeći dan", "Next day", "Jour suivant", "Nächster Tag", "Giorno successivo", "Следующий день", "下一天", "अगला दिन")
 add("Sledeći zadatak", "Next puzzle", "Problème suivant", "Nächste Aufgabe", "Prossimo problema", "Следующая задача", "下一题", "अगली पहेली")
-add("Završio si zadatak za danas!", "You finished today’s puzzle!", "Vous avez terminé le problème du jour !", "Du hast die heutige Aufgabe gelöst!", "Hai completato il problema di oggi!", "Вы решили сегодняшнюю задачу!", "你完成了今天的谜题！", "आपने आज की पहेली पूरी कर ली!")
+add("Zadatak za danas je rešen!", "Today’s puzzle is solved!", "Le problème du jour est résolu !", "Die heutige Aufgabe ist gelöst!", "Il problema di oggi è risolto!", "Задача на сегодня решена!", "今天的谜题已完成！", "आज की पहेली हल हो गई!")
 add("Pokušaj ponovo", "Try again", "Réessayer", "Erneut versuchen", "Riprova", "Попробовать снова", "重试", "फिर कोशिश करें")
 add("Nema dostupnih zadataka", "No puzzles available", "Aucun problème disponible", "Keine Aufgaben verfügbar", "Nessun problema disponibile", "Нет доступных задач", "暂无可用谜题", "कोई पहेली उपलब्ध नहीं")
 add("Zadatak je oštećen", "This puzzle is corrupted", "Ce problème est corrompu", "Diese Aufgabe ist beschädigt", "Questo problema è danneggiato", "Задача повреждена", "该题目已损坏", "यह पहेली क्षतिग्रस्त है")
@@ -175,7 +169,6 @@ add("Teško", "Hard", "Difficile", "Schwer", "Difficile", "Сложно", "困�
 
 # ── Learn tab home ──────────────────────────────────────────────────────────
 add("Nauči šah", "Learn chess", "Apprendre les échecs", "Schach lernen", "Impara gli scacchi", "Учитесь играть в шахматы", "学习国际象棋", "शतरंज सीखें")
-add("%lld lekcije od osnova do završnice", "%lld lessons from basics to the endgame", "%lld leçons des bases à la finale", "%lld Lektionen von den Grundlagen bis zum Endspiel", "%lld lezioni dalle basi al finale", "%lld уроков от основ до эндшпиля", "%lld 节课，从基础到残局", "%lld पाठ, मूल बातों से अंत तक")
 
 # ── Learn scenarios / move count ────────────────────────────────────────────
 add("Rokada", "Castling", "Roque", "Rochade", "Arrocco", "Рокировка", "王车易位", "कैसलिंग")
@@ -192,7 +185,6 @@ add("Crni razmišlja...", "Black is thinking…", "Les Noirs réfléchissent…"
 add("Na potezu si!", "Your move!", "À vous de jouer !", "Du bist am Zug!", "Tocca a te!", "Ваш ход!", "轮到你了！", "आपकी चाल!")
 
 # ── Opening / mate exercise (lesson cards) ──────────────────────────────────
-add("%lld/%lld poteza", "%lld/%lld moves", "%lld/%lld coups", "%lld/%lld Züge", "%lld/%lld mosse", "%lld/%lld ходов", "%lld/%lld 步", "%lld/%lld चालें")
 add("Potez %lld — pronađi pravi potez za bele!", "Move %lld — find the right move for White!", "Coup %lld — trouvez le bon coup pour les Blancs !", "Zug %lld — finde den richtigen Zug für Weiß!", "Mossa %lld — trova la mossa giusta per il Bianco!", "Ход %lld — найдите верный ход за белых!", "第 %lld 步——为白方找到正确的一步！", "चाल %lld — सफ़ेद के लिए सही चाल खोजें!")
 add("Bravo! Otvaranje savladano! ✓", "Bravo! Opening mastered! ✓", "Bravo ! Ouverture maîtrisée ! ✓", "Bravo! Eröffnung gemeistert! ✓", "Bravo! Apertura padroneggiata! ✓", "Браво! Дебют освоен! ✓", "太棒了！开局已掌握！✓", "शाबाश! ओपनिंग में महारत! ✓")
 add("Pogrešan potez — pokušaj ponovo.", "Wrong move — try again.", "Mauvais coup — réessayez.", "Falscher Zug — versuch es nochmal.", "Mossa sbagliata — riprova.", "Неверный ход — попробуйте снова.", "走错了——再试一次。", "गलत चाल — फिर कोशिश करें।")
@@ -232,7 +224,7 @@ add("Najbolji niz", "Best Streak", "Meilleure série", "Beste Serie", "Miglior s
 add("Rešeno zadataka", "Puzzles Solved", "Problèmes résolus", "Gelöste Rätsel", "Problemi risolti", "Решено задач", "已解谜题", "हल की गई पहेलियाँ")
 add("Rejting zadataka", "Puzzle rating", "Classement des problèmes", "Aufgaben-Wertung", "Punteggio problemi", "Рейтинг задач", "谜题评分", "पहेली रेटिंग")
 add("Resetuj statistiku", "Reset Statistics", "Réinitialiser les statistiques", "Statistiken zurücksetzen", "Reimposta statistiche", "Сбросить статистику", "重置统计", "सांख्यिकी रीसेट करें")
-add("Da li želite da resetujete sve statistike?", "Do you want to reset all statistics?", "Voulez-vous réinitialiser toutes les statistiques ?", "Möchten Sie alle Statistiken zurücksetzen?", "Vuoi reimpostare tutte le statistiche?", "Вы хотите сбросить всю статистику?", "您想重置所有统计数据吗？", "क्या आप सभी सांख्यिकी रीसेट करना चाहते हैं?")
+add("Da li želiš da resetuješ celu statistiku?", "Do you want to reset all statistics?", "Veux-tu réinitialiser toutes les statistiques ?", "Möchtest du alle Statistiken zurücksetzen?", "Vuoi reimpostare tutte le statistiche?", "Сбросить всю статистику?", "要重置所有统计数据吗？", "सभी सांख्यिकी रीसेट करें?")
 
 # ── LearnViewModel.infoText (piece-explorer descriptions) ────────────────────
 add("Kreće se jedno polje napred. Uzima figuru dijagonalno ispred sebe. Sa startne pozicije može da skoči i dva polja odjednom.",
@@ -330,7 +322,7 @@ add("Drvo", "Wood", "Bois", "Holz", "Legno", "Дерево", "木质", "लक�
 add("Ugalj", "Charcoal", "Charbon", "Kohle", "Carbonella", "Уголь", "木炭", "कोयला")
 add("Žalfija", "Sage", "Sauge", "Salbei", "Salvia", "Шалфей", "鼠尾草", "सेज")
 add("Glina", "Clay", "Argile", "Ton", "Argilla", "Глина", "陶土", "मिट्टी")
-add("Izgled table", "Board Appearance", "Apparence de l'échiquier", "Brett-Aussehen", "Aspetto della scacchiera", "Внешний vuд доски", "棋盘外观", "बोर्ड का रूप")
+add("Izgled table", "Board Appearance", "Apparence de l'échiquier", "Brett-Aussehen", "Aspetto della scacchiera", "Внешний вид доски", "棋盘外观", "बोर्ड का रूप")
 add("Tema table", "Board Theme", "Thème de l'échiquier", "Brett-Thema", "Tema della scacchiera", "Тема доски", "棋盘主题", "बोर्ड थीम")
 add("Prikaži koordinate", "Show Coordinates", "Afficher les coordonnées", "Koordinaten anzeigen", "Mostra coordinate", "Показывать координаты", "显示坐标", "निर्देशांक दिखाएं")
 add("Prikaži poslednji potez", "Show Last Move", "Afficher le dernier coup", "Letzten Zug anzeigen", "Mostra l'ultima mossa", "Показывать последний ход", "显示最后一步", "अंतिम चाल दिखाएं")
@@ -434,13 +426,6 @@ add("Mat · pobeda belih", "Checkmate · White wins", "Échec et mat · victoire
 add("Mat · pobeda crnih", "Checkmate · Black wins", "Échec et mat · victoire des Noirs", "Matt · Sieg für Schwarz", "Scacco matto · vince il Nero", "Мат · победа чёрных", "将死 · 黑方胜", "शह और मात · काले की जीत")
 add("Partija je predata · pobeda belih", "Game resigned · White wins", "Partie abandonnée · victoire des Blancs", "Partie aufgegeben · Sieg für Weiß", "Partita abbandonata · vince il Bianco", "Партия сдана · победа белых", "已认输 · 白方胜", "बाज़ी छोड़ी गई · सफ़ेद की जीत")
 add("Partija je predata · pobeda crnih", "Game resigned · Black wins", "Partie abandonnée · victoire des Noirs", "Partie aufgegeben · Sieg für Schwarz", "Partita abbandonata · vince il Nero", "Партия сдана · победа чёрных", "已认输 · 黑方胜", "बाज़ी छोड़ी गई · काले की जीत")
-add("Predaja partije", "Resign Game", "Abandonner la partie", "Partie aufgeben", "Abbandona la partita", "Сдать партию", "认输棋局", "खेल से इस्तीफा दें")
-add("Da li ste sigurni da želite da predate partiju?", "Are you sure you want to resign the game?", "Êtes-vous sûr de vouloir abandonner la partie ?", "Sind Sie sicher, dass Sie die Partie aufgeben möchten?", "Sei sicuro di voler abbandonare la partita?", "Вы уверены, что хотите сдать партию?", "您确定要认输吗？", "क्या आप सुनिश्चित हैं कि आप खेल छोड़ना चाहते हैं?")
-add("Nastavi igru", "Continue Playing", "Continuer à jouer", "Weiterspielen", "Continua a giocare", "Продолжить игру", "继续对局", "खेलना जारी रखें")
-add("Predaja! Crni je pobedio.", "Resignation! Black wins.", "Abandon ! Les Noirs gagnent.", "Aufgabe! Schwarz gewinnt.", "Abbandono! Il Nero vince.", "Сдача! Чёрные победили.", "认输！黑方获胜。", "इस्तीफा! काला जीता।")
-add("Predaja! Beli je pobedio.", "Resignation! White wins.", "Abandon ! Les Blancs gagnent.", "Aufgabe! Weiß gewinnt.", "Abbandono! Il Bianco vince.", "Сдача! Белые победили.", "认输！白方获胜。", "इस्तीफा! सफेद जीता।")
-add("Predaja! Izgubio si.", "Resignation! You lost.", "Abandon ! Vous avez perdu.", "Aufgabe! Du hast verloren.", "Abbandono! Hai perso.", "Сдача! Вы проиграли.", "认输！您输了。", "इस्तीफा! आप हार गए।")
-add("Predaja! Pobedio si! 🎉", "Resignation! You won! 🎉", "Abandon ! Vous avez gagné ! 🎉", "Aufgabe! Du hast gewonnen! 🎉", "Abbandono! Hai vinto! 🎉", "Сдача! Вы победили! 🎉", "认输！您获胜了！🎉", "इस्तीफा! आप जीत गए! 🎉")
 add("Pregled partije", "Game Review", "Analyse de la partie", "Partieanalyse", "Revisione partita", "Обзор партии", "复盘分析", "खेल समीक्षा")
 add("Početna pozicija", "Initial position", "Position initiale", "Ausgangsposition", "Posizione iniziale", "Начальная позиция", "初始位置", "प्रारंभिक स्थिति")
 add("Potez %d od %d", "Move %d of %d", "Coup %d sur %d", "Zug %d von %d", "Mossa %d di %d", "Ход %d из %d", "第 %d 步（共 %d 步）", "चाल %d / %d")
@@ -459,7 +444,7 @@ add("Vežba · %lld", "Practice · %lld", "Entraînement · %lld", "Übung · %l
 add("Test · %lld", "Test · %lld", "Test · %lld", "Test · %lld", "Test · %lld", "Тест · %lld", "测验 · %lld", "परीक्षा · %lld")
 add("Cilj za danas ispunjen", "Today's goal met", "Objectif du jour atteint", "Tagesziel erreicht", "Obiettivo di oggi raggiunto", "Цель на сегодня выполнена", "今日目标已完成", "आज का लक्ष्य पूरा")
 add("Cilj za danas nije ispunjen", "Today's goal not met yet", "Objectif du jour non atteint", "Tagesziel noch nicht erreicht", "Obiettivo di oggi non ancora raggiunto", "Цель на сегодня ещё не выполнена", "今日目标尚未完成", "आज का लक्ष्य अभी पूरा नहीं हुआ")
-add("Prešao si ceo put!", "You finished the whole path!", "Tu as terminé tout le parcours !", "Du hast den ganzen Pfad geschafft!", "Hai completato tutto il percorso!", "Вы прошли весь путь!", "你走完了整条路径！", "आपने पूरा पथ पूरा किया!")
+add("Ceo put je pređen!", "The whole path is complete!", "Tout le parcours est terminé !", "Der ganze Pfad ist geschafft!", "Tutto il percorso è completato!", "Весь путь пройден!", "整条路径已完成！", "पूरा पथ पूरा हुआ!")
 add("Put nije dostupan", "Path unavailable", "Parcours indisponible", "Pfad nicht verfügbar", "Percorso non disponibile", "Путь недоступен", "路径不可用", "पथ उपलब्ध नहीं")
 add("Uskoro", "Coming soon", "Bientôt", "Demnächst", "Prossimamente", "Скоро", "即将推出", "जल्द आ रहा है")
 add("Nastavi, korak %lld, %@", "Continue, step %lld, %@", "Continuer, étape %lld, %@", "Weiter, Schritt %lld, %@", "Continua, passo %lld, %@", "Продолжить, шаг %lld, %@", "继续，第 %lld 步，%@", "जारी रखें, चरण %lld, %@")

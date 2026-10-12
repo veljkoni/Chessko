@@ -1,15 +1,12 @@
 package com.veljkoni.chessko.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.veljkoni.chessko.models.ChessPiece
-import com.veljkoni.chessko.ui.theme.DS
-import com.veljkoni.chessko.ui.theme.Type
 
 @Composable
 fun CapturedPiecesView(
@@ -25,16 +22,9 @@ fun CapturedPiecesView(
         modifier = modifier.height(28.dp),
         horizontalArrangement = Arrangement.Start
     ) {
-        if (sortedPieces.isEmpty()) {
-            Text(
-                text = "–",
-                // iOS crta bas caption2 (`Chessko/Views/CapturedPiecesView.swift:34`),
-                // dakle Type.label -- 12 je ovde bilo razilazenje, ne odluka.
-                style = Type.label,
-                // Hrom (prazno stanje), ne sadrzaj stila figure -- ovo mora da prati temu.
-                color = DS.inkMuted
-            )
-        } else {
+        // § 5 / § 19: nigde „–" kao prazno stanje. Pozivalac (`PlayerCard`)
+        // red ionako ne crta kad nema uzetih figura; ostaje prazan red visine 28.
+        if (sortedPieces.isNotEmpty()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy((-6).dp)
             ) {

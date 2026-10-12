@@ -126,7 +126,7 @@ struct SettingsSheet: View {
                 }
                 Button(Loc("Otkaži"), role: .cancel) {}
             } message: {
-                Text(Loc("Da li želite da resetujete sve statistike?"))
+                Text(Loc("Da li želiš da resetuješ celu statistiku?"))
             }
         }
         .tint(DS.accent)

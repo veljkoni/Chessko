@@ -45,17 +45,18 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (**84 testa**): 7 perft testova za svih 6 standardnih pozicija (uključujući
-početnu do dubine 5, 4.865.609 čvorova, ~85s), 4 testa prava rokade (uzimanje
-topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
-14 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu —
-vidi ispod), 5 testova Elo rejtinga, 4 testa sadržaja lekcija (dekodiranje
-svih 12 tipova blokova, round-trip, glasan pad na nepoznat tip, i prolaz kroz
-sve lekcijske JSON-e), 7 testova kurikuluma (uključujući onaj koji tvrdi da
-kurikulum ne laže — svaka lekcija koju pominje postoji, svaka tema ima dovoljno
-zadataka u opsegu), 17 testova napretka (`ProgressStore`, dnevni cilj, streak) i
-26 testova analize partije (`MoveAnalysisTests` — matematika ocena i klasa poteza,
-plus parser UCI ocene). `Chessko/TestSupport/LocShim.swift`
+Pokriveno (**110 testova**, stanje posle dizajnerskog pregleda 2026-10): 7 perft testova za svih 6
+standardnih pozicija (uključujući početnu do dubine 5, 4.865.609 čvorova, ~75–85s), 4 testa prava
+rokade (uzimanje topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
+14 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu — vidi ispod),
+5 testova Elo rejtinga, 6 testova sadržaja lekcija (12 tipova blokova, round-trip, glasan pad na
+nepoznat tip, prolaz kroz sve lekcijske JSON-e, `LessonSymbol.resolve`), 7 testova kurikuluma
+(uključujući onaj koji tvrdi da kurikulum ne laže), 18 testova napretka (`ProgressStore`, dnevni
+cilj, streak, kartica cilja), 32 testa analize partije (`MoveAnalysisTests` — ocene, klase poteza,
+tačnost iz gubitka procenta pobede, rečenica za početnike, parser UCI ocene), 8 testova lokalnog
+formata i množina (`LocalFormatTests`), 8 testova strane table (`BoardSizingTests`, § 13 tabela) i
+1 test kataloga (`LocCatalogTests` — svaki `Loc("…")`/`LocF("…")` literal mora postojati u
+katalogu sa svih 8 jezika). `Chessko/TestSupport/LocShim.swift`
 postoji samo zbog paketa i zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u
 aplikaciji se ne kompajlira.
 
@@ -126,14 +127,21 @@ uzdržan akcent**, tabla je jedina zasićena stvar na ekranu.
 | `DS.accent` | `#2E4A8A` | `#7EA0E8` |
 | `DS.ground` / `DS.surface` | `#F2F3F7` / `#FFFFFF` | `#0E1428` / `#161D33` |
 | `DS.fill` / `DS.line` | `#E7EAF1` / `#DFE3EC` | `#1E2740` / `#232C46` |
-| `DS.ink` / `DS.inkMuted` | `#161A22` / `#6B7280` | `#EEF1F7` / `#8B93A7` |
+| `DS.ink` / `DS.inkMuted` | `#161A22` / `#5E6573` | `#EEF1F7` / `#8B93A7` |
+| `DS.warning` | `#865F21` | `#E0B252` |
+
+`inkMuted` i `warning` u svetloj temi su promenjeni u dizajnerskom pregledu (2026-10, spec § 2:
+bili `#6B7280` / `#B07D2B`) — time su svi tekstualni parovi tokena prešli WCAG AA osim
+`success`/`fill` (4,18). Izvedene tinte (kutija pravila `warning` 10 % preko `surface`, izabran
+red `DS.selectionTint` = `accent` 12 % / 16 %) računaju se iz tokena, nisu novi tokeni.
 
 Uz njih: `DS.success/warning/danger` (nose značenje, ne ukras), `DS.scrim`/`DS.onScrim`
 (modalni preklopi, namerno isti u obe teme), `DS.inkFixed` (taman tekst koji se NE
 invertuje — za podloge koje same ne prate temu), `DS.Space.*`, `DS.Radius.*`,
 `DS.maxBoardSide`, i tipografska skala `Font.dsTitle/dsHeading/dsBody/dsCaption/dsMono`.
 
-**Akcent je fiksan i ne menja se sa temom table.** Osam tema table i dalje bira
+**Akcent je fiksan i ne menja se sa temom table.** Šest tema table (Klasična, Šumska, Drvo, Ugalj,
+Žalfija, Glina — posle dizajnerskog pregleda; Polarna/Smaragd/Pesak/Sajber obrisane) i dalje bira
 korisnik; tabla ostaje jedini šaroliki element.
 
 Šta NAMERNO nije token, i zašto:
@@ -223,6 +231,16 @@ vrednošću mora biti token; dokazan mutacijom: vraćen `MainActivity.kt` → 62
 `val` (`val spacing = 6.dp`) — uzak test koji ne laže bolji je od širokog koji se gasi na prvi
 izuzetak.
 
+> **Dizajnerski pregled (2026-10, § 13) je ovo zamenio jednom funkcijom.** Strana table se na obe
+> platforme računa u `BoardSizing.boardSide` (iOS `Chessko/Models/BoardSizing.swift`, Android
+> `logic/BoardSizing.kt` + omotač `ui/BoardLayout.kt`): telefon do 560 (`DS.maxBoardSide`, sada izveden
+> iz `BoardSizing.phoneMaxSide`), tablet (prozor ≥ 600 i visina ≥ 480 / vertikalno `regular`) **560–800**
+> po visini ekrana (`DS.maxBoardSideTablet`). Svih šest igračkih ekrana i lekcija (kroz
+> `LocalLessonBoardMaxSide` / `\.lessonBoardMaxSide`) idu kroz nju; nijedan ekran više ne nosi
+> `DS.maxBoardSide` direktno. `BoardWidthCapTest` je svesno izmenjen: svaki ekran mora da zove
+> zajedničku `boardSide(` i **ne sme** da nosi `DS.maxBoardSide`; vrednosti tabele § 13 pokrivaju
+> `BoardSizingTest`/`BoardSizingTests` (8 + 8). Tekst ispod je istorija Faze 10.
+
 **`DS.maxBoardSide` (560) je popravka buga, ne higijena tokena — i tvrdnja o njemu je u ovoj fazi
 bila suzena pogrešno, pa ispravljena merenjem.** Pre Faze 10 igračka tabla na Androidu **nije
 imala gornju granicu**: na tabletu u pejzažu Igre strana table je **1426 px** (snimak
@@ -273,7 +291,7 @@ migrirala. Ostaje isti obrazac izuzetaka koji ima i iOS (vidi „Šta NAMERNO ni
 **Spisak namerno fiksnih mesta, pun — raniji oblik ovog pasusa je nabrajao tri kategorije a
 zvučao kao da je iscrpan:**
 
-- boje table i osam tema table (`BoardView.kt`, `BoardTheme.kt`; Task 4 deo B ih je samo
+- boje table i šest tema table (`BoardView.kt`, `BoardTheme.kt`; bilo osam do dizajnerskog pregleda; Task 4 deo B ih je samo
   poravnao sa iOS vrednostima, ne tokenizovao — tabla je i dalje jedini šareni element)
 - **cela kontrolna traka sata** (`ChessClockView.kt`): dve polovine prate STRANU u igri, a od
   talasa ispravki i traka između njih i sav njen sadržaj (`ClockBarBackground`/`ClockBarWell`/
@@ -288,8 +306,9 @@ zvučao kao da je iscrpan:**
   Igra, Zadaci i koraci Puta, Učenje i Podešavanja; 34 u četiri taska + 2 koja je provera obima
   propustila jer joj je grep izostavio blokove strelica i geometrije — vidi changelog) su
   zamenjena `Icons.*` + `tint = DS.*`; vidi „Faza 8" u Changelog-u. **Faza 9 je isto uradila sa
-  lekcijskom mapom** — `SYMBOL_TO_GLYPH` (bivša `lessonIcon()`) je danas **43 `Icon` + 6
-  `Emoji`**; vidi „Lekcijski glifovi" ispod. NAMERNO ostaju: tih **šest** simbola i **emoji u
+  lekcijskom mapom** — `SYMBOL_TO_GLYPH` (bivša `lessonIcon()`) je bila **43 `Icon` + 6
+  `Emoji`**, a od dizajnerskog pregleda (§ 9) je **45 `Icon` + 4 `Glyph` (Unicode figura uz
+  U+FE0E), 0 `Emoji`**; vidi „Lekcijski glifovi" ispod. NAMERNO ostaju **emoji u
   prevedenim porukama** (`Loc.kt`: `🎉`/`🏆`/`🔥`/`🧩` u porukama pobede/mata/statistike). Ovo
   drugo NIJE odstupanje Androida — iOS katalog nosi **iste ključeve sa istim emoji-jem**, a
   `Chessko/Views/SettingsSheet.swift:121,123` ima doslovno `🔥`/`🧩`; uklanjanje bi pokvarilo
@@ -476,10 +495,18 @@ prelomnim potezom. Dostupno je i iz `game` koraka Puta.
   motor po poziciji daje 20/20 ali ~3× sporije (25,1 s prema 8,7 s **na 20 pozicija**, i to na
   simulatoru iPhone 17 bez „Pro"). Na punih 81 poziciju svež motor nikad nije meren; brojevi iz
   dva reda ovog bullet-a nisu sa istog uređaja i ne porede se direktno.
-- **Mat se mapira u centipione**, a `cpLoss` je ograničen na `0…1000`. Bez gornje granice
-  jedan propušten mat (razlika ~20.000) sam odredi prosek cele partije i tačnost padne na ~0
-  iako je ostatak bio solidan. Granica je trostruko iznad praga za promašaj (300), pa ne
-  sakriva nijednu grešku. Potez koji DAJE mat ispadne `cpLoss = 0`, što je i tačno.
+- **Mat se mapira u centipione**, a `cpLoss` je ograničen na `0…1000` (klase poteza i prelomni
+  potez se i dalje računaju iz `cpLoss`, pragovi 20/50/100/300). Potez koji DAJE mat ispadne
+  `cpLoss = 0`, što je i tačno.
+- **Tačnost se od dizajnerskog pregleda (2026-10, § 17) računa iz gubitka PROCENTA POBEDE, ne iz
+  centipiona.** Stara formula je Lichess konstante (`103,1668 · e^(−0,04354 · x) − 3,1669`)
+  primenjivala na prosečan `cpLoss`; u pogrešnim jedinicama pada na 0 već kod proseka ≈ 80 cp, pa je
+  jedan promašaj u partiji od 9 poteza davao „0,0 %" (greška iz spec-a v2, preneta na obe
+  platforme). Sada: `winPercent(cp)` (Lichess `fromCentiPawns`, cp ±1000) → gubitak procenta pobede
+  po potezu → tačnost po potezu istom formulom → strana = **aritmetička sredina** svojih poteza (bez
+  Lichess-ove harmonijske sredine i težina — blaže ocene, ~89 % za jedan promašaj). Ispod **5
+  sopstvenih poteza** strana dobija „—" i napomenu „Premalo poteza za procenu tačnosti.". Isto na
+  obe platforme (`MoveAnalysis.swift` / `MoveAnalysis.kt`), repro test na obe.
 - **Prelomni potez** je najveći gubitak, ali samo ako je ≥ 100 i ako potez **nije** klase
   `.best`. Bez tog drugog uslova kartica ume da kaže „Prelomni potez (−1000)" i da ga oboji
   akcentom kao najbolji potez — dve suprotne poruke o istom potezu. Potez koji bi i motor
@@ -702,6 +729,19 @@ na jednom mestu i menja se na obe platforme.
 
 ### Lekcijski glifovi (Faza 9)
 
+> **Dizajnerski pregled (2026-10, § 9) je ovaj odeljak delom obrnuo.** Emoji 👑 🏰 🐴 📐 🍴 ⬛ su
+> zamenjeni: `crown.fill` → ♔, `rectangle.portrait.fill` → ♖, `l.joystick.fill` → ♘,
+> `rhombus.fill` → ♗ (svi uz U+FE0E, tekstualna prezentacija koja prima boju), `tuningfork` →
+> `CallSplit` / SF `arrow.triangle.branch`, `dot.square.fill` → `Square` / SF `square.fill`.
+> Android mapa je sada **45 `Icon` + 4 `Glyph` (nov slučaj `LessonGlyph.Glyph`), 0 `Emoji`**;
+> `Emoji` ostaje samo kao prolaz ne-ASCII glifa iz sadržaja. iOS isto rešava kroz
+> `LessonSymbol.resolve` (`Models/LessonContent.swift`, Foundation-only, pod `swift test`).
+> Glif uzima boju mesta (sekcija `inkMuted`, kutija pravila `warning`, u tekstu `ink`). Unicode
+> figure, koje je Faza 9 odbila zbog polisemije `crown.fill`, sada su usvojene po spec-u: ♔ se crta
+> i tamo gde lekcija misli na Damu (svesna cena). `LessonGlyphMapTest.shippedIconsAreTintableNeverFullColorEmoji`
+> tvrdi da nijedan isporučen simbol ne daje `Emoji` i da svaki `Glyph` nosi U+FE0E. Tekst ispod opisuje
+> stanje posle Faze 9 i ostaje kao istorija.
+
 Do Faze 9 je mapa bila `Map<String, String>` (`lessonIcon()`, 49 emoji-ja) i rezultat je išao
 direktno u `Text(...)`. Danas je `SYMBOL_TO_GLYPH: Map<String, LessonGlyph>` — **43 `Icon` +
 6 `Emoji` = 49** — a `lessonGlyph(String): LessonGlyph` je jedina ulazna tačka.
@@ -804,19 +844,19 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | 5 — analiza partije | **da** | ista stavka pod dva broja kao 2/6a i 4/6c — isporučeno kao **6e** |
 | **6e — analiza partije** | **da** | native Stockfish preko JNI (ne `ChessKitEngine`), isti N+1 ugovor i pragovi klasifikacije kao iOS; ekran analize + dugme u obe grane `MainActivity` (portret/pejzaž) i u `game` koraku Puta; vidi „Android (Faza 6e) — šta je drugačije" |
 | **10 — razmaci i tipografija** (spec 5.6) | **da, uz presudu** | `DS.Space` 169 / `DS.Radius` 65 / `DS.maxBoardSide` 6 / skala 159 pozivnih mesta; 285 `.dp` literala ostaje namerno po ulozi — vidi „Android dizajn sistem" |
+| **Dizajnerski pregled** (2026-10, obe platforme) | **da** | spec `docs/design/CHESSKO-IMPLEMENTACIJA.md` § 2–§ 17; 6 tema / 5 stilova (odluka vlasnika); `BoardSizing` do 800 na tabletu; celoekranska Analiza/Podešavanja/Sat; vidi `IMPLEMENTACIJA-LOG.md` → „Završni izveštaj" |
 
-Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `ContrastTest` 18,
-`EngineTest` 9, `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5, `GameStateStatusFromPositionTest` 5,
-`LessonBoardsOptOutOfSwipeTest` 2, `LocTest` 5,
-`MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 27, `PathProgressTest` 9,
-`PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9, `SpacingTokensTest` 1,
-`StepWindowTest` 3, `TypographyScaleTest` 1, `UCIScoreParserTest` 9) + **54 instrumentisana**
+Testovi (posle dizajnerskog pregleda, 2026-10-12): **147 JVM** (`./gradlew testDebugUnitTest` —
+`AppearanceCatalogTest` 5, `BoardSizingTest` 8, `BoardWidthCapTest` 2, `ContrastTest` 19, `EngineTest` 9,
+`EvaluationLabelTest` 3, `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5,
+`GameStateStatusFromPositionTest` 5, `LessonBoardsOptOutOfSwipeTest` 2, `LocTest` 7,
+`MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 33, `PathProgressTest` 10, `PluralRulesTest` 7,
+`PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9, `SpacingTokensTest` 1, `StepWindowTest` 3,
+`TypographyScaleTest` 1, `UCIScoreParserTest` 9) + **55 instrumentisanih**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
-`GameViewModelActivityRecreationTest` 1, `LessonContentTest` 9, `LessonGlyphMapTest` 2,
-`LessonRepositoryTest` 6,
-`ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
-`SoundReleaseOnLanguageKeyChangeTest` 1,
-`StatsFacadeTest` 4, `StockfishEvaluateTest` 4). Oba broja su iz XML-a, ne iz izlaznog koda.
+`GameViewModelActivityRecreationTest` 1, `LessonContentTest` 9, `LessonGlyphMapTest` 3,
+`LessonRepositoryTest` 6, `ProgressStoreTest` 10, `PuzzleRepositoryTest` 10,
+`SoundReleaseOnLanguageKeyChangeTest` 1, `StatsFacadeTest` 4, `StockfishEvaluateTest` 4). Oba broja su iz XML-a, ne iz izlaznog koda.
 
 > **`espresso-core` je od Faze 7 na `3.7.0`, i to nije kozmetika.** `SoundReleaseOnLanguageKeyChangeTest`
 > je prvi test u projektu koji uopšte koristi Compose UI test (`createComposeRule`), pa je prvi
@@ -913,6 +953,11 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
 
 ## Poznata ograničenja / TODO kandidati
 
+- **ZASTARELO posle dizajnerskog pregleda (2026-10, § 2):** sa `inkMuted #5E6573` i `warning #865F21`
+  svih šest tekstualnih parova ispod je prešlo AA (5,28 / 4,86 / 5,72 / 4,75 / 5,16) i tvrdi ih
+  `ContrastTest.designReviewTokensLiftFormerSubAAPairsAboveAA`; u `knownSubAAPairsDoNotGetWorse` je
+  ostao samo `success`/`fill` (4,18). Ikona kutije pravila je sada nad `warning@10%` preko
+  **`surface`** i meri ~4,99 (svetla) — prag 3:1 prelazi. Ostatak unosa je istorija.
 - **Sedam parova tokena je ispod praga u svetloj temi.** Prvih šest su ispod WCAG **AA za tekst**
   (4,5:1); sedmi je ispod praga **3:1 za ne-tekstualni sadržaj** i ima sopstveni test.
   Prva tri su nasleđena iz spec tabele i
@@ -958,6 +1003,12 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   čuva `ContrastTest.nonTextPairsOverFillAreDistinguishable`, koji tvrdi oba smera: da
   `inkMuted` prelazi prag i da `line` ne prelazi — ostaje relevantan jer `DS.fill` i dalje nosi
   redove prekidača i drugi hrom gde se ivica ili kontrola crta preko `inkMuted`.
+- **ZASTARELO posle dizajnerskog pregleda (2026-10, § 3 / § 15):** kartica je sada na obe platforme
+  `surface` + 1 pt `DS.line` (iOS `.dsCard()`, Android `Modifier.dsCard` / `DSCardGroup` +
+  `DSRowDivider`). Spec presudu obrće: ivica je **dekorativna** (`line/ground` 1,16 / 1,32, namerno
+  ispod 3:1), kartica se prepoznaje po sadržaju. Podešavanja na obe imaju iOS redosled grupa
+  (Statistika, Težina, Izgled table, Stil figura, Igra i pravila, Jezik kao jedan red, Izgled,
+  Ostalo, O aplikaciji); iOS više nije `List` nego `ScrollView` + `SettingsGroup`. Ostatak unosa je istorija.
 - **Ivice kartica u Podešavanjima (Android) ne postoje, i to je odluka Faze 6d-2 Task 4.**
   Izmereno: `line/fill` 1,067, `line/surface` 1,285, `surface/ground` 1,109 — nijedan par u
   paleti ne daje vidljivu ivicu (WCAG ne-tekstualni prag je 3:1). Umesto da se traži nova boja
@@ -1019,11 +1070,16 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   meri po `#708090` na ivičnoj koloni, pa zaobljeni uglovi odnesu po ~4 px. Ostala četiri ekrana
   sa tablom (`PuzzleView` ×2, `StepGameView`, `StepPracticeView`) nemaju ništa što čita veličinu
   table iz zasebne promenljive — granica i tabla su tamo isti čvor — pa nisu dirani.
+- **ZATVORENO u dizajnerskom pregledu (Task 4/11):** mrtav `widthIn(500)` je nestao sa prepisom
+  rasporeda Igre (grep 0), a portretna kolona na tabletu je sada široka kao tabla (+ eval traka).
 - **`.widthIn(max = 500.dp)` u portretu Igre je mrtav kod** (`MainActivity.kt:944-945`):
   `.fillMaxWidth()` ispred njega fiksira min = max = širina roditelja, pa kolona sadržaja na
   tabletu ide celom širinom (kartice igrača 1600 px na `27_…`). Zatečeno pre Faze 10. Popravka bi
   bila zamena redosleda, ali bi **prvi put** suzila kartice i istoriju na tabletu — nova odluka o
   rasporedu, ne ispravka.
+- **Presuđeno u dizajnerskom pregledu (§ 13):** „sadržaj od vrha, nikad centriranje po visini" je
+  pravilo spec-a; višak visine upija lista poteza (Igra), ispod ostalih ekrana ostaje prazno.
+  iOS je na istu logiku prebačen (Task 5/11 su uklonili `Spacer` centriranje). Unos ispod je istorija.
 - **Posle Task-a 5b tabla u portretu na tabletu stoji uz VRH ekrana, sa praznom donjom
   polovinom** (`44_tablet_igra_portret_light_5b`). Pre 5b je bila centrirana u visokom redu
   (`27_…`, y 592–1431), jer je red imao neograničenu visinu. Ovo je **posledica ispravne
@@ -1035,6 +1091,8 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   `TypographyScaleTest` traži `fontSize\s*=\s*\d+\.sp`, pa **ne vidi** `private val X = N.sp`
   (tako i žive `BoardCoordinateSize`/`StepChevronSize`/`LessonPieceGlyphSize`, van `allowed`) ni
   uslovni oblik `if (…) 22.sp else …` — isti put je otvoren svakom budućem ekranu.
+  (Od dizajnerskog pregleda `BoardWidthCapTest` proverava poziv zajedničke `boardSide(` i odsustvo
+  `DS.maxBoardSide` po ekranu — i dalje izvorni tekst, ne ponašanje; vidi „Android dizajn sistem".)
   `BoardWidthCapTest` proverava da string `DS.maxBoardSide` **postoji u fajlu**, ne da ograničava
   svako mesto: uklanjanje jednog od dva `coerceAtMost` u `MainActivity` **prolazi**, pa regresija
   eval trake iz Task-a 5b nema automatsku odbranu. `lessonBoardsAreNotCapped` nema dokaz
@@ -1049,6 +1107,11 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   `viewmodels/`/`models/`/`logic/`) i skoro sigurno je artefakt simulacije. Ali tihi `return`
   je **sakrio baš ovu dijagnozu**, i to vredi popraviti. Stvarna rekreacija sa legalnom partijom
   na uređaju **nije proverena**.
+- **ZATVORENO u dizajnerskom pregledu:** (1) „Внешний вид доски" ispravljen na obe platforme
+  (Task 13); (2) od pet neprevedenih stilova četiri su obrisana odlukom vlasnika, „Klasični" je
+  preveden (Task 12); (3)/(4) mreže tema i stilova su adaptivne (88), labele do 2 reda bez loma
+  reči (`Hyphens.None` + `LineBreak.Heading`; iOS `lineLimit(2, reservesSpace:)`) — Task 10;
+  vizuelno neprovereno do ponovnog snimanja. Unos ispod je istorija.
 - **Četiri ZATEČENE greške na ruskom UI-ju, sve vidljive na ekranu Podešavanja.** Nijednu nije
   uvela Faza 10 — dokaz su snimci `38_…_ru_PRE_taska3` i `39_…_ru_PRE_taska3`, napravljeni na istom
   uređaju sa privremeno vraćenom tipografijom od pre Task-a 3 (veći tekst samo pomera mesto
@@ -1110,6 +1173,9 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   poteza i u kartici prelomnog poteza. Danas nedostižno: nijedan `game` korak u
   `curriculum.json` nema `startFEN`. Popravka je jeftina (proslediti početni `currentTurn` u
   `build`), ali nije rađena jer bi bila neprovereno rešenje za problem koji ne postoji.
+- **ZATVORENO u dizajnerskom pregledu (§ 6, Task 4/6):** klasa se crta oznakom `MoveClassBadge`
+  (★ ! ✓ ?! ? ??; boja = porodica, simbol i ispuna = klasa), „najbolji" u `success`, ne u `accent`.
+  Unos ispod je istorija (važi i za Android stavku o analizi niže).
 - **Šest klasa poteza preslikava se u četiri boje.** `excellent` i `good` dele `DS.success`,
   `inaccuracy` i `mistake` dele `DS.warning`. Pragovi 20 i 100 su u spec-u navedeni doslovno i
   testirani, ali se u traci poteza ne vide. Nazivi klasa jesu tačni u VoiceOver labeli, pa
@@ -1348,6 +1414,9 @@ Testovi: **114 JVM** (`./gradlew testDebugUnitTest` — `BoardWidthCapTest` 2, `
   i infrastruktura je već jednom ujela (`espresso-core` 3.5.1 i 3.6.1 padaju na API 36).
   Uvođenje novog test-obrasca u **zatvaranju** faze je način na koji obim eksplodira, pa je
   svesno odloženo. **Cena ako grešim:** regresiju danas može neko da vrati neprimećeno.
+- **ZATVORENO u dizajnerskom pregledu (§ 4, Task 3):** Analiza, Podešavanja i Sat su na Androidu
+  celoekranska odredišta (`ui/FullScreen.kt`, sloj iznad `Scaffold`-a), ne `Dialog`; donja traka se
+  ispod njih ne crta. Neprovereno na uređaju do ponovnog snimanja.
 - **Dijalog analize (Android) ne pokriva sistemsku navigacionu traku.** Ispod zatamnjenja se na
   svakom snimku vide presečeni natpisi `Igra / Zadaci / Put`. iOS isti ekran prikazuje kao punu
   `sheet`, pa tamo tab bar nestane. Nije popravljeno jer bi tražilo menjanje tipa dijaloga
@@ -3300,3 +3369,43 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   pregažen novim buildom; migraciju pokriva samo `ProgressStoreTest`. Release build nema R8, pa
   Stockfish D-nivo logovi ostaju u release-u. Potpisani bundle (alias `key0`) je u
   `ChesskoAndroid/app/release/app-release.aab` (ignorisan u git-u).
+
+- **2026-10-12** — Dizajnerski pregled pred izdanje (grana `v2/dizajn-pregled`, spec
+  `docs/design/CHESSKO-IMPLEMENTACIJA.md`, 13 taskova, obe platforme u istom commit-u po tasku).
+  Pun zapis po sekcijama, sve odluke, reziduali i spisak za ponovno snimanje: `IMPLEMENTACIJA-LOG.md`
+  → „Završni izveštaj". Ukratko:
+  - **Tokeni (§ 2):** `inkMuted` svetla `#6B7280 → #5E6573`, `warning` svetla `#B07D2B → #865F21`;
+    jedini preostali sub-AA par tokena je `success`/`fill`. Nove komponente: kartica (`surface` + 1 pt
+    `line`, iOS `.dsCard()`, Android `dsCard`/`DSCardGroup`), dijalog/dugmad (`Radius.m`, nigde
+    „stadion"), naslov sekcije (`heading` bold `ink`), `LocalFormat` (lokalni decimalni zarez) i
+    **množine** (sopstvena CLDR pravila, ključevi `<osnova>#one|few|many|other`, `LocPlural`/`locPlural`).
+    iOS više nema nijednu sistemsku boju kao podlogu osim tri namerna mesta (birač boje § 0, kartica
+    promocije, `systemRed` tekst na polovini sata).
+  - **Navigacija (§ 4, § 10):** Android Analiza/Podešavanja/Sat kao celoekranska odredišta
+    (`ui/FullScreen.kt`), M3 `NavigationBar` sa insetima, `NavigationRail` ≥ 840 dp; nova ikonica
+    aplikacije (I1 skakač) i ikone tabova (skakač / slagalica / ruta) na obe.
+  - **Ekrani (§ 5–§ 9, § 14, § 15):** Igra sa karticama igrača, akcionom trakom Vrati · Predaj · Više i
+    listom poteza; Zadaci i koraci po iOS rasporedu sa okvirom uputstva; Analiza sa oznakama klase
+    poteza; Put po iOS rasporedu na Androidu, dnevni cilj; Lekcija (hijerarhija, kutija pravila,
+    glifovi ♔♖♘♗ uz U+FE0E umesto emoji-ja, tablet 640 / dve kolone); sat (fiksno tamna traka i na
+    iOS-u, tabularne cifre, iOS izbor vremena kao sheet); Podešavanja (iOS redosled grupa na obe,
+    adaptivna mreža 88, jezik kao jedan red sa opcijom „Sistem", Android bez `appcompat`).
+  - **Tablet (§ 13):** jedna funkcija `BoardSizing.boardSide` na svim ekranima sa tablom — telefon do
+    560, tablet 560–800; `BoardWidthCapTest` svesno izmenjen.
+  - **Teme i stilovi (§ 11, § 12 + odluka vlasnika):** obrisane teme Polarna/Smaragd/Pesak/Sajber i
+    stilovi Neonski/Drvene/Metalne/Ravne/Tanke (kod, asseti, prevodi); nove teme Žalfija i Glina, novi
+    stilovi Reljef i Rez (iste SVG datoteke na obe). Sačuvana obrisana vrednost pada na Klasičnu/Klasični.
+  - **§ 17:** tačnost „0,0 %" je bila prava greška (Lichess konstante nad centipionima umesto nad
+    gubitkom procenta pobede) — popravljena na obe, vidi „Analiza partije"; prazan avatar „Ti" nije
+    greška u kodu (neuspelo učitavanje SVG-a u toj emulatorskoj sesiji), dodato beleženje; radijalni
+    gradijent je postojao na obe platforme i nestao je sa obrisanim temama.
+  - **Task 13 (§ 16):** ruski „Внешний вид доски" na obe; „ti" i rodno neutralne poruke („Da li želiš da
+    resetuješ celu statistiku?", „Zadatak za danas je rešen!", „Ceo put je pređen!"); dugmad visine 48
+    → najmanje 48; obrisani mrtvi ključevi (iOS 18, Android 26) i Android `StatusBanner`; kalendar
+    Zadataka i „–" u uzetim figurama bez sistemske boje.
+  - **Testovi:** `swift test` **84 → 110**, Android JVM **114 → 147**, instrumentisani **54 → 55**
+    (`connectedDebugAndroidTest`, jedan prolaz emulatora 01:54:44–01:56:38; prvi pokušaj je dao
+    `INSTALL_FAILED_INSUFFICIENT_STORAGE` uz `BUILD SUCCESSFUL` — broj čitan iz XML-a). Raspodela po
+    fajlovima u „Testovi" i „Stanje Android porta".
+  - **Vizuelno ništa nije provereno** — ni simulator ni emulator za izgled, po presudi; vlasnik ponovo
+    snima (telefon + tablet, obe teme, sr/ru/de/hi za Igru, Podešavanja, Sat i Lekciju).

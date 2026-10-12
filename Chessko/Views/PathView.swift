@@ -244,7 +244,7 @@ struct PathView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.dsHeading)
                     .foregroundStyle(DS.success)
-                Text(Loc("Prešao si ceo put!"))
+                Text(Loc("Ceo put je pređen!"))
                     .font(.dsHeading)
                     .foregroundStyle(DS.ink)
                 Spacer(minLength: 0)

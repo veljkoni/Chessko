@@ -30,9 +30,10 @@ struct CapturedPiecesView: View {
     var body: some View {
         HStack(spacing: 4) {
             if sorted.isEmpty && !isDestination {
-                Text("–")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                // § 5 / § 19: nigde „–" kao prazno stanje (i bez sistemske
+                // `.tertiary` boje). Pozivalac (`DSPlayerCard`) red ionako ne
+                // crta kad nema uzetih figura; ovde ostaje samo visina reda.
+                Color.clear.frame(width: 0, height: pieceSize)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: -6) {
