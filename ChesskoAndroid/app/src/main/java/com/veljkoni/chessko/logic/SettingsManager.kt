@@ -53,7 +53,7 @@ class SettingsManager private constructor(context: Context) {
         private set
     var swipeToChangePieceStyle by mutableStateOf(prefs.getBoolean("swipeToChangePieceStyle", true))
         private set
-    var showEvalBar by mutableStateOf(prefs.getBoolean("showEvalBar", true))
+    var showEvalBar by mutableStateOf(prefs.getBoolean("showEvalBar", false))
         private set
     var difficulty by mutableStateOf(GameDifficulty.valueOf(prefs.getString("difficulty", "MEDIUM") ?: "MEDIUM"))
         private set

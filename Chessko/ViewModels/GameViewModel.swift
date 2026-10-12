@@ -207,7 +207,7 @@ final class GameViewModel {
             "autoPromoteToQueen": false,
             "pieceStyle": "classic",
             "rotateBoardInLocalPlay": true,
-            "showEvalBar": true
+            "showEvalBar": false
         ])
         Task { await stockfish.start() }
         load()   // restore game from previous session (no-op if nothing saved)

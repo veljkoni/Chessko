@@ -82,7 +82,7 @@ struct SettingsSheet: View {
     @AppStorage("rotateBoardInLocalPlay") private var rotateBoardInLocalPlay: Bool   = true
     @AppStorage("swipeToChangeBoardTheme") private var swipeToChangeBoardTheme: Bool = true
     @AppStorage("swipeToChangePieceStyle") private var swipeToChangePieceStyle: Bool = true
-    @AppStorage("showEvalBar")           private var showEvalBar:           Bool   = true
+    @AppStorage("showEvalBar")           private var showEvalBar:           Bool   = false
     @State private var showResetStatsConfirm: Bool = false
 
     private var preferredColorScheme: ColorScheme? {

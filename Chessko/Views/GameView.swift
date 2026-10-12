@@ -5,7 +5,7 @@ import SwiftUI
 struct GameView: View {
     var viewModel: GameViewModel
     var localization: LocalizationManager = .shared
-    @AppStorage("showEvalBar") private var showEvalBar: Bool = true
+    @AppStorage("showEvalBar") private var showEvalBar: Bool = false
     @Environment(\.horizontalSizeClass) private var hSize
     @Environment(\.verticalSizeClass) private var vSize
     @State private var showColorPicker = false
