@@ -3428,3 +3428,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `FATAL EXCEPTION`, Stockfish `readyok`, AI odgovor (1. e4 Sf6). Nepotpisan bundle je
   `ChesskoAndroid/app/build/outputs/bundle/release/app-release.aab`; potpis (`appbundle.jks`, alias `key0`) radi
   vlasnik u Android Studiju.
+- **2026-10-13** — Nova verzija kralja u stilovima Reljef i Rez (vlasnik, iz Claude Design-a): `wK.svg`/`bK.svg` iz
+  `~/Desktop/chessko-dizajn-snimci/figure-C-reljef` i `figure-A-rez` kopirani doslovno (`cmp`) u
+  `Chessko/Assets.xcassets/piece_{white,black}_king_{reljef,rez}.imageset/` i `ChesskoAndroid/app/src/main/assets/pieces/`,
+  iste datoteke na obe platforme. Ostale figure nisu dirane (već su bile bajt-identične izvoru). Nisu u izdanju 2.1 (4).
