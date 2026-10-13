@@ -3439,3 +3439,5 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `dexdump` release bundle-a: nijedna klasa `com.veljkoni` ne poziva `removeFirst`/`removeLast` (preostali pozivi su
   biblioteke nad `ArrayDeque`/`Deque`, bezbedni). Izdanje **2.2 (5)** — `versionCode 4` je već otpremljen; sadrži i
   novog kralja. Nepotpisan bundle u `app/build/outputs/bundle/release/`, potpis radi vlasnik.
+- **2026-10-13** — Vlasnik je otpremio Android 2.2 (5) na Google Play i iOS izdanje na App Store; `main` poslat na
+  GitHub (`origin/main`).
