@@ -408,7 +408,7 @@ class GameViewModel(
 
         // VS Computer: pop until we reach the player's turn
         while (history.isNotEmpty()) {
-            val last = history.removeLast()
+            val last = history.removeAt(history.lastIndex)
             if (last.first.currentTurn == playerColor) {
                 gameState = last.first
                 lastMove = last.second

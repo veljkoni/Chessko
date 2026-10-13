@@ -850,11 +850,11 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **10 — razmaci i tipografija** (spec 5.6) | **da, uz presudu** | `DS.Space` 169 / `DS.Radius` 65 / `DS.maxBoardSide` 6 / skala 159 pozivnih mesta; 285 `.dp` literala ostaje namerno po ulozi — vidi „Android dizajn sistem" |
 | **Dizajnerski pregled** (2026-10, obe platforme) | **da** | spec `docs/design/CHESSKO-IMPLEMENTACIJA.md` § 2–§ 17; 6 tema / 5 stilova (odluka vlasnika); `BoardSizing` do 800 na tabletu; celoekranska Analiza/Podešavanja/Sat; vidi `IMPLEMENTACIJA-LOG.md` → „Završni izveštaj" |
 
-Testovi (posle dizajnerskog pregleda, 2026-10-12): **148 JVM** (`./gradlew testDebugUnitTest` —
+Testovi (posle dizajnerskog pregleda, 2026-10-12; +1 u 2.2): **149 JVM** (`./gradlew testDebugUnitTest` —
 `AppearanceCatalogTest` 5, `BoardSizingTest` 8, `BoardWidthCapTest` 2, `ContrastTest` 19, `EngineTest` 9,
 `EvaluationLabelTest` 3, `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5,
 `GameStateStatusFromPositionTest` 5, `LessonBoardsOptOutOfSwipeTest` 2, `LocTest` 7,
-`MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 34, `PathProgressTest` 10, `PluralRulesTest` 7,
+`MainActivitySoundWiringTest` 1, `MoveAnalysisTest` 34, `NoListRemoveFirstLastTest` 1, `PathProgressTest` 10, `PluralRulesTest` 7,
 `PuzzleDateFormatTest` 7, `PuzzleRatingTest` 9, `SpacingTokensTest` 1, `StepWindowTest` 3,
 `TypographyScaleTest` 1, `UCIScoreParserTest` 9) + **55 instrumentisanih**
 (`./gradlew connectedDebugAndroidTest`, traži emulator — `CurriculumTest` 6, `ExampleInstrumentedTest` 1,
@@ -3432,3 +3432,10 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   `~/Desktop/chessko-dizajn-snimci/figure-C-reljef` i `figure-A-rez` kopirani doslovno (`cmp`) u
   `Chessko/Assets.xcassets/piece_{white,black}_king_{reljef,rez}.imageset/` i `ChesskoAndroid/app/src/main/assets/pieces/`,
   iste datoteke na obe platforme. Ostale figure nisu dirane (već su bile bajt-identične izvoru). Nisu u izdanju 2.1 (4).
+- **2026-10-13** — Google Play je odbio 2.1 (4) pre pregleda: Kotlin `removeLast()` u `GameViewModel.undo` se sa
+  `compileSdk` 35+ vezuje za Java 21 `List.removeLast()`, koji na Androidu 14 i starijem ne postoji (pad pri
+  „Vrati potez" protiv računara). Zamenjeno sa `removeAt(history.lastIndex)`; `removeLastOrNull()` iznad je čist
+  Kotlin i ostaje. Nov JVM test `NoListRemoveFirstLastTest` (izvor, dokazan mutacijom) — 149/149 iz XML-a.
+  `dexdump` release bundle-a: nijedna klasa `com.veljkoni` ne poziva `removeFirst`/`removeLast` (preostali pozivi su
+  biblioteke nad `ArrayDeque`/`Deque`, bezbedni). Izdanje **2.2 (5)** — `versionCode 4` je već otpremljen; sadrži i
+  novog kralja. Nepotpisan bundle u `app/build/outputs/bundle/release/`, potpis radi vlasnik.
