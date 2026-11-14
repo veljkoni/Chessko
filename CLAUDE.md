@@ -3483,3 +3483,6 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   Animaciju naslova dizajn izričito NE skraćuje (deo karaktera sajta). **Usput nađeno:** na chessko.app je uključena
   Cloudflare Email Address Obfuscation — prepisuje `mailto:` u `/cdn-cgi/l/email-protection` i ubacuje
   `email-decode.min.js`; na `chessko.pages.dev` toga nema. Poređenje „objavljeno = repo“ zato se radi na pages.dev.
+- **2026-11-14** — Cloudflare Email Address Obfuscation za zonu chessko.app isključena preko Cloudflare MCP-a
+  (`email_obfuscation`: on → off). Posle toga `https://chessko.app/` i `/privacy` su bajt-isti fajlovima u repou sajta,
+  bez `/cdn-cgi/` skripte; `mailto:kontakt@chessko.app` je ponovo običan link.
