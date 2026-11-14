@@ -3465,3 +3465,13 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   sebi. Animacija naslova kreće bez početnih 150 ms, tekst ispod sa 0,4 s umesto 0,7 s. Lighthouse (mobilni,
   chessko.app), tri merenja: Performance **84 / 84 / 77**, ostalo 100. Izdvajanje prevoda ocenu nije pomerilo
   merljivo (HTML 97 → 69 KB); vreme do prvog prikaza (~2,4 s) drže fontovi i ostatak stranice, ne prevodi.
+- **2026-11-14** — Sajt, brzina bez vidljive promene (prompt `chessko-dizajn-snimci/sajt-dodaci/PROMPT-agent-sajt-brzina.md`,
+  repo sajta commit `6df44f1`, izveštaj `sajt-dodaci/IZVESTAJ-brzina.md`). SVG figure isečene iz zajedničkog lista
+  (62 KB → 0,5–4,0 KB, `img/pieces/*.v2.svg`); Fraunces podskup na sve znakove sa sajta uz sve ose i layout funkcije
+  (493 → 215 KiB, `fonts/fraunces-*.v2.woff2`); pozadine `.mid/.calm/.end` tek na 600 px od ekrana
+  (IntersectionObserver, bez njega odmah). **Dokaz da je izgled isti: 16 snimaka cele strane pre/posle, 0 različitih
+  piksela; figure pojedinačno na 28/64/120/240 px, 0 razlika.** Pouka iz ovog prolaza: svgo sa zaokruživanjem
+  koordinata (`floatPrecision`, `convertPathData`) menja ivice figura (do 300 piksela po figuri) — za figure se svgo
+  koristi samo za čišćenje teksta. **Novi tekst na sajtu sa znakom koji nije u podskupu Fraunces-a pao bi na rezervni
+  font: posle izmene teksta ponovo napraviti podskup.** Težina početne 772 → 522 KiB; Lighthouse Performance 97 / 82 / 83
+  (pre 84 / 84 / 77), LCP i dalje varira zbog naslovne fotografije kao CSS pozadine.
