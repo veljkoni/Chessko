@@ -3475,3 +3475,11 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   koristi samo za čišćenje teksta. **Novi tekst na sajtu sa znakom koji nije u podskupu Fraunces-a pao bi na rezervni
   font: posle izmene teksta ponovo napraviti podskup.** Težina početne 772 → 522 KiB; Lighthouse Performance 97 / 82 / 83
   (pre 84 / 84 / 77), LCP i dalje varira zbog naslovne fotografije kao CSS pozadine.
+- **2026-11-14** — Sajt: naslovna fotografija kao `<img fetchpriority="high">` umesto CSS pozadine — **pokušano i
+  vraćeno, ništa nije objavljeno** (prompt `sajt-dodaci/PROMPT-agent-sajt-hero-img.md`, izveštaj
+  `sajt-dodaci/IZVESTAJ-hero-img.md`). Geometrija je bila tačna (bez pomaka, srednja greška 0,05), ali Chrome
+  umanjuje veliku sliku drugačijim filterom kao `<img>` nego kao CSS pozadinu: do Δ63 i ~150–215 hiljada piksela
+  na desktopu, Δ2 na telefonu. Uslov dizajna je bio piksel-identičnost, pa se ovaj put ne vraća bez nove odluke.
+  Animaciju naslova dizajn izričito NE skraćuje (deo karaktera sajta). **Usput nađeno:** na chessko.app je uključena
+  Cloudflare Email Address Obfuscation — prepisuje `mailto:` u `/cdn-cgi/l/email-protection` i ubacuje
+  `email-decode.min.js`; na `chessko.pages.dev` toga nema. Poređenje „objavljeno = repo“ zato se radi na pages.dev.
