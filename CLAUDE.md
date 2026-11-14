@@ -3441,3 +3441,27 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   novog kralja. Nepotpisan bundle u `app/build/outputs/bundle/release/`, potpis radi vlasnik.
 - **2026-10-13** — Vlasnik je otpremio Android 2.2 (5) na Google Play i iOS izdanje na App Store; `main` poslat na
   GitHub (`origin/main`).
+- **2026-11-14** — Sajt **chessko.app** objavljen. Živi u **zasebnom repou**
+  `/Users/veljkoodobasic/Documents/Projects/chessko-site` (grana `main`), ne u ovom; dizajn je iz
+  `chessko-dizajn-snimci/chessko-sajt/` (taj folder ostaje kao odobrena verzija, izvor je repo). Statičan sajt:
+  `index.html`, `privacy.html` (8 jezika), `404.html`, `_headers`, `robots.txt`, `sitemap.xml`. Hosting
+  Cloudflare Pages, projekat `chessko`; objava `npx wrangler pages deploy . --project-name chessko` iz repoa
+  sajta. Projekat je napravljen sa `--force` jer wrangler 4.162 Pages komande preusmerava na Workers i pada;
+  posle toga `--force` ne treba. Domen `chessko.app` + `www` povezan preko Cloudflare MCP-a (CNAME →
+  `chessko.pages.dev`, proxied; Redirect Rule `www` → apex 301); Email Routing `kontakt@chessko.app` podesio
+  vlasnik. Politika privatnosti je izvedena iz koda obe aplikacije (nema mreže, naloga, reklama, analitike;
+  Android nema `INTERNET` ni u spojenom release manifestu). **Ako aplikacija ikad dobije mrežni poziv,
+  analitiku ili novu dozvolu, `privacy.html` na svih 8 jezika mora da se promeni u istom koraku.** Slike i
+  fontovi se keširaju godinu dana (`immutable`): promenjena slika mora dobiti novo ime. Lighthouse (mobilni):
+  početna Performance 77–89 (varira), Accessibility/Best Practices/SEO 100; privatnost 96/100/100/100.
+  Izveštaj za dizajn: `chessko-dizajn-snimci/IZVESTAJ-sajt-objava.md`.
+- **2026-11-14** — Sajt, dodaci (prompt `chessko-dizajn-snimci/sajt-dodaci/PROMPT-agent-sajt-dodaci.md`, repo
+  sajta commit `fadce39`). Slika za deljenje `img/og-image.jpg` 1200×630 (`og-image-en.jpg` čuva se za kampanje,
+  nije u `<head>`), puni Open Graph + Twitter kartica, `favicon.ico` + `favicon-32/192/512` + `site.webmanifest`,
+  `hreflang` za 8 jezika + `x-default` na početnoj i `/privacy` i u `sitemap.xml`. **`index.html` u sebi nosi samo
+  `sr` i `en`; ostalih šest jezika je u `i18n/<jezik>.json`** i učitava se tek kad je izabran (dok traje: engleski;
+  neuspeh: ostaje engleski). Izbor jezika (`?lang=`, `chessko.lang`, jezik pregledača) proveren isto kao pre.
+  Novi tekst na sajtu za te jezike ide u `i18n/*.json`, ne u `index.html`; `privacy.html` i dalje nosi svih 8 u
+  sebi. Animacija naslova kreće bez početnih 150 ms, tekst ispod sa 0,4 s umesto 0,7 s. Lighthouse (mobilni,
+  chessko.app), tri merenja: Performance **84 / 84 / 77**, ostalo 100. Izdvajanje prevoda ocenu nije pomerilo
+  merljivo (HTML 97 → 69 KB); vreme do prvog prikaza (~2,4 s) drže fontovi i ostatak stranice, ne prevodi.
