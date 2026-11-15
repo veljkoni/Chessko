@@ -75,6 +75,21 @@ export class Hub extends DurableObject {
       case "decline":
         this.onDecline(ws, msg);
         break;
+      case "move":
+        this.onMove(ws, msg);
+        break;
+      case "resign":
+        this.onResign(ws);
+        break;
+      case "draw_offer":
+        this.onDrawOffer(ws);
+        break;
+      case "draw_reply":
+        this.onDrawReply(ws, msg);
+        break;
+      case "finished":
+        this.onFinished(ws);
+        break;
       default:
         break; // ostale poruke dolaze u kasnijim taskovima
     }
@@ -214,6 +229,89 @@ export class Hub extends DurableObject {
       token: inviterWhite ? blackToken : whiteToken,
       opponent: iatt.code!,
     });
+  }
+
+  private gameRow(id: string): { white: string; black: string; moves: string[] } | undefined {
+    const rows = this.ctx.storage.sql
+      .exec("SELECT white, black, moves FROM games WHERE id = ?", id)
+      .toArray();
+    if (rows.length === 0) return undefined;
+    const r = rows[0] as { white: string; black: string; moves: string };
+    return { white: r.white, black: r.black, moves: JSON.parse(r.moves) as string[] };
+  }
+
+  /** Brise partiju i oslobada obe strane (prilog `game`) za nove pozive. */
+  private deleteGame(id: string): void {
+    this.ctx.storage.sql.exec("DELETE FROM games WHERE id = ?", id);
+    for (const ws of this.ctx.getWebSockets()) {
+      const att = this.attOf(ws);
+      if (att.game === id) {
+        delete att.game;
+        ws.serializeAttachment(att);
+      }
+    }
+  }
+
+  /** Partija strane koja salje poruku, ili game_gone ako je nema. */
+  private ownGame(ws: WebSocket) {
+    const att = this.attOf(ws);
+    if (!att.code) return undefined;
+    const row = att.game ? this.gameRow(att.game) : undefined;
+    if (!att.game || !row) {
+      if (att.game) {
+        delete att.game;
+        ws.serializeAttachment(att);
+      }
+      this.send(ws, { t: "error", reason: "game_gone" });
+      return undefined;
+    }
+    const mine: "w" | "b" = row.white === att.code ? "w" : "b";
+    const oppCode = mine === "w" ? row.black : row.white;
+    return { id: att.game, row, mine, opp: this.socketForCode(oppCode, ws) };
+  }
+
+  private onMove(ws: WebSocket, msg: Extract<ClientMessage, { t: "move" }>): void {
+    const g = this.ownGame(ws);
+    if (!g) return;
+    const turn: "w" | "b" = g.row.moves.length % 2 === 0 ? "w" : "b";
+    if (
+      typeof msg.uci !== "string" || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(msg.uci) ||
+      turn !== g.mine || msg.ply !== g.row.moves.length
+    ) {
+      this.send(ws, { t: "sync", moves: g.row.moves });
+      return;
+    }
+    g.row.moves.push(msg.uci);
+    this.ctx.storage.sql.exec("UPDATE games SET moves = ? WHERE id = ?", JSON.stringify(g.row.moves), g.id);
+    this.send(ws, { t: "ack", ply: msg.ply });
+    if (g.opp) this.send(g.opp, { t: "move", ply: msg.ply, uci: msg.uci });
+  }
+
+  private onResign(ws: WebSocket): void {
+    const g = this.ownGame(ws);
+    if (!g) return;
+    if (g.opp) this.send(g.opp, { t: "resigned" });
+    this.deleteGame(g.id);
+  }
+
+  private onDrawOffer(ws: WebSocket): void {
+    const g = this.ownGame(ws);
+    if (!g) return;
+    if (g.opp) this.send(g.opp, { t: "draw_offer" });
+  }
+
+  private onDrawReply(ws: WebSocket, msg: Extract<ClientMessage, { t: "draw_reply" }>): void {
+    const g = this.ownGame(ws);
+    if (!g) return;
+    const accept = msg.accept === true;
+    if (g.opp) this.send(g.opp, { t: "draw_reply", accept });
+    if (accept) this.deleteGame(g.id);
+  }
+
+  private onFinished(ws: WebSocket): void {
+    const g = this.ownGame(ws);
+    if (!g) return;
+    this.deleteGame(g.id);
   }
 
   private onDecline(ws: WebSocket, msg: Extract<ClientMessage, { t: "decline" }>): void {
