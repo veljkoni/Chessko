@@ -3486,3 +3486,10 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
 - **2026-11-14** — Cloudflare Email Address Obfuscation za zonu chessko.app isključena preko Cloudflare MCP-a
   (`email_obfuscation`: on → off). Posle toga `https://chessko.app/` i `/privacy` su bajt-isti fajlovima u repou sajta,
   bez `/cdn-cgi/` skripte; `mailto:kontakt@chessko.app` je ponovo običan link.
+- **2026-11-15** — Sajt: zaglavlje se više ne preklapa na dugim jezicima (repo sajta `70dd8bd`). Na francuskom
+  (~385–400 px i 901–930 px), engleskom i hindiju (385 px) „Chessko“, birač jezika i dugme nisu stajali u red
+  (prijavio vlasnik, snimak sa telefona). `fitNav()` meri zaglavlje posle promene jezika, širine i učitavanja
+  fontova i tek tada doda `.tight` (telefon: sakrije reč pored ikonice, kao dizajn ispod 380 px; šire: manji
+  razmaci linkova) ili `.tighter` (bez linkova — nigde nije bilo potrebno). Kad sve staje, ništa se ne menja.
+  Provereno na index/privacy/404, 8 jezika, 320–1300 px na svakih 5 px: 0 preklopa. Novi tekst u zaglavlju ne
+  traži novu prelomnu tačku — merenje ga hvata samo.
