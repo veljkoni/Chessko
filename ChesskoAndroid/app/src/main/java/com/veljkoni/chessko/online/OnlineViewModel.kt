@@ -112,11 +112,23 @@ class OnlineViewModel private constructor(private val app: Application) {
 
     // ── Javni API ───────────────────────────────────────────────────────
 
+    /**
+     * Ekran je stvarno na ekranu (postavlja ga `OnlineGameDestination`; rotacija ga na
+     * trenutak spusti pa digne). ON_START/ON_STOP hookovi ga citaju umesto `uiOpen`, da
+     * veza nikad ne ostane otvorena bez vidljivog ekrana.
+     */
+    @Volatile
+    var destinationShowing = false
+
     fun open() {
         uiOpen = true
+        val wasBackgrounded = backgrounded
         backgrounded = false
         if (OnlineLogic.shouldOpenOnOpen(machine.state, connection != null || reconnectJob?.isActive == true)) {
             openSocket()
+        } else if (wasBackgrounded && connection == null && reconnectJob?.isActive != true) {
+            // ON_STOP (rotacija) je ugasio vezu a ON_START je preskocen jer ekran jos nije bio gore.
+            handle(OnlineEvent.AppBecameActive)
         }
     }
 
@@ -165,7 +177,7 @@ class OnlineViewModel private constructor(private val app: Application) {
      * je nastavlja.
      */
     fun appWentToBackground() {
-        if (!(uiOpen || machine.stored != null)) return
+        if (!(destinationShowing || machine.stored != null)) return
         backgrounded = true
         shutDownSocket()
         handle(OnlineEvent.SocketClosed)
@@ -174,7 +186,7 @@ class OnlineViewModel private constructor(private val app: Application) {
     /** Android oblik iOS `scenePhaseChanged(.active)`; zove se iz ON_START aktivnosti. */
     fun appBecameActive() {
         backgrounded = false
-        if (!(uiOpen || machine.stored != null)) return
+        if (!(destinationShowing || machine.stored != null)) return
         if (machine.state is OnlineState.Idle) {
             if (connection == null) openSocket()
             return

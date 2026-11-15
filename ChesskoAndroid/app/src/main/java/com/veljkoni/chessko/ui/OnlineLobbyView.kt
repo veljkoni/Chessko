@@ -89,7 +89,8 @@ fun formatOnlineCodeInput(input: String): String {
     return if (raw.length > 3) raw.take(3) + "-" + raw.drop(3) else raw
 }
 
-// Velicine koda kao na iOS-u (`OnlineLobbyView.swift`: 40 i 28, monospaced) — van skale.
+// Velicine koda van skale, monospaced: moj kod 36 (iOS 40, manje da staje na uskim telefonima),
+// kod prijatelja 28 (isto kao iOS `OnlineLobbyView.swift`).
 private val MyCodeSize = 36.sp
 private val FriendCodeSize = 28.sp
 
@@ -130,7 +131,7 @@ fun OnlineLobbyView(vm: OnlineViewModel, modifier: Modifier = Modifier) {
                     Text(text = loc("Povezujem…"), color = DS.inkMuted, style = Type.body)
                 }
             }
-            vm.notice?.let { notice ->
+            vm.notice?.takeIf { it != OnlineNotice.CODE_TAKEN }?.let { notice ->
                 Text(
                     text = onlineNoticeText(notice),
                     color = DS.ink,

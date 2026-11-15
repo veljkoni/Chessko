@@ -46,6 +46,7 @@ import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.models.GameStatus
 import com.veljkoni.chessko.models.PieceColor
 import com.veljkoni.chessko.online.OnlineLink
+import com.veljkoni.chessko.online.OnlineNotice
 import com.veljkoni.chessko.online.OnlineResult
 import com.veljkoni.chessko.online.OnlineState
 import com.veljkoni.chessko.online.OnlineViewModel
@@ -81,8 +82,11 @@ fun OnlineGameDestination(onDismiss: () -> Unit) {
     var showAnalysis by remember { mutableStateOf(false) }
 
     DisposableEffect(vm) {
+        vm.destinationShowing = true
         vm.open()
-        onDispose { }
+        // Samo oznaka da ekran nestaje; veza se NE gasi (rotacija u lobiju ne sme da
+        // izgubi poziv na cekanju) -- gasi je `close()` kroz izricito zatvaranje.
+        onDispose { vm.destinationShowing = false }
     }
 
     // Obavestenje se prikazuje ~4 s pa se brise (isto kao iOS).
@@ -363,7 +367,7 @@ private fun OnlineStatusArea(vm: OnlineViewModel, game: GameViewModel, onAnalyze
                 state.opponentAway -> loc("Prijatelj je izgubio vezu, čekam…")
                 else -> null
             }
-            val notice = vm.notice
+            val notice = vm.notice?.takeIf { it != OnlineNotice.CODE_TAKEN }
             when {
                 connection != null -> StatusLine(connection, showsProgress = true)
                 state.drawOfferedByOpponent -> DrawOfferBox(vm)

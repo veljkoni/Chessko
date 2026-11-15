@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.Dp
 import com.veljkoni.chessko.logic.StockfishLevel
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.veljkoni.chessko.online.OnlineViewModel
 import com.veljkoni.chessko.ui.theme.ChesskoTheme
 import com.veljkoni.chessko.ui.theme.DS
@@ -137,6 +138,11 @@ class MainActivity : ComponentActivity() {
 
             ChesskoTheme(darkTheme = isDark) {
                 var languageKey by remember { mutableStateOf(settingsManager.languageCode) }
+                // Igra preko interneta: izvan `key(languageKey)` i `rememberSaveable`, da rotacija,
+                // promena teme i promena jezika ne sakriju ekran dok `OnlineViewModel.uiOpen` ostaje
+                // true (veza bez vidljivog ekrana). Odmah otvorena samo ako postoji sacuvana partija
+                // (cita se iz SharedPreferences, `OnlineViewModel` se NE pravi pri pokretanju).
+                var showOnline by rememberSaveable { mutableStateOf(OnlineViewModel.hasStoredGame(context)) }
 
                 key(languageKey) {
                 // spec § 4: Analiza, Podesavanja i Sat se otvaraju PREKO celog prozora
@@ -166,7 +172,6 @@ class MainActivity : ComponentActivity() {
                 var showChessClock by remember { mutableStateOf(false) }
                 // Igra preko interneta: odmah otvorena samo ako postoji sacuvana partija
                 // (cita se iz SharedPreferences, `OnlineViewModel` se NE pravi pri pokretanju).
-                var showOnline by remember { mutableStateOf(OnlineViewModel.hasStoredGame(context)) }
                 var showResetConfirm by remember { mutableStateOf(false) }
                 var showResignConfirm by remember { mutableStateOf(false) }
                 var dismissGameOverOverlay by remember { mutableStateOf(false) }
