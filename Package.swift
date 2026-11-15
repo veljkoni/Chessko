@@ -24,6 +24,7 @@ let package = Package(
                 "Models/BoardSizing.swift",
                 "Models/OnlineCode.swift",
                 "Models/OnlineProtocol.swift",
+                "Models/OnlineMachine.swift",
                 "Logic/StatsManager.swift",
                 "Logic/ProgressStore.swift",
                 "Logic/MoveGenerator.swift",
