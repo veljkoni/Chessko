@@ -6,10 +6,12 @@
 ## Šta je aplikacija
 
 **Chessko** — iOS aplikacija: šah protiv računara (AI), sa dodatnim modovima
-(igra sa prijateljem na istom uređaju, samostalni šahovski sat). Igrač bira
+(igra sa prijateljem na istom uređaju, igra sa prijateljem preko interneta uz
+kod uređaja, samostalni šahovski sat). Igrač bira
 boju (beli ili crni; podrazumevano beli) — tabla se rotira kad igra crnim.
 UI je lokalizovan na 8 jezika (izvorni srpski). `ContentView` je `TabView`
-sa tri taba: Igra, Zadaci (dnevni puzzle), Put (kurikulum).
+sa tri taba: Igra, Zadaci (dnevni puzzle), Put (kurikulum). Sve osim igre preko
+interneta radi bez interneta; vidi „Igra preko interneta".
 
 - Platforma: **iOS 18.0+**, iPhone + iPad (`TARGETED_DEVICE_FAMILY = 1,2`)
 - Jezik: **Swift 6.0**, **SwiftUI**
@@ -45,7 +47,7 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (**111 testova**, stanje posle dizajnerskog pregleda 2026-10): 7 perft testova za svih 6
+Pokriveno (**163 testa**, stanje posle igre preko interneta 2026-11-15; bilo 111 posle dizajnerskog pregleda 2026-10): 7 perft testova za svih 6
 standardnih pozicija (uključujući početnu do dubine 5, 4.865.609 čvorova, ~75–85s), 4 testa prava
 rokade (uzimanje topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
 14 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu — vidi ispod),
@@ -56,7 +58,10 @@ cilj, streak, kartica cilja), 33 testa analize partije (`MoveAnalysisTests` — 
 tačnost iz gubitka procenta pobede, rečenica za početnike, parser UCI ocene), 8 testova lokalnog
 formata i množina (`LocalFormatTests`), 8 testova strane table (`BoardSizingTests`, § 13 tabela) i
 1 test kataloga (`LocCatalogTests` — svaki `Loc("…")`/`LocF("…")` literal mora postojati u
-katalogu sa svih 8 jezika). `Chessko/TestSupport/LocShim.swift`
+katalogu sa svih 8 jezika), 11 testova protokola igre preko interneta (`OnlineProtocolTests`) i 41 test
+njene čiste mašine stanja (`OnlineMachineTests`). Server ima svoj skup (`cd server/play && npx vitest run`,
+**48 testova** u 5 fajlova, plus `npx tsc --noEmit`) — vidi „Igra preko interneta".
+`Chessko/TestSupport/LocShim.swift`
 postoji samo zbog paketa i zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u
 aplikaciji se ne kompajlira.
 
@@ -70,8 +75,9 @@ red u ~2,5% pokretanja — praktično nikad.
 ## Baza zadataka
 
 `Chessko/puzzles.sqlite` (7,0 MB, commit-ovan) — **20.000 zadataka iz Lichess
-baze, licenca CC0**. Aplikacija od Faze 2 nema nijedan mrežni poziv za
-zadatke; radi u avionskom režimu.
+baze, licenca CC0**. Zadaci od Faze 2 nemaju nijedan mrežni poziv i rade u avionskom
+režimu. (Od 2026-11-15 aplikacija ima mrežni kod, ali **samo** za igru preko interneta — vidi
+„Igra preko interneta"; zadaci, lekcije, igra protiv računara, sat i analiza i dalje ne traže mrežu.)
 
 **Od Faze 6a istu bazu deli i Android**, bajt-identično (`sha256` počinje sa
 `3cd00a83`) — `ChesskoAndroid/app/src/main/assets/puzzles.sqlite`. Nikad se ne
@@ -659,6 +665,112 @@ partije nije ostavilo zaglavljen ili tuđ potez: AI je odigrao svoj, ispravan po
 Popravka iz Task-a 4 (`NonCancellable` `"stop"`) je zato potvrđena izvorom i logikom, ne i
 snimljenim trenutkom prave trke.
 
+## Igra preko interneta
+
+Od 2026-11-15 (grana `v2/igra-preko-interneta`). Dva prijatelja igraju jedan protiv drugog, svako na svom
+telefonu, iPhone i Android međusobno. **Bez naloga i prijave:** svaka instalacija ima svoj **kod uređaja**
+(6 znakova, `XXX-XXX`, kao AnyDesk); prijatelj ukuca tvoj kod, ti dobiješ poziv i prihvatiš. Nova stavka u meniju
+„+" na ekranu Igra: „Igraj preko interneta". Spec: `docs/superpowers/specs/2026-11-15-igra-preko-interneta-design.md`;
+protokol: `docs/online-protocol.md` (jedini izvor istine o porukama); plan i ledger: `.superpowers/sdd/2026-11-15-igra-preko-interneta/`.
+
+### Server (`server/play/`)
+
+- **Cloudflare Worker + jedan SQLite Durable Object `Hub`** (`src/hub.ts`, `src/index.ts`, `src/protocol.ts`),
+  WebSocket Hibernation (prisustvo i pozivi žive u attachment-ima, 30-minutno odsustvo u SQLite-u uz `alarm`).
+  Endpoint `wss://play.chessko.app/ws`, `GET /health` → `ok`. Server **ne zna šah**: prosleđuje poteze i broji `ply`.
+- Objava: `cd server/play && npx wrangler deploy` (wrangler **pinovan** `4.124.0` u `package.json`; poslednja
+  verzija `222ccb7e`, 2026-11-15). Provera uživo: `npm run smoke` (pravi dva klijenta protiv produkcije, uključujući
+  „resign dok je protivnik odsutan"). Testovi: `npx vitest run` (48) + `npx tsc --noEmit`.
+- Besplatan Cloudflare nivo; prelazak na plaćeni (~5 $) ne traži izmenu koda (odluka vlasnika).
+- **Verzija protokola je 1** i proverava se samo na `hello` (`resume` ne nosi `v`; klijent uvek šalje `hello` pre
+  `resume`). `error version` je **završan za sesiju** na obe platforme: bez ponovnih povezivanja, stalna poruka „Za igru
+  preko interneta potrebna je novija verzija aplikacije." (rodno neutralna, isti tekst na svih 8 jezika).
+
+### Šta se čuva i kada se briše
+
+- Red partije (potezi, tokeni sedišta, oznake odsustva) postoji **samo dok partija traje ili čeka**. Briše se: pri
+  kraju partije kad su obe strane prisutne; po isteku **30 min odsustva** (`AWAY_LIMIT_MS` u `hub.ts`; prisutna strana
+  dobija `aborted`); i pri isporuci kraja odsutnoj strani.
+- **Kraj dok je protivnik odsutan** (`resign`, prihvaćen remi, `finished`): red se **ne** briše odmah nego pamti kraj
+  (`ended`, `ended_to`) sve dok se odsutna strana ne vrati sa `resume` (dobija `resumed` + `resigned`/`draw_reply`,
+  pa se red briše) ili ne istekne 30 min. Strana koja je završila je odmah slobodna za nove pozive.
+- **Odsustvo bez zatvaranja veze** (deploy, restart): oznaka odsustva se postavlja naknadno (pri `resume`, potezu, i pri
+  pokretanju DO-a — `stampOrphanSeats`), pa 30 minuta važi i za takvo sedište.
+- Nema istorije partija, nema logova sa kodovima (`console` se u `server/play/src` nigde ne zove), nema analitike.
+  Cloudflare tehnički vidi IP adresu.
+- Zaštita: najviše poziva po vezi u minuti (vremenske oznake u attachment-u), kod prima poziv samo dok je povezan, kod
+  može biti u samo jednoj partiji, drugi `hello` na istoj vezi se ignoriše, `resume` preuzima sedište (zatvara drugu vezu
+  istog sedišta), `move` se prihvata samo od strane na potezu sa tačnim `ply`, inače `sync`.
+
+### Klijenti
+
+Isti nazivi i isti tekstovi na obe platforme (paritet); sve liste ispod su isti tok na dva jezika.
+
+| | iOS | Android |
+|---|---|---|
+| Kod uređaja | `Models/OnlineCode.swift` | `online/OnlineCode.kt` |
+| Poruke | `Models/OnlineProtocol.swift` | `online/OnlineMessages.kt` + `OnlineCodec.kt` (`org.json`, strogi tipovi) |
+| **Čista mašina stanja** `OnlineMachine` | `Models/OnlineMachine.swift` | `online/OnlineMachine.kt` |
+| Veza | `Logic/OnlineConnection.swift` (`URLSessionWebSocketTask`) | `online/OnlineConnection.kt` (OkHttp) |
+| ViewModel | `ViewModels/OnlineViewModel.swift` (`shared`) | `online/OnlineViewModel.kt` |
+| Ekrani | `Views/OnlineLobbyView.swift`, `OnlineGameView.swift` | `ui/OnlineLobbyView.kt`, `OnlineGameView.kt` |
+| Tabla | `GameViewModel` sa `saveKey` za online | `GameViewModel` (`ONLINE_SAVE_KEY`), `online/OnlineReplay.kt` |
+
+- **`OnlineMachine` je čista** (događaj → lista efekata, bez mreže i vremena), Foundation-only na iOS-u, pa pod `swift test`;
+  Android je njen 1:1 odraz sa istim nazivima događaja/stanja (`OnlineLink`, `backToLobby`, `canAct`, `updateRequired`,
+  `OnlineCloseConfirm`). Dok je veza u `reconnecting`, `localMove`/`resign`/`offerDraw`/`answerDraw` se **odbijaju** (ne
+  stavljaju u red; server ostaje istina, `resume` sinhronizuje).
+- **Ključevi** (lokalno): kod uređaja `chessko.online.code`, aktivna partija `chessko.online.activeGame` (oznaka partije,
+  boja, token), tabla `chessko.savedGame.online` — Android `online.code`, `online.activeGame`, `saved_game.online`. Partija
+  na tabu Igra se ne dira (poseban ključ, isti obrazac kao koraci Puta). Rezultat se **ne** upisuje u statistiku.
+- **Android:** `android.permission.INTERNET` (jedina nova dozvola; `aapt dump permissions` posle = pre + INTERNET) i
+  **OkHttp `4.12.0` izričito** u `libs.versions.toml`/`build.gradle.kts` — ista verzija koju već vuče Coil, razrešeni skup
+  zavisnosti nepromenjen. **Nema `ACCESS_NETWORK_STATE`**, pa Android ne prikazuje „Nema veze sa internetom." (iOS ga
+  prikazuje preko `NWPathMonitor`) — presuđeno, jer bi dozvola promenila i politiku privatnosti; Android pokazuje stanje
+  ponovnog povezivanja.
+- **Životni ciklus:** iOS prekida vezu u pozadini (`scenePhase`), Android na `ON_STOP` (osim pri promeni konfiguracije —
+  rotacija ne prekida vezu) a na `ON_START` zove `appBecameActive()`. Bez toga bi Android u pozadini zauvek držao sedište
+  „na vezi" i protivnik nikad ne bi video „odsutan" niti bi počeo rok od 30 min. **Pri pokretanju se ništa ne pravi
+  (nijedna mreža) osim ako postoji sačuvana partija** (`hasStoredGame`). Ekran koji se zatvara dok partija traje drži
+  vezu; kad se partija završi a ekran je zatvoren, veza se gasi (kod ne sme ostati pozivljiv bez ekrana).
+- **iOS pong rok:** svaki ping ima rok 10 s; prekoračenje → `fail()` → ponovno povezivanje.
+
+### Zamke koje su već jednom ujele (nađene tokom rada)
+
+- **Android `isStepGame` se izvodio iz ključa čuvanja** (`!= FREE_PLAY`), pa bi online primerak bio proglašen korakom Puta;
+  sada samo za prefiks `saved_game.step.`.
+- **Online partije moraju čuvati istoriju stanja** da bi analiza radila (iOS je prvo dobijao „nema poteza"); Android čuva
+  listu UCI poteza i `load()` ih ponovo odigra (iz `fromFEN` se `ply` i istorija gube).
+- **`resign` mora stići na server pre zatvaranja veze:** zatvaranje je graciozno (čeka poslato do 2 s); potvrda zatvaranja
+  nudi „Predaj" samo kad `canAct`, a **varijanta dijaloga se hvata pri otvaranju** (`OnlineCloseConfirm`) — inače bi
+  „Zatvori" ispod prsta postalo „Predaj".
+- **Kraj dok je protivnik odsutan se nije smeo brisati odmah** (prvobitno je vraćao „Partija je prekinuta" umesto pobede).
+- **`code_taken` pri ponovnom povezivanju** je obično sopstvena poluotvorena veza posle gašenja aplikacije: ponavlja se uz
+  backoff, bez poruke korisniku.
+- Android: `showOnline` mora preživeti rotaciju (`rememberSaveable` + `destinationShowing`), inače je ekran nevidljiv a veza živa.
+
+### Šta NIJE provereno (stoji otvoreno)
+
+- **Nijedna prava partija iPhone ↔ Android nije odigrana.** iOS simulator se u ovom okruženju nije mogao voditi (nema `idb`,
+  Xcode MCP ne vidi iOS 26.5 simulator). Zamena: obe aplikacije proverene uživo protiv iste produkcije istim skriptom, oba
+  kodeka testirana identičnim JSON stringovima.
+- **Na iOS-u nema nijednog pravog dodira:** dugmad, alerti, unos koda, promocija, prihvaćen remi, `aborted`, iPad, pejzaž,
+  drugi jezici — proveravano samo kodom, buildom i živom vezom iz privremene sprege.
+- Android: pravi dodiri protiv skriptovanog prijatelja na produkciji jesu rađeni za sve scenarije, **ali rotacija usred
+  partije samo rezonovana, ne pokrenuta**; tablet rasporedi nisu pregledani; instrumentisani broj (60) je iz prolaza Task-a 14,
+  pre završnih ispravki.
+- Politika privatnosti ne pominje da se sačuvana partija sama ponovo povezuje pri otvaranju aplikacije (sitnica, sajt).
+
+### Lista za vlasnika pre izdanja
+
+1. **Jedna prava partija iPhone ↔ Android**, pozivom u oba smera: promocija, ponuda remija, zatvoriti aplikaciju usred
+   partije pa se vratiti, predaja.
+2. **App Store „App Privacy" i Google Play „Data safety":** odluka je vlasnikova da li prolazni prenos bez čuvanja (kod
+   uređaja i potezi preko servera, IP vidi Cloudflare) znači „prikuplja se".
+3. Prva rečenica politike privatnosti, „Chessko ne prikuplja tvoje podatke", možda treba ublažiti — takođe vlasnikova odluka.
+4. **Marketinški tekst sajta** koji tvrdi da aplikacija radi bez interneta menja dizajn sajta (nije u ovom repou).
+5. Politika privatnosti je već objavljena (`chessko-site` `39fcd64`, 8 jezika) i mora ostati objavljena pre izdanja.
+
 ## Sadržaj lekcija
 
 Od Faze 3 tekst lekcija **nije u Swift-u**. Živi u
@@ -850,7 +962,11 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **10 — razmaci i tipografija** (spec 5.6) | **da, uz presudu** | `DS.Space` 169 / `DS.Radius` 65 / `DS.maxBoardSide` 6 / skala 159 pozivnih mesta; 285 `.dp` literala ostaje namerno po ulozi — vidi „Android dizajn sistem" |
 | **Dizajnerski pregled** (2026-10, obe platforme) | **da** | spec `docs/design/CHESSKO-IMPLEMENTACIJA.md` § 2–§ 17; 6 tema / 5 stilova (odluka vlasnika); `BoardSizing` do 800 na tabletu; celoekranska Analiza/Podešavanja/Sat; vidi `IMPLEMENTACIJA-LOG.md` → „Završni izveštaj" |
 
-Testovi (posle dizajnerskog pregleda, 2026-10-12; +1 u 2.2): **149 JVM** (`./gradlew testDebugUnitTest` —
+Testovi (posle igre preko interneta, 2026-11-15): **202 JVM** (`./gradlew testDebugUnitTest`, iz XML-a, HEAD `f824fa7`;
+bilo 149 posle dizajnerskog pregleda; nove klase: `OnlineCodeTest` 5, `OnlineMachineTest` 41, `OnlineReplayTest` 2,
+`online.OnlineLogicTest` 4, `MoveUciTest` 1) + **60 instrumentisanih** (iz XML-a prolaza Task-a 14, 2026-11-15, **nije
+ponovljeno posle završnih ispravki**; nov `OnlineCodecTest` 5, plus izmenjen `GameViewModelActivityRecreationTest`).
+Stari spisak ispod je stanje pre toga (149 JVM + 55 instrumentisanih) i ostaje kao osnova: **149 JVM** (`./gradlew testDebugUnitTest` —
 `AppearanceCatalogTest` 5, `BoardSizingTest` 8, `BoardWidthCapTest` 2, `ContrastTest` 19, `EngineTest` 9,
 `EvaluationLabelTest` 3, `ExampleUnitTest` 1, `GameStateFenHalfmoveTest` 5,
 `GameStateStatusFromPositionTest` 5, `LessonBoardsOptOutOfSwipeTest` 2, `LocTest` 7,
@@ -956,6 +1072,18 @@ Testovi (posle dizajnerskog pregleda, 2026-10-12; +1 u 2.2): **149 JVM** (`./gra
 > zaobilazni hak sa zakucavanjem korena. Screenshot: `adb exec-out screencap -p > …`.
 
 ## Poznata ograničenja / TODO kandidati
+
+- **Igra preko interneta (2026-11-15), odloženo ili presuđeno:**
+  - Ponuda remija odsutnom protivniku se **odbacuje** (resign/draw poruke se ne čuvaju); ponuđač može ponovo kad se protivnik vrati (`back`).
+    Slično, ponuda stigla dok je protivnik između `hello` i `resume` se gubi. Presuđeno: stvarno, ali ne nosi ništa.
+  - **Android ne prikazuje „Nema veze sa internetom."** (bez `ACCESS_NETWORK_STATE`, presuđeno), samo „ponovno povezivanje".
+  - **Nije odigrana nijedna prava partija iPhone ↔ Android** i nema pravih dodira na iOS-u — vidi „Igra preko interneta".
+  - Ostali minori završnog pregleda koji nisu popravljeni: lažno `opponent back` bez prethodnog `away` (bezopasno); pregled
+    sedišta bez veze pri svakom buđenju DO-a; iOS pong rok može posle suspenzije izazvati jedno suvišno ponovno povezivanje;
+    `finished` dok je protivnik odsutan se oslanja na to da se table slažu; Android `onClosing` vraća kod koji server pošalje
+    (1005 bi bacilo — treba 1000); iOS ne gasi vezu na `.background` pri otvorenom ekranu kao Android; poruke u lobiju se na
+    Androidu same brišu a na iOS-u ne; stanje dijaloga se gubi pri rotaciji; `ply` u dolaznom potezu se ignoriše (duplikat
+    izaziva ponovno povezivanje); nema testa za izvršioce efekata; poređenje tokena nije u konstantnom vremenu.
 
 - **ZASTARELO posle dizajnerskog pregleda (2026-10, § 2):** sa `inkMuted #5E6573` i `warning #865F21`
   pet od šest tekstualnih parova ispod je prešlo AA (5,28 / 4,86 / 5,72 / 4,75 / 5,16) i tvrdi ih
@@ -2062,7 +2190,8 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   python skriptom.
   `swift test`: 26/26 prošlo (23 postojeća + 3 nova za `practiceRatingWindow`). `xcodebuild`
   (simulator `iPhone 17`): BUILD SUCCEEDED. `project.pbxproj` nije dirran — nema novih fajlova.
-- **2026-09-07** — Faza 2 završena (offline zadaci). Tab Zadaci više nema nijedan mrežni
+- **2026-09-07** — Faza 2 završena (offline zadaci). *(Zastarelo od 2026-11-15 samo u smislu cele aplikacije: mrežni
+  kod postoji, ali samo za igru preko interneta; tab Zadaci i dalje nema nijedan mrežni poziv.)* Tab Zadaci više nema nijedan mrežni
   poziv: `chess-puzzles-api.vercel.app` je zamenjen lokalnom bazom od 20.000 Lichess
   zadataka (CC0) koja se čita kroz `PuzzleRepository` (`import SQLite3`, bez ijedne nove
   SPM zavisnosti). Detalji baze i njeno regenerisanje — vidi sekciju „Baza zadataka".
@@ -2435,7 +2564,7 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   i interpolira već preveden razlog. Četiri nova ključa u `Loc.kt`, svaki na svih 8 jezika,
   prevodima usklađenim sa iOS katalogom.
   **M-7:** uklonjena `android.permission.INTERNET` — aplikacija nema nijedan mrežni poziv, a
-  odsustvo dozvole je najjači dokaz za to. Provereni i build i pokretanje. **M-1:** dva nova
+  odsustvo dozvole je najjači dokaz za to. *(Zastarelo od 2026-11-15: dozvola je vraćena za igru preko interneta.)* Provereni i build i pokretanje. **M-1:** dva nova
   instrumentisana testa (9 → 11). Plan je za negativan `dayIndex` tražio samo „ne-null"; to
   ne bi bilo dovoljno jer SQLite **negativan `OFFSET` tretira kao nulu** (provereno), pa test
   traži tačno preslikavanje — mutacija `dayIndex % n` ga obori. Drugi test na API 36 ne može
@@ -3450,7 +3579,8 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   posle toga `--force` ne treba. Domen `chessko.app` + `www` povezan preko Cloudflare MCP-a (CNAME →
   `chessko.pages.dev`, proxied; Redirect Rule `www` → apex 301); Email Routing `kontakt@chessko.app` podesio
   vlasnik. Politika privatnosti je izvedena iz koda obe aplikacije (nema mreže, naloga, reklama, analitike;
-  Android nema `INTERNET` ni u spojenom release manifestu). **Ako aplikacija ikad dobije mrežni poziv,
+  Android nema `INTERNET` ni u spojenom release manifestu). **(Zastarelo od 2026-11-15: Android od igre
+  preko interneta ima `INTERNET` i mrežni kod samo za tu opciju; politika je promenjena — vidi unos 2026-11-15.)** **Ako aplikacija ikad dobije mrežni poziv,
   analitiku ili novu dozvolu, `privacy.html` na svih 8 jezika mora da se promeni u istom koraku.** Slike i
   fontovi se keširaju godinu dana (`immutable`): promenjena slika mora dobiti novo ime. Lighthouse (mobilni):
   početna Performance 77–89 (varira), Accessibility/Best Practices/SEO 100; privatnost 96/100/100/100.
@@ -3493,3 +3623,29 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   razmaci linkova) ili `.tighter` (bez linkova — nigde nije bilo potrebno). Kad sve staje, ništa se ne menja.
   Provereno na index/privacy/404, 8 jezika, 320–1300 px na svakih 5 px: 0 preklopa. Novi tekst u zaglavlju ne
   traži novu prelomnu tačku — merenje ga hvata samo.
+
+- **2026-11-15** — Igra preko interneta (grana `v2/igra-preko-interneta`, 16 taskova, od `4bea6c8` do `f824fa7`, plan i
+  ledger u `.superpowers/sdd/2026-11-15-igra-preko-interneta/`). Pun opis u sekciji „Igra preko interneta".
+  - **Server** `server/play/` (Worker + SQLite DO `Hub`, WebSocket Hibernation), objavljen na `play.chessko.app`, pinovan
+    wrangler `4.124.0`, `npm run smoke` protiv produkcije; testova **48**.
+  - **iOS:** `OnlineCode`/`OnlineProtocol`/`OnlineMachine` (Models, pod `swift test`), `OnlineConnection`, `OnlineViewModel`,
+    ekrani lobija i partije, online mod u `GameViewModel`, 28+ novih ključeva × 8 jezika. `swift test` **111 → 163**.
+  - **Android:** isti sastav (`online/`, `ui/Online*View.kt`), `INTERNET`, OkHttp `4.12.0` izričito, životni ciklus na
+    `ON_STOP`/`ON_START`. JVM **149 → 202**, instrumentisanih **55 → 60** (iz prolaza Task-a 14).
+  - **Politika privatnosti** na sajtu promenjena na svih 8 jezika i objavljena (`chessko-site` `39fcd64`, bajtovi uživo =
+    fajl). Marketinški tekst sajta ostaje na dizajnu.
+  - **Krugovi ispravki vredni pamćenja:** Task 2 (jedan krug), Task 7 (dva Important: akcije u mrtvu vezu, `.ended`
+    bez izlaza — odbijanje umesto reda, `backToLobby`), Task 8 (online partija oživljena posle kraja), Task 9 (veza ostaje
+    otvorena posle kraja), Task 10 (resign pre zatvaranja veze; usput nađena greška iz Task-a 8: online partije bez istorije),
+    Task 12 (`ply` posle ponovnog pokretanja; AI korutina u ONLINE), Task 14 (`showOnline` posle rotacije); svaki od njih po
+    jedan krug, osim Task-a 7 (dva).
+  - **Završni pregled (4 popravke, `ecdaa2a`, `ce64b73`, `8345f12`, `f824fa7`; server objavljen `222ccb7e`):** I1 kraj partije
+    dok je protivnik odsutan se pamti dok se ne isporuči (ranije „Partija je prekinuta" umesto rezultata); I2 sedište izgubljeno
+    bez `webSocketClose` dobija oznaku odsustva (inače partija ostaje zauvek); I3 greška verzije je završna, rodno neutralan tekst;
+    I4 varijanta dijaloga zatvaranja se hvata pri otvaranju. Uz to iOS pong rok od 10 s. Ponovni pregled: bez novih Critical/Important.
+  - **Provera na kraju (HEAD `f824fa7`):** `swift test` 163/163, `vitest` 48/48 (5 fajlova), `tsc --noEmit` čist, Android JVM 202/202
+    iz XML-a (mtime 22:10), 0 padova. Emulator nije dizan; instrumentisanih 60/60 je iz Task-a 14.
+  - **Ostaje vlasniku:** prava partija iPhone ↔ Android pre izdanja; App Store „App Privacy" i Google Play „Data safety"
+    (da li prolazni prenos znači „prikuplja se"); prva rečenica politike „Chessko ne prikuplja tvoje podatke" možda treba
+    ublažiti; marketinški tekst sajta o radu bez interneta (dizajn). Parkirano: ponuda remija odsutnom protivniku, Android bez
+    „Nema veze sa internetom." (vidi „Poznata ograničenja").
