@@ -1,0 +1,10 @@
+{
+  "name": "chessko-play",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-15",
+  "routes": [{ "pattern": "play.chessko.app", "custom_domain": true }],
+  "durable_objects": {
+    "bindings": [{ "name": "HUB", "class_name": "Hub" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Hub"] }]
+}
