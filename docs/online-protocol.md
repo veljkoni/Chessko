@@ -22,6 +22,8 @@ Sve poruke su JSON objekti sa poljem `t`. Kod je 6 znakova iz abecede
 | S→K | `{t:"opponent", state:"away"\|"back"}` | prisutnoj strani, kad druga izgubi ili vrati vezu |
 | S→K | `{t:"aborted"}` | prisutnoj strani, posle 30 min odsustva druge; partija se briše |
 
+`resume` ne traži prethodni `hello`: autentikuje se samo tokenom, vezuje kod sedišta za vezu i zatvara svaku drugu vezu sa tim kodom (preuzimanje sedišta).
+
 `ply` je redni broj poteza od 0. Beli igra parne, crni neparne. `token` je 128-bitni nasumični heks i važi
 samo za jednu partiju i jednu stranu.
 

@@ -9,6 +9,7 @@ import {
 
 const INVITE_LIMIT = 10;
 const INVITE_WINDOW_MS = 60_000;
+export const AWAY_LIMIT_MS = 30 * 60 * 1000;
 
 function randomHex(bytes: number): string {
   const buf = new Uint8Array(bytes);
@@ -22,7 +23,7 @@ export class Hub extends DurableObject {
     ctx.storage.sql.exec(
       `CREATE TABLE IF NOT EXISTS games (
         id TEXT PRIMARY KEY, white TEXT, black TEXT, white_token TEXT, black_token TEXT,
-        moves TEXT, away_code TEXT, away_since INTEGER)`,
+        moves TEXT, white_away INTEGER, black_away INTEGER)`,
     );
   }
 
@@ -74,6 +75,9 @@ export class Hub extends DurableObject {
         break;
       case "decline":
         this.onDecline(ws, msg);
+        break;
+      case "resume":
+        this.onResume(ws, msg);
         break;
       case "move":
         this.onMove(ws, msg);
@@ -203,7 +207,7 @@ export class Hub extends DurableObject {
     const whiteToken = randomHex(16);
     const blackToken = randomHex(16);
     this.ctx.storage.sql.exec(
-      "INSERT INTO games (id, white, black, white_token, black_token, moves, away_code, away_since) VALUES (?, ?, ?, ?, ?, '[]', NULL, NULL)",
+      "INSERT INTO games (id, white, black, white_token, black_token, moves, white_away, black_away) VALUES (?, ?, ?, ?, ?, '[]', NULL, NULL)",
       game,
       white,
       black,
@@ -347,9 +351,129 @@ export class Hub extends DurableObject {
     }
   }
 
+  /** Socket vezan za istu partiju i stranu (kod), osim `except`. */
+  private seatSocket(game: string, code: string, except?: WebSocket): WebSocket | undefined {
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws === except) continue;
+      const att = this.attOf(ws);
+      if (att.game === game && att.code === code) return ws;
+    }
+    return undefined;
+  }
+
+  private onResume(ws: WebSocket, msg: Extract<ClientMessage, { t: "resume" }>): void {
+    const gone = () => this.send(ws, { t: "error", reason: "game_gone" });
+    if (typeof msg.game !== "string" || typeof msg.token !== "string") return gone();
+    const rows = this.ctx.storage.sql
+      .exec(
+        "SELECT white, black, white_token, black_token, moves, white_away, black_away FROM games WHERE id = ?",
+        msg.game,
+      )
+      .toArray() as unknown as {
+      white: string; black: string; white_token: string; black_token: string;
+      moves: string; white_away: number | null; black_away: number | null;
+    }[];
+    const r = rows[0];
+    if (!r) return gone();
+    let mine: "w" | "b";
+    if (msg.token === r.white_token) mine = "w";
+    else if (msg.token === r.black_token) mine = "b";
+    else return gone();
+    const myCode = mine === "w" ? r.white : r.black;
+    const oppCode = mine === "w" ? r.black : r.white;
+
+    // Preuzimanje sedista: svaka druga veza sa ovim kodom se zatvara.
+    for (const other of this.ctx.getWebSockets()) {
+      if (other === ws) continue;
+      const oatt = this.attOf(other);
+      if (oatt.code !== myCode) continue;
+      other.serializeAttachment({ code: null, invites: [] } satisfies Attachment);
+      try {
+        other.close(1000, "replaced");
+      } catch {
+        /* vec zatvoren */
+      }
+    }
+    const att = this.attOf(ws);
+    att.code = myCode;
+    att.game = msg.game;
+    delete att.invite;
+    ws.serializeAttachment(att);
+
+    const wasAway = (mine === "w" ? r.white_away : r.black_away) !== null;
+    this.ctx.storage.sql.exec(
+      `UPDATE games SET ${mine === "w" ? "white_away" : "black_away"} = NULL WHERE id = ?`,
+      msg.game,
+    );
+    const opp = this.seatSocket(msg.game, oppCode, ws);
+    this.send(ws, {
+      t: "resumed",
+      game: msg.game,
+      color: mine,
+      moves: JSON.parse(r.moves) as string[],
+      opponent: opp ? "online" : "away",
+    });
+    if (wasAway && opp) this.send(opp, { t: "opponent", state: "back" });
+    void this.scheduleAlarm();
+  }
+
+  /** Postavlja alarm na najraniji istek odsustva u bilo kojoj partiji. */
+  private async scheduleAlarm(): Promise<void> {
+    const row = this.ctx.storage.sql
+      .exec(
+        `SELECT MIN(m) AS m FROM (
+           SELECT white_away AS m FROM games WHERE white_away IS NOT NULL
+           UNION ALL SELECT black_away FROM games WHERE black_away IS NOT NULL)`,
+      )
+      .one() as { m: number | null };
+    if (row.m === null) {
+      await this.ctx.storage.deleteAlarm();
+    } else {
+      await this.ctx.storage.setAlarm(row.m + AWAY_LIMIT_MS);
+    }
+  }
+
+  async alarm(): Promise<void> {
+    const cutoff = Date.now() - AWAY_LIMIT_MS;
+    const rows = this.ctx.storage.sql
+      .exec(
+        "SELECT id, white, black FROM games WHERE (white_away IS NOT NULL AND white_away <= ?) OR (black_away IS NOT NULL AND black_away <= ?)",
+        cutoff,
+        cutoff,
+      )
+      .toArray() as unknown as { id: string; white: string; black: string }[];
+    for (const g of rows) {
+      const present = [g.white, g.black]
+        .map((c) => this.seatSocket(g.id, c))
+        .filter((w): w is WebSocket => !!w);
+      for (const ws of present) this.send(ws, { t: "aborted" });
+      this.deleteGame(g.id);
+    }
+    await this.scheduleAlarm();
+  }
+
+  /** Veza nestaje: partija ostaje, strana se vodi kao odsutna, protivnik dobija opponent away. */
+  private markAway(ws: WebSocket): void {
+    const att = this.attOf(ws);
+    if (!att.code || !att.game) return;
+    const row = this.gameRow(att.game);
+    if (!row) return;
+    if (this.seatSocket(att.game, att.code, ws)) return; // sediste je vec preuzeto drugom vezom
+    const mine: "w" | "b" = row.white === att.code ? "w" : "b";
+    this.ctx.storage.sql.exec(
+      `UPDATE games SET ${mine === "w" ? "white_away" : "black_away"} = ? WHERE id = ?`,
+      Date.now(),
+      att.game,
+    );
+    const opp = this.seatSocket(att.game, mine === "w" ? row.black : row.white, ws);
+    if (opp) this.send(opp, { t: "opponent", state: "away" });
+    void this.scheduleAlarm();
+  }
+
   async webSocketClose(ws: WebSocket, code: number, _reason: string, _wasClean: boolean): Promise<void> {
     // Prilog nestaje sa soketom; kod se oslobada cim soket vise nije u getWebSockets().
     this.releaseInvites(ws);
+    this.markAway(ws);
     try {
       ws.close(code === 1005 || code === 1006 ? 1000 : code);
     } catch {
@@ -359,6 +483,7 @@ export class Hub extends DurableObject {
 
   async webSocketError(ws: WebSocket): Promise<void> {
     this.releaseInvites(ws);
+    this.markAway(ws);
     try {
       ws.close(1011);
     } catch {
