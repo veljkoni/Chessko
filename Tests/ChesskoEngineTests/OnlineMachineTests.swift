@@ -328,3 +328,24 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
     #expect(m.handle(.received(.welcome(code: "K7M4QX"))) == [])
     #expect(m.state == .lobby)
 }
+
+// Pozadina: eksplicitan prekid veze (isto kao Android)
+@Test func scenePolicyDropsOnBackgroundOnlyWithUiOrStoredGame() {
+    #expect(OnlineScenePolicy.shouldDropOnBackground(uiOpen: true, hasStoredGame: false))
+    #expect(OnlineScenePolicy.shouldDropOnBackground(uiOpen: false, hasStoredGame: true))
+    #expect(!OnlineScenePolicy.shouldDropOnBackground(uiOpen: false, hasStoredGame: false))
+}
+
+@Test func scenePolicyBlocksConnectsWhileBackgrounded() {
+    #expect(!OnlineScenePolicy.mayConnect(backgrounded: true))
+    #expect(OnlineScenePolicy.mayConnect(backgrounded: false))
+}
+
+@Test func backgroundThenActiveReconnectsFromPlaying() {
+    var m = machine(playing(), stored: game)
+    // pozadina: veza pada, mašina traži reconnect (VM ga ne zakazuje dok je u pozadini)
+    #expect(m.handle(.socketClosed) == [.scheduleReconnect(seconds: 1)])
+    #expect(m.state == playing(.reconnecting))
+    // povratak: odmah connect, bez čekanja backoff-a
+    #expect(m.handle(.appBecameActive) == [.connect])
+}

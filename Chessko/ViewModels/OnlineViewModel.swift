@@ -37,6 +37,9 @@ final class OnlineViewModel {
     @ObservationIgnored private var generation = 0
     @ObservationIgnored private var reconnectTask: Task<Void, Never>?
     @ObservationIgnored private var uiOpen = false
+    /// Aplikacija je u pozadini: veza je namerno prekinuta i nijedna se ne otvara
+    /// (ni zakazani reconnect) dok se ne vrati `.active`.
+    @ObservationIgnored private var backgrounded = false
     // Događaji se serijalizuju: efekat (npr. `replaceMoves` → `onBoardFinished`)
     // sme da proizvede novi događaj, ali se on obrađuje tek posle tekućeg.
     @ObservationIgnored private var queue: [OnlineEvent] = []
@@ -113,12 +116,48 @@ final class OnlineViewModel {
     }
 
     func scenePhaseChanged(_ phase: ScenePhase) {
-        guard phase == .active, uiOpen || machine.stored != nil else { return }
-        if case .idle = machine.state {
-            if connection == nil { openSocket() }
-            return
+        switch phase {
+        case .background:
+            guard OnlineScenePolicy.shouldDropOnBackground(uiOpen: uiOpen, hasStoredGame: machine.stored != nil) else { return }
+            // Suspendovana aplikacija ne zatvara soket sama: server je i dalje vidi
+            // kao prisutnu pa protivnik nikad ne dobije „away". Zato eksplicitno.
+            backgrounded = true
+            dropSocketForBackground()
+            handle(.socketClosed)
+        case .active:
+            backgrounded = false
+            guard uiOpen || machine.stored != nil else { return }
+            if case .idle = machine.state {
+                if connection == nil { openSocket() }
+                return
+            }
+            handle(.appBecameActive)
+        default:
+            break // .inactive ne prekida vezu
         }
-        handle(.appBecameActive)
+    }
+
+    /// Zatvara soket uz `beginBackgroundTask` da close frame stigne pre suspenzije.
+    private func dropSocketForBackground() {
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        generation += 1
+        guard let c = connection else { return }
+        connection = nil
+        var taskID = UIBackgroundTaskIdentifier.invalid
+        let end: @MainActor () -> Void = {
+            guard taskID != .invalid else { return }
+            UIApplication.shared.endBackgroundTask(taskID)
+            taskID = .invalid
+        }
+        taskID = UIApplication.shared.beginBackgroundTask(withName: "online-close") { end() }
+        c.close {
+            // Kratka rezerva da close frame zaista napusti uređaj.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(300))
+                end()
+            }
+        }
     }
 
     // MARK: Događaji i efekti
@@ -196,7 +235,7 @@ final class OnlineViewModel {
     // MARK: Veza
 
     private func openSocket() {
-        guard !updateRequired else { return }
+        guard !updateRequired, OnlineScenePolicy.mayConnect(backgrounded: backgrounded) else { return }
         reconnectTask?.cancel()
         reconnectTask = nil
         connection?.close()
@@ -239,6 +278,8 @@ final class OnlineViewModel {
 
     private func scheduleReconnect(seconds: Int) {
         reconnectTask?.cancel()
+        reconnectTask = nil
+        guard OnlineScenePolicy.mayConnect(backgrounded: backgrounded) else { return }
         reconnectTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled, let self, self.needsConnection else { return }

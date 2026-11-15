@@ -318,3 +318,16 @@ enum OnlineCloseConfirm: Equatable, Sendable {
     /// da igra; inače se ekran zatvara a partija čeka.
     func resignsOnConfirm(canActNow: Bool) -> Bool { self == .resign && canActNow }
 }
+
+
+/// Odluke oko `scenePhase` koje ne zavise od UI-ja (testabilne). Isto kao Android
+/// `appWentToBackground`/`appBecameActive`.
+enum OnlineScenePolicy {
+    /// U pozadini se veza prekida samo ako je ekran igre otvoren ili čeka sačuvana partija.
+    /// `.inactive` (Kontrolni centar, baner poziva) nikad ne prekida vezu.
+    static func shouldDropOnBackground(uiOpen: Bool, hasStoredGame: Bool) -> Bool {
+        uiOpen || hasStoredGame
+    }
+    /// Dok je aplikacija u pozadini nijedna veza se ne otvara (ni zakazani reconnect).
+    static func mayConnect(backgrounded: Bool) -> Bool { !backgrounded }
+}

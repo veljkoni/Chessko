@@ -97,7 +97,8 @@ final class OnlineConnection {
     /// Tiho gašenje: nijedan callback više ne stiže. Poruke u letu (poslednji
     /// `resign`, `move`) se sačekaju, najviše `flushCap`, pa se soket zatvara
     /// regularno (`normalClosure`).
-    func close() {
+    /// `completion` stiže kad je soket stvarno zatvoren (posle ispiranja poruka u letu).
+    func close(completion: (@MainActor () -> Void)? = nil) {
         finished = true
         onClose = nil
         onOpen = nil
@@ -110,10 +111,12 @@ final class OnlineConnection {
         pongDeadline = nil
         if pendingSends == 0 {
             hardClose(.normalClosure)
+            completion?()
         } else {
             Task { [weak self] in
                 try? await Task.sleep(for: Self.flushCap)
                 self?.hardClose(.normalClosure)
+                completion?()
             }
         }
     }
