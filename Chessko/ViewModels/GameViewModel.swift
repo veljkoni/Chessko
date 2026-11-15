@@ -419,6 +419,7 @@ final class GameViewModel {
             case .fiftyMoves:           return Loc("Remi – pravilo 50 poteza.")
             case .repetition:           return Loc("Remi – ponavljanje pozicije.")
             case .insufficientMaterial: return Loc("Remi – nedovoljan materijal.")
+            case .agreement:            return Loc("Remi – dogovor.")
             }
         }
     }

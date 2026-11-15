@@ -114,6 +114,7 @@ add("Pat – remi!", "Stalemate – draw!", "Pat – nulle !", "Patt – remis!"
 add("Remi – pravilo 50 poteza.", "Draw – fifty-move rule.", "Nulle – règle des 50 coups.", "Remis – 50-Züge-Regel.", "Patta – regola delle 50 mosse.", "Ничья – правило 50 ходов.", "平局——50回合规则。", "ड्रॉ – पचास-चाल नियम।")
 add("Remi – ponavljanje pozicije.", "Draw – repetition.", "Nulle – répétition.", "Remis – Stellungswiederholung.", "Patta – ripetizione.", "Ничья – повторение позиции.", "平局——重复局面。", "ड्रॉ – पुनरावृत्ति।")
 add("Remi – nedovoljan materijal.", "Draw – insufficient material.", "Nulle – matériel insuffisant.", "Remis – ungenügendes Material.", "Patta – materiale insufficiente.", "Ничья – недостаточно материала.", "平局——子力不足。", "ड्रॉ – अपर्याप्त सामग्री।")
+add("Remi – dogovor.", "Draw – by agreement.", "Nulle – par accord.", "Remis – durch Einigung.", "Patta – per accordo.", "Ничья – по соглашению.", "平局——双方同意。", "ड्रॉ – आपसी सहमति।")
 
 # ── Puzzle screen ───────────────────────────────────────────────────────────
 add("Izaberi dan", "Choose a day", "Choisir un jour", "Tag wählen", "Scegli un giorno", "Выберите день", "选择日期", "दिन चुनें")

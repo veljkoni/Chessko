@@ -22,6 +22,8 @@ let package = Package(
                 "Models/Curriculum.swift",
                 "Models/MoveAnalysis.swift",
                 "Models/BoardSizing.swift",
+                "Models/OnlineCode.swift",
+                "Models/OnlineProtocol.swift",
                 "Logic/StatsManager.swift",
                 "Logic/ProgressStore.swift",
                 "Logic/MoveGenerator.swift",

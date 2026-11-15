@@ -63,6 +63,20 @@ struct ChessMove: Equatable, Sendable, Codable {
         "\(from.algebraic)\(to.algebraic)"
     }
 
+    /// UCI zapis ("e2e4", "e7e8q" — slovo promocije malo).
+    var uci: String {
+        if case .promotion(let piece) = flag {
+            let letter: String = switch piece {
+            case .rook: "r"
+            case .bishop: "b"
+            case .knight: "n"
+            default: "q"
+            }
+            return notation + letter
+        }
+        return notation
+    }
+
     /// Converts a UCI string (e.g. "e2e4", "e7e8q") to a ChessMove by
     /// matching against legal moves in `state`.  Returns nil if not found.
     static func fromUCI(_ uci: String, in state: GameState) -> ChessMove? {

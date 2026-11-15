@@ -7,6 +7,7 @@ enum DrawReason: String, Equatable, Sendable, Codable {
     case fiftyMoves
     case repetition
     case insufficientMaterial
+    case agreement
 }
 
 // MARK: - Game Status
