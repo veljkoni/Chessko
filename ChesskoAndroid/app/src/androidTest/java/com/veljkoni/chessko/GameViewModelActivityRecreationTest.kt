@@ -48,7 +48,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class GameViewModelActivityRecreationTest {
 
-    private val testSaveKey = "test.faza7.task4.activityRecreation"
+    private val testSaveKey = "saved_game.step.test.faza7.task4.activityRecreation" // step-prefiks: ne upisuje u pravu statistiku
 
     private fun clearTestSave(context: Context) {
         context.getSharedPreferences("chessko_save", Context.MODE_PRIVATE)

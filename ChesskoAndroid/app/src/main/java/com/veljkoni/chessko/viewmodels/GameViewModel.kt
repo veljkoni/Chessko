@@ -11,6 +11,8 @@ import androidx.lifecycle.viewModelScope
 import com.veljkoni.chessko.logic.*
 import com.veljkoni.chessko.models.*
 import com.veljkoni.chessko.online.OnlineResult
+import com.veljkoni.chessko.online.replayUci
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -150,6 +152,11 @@ class GameViewModel(
     /** Kraj online partije; dok je postavljen, tabla je u `ONLINE` zakljucana. */
     var onlineResult by mutableStateOf<OnlineResult?>(null)
         private set
+
+    /** UCI potezi online partije -- definicija partije (kao na serveru i iOS-u); cuva se u slotu. */
+    private var onlineMoves: List<String> = emptyList()
+
+    private var aiJob: Job? = null
 
     var showPromotion by mutableStateOf(false)
     var promotionMove by mutableStateOf<ChessMove?>(null)
@@ -395,7 +402,7 @@ class GameViewModel(
     }
 
     private fun execute(move: ChessMove, addToHistory: Boolean = true, remote: Boolean = false) {
-        val plyBefore = gameState.moveHistory.size
+        val plyBefore = onlineMoves.size
         // Capture details BEFORE state change
         val capturedPiece = when (move.flag) {
             is MoveFlag.EnPassant -> {
@@ -424,6 +431,8 @@ class GameViewModel(
         updateEvaluation()
 
         if (gameMode == GameMode.ONLINE) {
+            onlineMoves = onlineMoves + move.uci
+            save()
             if (!remote) onLocalMove?.invoke(plyBefore, move.uci)
             if (isGameOver) onBoardFinished?.invoke()
             return
@@ -491,23 +500,16 @@ class GameViewModel(
      * (`allHistoryStates` je izvor pregleda poteza i analize partije).
      */
     private fun rebuildQuietly(moves: List<String>) {
-        var state = GameState.initial()
-        var last: ChessMove? = null
-        val rebuilt = mutableListOf<Pair<GameState, ChessMove?>>()
-        for (uci in moves) {
-            val move = ChessMove.fromUCI(uci, state) ?: break
-            rebuilt.add(Pair(state, last))
-            state = state.applying(move)
-            last = move
-        }
+        val replay = replayUci(moves)
+        onlineMoves = replay.applied
         promotionMove = null
         showPromotion = false
         viewingMoveIndex = null
         isThinking = false
         history.clear()
-        history.addAll(rebuilt)
-        gameState = state
-        lastMove = last
+        history.addAll(replay.history)
+        gameState = replay.state
+        lastMove = replay.lastMove
         selectedPosition = null
         legalMovesForSelected = emptyList()
         save()
@@ -519,6 +521,8 @@ class GameViewModel(
         gameMode = GameMode.ONLINE
         playerColor = color
         hasRecordedGameEnd = true // online se nikad ne upisuje u statistiku
+        aiJob?.cancel()
+        aiJob = null
         onlineResult = null
         rebuildQuietly(moves)
     }
@@ -673,7 +677,7 @@ class GameViewModel(
         val currentDifficulty = difficulty
         val currentStockfishLevel = stockfishLevel
 
-        viewModelScope.launch {
+        aiJob = viewModelScope.launch {
             delay(300) // slight delay to look natural
             
             // Calculate best move on background thread
@@ -703,7 +707,7 @@ class GameViewModel(
 
             isThinking = false
 
-            if (move != null && capturedState == gameState) {
+            if (move != null && capturedState == gameState && gameMode == GameMode.VS_COMPUTER) {
                 execute(move)
             }
         }
@@ -892,6 +896,7 @@ class GameViewModel(
                 notationsArray.put(notation)
             }
             json.put("moveNotations", notationsArray)
+            if (gameMode == GameMode.ONLINE) json.put("onlineMoves", JSONArray(onlineMoves))
             
             val prefs = getApplication<Application>().getSharedPreferences("chessko_save", Context.MODE_PRIVATE)
             prefs.edit().putString(saveKey, json.toString()).apply()
@@ -912,6 +917,18 @@ class GameViewModel(
             
             val savedMode = GameMode.valueOf(json.getString("gameMode"))
             val savedColor = PieceColor.valueOf(json.getString("playerColor"))
+
+            // Online partija je definisana UCI listom: tihim ponavljanjem se vracaju
+            // moveHistory, notacije i istorija stanja (analiza partije).
+            if (savedMode == GameMode.ONLINE && json.has("onlineMoves")) {
+                val arr = json.getJSONArray("onlineMoves")
+                val moves = List(arr.length()) { arr.getString(it) }
+                gameMode = savedMode
+                playerColor = savedColor
+                hasRecordedGameEnd = true
+                rebuildQuietly(moves)
+                return
+            }
             
             val historyArray = json.getJSONArray("history")
             val tempHistory = mutableListOf<Pair<GameState, ChessMove?>>()
