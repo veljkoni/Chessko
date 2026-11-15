@@ -25,6 +25,9 @@ final class OnlineViewModel {
 
     private(set) var state: OnlineState = .idle
     var notice: OnlineNotice?
+    /// Server je odbio verziju protokola. Važi do kraja procesa: nijedna veza se više
+    /// ne otvara, a ekrani trajno traže ažuriranje umesto „Povezujem…".
+    private(set) var updateRequired = false
     private(set) var myCode: String
     @ObservationIgnored let game: GameViewModel
 
@@ -133,6 +136,10 @@ final class OnlineViewModel {
         if case .ended = machine.state { wasEnded = true } else { wasEnded = false }
         let effects = machine.handle(event)
         for effect in effects { execute(effect) }
+        if machine.updateRequired && !updateRequired {
+            updateRequired = true
+            shutDownSocket()
+        }
         sync()
         if case .ended(let result) = machine.state, !wasEnded {
             game.endOnline(result)
@@ -189,6 +196,7 @@ final class OnlineViewModel {
     // MARK: Veza
 
     private func openSocket() {
+        guard !updateRequired else { return }
         reconnectTask?.cancel()
         reconnectTask = nil
         connection?.close()

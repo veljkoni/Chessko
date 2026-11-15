@@ -3499,55 +3499,55 @@
         }
       }
     },
-    "Ažuriraj aplikaciju da bi igrao preko interneta.": {
+    "Za igru preko interneta potrebna je novija verzija aplikacije.": {
       "extractionState": "manual",
       "localizations": {
         "sr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ažuriraj aplikaciju da bi igrao preko interneta."
+            "value": "Za igru preko interneta potrebna je novija verzija aplikacije."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Update the app to play over the internet."
+            "value": "Playing over the internet requires a newer version of the app."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mets l’application à jour pour jouer en ligne."
+            "value": "Le jeu en ligne nécessite une version plus récente de l’application."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aktualisiere die App, um online zu spielen."
+            "value": "Für das Spielen über das Internet ist eine neuere Version der App nötig."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aggiorna l’app per giocare online."
+            "value": "Per giocare online serve una versione più recente dell’app."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Обнови приложение, чтобы играть по интернету."
+            "value": "Для игры по интернету нужна более новая версия приложения."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "请更新应用以便在线对弈。"
+            "value": "在线对弈需要更新版本的应用。"
           }
         },
         "hi": {
           "stringUnit": {
             "state": "translated",
-            "value": "इंटरनेट पर खेलने के लिए ऐप अपडेट करो।"
+            "value": "इंटरनेट पर खेलने के लिए ऐप का नया संस्करण चाहिए।"
           }
         }
       }

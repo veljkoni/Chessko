@@ -184,9 +184,76 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
     #expect(m.state == playing())
 }
 
-@Test func versionErrorShowsUpdateApp() {
+// I3: greška verzije je kraj za sesiju — bez ponovnog povezivanja, trajno „ažuriraj".
+@Test func versionErrorRequiresUpdateAndStopsTheMachine() {
     var m = machine(.connecting)
-    #expect(m.handle(.received(.error(.version))) == [.showMessage(.updateApp)])
+    #expect(!m.updateRequired)
+    #expect(m.handle(.received(.error(.version))) == [])
+    #expect(m.updateRequired)
+    #expect(m.handle(.socketClosed) == [])            // nema scheduleReconnect
+    #expect(m.handle(.appBecameActive) == [])         // nema connect
+    #expect(m.handle(.socketOpened) == [])            // nema hello
+    #expect(m.handle(.received(.welcome(code: "K7M4QX"))) == [])
+    #expect(m.state == .connecting)
+    #expect(m.updateRequired)
+}
+
+@Test func versionErrorWithStoredGameIgnoresResumedAndBlocksActions() {
+    var m = machine(playing(.reconnecting), stored: game)
+    #expect(m.handle(.received(.error(.version))) == [])
+    #expect(m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: true))) == [])
+    #expect(!m.canAct)
+    #expect(m.handle(.resign) == [])
+    #expect(m.handle(.backToLobby) == [])
+    #expect(m.stored == game)
+}
+
+// I1: kraj koji je server sačuvao dok je ova strana bila odsutna stiže odmah posle `resumed`.
+@Test func resignedRightAfterResumedEndsOpponentResigned() {
+    var m = machine(playing(.reconnecting), stored: game)
+    #expect(m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false))) == [.replaceMoves(["e2e4"])])
+    #expect(m.handle(.received(.resigned)) == [.persist(nil)])
+    #expect(m.state == .ended(.opponentResigned))
+    #expect(m.stored == nil)
+}
+
+@Test func drawAcceptRightAfterResumedEndsDrawEvenThoughOfferFlagWasReset() {
+    // Ova strana je ponudila remi pa izgubila vezu; `resumed` briše zastavicu ponude.
+    var m = machine(playing(.reconnecting, dMe: true), stored: game)
+    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: [], opponentOnline: false)))
+    #expect(m.state == playing(.connected, away: true))
+    #expect(m.handle(.received(.drawReply(accept: true))) == [.persist(nil)])
+    #expect(m.state == .ended(.drawAgreed))
+}
+
+@Test func resumedAfterRelaunchThenResignedEnds() {
+    var m = machine(.idle, stored: game)
+    _ = m.handle(.socketOpened)
+    _ = m.handle(.received(.welcome(code: "K7M4QX")))
+    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false)))
+    #expect(m.handle(.received(.resigned)) == [.persist(nil)])
+    #expect(m.state == .ended(.opponentResigned))
+}
+
+@Test func boardFinishedAfterResumedSendsFinishedAndEnds() {
+    // Mat/pat iz liste poteza: VM posle `replaceMoves` javlja boardFinished.
+    var m = machine(playing(.reconnecting), stored: game)
+    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["f2f3", "e7e5", "g2g4", "d8h4"], opponentOnline: false)))
+    #expect(m.handle(.boardFinished) == [.send(.finished), .persist(nil)])
+    #expect(m.state == .ended(.board))
+    // server je partiju već obrisao: game_gone posle kraja ne menja ništa
+    #expect(m.handle(.received(.error(.gameGone))) == [])
+    #expect(m.state == .ended(.board))
+}
+
+// I4: varijanta potvrde zatvaranja je zamrznuta pri otvaranju.
+@Test func closeConfirmVariantIsCapturedAndResignNeedsLiveLink() {
+    #expect(OnlineCloseConfirm(canAct: true) == .resign)
+    #expect(OnlineCloseConfirm(canAct: false) == .gameWaits)
+    #expect(OnlineCloseConfirm.resign.resignsOnConfirm(canActNow: true))
+    #expect(!OnlineCloseConfirm.resign.resignsOnConfirm(canActNow: false))
+    #expect(!OnlineCloseConfirm.gameWaits.resignsOnConfirm(canActNow: true))
+    #expect(!OnlineCloseConfirm.gameWaits.resignsOnConfirm(canActNow: false))
 }
 
 // Fix round 1: bez akcija tokom obnove veze

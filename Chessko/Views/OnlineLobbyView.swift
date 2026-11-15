@@ -27,6 +27,7 @@ struct OnlineLobbyView: View {
     }
 
     private var connectionText: String? {
+        if vm.updateRequired { return Loc("Za igru preko interneta potrebna je novija verzija aplikacije.") }
         if !hasNetwork && !isConnected { return Loc("Nema veze sa internetom.") }
         if !isConnected { return Loc("Povezujem…") }
         return nil
@@ -43,7 +44,7 @@ struct OnlineLobbyView: View {
                 myCodeCard
                 inviteCard
                 if let text = connectionText {
-                    statusLine(text, showsProgress: hasNetwork)
+                    statusLine(text, showsProgress: hasNetwork && !vm.updateRequired)
                 }
                 if let notice = vm.notice {
                     noticeLine(OnlineNoticeText.text(for: notice))
@@ -219,7 +220,6 @@ enum OnlineNoticeText {
         case .rateLimited:    return Loc("Previše poziva, pokušaj za minut.")
         case .badCode:        return Loc("Neispravan kod.")
         case .declined:       return Loc("Prijatelj je odbio poziv.")
-        case .updateApp:      return Loc("Ažuriraj aplikaciju da bi igrao preko interneta.")
         case .inviteCancelled: return Loc("Poziv je otkazan.")
         case .drawDeclined:   return Loc("Prijatelj je odbio remi.")
         case .codeTaken:      return ""

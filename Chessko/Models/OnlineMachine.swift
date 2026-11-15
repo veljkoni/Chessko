@@ -17,7 +17,7 @@ enum OnlineLink: Equatable, Sendable { case connected, reconnecting }
 enum OnlineResult: Equatable, Sendable { case iResigned, opponentResigned, drawAgreed, aborted, board }
 
 enum OnlineNotice: Equatable, Sendable {
-    case offline, busy, selfCode, rateLimited, badCode, declined, updateApp
+    case offline, busy, selfCode, rateLimited, badCode, declined
     /// U interfejsu, ali ga mašina ne emituje: `code_taken` se tiho rešava
     /// (resume preuzima mesto, ili se ponovo povezuje sa backoff-om).
     case codeTaken
@@ -63,10 +63,14 @@ struct OnlineMachine: Sendable {
     private var socketAlive = false
     /// Da li je TRENUTNI socket vezan za `myCode` (welcome/resumed stigli).
     private var socketBound = false
+    /// Server je odbio verziju protokola (`error version`). Kraj za ovu sesiju:
+    /// mašina više ne traži vezu i ignoriše sve događaje; UI trajno traži ažuriranje.
+    private(set) var updateRequired = false
 
     /// Igrač sme da igra/predaje/nudi remi samo dok je veza živa. UI onemogućava
     /// tablu i dugmad kad je `false`.
     var canAct: Bool {
+        guard !updateRequired else { return false }
         if case .playing(_, .connected, _, _, _) = state { return true }
         return false
     }
@@ -98,6 +102,7 @@ struct OnlineMachine: Sendable {
         case .received(.welcome), .received(.resumed): socketBound = true
         default: break
         }
+        if updateRequired { return [] }
         if case .ended = state {
             switch e {
             case .backToLobby:
@@ -222,7 +227,9 @@ struct OnlineMachine: Sendable {
                 if stored != nil { return [] }
                 state = .connecting
                 return [nextBackoff()]
-            case .version: return [.showMessage(.updateApp)]
+            case .version:
+                updateRequired = true
+                return []
             case .badCode: return backToLobby(.badCode)
             case .offline: return backToLobby(.offline)
             case .busy: return backToLobby(.busy)
@@ -295,4 +302,19 @@ struct OnlineMachine: Sendable {
         }
         return [.showMessage(n)]
     }
+}
+
+/// Potvrda zatvaranja usred partije. Varijanta se bira kad se dijalog otvori i ne
+/// menja se dok je otvoren (veza koja se vrati ne sme pretvoriti „Zatvori" u „Predaj").
+enum OnlineCloseConfirm: Equatable, Sendable {
+    /// „Predati partiju?" [Predaj]
+    case resign
+    /// „Partija će te čekati." [Zatvori]
+    case gameWaits
+
+    init(canAct: Bool) { self = canAct ? .resign : .gameWaits }
+
+    /// Potvrda predaje samo ako je ponuđena predaja I mašina u trenutku dodira još sme
+    /// da igra; inače se ekran zatvara a partija čeka.
+    func resignsOnConfirm(canActNow: Bool) -> Bool { self == .resign && canActNow }
 }

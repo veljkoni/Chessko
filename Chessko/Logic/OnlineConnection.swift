@@ -27,6 +27,9 @@ private final class OnlineSocketDelegate: NSObject, URLSessionWebSocketDelegate,
 final class OnlineConnection {
     static let url = URL(string: "wss://play.chessko.app/ws")!
     private static let pingInterval: Duration = .seconds(25)
+    /// Pong koji ne stigne u ovom roku znači polumrtvu vezu (OkHttp na Androidu radi isto):
+    /// `sendPing` tada nikad ne pozove callback, pa bez roka igrač čeka zauvek.
+    private static let pongTimeout: Duration = .seconds(10)
 
     var onOpen: (() -> Void)?
     var onMessage: ((ServerMessage) -> Void)?
@@ -37,6 +40,10 @@ final class OnlineConnection {
     private var task: URLSessionWebSocketTask?
     private var receiveTask: Task<Void, Never>?
     private var pingTask: Task<Void, Never>?
+    private var pongDeadline: Task<Void, Never>?
+    /// Redni broj pinga koji još čeka pong (`nil` kad nijedan ne čeka).
+    private var pendingPing: Int?
+    private var pingSeq = 0
     private var finished = false
     /// Poruke poslate a još nepotvrđene upisom u soket; `close()` ih sačeka.
     private var pendingSends = 0
@@ -97,8 +104,10 @@ final class OnlineConnection {
         onMessage = nil
         receiveTask?.cancel()
         pingTask?.cancel()
+        pongDeadline?.cancel()
         receiveTask = nil
         pingTask = nil
+        pongDeadline = nil
         if pendingSends == 0 {
             hardClose(.normalClosure)
         } else {
@@ -148,8 +157,21 @@ final class OnlineConnection {
             while !Task.isCancelled {
                 try? await Task.sleep(for: Self.pingInterval)
                 guard !Task.isCancelled, let self, let task = self.task, !self.finished else { return }
+                self.pingSeq += 1
+                let seq = self.pingSeq
+                self.pendingPing = seq
                 task.sendPing { [weak self] error in
-                    if error != nil { Task { @MainActor in self?.fail() } }
+                    Task { @MainActor in
+                        guard let self else { return }
+                        if error != nil { self.fail(); return }
+                        if self.pendingPing == seq { self.pendingPing = nil }
+                    }
+                }
+                self.pongDeadline?.cancel()
+                self.pongDeadline = Task { [weak self] in
+                    try? await Task.sleep(for: Self.pongTimeout)
+                    guard !Task.isCancelled, let self, self.pendingPing == seq else { return }
+                    self.fail()   // jedan onClose: `fail` proverava `finished`
                 }
             }
         }
@@ -166,9 +188,11 @@ final class OnlineConnection {
     private func teardown() {
         receiveTask?.cancel()
         pingTask?.cancel()
+        pongDeadline?.cancel()
         hardClose(.goingAway)
         receiveTask = nil
         pingTask = nil
+        pongDeadline = nil
         onOpen = nil
         onMessage = nil
     }

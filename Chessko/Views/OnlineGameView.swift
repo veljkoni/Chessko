@@ -32,6 +32,8 @@ struct OnlineGameView: View {
 
     @State private var reachability: NetworkReachability?
     @State private var showCloseConfirm = false
+    /// Varijanta potvrde zatvaranja, zamrznuta pri otvaranju dijaloga.
+    @State private var closeConfirm: OnlineCloseConfirm = .gameWaits
     @State private var showResignConfirm = false
     @State private var showAnalysis = false
 
@@ -87,11 +89,14 @@ struct OnlineGameView: View {
             // Predaja se nudi samo dok je veza živa; inače bi `resign` bio tihi
             // no-op a ekran bi se zatvorio. Bez veze partija čeka (sačuvana je i
             // otvara se pri sledećem pokretanju; prijatelj vidi „izgubio vezu").
-            .alert(game.onlineCanMove ? Loc("Predati partiju?") : Loc("Partija će te čekati."),
+            // Varijanta je zamrznuta pri otvaranju: veza koja se vrati dok je
+            // dijalog otvoren ne sme pretvoriti „Zatvori" u „Predaj" pod prstom.
+            .alert(closeConfirm == .resign ? Loc("Predati partiju?") : Loc("Partija će te čekati."),
                    isPresented: $showCloseConfirm) {
-                if game.onlineCanMove {
+                if closeConfirm == .resign {
                     Button(Loc("Predaj"), role: .destructive) {
-                        vm.resign()
+                        // Veza je u međuvremenu pala: bez predaje, partija čeka.
+                        if closeConfirm.resignsOnConfirm(canActNow: game.onlineCanMove) { vm.resign() }
                         closeNow()
                     }
                 } else {
@@ -121,6 +126,7 @@ struct OnlineGameView: View {
 
     private func requestClose() {
         if isPlaying {
+            closeConfirm = OnlineCloseConfirm(canAct: game.onlineCanMove)
             showCloseConfirm = true
         } else {
             closeNow()
@@ -273,6 +279,8 @@ struct OnlineGameView: View {
         switch vm.state {
         case .ended:
             endedArea
+        case .playing where vm.updateRequired:
+            statusLine(Loc("Za igru preko interneta potrebna je novija verzija aplikacije."), showsProgress: false)
         case .playing(_, let link, let away, let drawByOpp, _):
             VStack(spacing: DS.Space.s) {
                 if let text = connectionText(link: link, away: away) {
@@ -286,9 +294,13 @@ struct OnlineGameView: View {
                 }
             }
         default:
-            // Sačuvana partija, veza se još uspostavlja.
-            statusLine(hasNetwork ? Loc("Povezujem…") : Loc("Nema veze sa internetom."),
-                       showsProgress: hasNetwork)
+            // Sačuvana partija, veza se još uspostavlja (ili server traži noviju verziju).
+            if vm.updateRequired {
+                statusLine(Loc("Za igru preko interneta potrebna je novija verzija aplikacije."), showsProgress: false)
+            } else {
+                statusLine(hasNetwork ? Loc("Povezujem…") : Loc("Nema veze sa internetom."),
+                           showsProgress: hasNetwork)
+            }
         }
     }
 
