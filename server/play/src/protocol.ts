@@ -52,5 +52,8 @@ export type ServerMessage =
 export interface Attachment {
   code: string | null;
   game?: string;
+  /** Kod koji je ova strana pozvala i koji jos nije odgovorio. */
+  invite?: string;
+  /** Vremena poziva iz poslednjih 60 s (najvise 10). */
   invites: number[];
 }
