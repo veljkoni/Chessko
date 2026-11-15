@@ -4,11 +4,12 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <!--
-      INTERNET je namerno UKLONJEN (Faza 6a). Aplikacija od prelaska na lokalnu
-      bazu zadataka nema nijedan mrezni poziv, a odsustvo dozvole je najjaci
-      dokaz za to: svaki buduci mrezni poziv bi pukao odmah, umesto da tiho
-      vrati aplikaciju na mrezu. Stockfish radi lokalno i ne trazi mrezu.
+      INTERNET koristi SAMO igra preko interneta (online/OnlineConnection.kt, jedan
+      WebSocket ka play.chessko.app). Zadaci, lekcije, Stockfish i ostalo rade
+      lokalno i ne traze mrezu. Svaki drugi mrezni poziv trazi izmenu i politike
+      privatnosti na sajtu.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
 
     <application

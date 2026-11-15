@@ -71,6 +71,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     
+    // Igra preko interneta (WebSocket). Verzija je ista koju Coil vec donosi.
+    implementation(libs.okhttp)
+
     // Coil for SVG loading
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-svg:2.6.0")
