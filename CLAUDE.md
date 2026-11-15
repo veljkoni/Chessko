@@ -749,27 +749,56 @@ Isti nazivi i isti tekstovi na obe platforme (paritet); sve liste ispod su isti 
   backoff, bez poruke korisniku.
 - Android: `showOnline` mora preživeti rotaciju (`rememberSaveable` + `destinationShowing`), inače je ekran nevidljiv a veza živa.
 
+### Unakrsna partija iPhone ↔ Android (2026-11-15, posle spajanja)
+
+Odigrana uživo na produkciji, **pravim dodirima na obe strane**. iOS je vođen kroz Xcode MCP
+(`DeviceInteraction*`) na simulatoru **iPhone 18 Pro, iOS 27.2**. Raniji zaključak „iOS simulator se ne može
+voditi" bio je preuranjen: Xcode MCP ne vidi samo **iOS 26.5** simulator, a 27.x vidi i dodiruje. Android je
+vođen preko `adb`, a kod prijatelja je unet sa `input text`. Prošlo je 8 od 9 scenarija:
+- poziv u oba smera, potezi i promocija;
+- remi odbijen, pa prihvaćen;
+- gašenje aplikacije i povratak, na obe strane;
+- Android u pozadini;
+- predaja i analiza;
+- iPad, samo uspravno.
+
+**Palo je samo „iPhone u pozadini“:** prijatelj nije video odsustvo, jer suspendovana iOS aplikacija ne
+zatvara WebSocket, pa ga server smatra živim. Popravljeno u `cca88c0`: iOS na `.background` sam zatvara vezu
+(u `beginBackgroundTask` prozoru) i blokira ponovno povezivanje do `.active`, isto kao Android
+`appWentToBackground()`. Provereno uživo: `away` stiže za oko 6 s, `back` za oko 7 s. Izveštaj:
+`.superpowers/sdd/2026-11-15-igra-preko-interneta/crossplay-report.md`.
+
 ### Šta NIJE provereno (stoji otvoreno)
 
-- **Nijedna prava partija iPhone ↔ Android nije odigrana.** iOS simulator se u ovom okruženju nije mogao voditi (nema `idb`,
-  Xcode MCP ne vidi iOS 26.5 simulator). Zamena: obe aplikacije proverene uživo protiv iste produkcije istim skriptom, oba
-  kodeka testirana identičnim JSON stringovima.
-- **Na iOS-u nema nijednog pravog dodira:** dugmad, alerti, unos koda, promocija, prihvaćen remi, `aborted`, iPad, pejzaž,
-  drugi jezici — proveravano samo kodom, buildom i živom vezom iz privremene sprege.
-- Android: pravi dodiri protiv skriptovanog prijatelja na produkciji jesu rađeni za sve scenarije, **ali rotacija usred
-  partije samo rezonovana, ne pokrenuta**; tablet rasporedi nisu pregledani; instrumentisani broj (60) je iz prolaza Task-a 14,
-  pre završnih ispravki.
-- Politika privatnosti ne pominje da se sačuvana partija sama ponovo povezuje pri otvaranju aplikacije (sitnica, sajt).
+- Nijedna partija **na pravim telefonima**: provere su sa simulatorom i emulatorom. Prava suspenzija iOS-a i
+  pun istek od 30 minuta nisu posmatrani.
+- iPad u pejzažu i tablet rasporedi na Androidu nisu pregledani u igri.
+- Android: rotacija usred partije je samo rezonovana, nije pokrenuta. Instrumentisani broj (60) je iz prolaza
+  Task-a 14, pre završnih ispravki.
+- Politika privatnosti ne pominje da se sačuvana partija sama ponovo povezuje pri otvaranju aplikacije
+  (sitnica, sajt).
+
+### Zaštita servera
+
+Na zoni `chessko.app` postoji Cloudflare **rate limiting** pravilo (`http_ratelimit` faza, pravilo
+`253a7216…`, postavljeno kroz MCP): za `http.host eq "play.chessko.app"` važi najviše **20 zahteva po IP adresi
+u 10 s**, a prekoračenje se blokira 10 s. Pravilo je jedino koje besplatni plan dozvoljava. Provereno: 20× 200,
+pa 429, a posle 10 s opet 200. WebSocket poruke posle uspostavljanja veze se ne broje, samo konekcije.
+Aplikacija granicu ne dostiže ni sa backoff-om (najkraće 1 s). Javni repo na GitHub-u ne otkriva tajnu, jer
+tajni nema: adresa i protokol su ionako u svakoj aplikaciji. Napad može najviše da potroši dnevnu besplatnu
+kvotu (igra preko interneta stane do kraja dana, bez troška).
 
 ### Lista za vlasnika pre izdanja
 
-1. **Jedna prava partija iPhone ↔ Android**, pozivom u oba smera: promocija, ponuda remija, zatvoriti aplikaciju usred
-   partije pa se vratiti, predaja.
-2. **App Store „App Privacy" i Google Play „Data safety":** odluka je vlasnikova da li prolazni prenos bez čuvanja (kod
-   uređaja i potezi preko servera, IP vidi Cloudflare) znači „prikuplja se".
-3. Prva rečenica politike privatnosti, „Chessko ne prikuplja tvoje podatke", možda treba ublažiti — takođe vlasnikova odluka.
-4. **Marketinški tekst sajta** koji tvrdi da aplikacija radi bez interneta menja dizajn sajta (nije u ovom repou).
-5. Politika privatnosti je već objavljena (`chessko-site` `39fcd64`, 8 jezika) i mora ostati objavljena pre izdanja.
+Odluke vlasnika (2026-11-15): App Privacy, Data safety i prva rečenica politike privatnosti **se ne menjaju**.
+Pun spisak koraka za prodavnice vodi se u memoriji projekta (`izdanje-igra-preko-interneta-prodavnice`) i u
+`chessko-dizajn-snimci/prodavnice/STA-JE-NOVO.md`. Najvažnije:
+1. Jedna partija na pravim telefonima, iPhone ↔ Android.
+2. U opis aplikacije u obe prodavnice dodati rečenicu da igra preko interneta traži internet (8 jezika).
+3. U App Store Connect-u **link ka politici privatnosti** zameniti sa `https://chessko.app/privacy`. Stari
+   `PRIVACY_POLICY.txt` na GitHub-u tvrdi da aplikacija ne koristi internet.
+4. Nov tekst „Šta je novo“ i novi snimci ekrana (`chessko-dizajn-snimci/prodavnice/`); dizajner ih oprema.
+5. Sajt je već usklađen (`chessko-site` `632633e`), a politika privatnosti objavljena (`39fcd64`).
 
 ## Sadržaj lekcija
 
@@ -3649,3 +3678,13 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
     (da li prolazni prenos znači „prikuplja se"); prva rečenica politike „Chessko ne prikuplja tvoje podatke" možda treba
     ublažiti; marketinški tekst sajta o radu bez interneta (dizajn). Parkirano: ponuda remija odsutnom protivniku, Android bez
     „Nema veze sa internetom." (vidi „Poznata ograničenja").
+
+- **2026-11-15** — Posle spajanja igre preko interneta: `main` poslat na GitHub (`d09cc58`), unakrsna partija
+  iPhone ↔ Android odigrana uživo pravim dodirima (8/9; detalji u „Igra preko interneta" → „Unakrsna partija"),
+  ispravljen iOS u pozadini (`cca88c0`: veza se sama zatvara, kao na Androidu; swift test 166/166, pregled bez
+  nalaza iznad sitnih), Cloudflare rate limiting na `play.chessko.app` (20 zahteva po IP u 10 s, provereno
+  429). Sajt: tekstovi o radu bez interneta i nova opcija u sekciji o protivniku (`chessko-site` `632633e`, po
+  promptu dizajna, 8 jezika). Za prodavnice: „Šta je novo" na 8 jezika i spisak zastarelih tvrdnji u opisu
+  (`chessko-dizajn-snimci/prodavnice/STA-JE-NOVO.md`); live App Store opis još pominje „8 setova figura / 8 tabli"
+  i ELO 1300–2600, a link ka privatnosti vodi na stari `PRIVACY_POLICY.txt`. Sitno, odloženo: iOS `open()` ne
+  briše `backgrounded` (Android briše), `close` drži pozadinski zadatak pun 2 s.
