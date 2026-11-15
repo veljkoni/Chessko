@@ -84,10 +84,18 @@ struct OnlineGameView: View {
             }
             .overlay(promotionOverlay)
             // Zatvaranje usred partije: ista potvrda kao „Predaj" (spec § 5).
-            .alert(Loc("Predati partiju?"), isPresented: $showCloseConfirm) {
-                Button(Loc("Predaj"), role: .destructive) {
-                    vm.resign()
-                    closeNow()
+            // Predaja se nudi samo dok je veza živa; inače bi `resign` bio tihi
+            // no-op a ekran bi se zatvorio. Bez veze partija čeka (sačuvana je i
+            // otvara se pri sledećem pokretanju; prijatelj vidi „izgubio vezu").
+            .alert(game.onlineCanMove ? Loc("Predati partiju?") : Loc("Partija će te čekati."),
+                   isPresented: $showCloseConfirm) {
+                if game.onlineCanMove {
+                    Button(Loc("Predaj"), role: .destructive) {
+                        vm.resign()
+                        closeNow()
+                    }
+                } else {
+                    Button(Loc("Zatvori")) { closeNow() }
                 }
                 Button(Loc("Nastavi"), role: .cancel) {}
             }

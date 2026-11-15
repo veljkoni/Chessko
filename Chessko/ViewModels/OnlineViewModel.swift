@@ -19,6 +19,10 @@ final class OnlineViewModel {
         return (try? JSONDecoder().decode(ActiveGame.self, from: data)) != nil
     }
 
+    /// Ekran igre preko interneta je otvoren — `ContentView` tad ne prosleđuje
+    /// `scenePhase` (to radi ekran), da se veza ne otvara dvaput.
+    private(set) static var isCoverOpen = false
+
     private(set) var state: OnlineState = .idle
     var notice: OnlineNotice?
     private(set) var myCode: String
@@ -63,12 +67,14 @@ final class OnlineViewModel {
 
     func open() {
         uiOpen = true
+        Self.isCoverOpen = true
         if case .idle = machine.state, connection == nil { openSocket() }
     }
 
     /// Dok partija traje veza ostaje pod kontrolom mašine (UI prvo pita „Predaj partiju?").
     func close() {
         uiOpen = false
+        Self.isCoverOpen = false
         if case .playing = machine.state { return }
         shutDownSocket()
         machine = OnlineMachine(myCode: myCode, stored: machine.stored)

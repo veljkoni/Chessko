@@ -73,7 +73,7 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             // Ekran igre preko interneta sam prati `scenePhase`; ovde samo kad
             // ceka sacuvana partija a ekran je zatvoren (sprecava stvaranje `shared`).
-            if !showOnlineAtLaunch, OnlineViewModel.hasStoredGame {
+            if !showOnlineAtLaunch, !OnlineViewModel.isCoverOpen, OnlineViewModel.hasStoredGame {
                 OnlineViewModel.shared.scenePhaseChanged(phase)
             }
         }

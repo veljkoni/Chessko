@@ -149,6 +149,7 @@ add("Prijatelj nudi remi.", "Your friend offers a draw.", "Ton ami propose nulle
 add("Prijatelj je odbio remi.", "Your friend declined the draw.", "Ton ami a refusé la nulle.", "Dein Freund hat Remis abgelehnt.", "Il tuo amico ha rifiutato la patta.", "Друг отказался от ничьей.", "朋友拒绝了和棋。", "दोस्त ने ड्रॉ अस्वीकार कर दिया।")
 add("Partija je prekinuta.", "The game was aborted.", "La partie a été interrompue.", "Die Partie wurde abgebrochen.", "La partita è stata interrotta.", "Партия прервана.", "对局已中断。", "बाज़ी रोक दी गई।")
 add("Prijatelj", "Friend", "Ami", "Freund", "Amico", "Друг", "朋友", "दोस्त")
+add("Partija će te čekati.", "The game will wait for you.", "La partie t’attendra.", "Die Partie wartet auf dich.", "La partita ti aspetterà.", "Партия подождёт тебя.", "对局会等你回来。", "बाज़ी तुम्हारा इंतज़ार करेगी।")
 
 # ── Puzzle screen ───────────────────────────────────────────────────────────
 add("Izaberi dan", "Choose a day", "Choisir un jour", "Tag wählen", "Scegli un giorno", "Выберите день", "选择日期", "दिन चुनें")

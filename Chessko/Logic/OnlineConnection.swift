@@ -38,6 +38,11 @@ final class OnlineConnection {
     private var receiveTask: Task<Void, Never>?
     private var pingTask: Task<Void, Never>?
     private var finished = false
+    /// Poruke poslate a još nepotvrđene upisom u soket; `close()` ih sačeka.
+    private var pendingSends = 0
+
+    /// Najduže čekanje da se poslate poruke isprazne pre gašenja (npr. „resign").
+    private static let flushCap: Duration = .seconds(2)
 
     init() {}
 
@@ -70,16 +75,50 @@ final class OnlineConnection {
         guard let task, !finished,
               let data = try? JSONEncoder().encode(message),
               let text = String(data: data, encoding: .utf8) else { return }
-        task.send(.string(text)) { [weak self] error in
-            if error != nil { Task { @MainActor in self?.fail() } }
+        pendingSends += 1
+        // Jaka referenca namerno: posle `close()` vlasnik pušta objekat, a upis
+        // mora da stigne do kraja (callback traje kratko, pa nema ciklusa).
+        task.send(.string(text)) { error in
+            Task { @MainActor in
+                self.pendingSends -= 1
+                if error != nil { self.fail() }   // posle close() je `finished`, pa ništa
+                self.closeNowIfFlushed()
+            }
         }
     }
 
-    /// Tiho gašenje: nijedan callback više ne stiže.
+    /// Tiho gašenje: nijedan callback više ne stiže. Poruke u letu (poslednji
+    /// `resign`, `move`) se sačekaju, najviše `flushCap`, pa se soket zatvara
+    /// regularno (`normalClosure`).
     func close() {
         finished = true
         onClose = nil
-        teardown()
+        onOpen = nil
+        onMessage = nil
+        receiveTask?.cancel()
+        pingTask?.cancel()
+        receiveTask = nil
+        pingTask = nil
+        if pendingSends == 0 {
+            hardClose(.normalClosure)
+        } else {
+            Task { [weak self] in
+                try? await Task.sleep(for: Self.flushCap)
+                self?.hardClose(.normalClosure)
+            }
+        }
+    }
+
+    private func closeNowIfFlushed() {
+        if finished, pendingSends == 0 { hardClose(.normalClosure) }
+    }
+
+    private func hardClose(_ code: URLSessionWebSocketTask.CloseCode) {
+        guard let task else { return }
+        task.cancel(with: code, reason: nil)
+        session?.invalidateAndCancel()
+        self.task = nil
+        session = nil
     }
 
     // MARK: Interno
@@ -127,8 +166,7 @@ final class OnlineConnection {
     private func teardown() {
         receiveTask?.cancel()
         pingTask?.cancel()
-        task?.cancel(with: .goingAway, reason: nil)
-        session?.invalidateAndCancel()
+        hardClose(.goingAway)
         receiveTask = nil
         pingTask = nil
         onOpen = nil
