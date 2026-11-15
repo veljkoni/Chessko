@@ -215,6 +215,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 @Test func backToLobbyFromEndedWithLiveSocketGoesToLobby() {
     var m = machine(.idle)
     _ = m.handle(.socketOpened)
+    _ = m.handle(.received(.welcome(code: "K7M4QX")))
     m.state = .ended(.board)
     #expect(m.handle(.backToLobby) == [])
     #expect(m.state == .lobby)
@@ -234,4 +235,29 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
     var m = machine(playing(), stored: game)
     #expect(m.handle(.backToLobby) == [])
     #expect(m.state == playing())
+}
+
+// Fix round 2: veza otvorena u .ended
+@Test func socketOpenedInEndedSendsHelloOnly() {
+    var m = machine(.ended(.board))
+    #expect(m.handle(.socketOpened) == [.send(.hello(code: "K7M4QX"))])
+    #expect(m.state == .ended(.board))
+}
+
+@Test func endedSocketOpenedWelcomeBackToLobby() {
+    var m = machine(.ended(.board))
+    _ = m.handle(.socketOpened)
+    #expect(m.handle(.received(.welcome(code: "K7M4QX"))) == [])
+    #expect(m.state == .ended(.board))
+    #expect(m.handle(.backToLobby) == [])
+    #expect(m.state == .lobby)
+}
+
+@Test func endedSocketOpenedBeforeWelcomeBackToLobbyWaitsForWelcomeWithoutSecondHello() {
+    var m = machine(.ended(.board))
+    #expect(m.handle(.socketOpened) == [.send(.hello(code: "K7M4QX"))])
+    #expect(m.handle(.backToLobby) == [])
+    #expect(m.state == .connecting)
+    #expect(m.handle(.received(.welcome(code: "K7M4QX"))) == [])
+    #expect(m.state == .lobby)
 }

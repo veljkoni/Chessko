@@ -61,6 +61,8 @@ struct OnlineMachine: Sendable {
     private var reconnectAttempt = 0
     /// Da li je socket trenutno otvoren (za `backToLobby` iz `.ended`).
     private var socketAlive = false
+    /// Da li je TRENUTNI socket vezan za `myCode` (welcome/resumed stigli).
+    private var socketBound = false
 
     /// Igrač sme da igra/predaje/nudi remi samo dok je veza živa. UI onemogućava
     /// tablu i dugmad kad je `false`.
@@ -91,17 +93,24 @@ struct OnlineMachine: Sendable {
     mutating func handle(_ e: OnlineEvent) -> [OnlineEffect] {
         // Socket živost se prati u svakom stanju, i u `.ended`.
         switch e {
-        case .socketOpened: socketAlive = true
-        case .socketClosed: socketAlive = false
+        case .socketOpened: socketAlive = true; socketBound = false
+        case .socketClosed: socketAlive = false; socketBound = false
+        case .received(.welcome), .received(.resumed): socketBound = true
         default: break
         }
         if case .ended = state {
-            if case .backToLobby = e {
-                if socketAlive { state = .lobby; return [] }
+            switch e {
+            case .backToLobby:
+                if socketAlive && socketBound { state = .lobby; return [] }
                 state = .connecting
-                return [.connect]
+                // Živ a nevezan socket je već poslao hello; njegov `welcome` vodi u lobi.
+                return socketAlive ? [] : [.connect]
+            case .socketOpened:
+                // Nikad resume: stored je ovde nil.
+                return [.send(.hello(code: myCode))]
+            default:
+                return []
             }
-            return []
         }
         switch e {
         case .backToLobby:
