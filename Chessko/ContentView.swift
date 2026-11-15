@@ -7,6 +7,12 @@ struct ContentView: View {
     @State private var learnViewModel  = LearnViewModel()
     @State private var localization    = LocalizationManager.shared
 
+    /// Sačuvana online partija iz prethodnog pokretanja → odmah se otvara. Čita se
+    /// `UserDefaults` direktno; `OnlineViewModel.shared` se ovde NE dodiruje dok
+    /// takve partije nema (pravi GameViewModel, motor i vezu).
+    @State private var showOnlineAtLaunch = OnlineViewModel.hasStoredGame
+    @Environment(\.scenePhase) private var scenePhase
+
     @AppStorage("appColorScheme") private var colorSchemePref: String = "system"
 
     private var preferredColorScheme: ColorScheme? {
@@ -61,6 +67,16 @@ struct ContentView: View {
                 .tag(AppTab.path)
         }
         .tint(DS.accent)
+        .fullScreenCover(isPresented: $showOnlineAtLaunch) {
+            OnlineGameView()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Ekran igre preko interneta sam prati `scenePhase`; ovde samo kad
+            // ceka sacuvana partija a ekran je zatvoren (sprecava stvaranje `shared`).
+            if !showOnlineAtLaunch, OnlineViewModel.hasStoredGame {
+                OnlineViewModel.shared.scenePhaseChanged(phase)
+            }
+        }
         .preferredColorScheme(preferredColorScheme)
         // Rebuild the whole tree when the language changes so every Text
         // re-resolves against the newly selected .lproj bundle.

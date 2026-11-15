@@ -71,6 +71,8 @@
 		10CA7A1000000000000000C2 /* nn-37f18f62d772.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */; };
 		10CA7A1000000000000000C4 /* nn-1111cefa1111.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */; };
 		953F5BE085B54B8E8B4B00D5 /* puzzles.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */; };
+		C0DE00000000000000000B06 /* OnlineLobbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A06 /* OnlineLobbyView.swift */; };
+		C0DE00000000000000000B07 /* OnlineGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A07 /* OnlineGameView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -138,6 +140,8 @@
 		F1CBFECDFF734F169829EE01 /* EvalBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvalBarView.swift; sourceTree = "<group>"; };
 		253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		FBA1E9BAE39C4E178203B664 /* Position.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Position.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000A06 /* OnlineLobbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineLobbyView.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000A07 /* OnlineGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineGameView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -181,6 +185,8 @@
 			10CA7A1000000000000000Y2 /* StepGameView.swift */,
 			10CA7A1000000000000000Z2 /* PromotionOverlay.swift */,
 			D5A1C0DE00000000000000G2 /* GameComponents.swift */,
+			C0DE00000000000000000A06 /* OnlineLobbyView.swift */,
+			C0DE00000000000000000A07 /* OnlineGameView.swift */,
 			10CA7A1000000000000000T2 /* AnalysisView.swift */,
 			);
 			path = Views;
@@ -387,6 +393,8 @@
 				C0DE00000000000000000B03 /* OnlineMachine.swift in Sources */,
 				C0DE00000000000000000B04 /* OnlineConnection.swift in Sources */,
 				C0DE00000000000000000B05 /* OnlineViewModel.swift in Sources */,
+				C0DE00000000000000000B07 /* OnlineGameView.swift in Sources */,
+				C0DE00000000000000000B06 /* OnlineLobbyView.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,
 				8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */,
 				03BA8BC3E785458B933E3985 /* ChessPuzzle.swift in Sources */,

@@ -56,6 +56,9 @@ final class OnlineViewModel {
         game.onBoardFinished = { [weak self] in self?.handle(.boardFinished) }
     }
 
+    /// Postoji sačuvana partija koja čeka nastavak (UI do povezivanja već crta tablu).
+    var hasActiveGame: Bool { machine.stored != nil }
+
     // MARK: Javni API
 
     func open() {

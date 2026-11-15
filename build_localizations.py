@@ -117,6 +117,39 @@ add("Remi – ponavljanje pozicije.", "Draw – repetition.", "Nulle – répét
 add("Remi – nedovoljan materijal.", "Draw – insufficient material.", "Nulle – matériel insuffisant.", "Remis – ungenügendes Material.", "Patta – materiale insufficiente.", "Ничья – недостаточно материала.", "平局——子力不足。", "ड्रॉ – अपर्याप्त सामग्री।")
 add("Remi – dogovor.", "Draw – by agreement.", "Nulle – par accord.", "Remis – durch Einigung.", "Patta – per accordo.", "Ничья – по соглашению.", "平局——双方同意。", "ड्रॉ – आपसी सहमति।")
 
+# ── Igra preko interneta (iOS Task 10) ──────────────────────────────────────
+# Ponovo korišćeni ključevi (nisu dupliran): Otkaži, Zatvori, Predaj, Nastavi,
+# Predati partiju?, Analiziraj partiju, Ti, Na potezu, Na potezu si!,
+# Remi – dogovor., Prijatelj je na potezu.
+add("Igraj preko interneta", "Play over the internet", "Jouer en ligne", "Online spielen", "Gioca online", "Играть по интернету", "在线对弈", "इंटरनेट पर खेलें")
+add("Tvoj kod", "Your code", "Ton code", "Dein Code", "Il tuo codice", "Твой код", "你的代码", "तुम्हारा कोड")
+add("Kopiraj", "Copy", "Copier", "Kopieren", "Copia", "Копировать", "复制", "कॉपी करें")
+add("Podeli kod", "Share code", "Partager le code", "Code teilen", "Condividi il codice", "Поделиться кодом", "分享代码", "कोड साझा करें")
+add("Novi kod", "New code", "Nouveau code", "Neuer Code", "Nuovo codice", "Новый код", "新代码", "नया कोड")
+add("Kod prijatelja", "Friend’s code", "Code de ton ami", "Code deines Freundes", "Codice del tuo amico", "Код друга", "朋友的代码", "दोस्त का कोड")
+add("Pozovi", "Invite", "Inviter", "Einladen", "Invita", "Пригласить", "邀请", "बुलाओ")
+add("Čekam da prijatelj prihvati…", "Waiting for your friend to accept…", "J’attends que ton ami accepte…", "Warte, bis dein Freund annimmt…", "Aspetto che il tuo amico accetti…", "Жду, пока друг примет приглашение…", "等待朋友接受…", "दोस्त के स्वीकार करने का इंतज़ार है…")
+add("Kod %@ te poziva na partiju", "Code %@ invites you to a game", "Le code %@ t’invite à une partie", "Code %@ lädt dich zu einer Partie ein", "Il codice %@ ti invita a una partita", "Код %@ приглашает тебя на партию", "代码 %@ 邀请你对弈", "कोड %@ तुम्हें बाज़ी के लिए बुला रहा है")
+add("Prihvati", "Accept", "Accepter", "Annehmen", "Accetta", "Принять", "接受", "स्वीकार करें")
+add("Odbij", "Decline", "Refuser", "Ablehnen", "Rifiuta", "Отклонить", "拒绝", "अस्वीकार करें")
+add("Prijatelj je odbio poziv.", "Your friend declined the invite.", "Ton ami a refusé l’invitation.", "Dein Freund hat die Einladung abgelehnt.", "Il tuo amico ha rifiutato l’invito.", "Друг отклонил приглашение.", "朋友拒绝了邀请。", "दोस्त ने बुलावा अस्वीकार कर दिया।")
+add("Prijatelj trenutno nije dostupan. Neka otvori „Igraj preko interneta“.", "Your friend isn’t available right now. Ask them to open “Play over the internet”.", "Ton ami n’est pas disponible pour le moment. Demande-lui d’ouvrir « Jouer en ligne ».", "Dein Freund ist gerade nicht erreichbar. Er soll „Online spielen“ öffnen.", "Il tuo amico non è disponibile al momento. Digli di aprire «Gioca online».", "Друг сейчас недоступен. Пусть откроет «Играть по интернету».", "朋友目前不在线。请让对方打开“在线对弈”。", "दोस्त अभी उपलब्ध नहीं है। उससे कहो कि “इंटरनेट पर खेलें” खोले।")
+add("Prijatelj je već u partiji.", "Your friend is already in a game.", "Ton ami est déjà en partie.", "Dein Freund spielt schon eine Partie.", "Il tuo amico è già in una partita.", "Друг уже в партии.", "朋友已经在对局中。", "दोस्त पहले से बाज़ी में है।")
+add("To je tvoj kod.", "That’s your own code.", "C’est ton propre code.", "Das ist dein eigener Code.", "Questo è il tuo codice.", "Это твой код.", "这是你自己的代码。", "यह तुम्हारा ही कोड है।")
+add("Previše poziva, pokušaj za minut.", "Too many invites, try again in a minute.", "Trop d’invitations, réessaie dans une minute.", "Zu viele Einladungen, versuch es in einer Minute erneut.", "Troppi inviti, riprova tra un minuto.", "Слишком много приглашений, попробуй через минуту.", "邀请太频繁，请一分钟后再试。", "बहुत ज़्यादा बुलावे, एक मिनट बाद कोशिश करो।")
+add("Neispravan kod.", "Invalid code.", "Code invalide.", "Ungültiger Code.", "Codice non valido.", "Неверный код.", "代码无效。", "कोड गलत है।")
+add("Ažuriraj aplikaciju da bi igrao preko interneta.", "Update the app to play over the internet.", "Mets l’application à jour pour jouer en ligne.", "Aktualisiere die App, um online zu spielen.", "Aggiorna l’app per giocare online.", "Обнови приложение, чтобы играть по интернету.", "请更新应用以便在线对弈。", "इंटरनेट पर खेलने के लिए ऐप अपडेट करो।")
+add("Poziv je otkazan.", "The invite was cancelled.", "L’invitation a été annulée.", "Die Einladung wurde zurückgezogen.", "L’invito è stato annullato.", "Приглашение отменено.", "邀请已取消。", "बुलावा रद्द कर दिया गया।")
+add("Nema veze sa internetom.", "No internet connection.", "Pas de connexion internet.", "Keine Internetverbindung.", "Nessuna connessione a internet.", "Нет подключения к интернету.", "没有网络连接。", "इंटरनेट कनेक्शन नहीं है।")
+add("Povezujem…", "Connecting…", "Connexion…", "Verbinde…", "Mi collego…", "Подключаюсь…", "正在连接…", "कनेक्ट हो रहा है…")
+add("Prijatelj je izgubio vezu, čekam…", "Your friend lost connection, waiting…", "Ton ami a perdu la connexion, j’attends…", "Dein Freund hat die Verbindung verloren, ich warte…", "Il tuo amico ha perso la connessione, aspetto…", "У друга пропала связь, жду…", "朋友断线了，等待中…", "दोस्त का कनेक्शन टूट गया, इंतज़ार है…")
+add("Ponovo se povezujem…", "Reconnecting…", "Reconnexion…", "Verbinde erneut…", "Mi ricollego…", "Подключаюсь снова…", "正在重新连接…", "फिर से कनेक्ट हो रहा है…")
+add("Ponudi remi", "Offer a draw", "Proposer nulle", "Remis anbieten", "Offri patta", "Предложить ничью", "提议和棋", "ड्रॉ का प्रस्ताव दो")
+add("Prijatelj nudi remi.", "Your friend offers a draw.", "Ton ami propose nulle.", "Dein Freund bietet Remis an.", "Il tuo amico offre patta.", "Друг предлагает ничью.", "朋友提议和棋。", "दोस्त ड्रॉ का प्रस्ताव दे रहा है।")
+add("Prijatelj je odbio remi.", "Your friend declined the draw.", "Ton ami a refusé la nulle.", "Dein Freund hat Remis abgelehnt.", "Il tuo amico ha rifiutato la patta.", "Друг отказался от ничьей.", "朋友拒绝了和棋。", "दोस्त ने ड्रॉ अस्वीकार कर दिया।")
+add("Partija je prekinuta.", "The game was aborted.", "La partie a été interrompue.", "Die Partie wurde abgebrochen.", "La partita è stata interrotta.", "Партия прервана.", "对局已中断。", "बाज़ी रोक दी गई।")
+add("Prijatelj", "Friend", "Ami", "Freund", "Amico", "Друг", "朋友", "दोस्त")
+
 # ── Puzzle screen ───────────────────────────────────────────────────────────
 add("Izaberi dan", "Choose a day", "Choisir un jour", "Tag wählen", "Scegli un giorno", "Выберите день", "选择日期", "दिन चुनें")
 add("Otkaži", "Cancel", "Annuler", "Abbrechen", "Annulla", "Отмена", "取消", "रद्द करें")

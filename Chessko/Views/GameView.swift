@@ -29,6 +29,7 @@ struct GameView: View {
     }
     @State private var pendingSelection: PendingSelection? = nil
     @State private var showChessClock = false
+    @State private var showOnline = false
 
     /// Najmanja visina liste poteza (tri reda + unutrašnji razmak).
     private static let minMoveListHeight: CGFloat = MoveHistoryView.rowHeight * 3 + DS.Space.s
@@ -66,6 +67,12 @@ struct GameView: View {
                             handleNewGameSelection(.chessClock)
                         } label: {
                             Label(Loc("Šahovski sat"), systemImage: "timer")
+                        }
+
+                        Button {
+                            showOnline = true
+                        } label: {
+                            Label(Loc("Igraj preko interneta"), systemImage: "globe")
                         }
                     } label: {
                         Image(systemName: "plus")
@@ -114,6 +121,9 @@ struct GameView: View {
             }
             .fullScreenCover(isPresented: $showChessClock) {
                 ChessClockView()
+            }
+            .fullScreenCover(isPresented: $showOnline) {
+                OnlineGameView()
             }
             .sheet(isPresented: $showAnalysis) {
                 AnalysisView(viewModel: viewModel)
