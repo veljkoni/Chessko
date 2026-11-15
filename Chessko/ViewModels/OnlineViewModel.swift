@@ -13,6 +13,12 @@ final class OnlineViewModel {
     static let codeKey = "chessko.online.code"
     static let activeGameKey = "chessko.online.activeGame"
 
+    /// Čita sačuvanu partiju BEZ pravljenja `shared` (to bi podiglo GameViewModel i motor).
+    static var hasStoredGame: Bool {
+        guard let data = UserDefaults.standard.data(forKey: activeGameKey) else { return false }
+        return (try? JSONDecoder().decode(ActiveGame.self, from: data)) != nil
+    }
+
     private(set) var state: OnlineState = .idle
     var notice: OnlineNotice?
     private(set) var myCode: String
@@ -54,7 +60,7 @@ final class OnlineViewModel {
 
     func open() {
         uiOpen = true
-        if case .idle = machine.state { openSocket() }
+        if case .idle = machine.state, connection == nil { openSocket() }
     }
 
     /// Dok partija traje veza ostaje pod kontrolom mašine (UI prvo pita „Predaj partiju?").
@@ -96,7 +102,10 @@ final class OnlineViewModel {
 
     func scenePhaseChanged(_ phase: ScenePhase) {
         guard phase == .active, uiOpen || machine.stored != nil else { return }
-        if case .idle = machine.state { openSocket(); return }
+        if case .idle = machine.state {
+            if connection == nil { openSocket() }
+            return
+        }
         handle(.appBecameActive)
     }
 
@@ -116,7 +125,15 @@ final class OnlineViewModel {
         let effects = machine.handle(event)
         for effect in effects { execute(effect) }
         sync()
-        if case .ended(let result) = machine.state, !wasEnded { game.endOnline(result) }
+        if case .ended(let result) = machine.state, !wasEnded {
+            game.endOnline(result)
+            // Ekran zatvoren: kod ne sme ostati registrovan na serveru. Mašina
+            // dobija socketClosed da `socketAlive` ostane tačan (backToLobby ponovo povezuje).
+            if !uiOpen {
+                shutDownSocket()
+                handle(.socketClosed)
+            }
+        }
     }
 
     private func sync() {
@@ -179,6 +196,7 @@ final class OnlineViewModel {
         }
         c.onClose = { [weak self] in
             guard let self, self.generation == gen else { return }
+            self.connection = nil
             self.handle(.socketClosed)
         }
         connection = c
