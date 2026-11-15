@@ -184,7 +184,12 @@ final class GameViewModel {
     /// posle bilo kog poteza ili posle `replaceMoves`.
     var onBoardFinished: (() -> Void)?
     /// Postavlja ga `OnlineViewModel` iz `OnlineMachine.canAct`; gleda se samo u `.online`.
-    var onlineCanMove: Bool = true
+    var onlineCanMove: Bool = true {
+        didSet {
+            // Otvoren izbor promocije ne sme ostati mrtav kad masina prestane da dozvoljava poteze.
+            if gameMode == .online, !onlineCanMove, showPromotion { cancelPromotion() }
+        }
+    }
     /// Kraj online partije; dok je postavljen, tabla je u `.online` zakljucana.
     private(set) var onlineResult: OnlineResult?
 
@@ -494,6 +499,10 @@ final class GameViewModel {
 
     /// Called by the UI when the player picks a promotion piece.
     func confirmPromotion(_ type: PieceType) {
+        if gameMode == .online, !onlineCanMove || onlineResult != nil {
+            cancelPromotion()   // nema poteza i nema onLocalMove dok masina ne moze da deluje
+            return
+        }
         guard let move = promotionMove else { return }
         promotionMove = nil
         showPromotion = false
@@ -868,6 +877,8 @@ final class GameViewModel {
 
     /// Serialise current state to UserDefaults.
     private func save() {
+        // Posle kraja online partije slot se ne sme ponovo napraviti (relaunch bi je vratio kao zivu).
+        if gameMode == .online, onlineResult != nil { return }
         let snap = SavedGame(
             gameState:      gameState,
             history:        history.map { SavedGame.HistoryEntry(state: $0.state, lastMove: $0.lastMove) },
@@ -1041,7 +1052,7 @@ final class GameViewModel {
 
     /// Zamenjuje tablu tacno ovim potezima (stanje sa servera posle sinhronizacije).
     func replaceMoves(_ moves: [String]) {
-        guard gameMode == .online else { return }
+        guard gameMode == .online, onlineResult == nil else { return }
         rebuildQuietly(moves: moves)
         if isGameOver { onBoardFinished?() }
     }
