@@ -1,4 +1,5 @@
 // Probna partija: dva klijenta, poziv, prihvatanje, dva poteza, predaja, kraj.
+// Zatim predaja dok je protivnik odsutan: on se vraca sa resume i dobija resumed pa resigned.
 // Upotreba: node scripts/smoke.mjs [wss://play.chessko.app/ws]
 const URL_ = process.argv[2] ?? "wss://play.chessko.app/ws";
 const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -10,7 +11,7 @@ const fail = (msg) => {
   for (const s of sockets) try { s.close(); } catch {}
   process.exit(1);
 };
-const timer = setTimeout(() => fail("timeout od 10 s"), 10_000);
+const timer = setTimeout(() => fail("timeout od 20 s"), 20_000);
 
 function open() {
   return new Promise((resolve, reject) => {
@@ -74,9 +75,48 @@ try {
   w.send({ t: "move", ply: 2, uci: "d2d4" });
   await expectMsg(w, { t: "error", reason: "game_gone" }, "partija obrisana posle kraja");
 
-  clearTimeout(timer);
   a.close();
   b.close();
+
+  // Predaja dok je protivnik odsutan: rezultat ga ceka do povratka.
+  const codeC = randCode();
+  let codeD = randCode();
+  while (codeD === codeC) codeD = randCode();
+  const c = await open();
+  const d = await open();
+  c.send({ t: "hello", v: 1, code: codeC });
+  d.send({ t: "hello", v: 1, code: codeD });
+  await expectMsg(c, { t: "welcome" }, "welcome C");
+  await expectMsg(d, { t: "welcome" }, "welcome D");
+  c.send({ t: "invite", to: codeD });
+  await expectMsg(c, { t: "invite_sent" }, "invite_sent C");
+  await expectMsg(d, { t: "invited" }, "invited D");
+  d.send({ t: "accept", from: codeC });
+  const sc = await expectMsg(c, { t: "start" }, "start C");
+  const sd = await expectMsg(d, { t: "start" }, "start D");
+  const wc = sc.color === "w" ? c : d;
+  wc.send({ t: "move", ply: 0, uci: "e2e4" });
+  await expectMsg(wc, { t: "ack", ply: 0 }, "ack 0 (C/D)");
+  await expectMsg(wc === c ? d : c, { t: "move", ply: 0 }, "potez 0 stiže (C/D)");
+
+  d.close();
+  await expectMsg(c, { t: "opponent", state: "away" }, "C vidi da je D otišao");
+  c.send({ t: "resign" });
+  await new Promise((r) => setTimeout(r, 500));
+
+  const d2 = await open();
+  d2.send({ t: "hello", v: 1, code: codeD });
+  d2.send({ t: "resume", game: sd.game, token: sd.token });
+  await expectMsg(d2, { t: "welcome" }, "welcome D2");
+  const rs = await expectMsg(d2, { t: "resumed", game: sd.game }, "D2 resumed");
+  if (JSON.stringify(rs.moves) !== JSON.stringify(["e2e4"])) fail(`resumed.moves: ${JSON.stringify(rs.moves)}`);
+  await expectMsg(d2, { t: "resigned" }, "D2 dobija predaju posle povratka");
+  d2.send({ t: "resume", game: sd.game, token: sd.token });
+  await expectMsg(d2, { t: "error", reason: "game_gone" }, "partija obrisana posle isporuke");
+
+  clearTimeout(timer);
+  c.close();
+  d2.close();
   console.log("smoke ok");
   process.exit(0);
 } catch (e) {

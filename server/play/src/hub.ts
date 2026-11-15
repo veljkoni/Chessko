@@ -25,6 +25,56 @@ export class Hub extends DurableObject {
         id TEXT PRIMARY KEY, white TEXT, black TEXT, white_token TEXT, black_token TEXT,
         moves TEXT, white_away INTEGER, black_away INTEGER)`,
     );
+    // Kraj dok je druga strana odsutna (I1): `ended` = resigned | draw | finished,
+    // `ended_to` = boja kojoj rezultat jos nije javljen. Starija tabela (v1) dobija kolone.
+    for (const col of ["ended TEXT", "ended_to TEXT"]) {
+      try {
+        ctx.storage.sql.exec(`ALTER TABLE games ADD COLUMN ${col}`);
+      } catch {
+        /* kolona vec postoji */
+      }
+    }
+    // Posle restarta (deploy, izbacivanje) webSocketClose ne stize za izgubljene veze;
+    // sediste bez veze i bez oznake odsustva dobija je sada, da istek od 30 min radi (I2).
+    void ctx.blockConcurrencyWhile(async () => {
+      if (this.stampOrphanSeats()) await this.scheduleAlarm();
+    });
+  }
+
+  /**
+   * Svako sediste bez zive veze vezane za partiju i bez oznake odsustva dobija oznaku
+   * `Date.now()`. Vraca da li je nesto upisano (tad treba zakazati alarm).
+   */
+  stampOrphanSeats(game?: string): boolean {
+    const rows = (game === undefined
+      ? this.ctx.storage.sql.exec(
+        "SELECT id, white, black, white_away, black_away FROM games WHERE white_away IS NULL OR black_away IS NULL",
+      )
+      : this.ctx.storage.sql.exec(
+        "SELECT id, white, black, white_away, black_away FROM games WHERE id = ?", game,
+      )).toArray() as unknown as {
+      id: string; white: string; black: string; white_away: number | null; black_away: number | null;
+    }[];
+    let stamped = false;
+    for (const r of rows) {
+      if (r.white_away === null && !this.seatSocket(r.id, r.white)) stamped = this.stampAway(r.id, "w") || stamped;
+      if (r.black_away === null && !this.seatSocket(r.id, r.black)) stamped = this.stampAway(r.id, "b") || stamped;
+    }
+    return stamped;
+  }
+
+  /** Oznaka odsustva samo ako je jos nema (prva oznaka odredjuje istek). */
+  private stampAway(game: string, color: "w" | "b"): boolean {
+    const col = color === "w" ? "white_away" : "black_away";
+    const cur = this.ctx.storage.sql.exec(
+      `UPDATE games SET ${col} = ? WHERE id = ? AND ${col} IS NULL`, Date.now(), game,
+    );
+    return cur.rowsWritten > 0;
+  }
+
+  /** Protivnik nema vezu vezanu za partiju: oznaci ga odsutnim (ako vec nije) i zakazi alarm. */
+  private ensureOpponentAway(game: string, oppColor: "w" | "b"): void {
+    if (this.stampAway(game, oppColor)) void this.scheduleAlarm();
   }
 
   async fetch(_request: Request): Promise<Response> {
@@ -270,8 +320,11 @@ export class Hub extends DurableObject {
       return undefined;
     }
     const mine: "w" | "b" = row.white === att.code ? "w" : "b";
+    const oppColor: "w" | "b" = mine === "w" ? "b" : "w";
     const oppCode = mine === "w" ? row.black : row.white;
-    return { id: att.game, row, mine, opp: this.socketForCode(oppCode, ws) };
+    const opp = this.seatSocket(att.game, oppCode, ws);
+    if (!opp) this.ensureOpponentAway(att.game, oppColor);
+    return { id: att.game, row, mine, oppColor, opp };
   }
 
   private onMove(ws: WebSocket, msg: Extract<ClientMessage, { t: "move" }>): void {
@@ -294,8 +347,25 @@ export class Hub extends DurableObject {
   private onResign(ws: WebSocket): void {
     const g = this.ownGame(ws);
     if (!g) return;
-    if (g.opp) this.send(g.opp, { t: "resigned" });
-    this.deleteGame(g.id);
+    if (g.opp) {
+      this.send(g.opp, { t: "resigned" });
+      this.deleteGame(g.id);
+    } else {
+      this.endWhileAway(ws, g.id, "resigned", g.oppColor);
+    }
+  }
+
+  /**
+   * Kraj dok protivnik nema vezu: partija ostaje sa zapisanim krajem dok se odsutna
+   * strana ne vrati (`resumed` + poruka kraja, pa brisanje) ili dok alarm ne istekne.
+   * Prisutna strana je odmah slobodna za nove pozive.
+   */
+  private endWhileAway(ws: WebSocket, game: string, kind: "resigned" | "draw" | "finished", to: "w" | "b"): void {
+    this.ctx.storage.sql.exec("UPDATE games SET ended = ?, ended_to = ? WHERE id = ?", kind, to, game);
+    const att = this.attOf(ws);
+    delete att.game;
+    ws.serializeAttachment(att);
+    this.ensureOpponentAway(game, to);
   }
 
   private onDrawOffer(ws: WebSocket): void {
@@ -309,13 +379,16 @@ export class Hub extends DurableObject {
     if (!g) return;
     const accept = msg.accept === true;
     if (g.opp) this.send(g.opp, { t: "draw_reply", accept });
-    if (accept) this.deleteGame(g.id);
+    if (!accept) return;
+    if (g.opp) this.deleteGame(g.id);
+    else this.endWhileAway(ws, g.id, "draw", g.oppColor);
   }
 
   private onFinished(ws: WebSocket): void {
     const g = this.ownGame(ws);
     if (!g) return;
-    this.deleteGame(g.id);
+    if (g.opp) this.deleteGame(g.id);
+    else this.endWhileAway(ws, g.id, "finished", g.oppColor);
   }
 
   private onDecline(ws: WebSocket, msg: Extract<ClientMessage, { t: "decline" }>): void {
@@ -366,12 +439,13 @@ export class Hub extends DurableObject {
     if (typeof msg.game !== "string" || typeof msg.token !== "string") return gone();
     const rows = this.ctx.storage.sql
       .exec(
-        "SELECT white, black, white_token, black_token, moves, white_away, black_away FROM games WHERE id = ?",
+        "SELECT white, black, white_token, black_token, moves, white_away, black_away, ended, ended_to FROM games WHERE id = ?",
         msg.game,
       )
       .toArray() as unknown as {
       white: string; black: string; white_token: string; black_token: string;
       moves: string; white_away: number | null; black_away: number | null;
+      ended: "resigned" | "draw" | "finished" | null; ended_to: "w" | "b" | null;
     }[];
     const r = rows[0];
     if (!r) return gone();
@@ -381,6 +455,9 @@ export class Hub extends DurableObject {
     else return gone();
     const myCode = mine === "w" ? r.white : r.black;
     const oppCode = mine === "w" ? r.black : r.white;
+    // Zavrsena partija: samo strana kojoj kraj nije javljen dobija ga; ona koja je
+    // zavrsila je vec zavrsila lokalno.
+    if (r.ended && r.ended_to !== mine) return gone();
 
     // Preuzimanje sedista: svaka druga veza sa ovim kodom se zatvara.
     for (const other of this.ctx.getWebSockets()) {
@@ -400,6 +477,19 @@ export class Hub extends DurableObject {
     delete att.invite;
     ws.serializeAttachment(att);
 
+    if (r.ended) {
+      // Odsutna strana se vratila: lista poteza (mat/pat se vidi na tabli), pa poruka
+      // kraja koju bi dobila uzivo, pa brisanje.
+      this.send(ws, {
+        t: "resumed", game: msg.game, color: mine, moves: JSON.parse(r.moves) as string[], opponent: "away",
+      });
+      if (r.ended === "resigned") this.send(ws, { t: "resigned" });
+      else if (r.ended === "draw") this.send(ws, { t: "draw_reply", accept: true });
+      this.deleteGame(msg.game);
+      void this.scheduleAlarm();
+      return;
+    }
+
     const wasAway = (mine === "w" ? r.white_away : r.black_away) !== null;
     this.ctx.storage.sql.exec(
       `UPDATE games SET ${mine === "w" ? "white_away" : "black_away"} = NULL WHERE id = ?`,
@@ -414,6 +504,8 @@ export class Hub extends DurableObject {
       opponent: opp ? "online" : "away",
     });
     if (wasAway && opp) this.send(opp, { t: "opponent", state: "back" });
+    // Protivnik bez veze a bez oznake (veza izgubljena bez webSocketClose, npr. deploy).
+    if (!opp) this.stampAway(msg.game, mine === "w" ? "b" : "w");
     void this.scheduleAlarm();
   }
 
@@ -467,6 +559,7 @@ export class Hub extends DurableObject {
     );
     const opp = this.seatSocket(att.game, mine === "w" ? row.black : row.white, ws);
     if (opp) this.send(opp, { t: "opponent", state: "away" });
+    else this.stampAway(att.game, mine === "w" ? "b" : "w"); // i protivnik bez veze (I2)
     void this.scheduleAlarm();
   }
 
