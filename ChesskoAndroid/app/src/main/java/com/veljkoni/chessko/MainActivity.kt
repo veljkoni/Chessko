@@ -101,7 +101,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        onlineIfAny()?.appWentToBackground()
+        // Rotacija/tema/jezik prave aktivnost iznova ali aplikacija ostaje na ekranu:
+        // veza i poziv na cekanju moraju da prezive.
+        if (!isChangingConfigurations) onlineIfAny()?.appWentToBackground()
     }
 
     override fun onStart() {
