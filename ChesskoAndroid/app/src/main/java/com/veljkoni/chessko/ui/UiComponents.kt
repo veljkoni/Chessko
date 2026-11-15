@@ -175,6 +175,7 @@ fun getStatusMessage(viewModel: GameViewModel): String {
                 is DrawReason.FiftyMoves -> loc("Remi – pravilo 50 poteza.")
                 is DrawReason.Repetition -> loc("Remi – ponavljanje pozicije.")
                 is DrawReason.InsufficientMaterial -> loc("Remi – nedovoljan materijal.")
+                is DrawReason.Agreement -> loc("Remi – dogovor.")
             }
         }
     }

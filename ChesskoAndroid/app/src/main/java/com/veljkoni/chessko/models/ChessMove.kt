@@ -18,6 +18,22 @@ data class ChessMove(
     val notation: String
         get() = "${from.algebraic}${to.algebraic}"
 
+    /** UCI zapis ("e2e4", "e7e8q" — slovo promocije malo). */
+    val uci: String
+        get() {
+            val flag = flag
+            if (flag is MoveFlag.Promotion) {
+                val letter = when (flag.pieceType) {
+                    PieceType.ROOK -> "r"
+                    PieceType.BISHOP -> "b"
+                    PieceType.KNIGHT -> "n"
+                    else -> "q"
+                }
+                return notation + letter
+            }
+            return notation
+        }
+
     companion object {
         fun fromUCI(uci: String, state: GameState): ChessMove? {
             val lower = uci.lowercase()

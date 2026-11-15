@@ -7,6 +7,7 @@ sealed interface DrawReason {
     object FiftyMoves : DrawReason
     object Repetition : DrawReason
     object InsufficientMaterial : DrawReason
+    object Agreement : DrawReason
 }
 
 sealed interface GameStatus {

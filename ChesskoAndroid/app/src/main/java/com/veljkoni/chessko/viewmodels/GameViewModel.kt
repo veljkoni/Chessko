@@ -682,6 +682,7 @@ class GameViewModel(
         is DrawReason.FiftyMoves -> "FIFTY_MOVES"
         is DrawReason.Repetition -> "REPETITION"
         is DrawReason.InsufficientMaterial -> "INSUFFICIENT_MATERIAL"
+        is DrawReason.Agreement -> "AGREEMENT"
     }
 
     private fun drawReasonFromName(name: String): DrawReason? = when (name) {
@@ -689,6 +690,7 @@ class GameViewModel(
         "FIFTY_MOVES" -> DrawReason.FiftyMoves
         "REPETITION" -> DrawReason.Repetition
         "INSUFFICIENT_MATERIAL" -> DrawReason.InsufficientMaterial
+        "AGREEMENT" -> DrawReason.Agreement
         else -> null
     }
 
