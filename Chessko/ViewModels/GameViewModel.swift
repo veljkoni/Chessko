@@ -519,8 +519,8 @@ final class GameViewModel {
 
     private func execute(_ move: ChessMove, addToHistory: Bool = true, remote: Bool = false) {
         let plyBefore = gameState.moveHistory.count
-        // Online nema undo, pa ni istorije stanja.
-        let addToHistory = addToHistory && gameMode != .online
+        // Online nema undo (`canUndo`), ali istoriju stanja drzi kao i ostali modovi:
+        // iz nje se racuna `allHistoryStates` (pregled poteza i analiza partije).
         // ── Capture info BEFORE state change ────────────────────────────────
         let capturedPiece: ChessPiece?
         let captureFromPos: Position
@@ -1010,8 +1010,10 @@ final class GameViewModel {
     private func rebuildQuietly(moves: [String]) {
         var state = GameState.initial()
         var last: ChessMove?
+        var rebuilt: [(state: GameState, lastMove: ChessMove?)] = []
         for uci in moves {
             guard let move = ChessMove.fromUCI(uci, in: state) else { break }
+            rebuilt.append((state: state, lastMove: last))
             state = state.applying(move)
             last = move
         }
@@ -1022,7 +1024,7 @@ final class GameViewModel {
         showPromotion = false
         viewingMoveIndex = nil
         isThinking = false
-        history.removeAll()
+        history = rebuilt
         gameState = state
         lastMove = last
         selectedPosition = nil
@@ -1046,7 +1048,7 @@ final class GameViewModel {
         guard gameMode == .online, onlineResult == nil, !isGameOver,
               gameState.currentTurn != playerColor,
               let move = ChessMove.fromUCI(uci, in: gameState) else { return false }
-        execute(move, addToHistory: false, remote: true)
+        execute(move, addToHistory: true, remote: true)
         return true
     }
 
