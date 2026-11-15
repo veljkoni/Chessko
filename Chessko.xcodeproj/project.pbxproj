@@ -57,6 +57,8 @@
 		C0DE00000000000000000B01 /* OnlineCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A01 /* OnlineCode.swift */; };
 		C0DE00000000000000000B02 /* OnlineProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A02 /* OnlineProtocol.swift */; };
 		C0DE00000000000000000B03 /* OnlineMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A03 /* OnlineMachine.swift */; };
+		C0DE00000000000000000B04 /* OnlineConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A04 /* OnlineConnection.swift */; };
+		C0DE00000000000000000B05 /* OnlineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A05 /* OnlineViewModel.swift */; };
 		B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86234DD826B24AC8AB906C35 /* ChessMove.swift */; };
 		B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */; };
 		B90005A02FE86EC500465DC2 /* ChessKitEngine in Frameworks */ = {isa = PBXBuildFile; productRef = B900059F2FE86EC500465DC2 /* ChessKitEngine */; };
@@ -114,6 +116,8 @@
 		C0DE00000000000000000A01 /* OnlineCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineCode.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000A02 /* OnlineProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineProtocol.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000A03 /* OnlineMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineMachine.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000A04 /* OnlineConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineConnection.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000A05 /* OnlineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineViewModel.swift; sourceTree = "<group>"; };
 		86234DD826B24AC8AB906C35 /* ChessMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessMove.swift; sourceTree = "<group>"; };
 		97E697423DC545FD8B18BD01 /* PuzzleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleView.swift; sourceTree = "<group>"; };
 		9F0EA4B995364C26A8D2D2A9 /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
@@ -191,6 +195,7 @@
 				4A9C3E00B2784A5CAEFD2100 /* MateExerciseViewModel.swift */,
 				5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */,
 				33E9B4EAAD094A458A1C7C9A /* PuzzleViewModel.swift */,
+				C0DE00000000000000000A05 /* OnlineViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -252,6 +257,7 @@
 			10CA7A1000000000000000L4 /* LessonRepository.swift */,
 			10CA7A1000000000000000N2 /* UCIScoreParser.swift */,
 			10CA7A2000000000000000P2 /* LocalFormat.swift */,
+				C0DE00000000000000000A04 /* OnlineConnection.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -379,6 +385,8 @@
 				C0DE00000000000000000B01 /* OnlineCode.swift in Sources */,
 				C0DE00000000000000000B02 /* OnlineProtocol.swift in Sources */,
 				C0DE00000000000000000B03 /* OnlineMachine.swift in Sources */,
+				C0DE00000000000000000B04 /* OnlineConnection.swift in Sources */,
+				C0DE00000000000000000B05 /* OnlineViewModel.swift in Sources */,
 				B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */,
 				8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */,
 				03BA8BC3E785458B933E3985 /* ChessPuzzle.swift in Sources */,
