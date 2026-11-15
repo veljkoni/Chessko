@@ -60,7 +60,8 @@ class OnlineConnection {
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                webSocket.close(code, null)
+                // Odgovor je uvek 1000 (normalno zatvaranje), ne eho serverovog koda.
+                webSocket.close(1000, null)
                 main.post { fail() }
             }
 
