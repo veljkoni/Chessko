@@ -144,7 +144,8 @@ export class Hub extends DurableObject {
       return;
     }
     const tatt = this.attOf(target);
-    if (att.game || att.invite || tatt.game || tatt.invite || this.inviterOf(to, ws)) {
+    if (att.game || att.invite || this.inviterOf(att.code, ws) ||
+      tatt.game || tatt.invite || this.inviterOf(to, ws)) {
       this.send(ws, { t: "error", reason: "busy" });
       return;
     }
@@ -173,6 +174,11 @@ export class Hub extends DurableObject {
     const iatt = this.attOf(inviter);
     if (iatt.invite !== att.code || iatt.game) return;
 
+    if (att.invite) {
+      const own = this.socketForCode(att.invite, ws);
+      delete att.invite;
+      if (own) this.send(own, { t: "invite_cancelled", from: att.code });
+    }
     const game = randomHex(16);
     const flip = new Uint8Array(1);
     crypto.getRandomValues(flip);
@@ -222,13 +228,30 @@ export class Hub extends DurableObject {
     this.send(inviter, { t: "declined", by: att.code });
   }
 
-  async webSocketClose(ws: WebSocket, code: number, _reason: string, _wasClean: boolean): Promise<void> {
-    // Prilog nestaje sa soketom; kod se oslobada cim soket vise nije u getWebSockets().
+  /** Veza nestaje: pozvani dobija invite_cancelled, a pozivaoci koji su cekali ovaj kod dobijaju offline. */
+  private releaseInvites(ws: WebSocket): void {
     const att = this.attOf(ws);
-    if (att.code && att.invite) {
+    if (!att.code) return;
+    if (att.invite) {
       const target = this.socketForCode(att.invite, ws);
+      delete att.invite;
+      ws.serializeAttachment(att);
       if (target) this.send(target, { t: "invite_cancelled", from: att.code });
     }
+    for (const other of this.ctx.getWebSockets()) {
+      if (other === ws) continue;
+      const oatt = this.attOf(other);
+      if (oatt.invite === att.code) {
+        delete oatt.invite;
+        other.serializeAttachment(oatt);
+        this.send(other, { t: "error", reason: "offline" });
+      }
+    }
+  }
+
+  async webSocketClose(ws: WebSocket, code: number, _reason: string, _wasClean: boolean): Promise<void> {
+    // Prilog nestaje sa soketom; kod se oslobada cim soket vise nije u getWebSockets().
+    this.releaseInvites(ws);
     try {
       ws.close(code === 1005 || code === 1006 ? 1000 : code);
     } catch {
@@ -237,6 +260,7 @@ export class Hub extends DurableObject {
   }
 
   async webSocketError(ws: WebSocket): Promise<void> {
+    this.releaseInvites(ws);
     try {
       ws.close(1011);
     } catch {

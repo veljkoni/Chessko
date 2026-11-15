@@ -168,4 +168,37 @@ describe("invites", () => {
     b.close();
     c.close();
   });
+
+  it("pozvani koji ima poziv na čekanju ne može da pozove drugog (busy)", async () => {
+    const a = await join("AAAAC2");
+    const b = await join("BBBBC2");
+    const c = await join("CCCCC2");
+    const invited = next(b);
+    await ask(c, { t: "invite", to: "BBBBC2" });
+    await invited;
+    expect(await ask(b, { t: "invite", to: "AAAAC2" })).toEqual({ t: "error", reason: "busy" });
+    // B i dalje može da prihvati C-ov poziv
+    const sc = next(c);
+    const sb = await ask(b, { t: "accept", from: "CCCCC2" });
+    expect(sb.t).toBe("start");
+    expect((await sc).t).toBe("start");
+    a.close();
+    b.close();
+    c.close();
+  });
+
+  it("kad pozvani prekine vezu, pozivalac dobija offline i oslobađa se", async () => {
+    const a = await join("AAAAC3");
+    const b = await join("BBBBC4");
+    const d = await join("DDDDC3");
+    const invited = next(b);
+    await ask(a, { t: "invite", to: "BBBBC4" });
+    await invited;
+    const off = next(a);
+    b.close();
+    expect(await off).toEqual({ t: "error", reason: "offline" });
+    expect(await ask(a, { t: "invite", to: "DDDDC3" })).toEqual({ t: "invite_sent", to: "DDDDC3" });
+    a.close();
+    d.close();
+  });
 });
