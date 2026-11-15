@@ -72,6 +72,13 @@ class OnlineViewModel private constructor(private val app: Application) {
     /** Poruka za ekran; ekran je brise kad je prikaze. */
     var notice: OnlineNotice? by mutableStateOf(null)
 
+    /**
+     * Server je odbio verziju protokola. Vazi do kraja procesa: nijedna veza se vise ne
+     * otvara, a ekrani trajno traze azuriranje umesto „Povezujem…".
+     */
+    var updateRequired: Boolean by mutableStateOf(false)
+        private set
+
     var myCode: String by mutableStateOf("")
         private set
 
@@ -211,6 +218,10 @@ class OnlineViewModel private constructor(private val app: Application) {
         val wasEnded = machine.state is OnlineState.Ended
         val effects = machine.handle(event)
         for (effect in effects) execute(effect)
+        if (machine.updateRequired && !updateRequired) {
+            updateRequired = true
+            shutDownSocket()
+        }
         sync()
         val st = machine.state
         if (st is OnlineState.Ended && !wasEnded) {
@@ -260,6 +271,7 @@ class OnlineViewModel private constructor(private val app: Application) {
     // ── Veza ────────────────────────────────────────────────────────────
 
     private fun openSocket() {
+        if (updateRequired) return
         reconnectJob?.cancel()
         reconnectJob = null
         connection?.close()

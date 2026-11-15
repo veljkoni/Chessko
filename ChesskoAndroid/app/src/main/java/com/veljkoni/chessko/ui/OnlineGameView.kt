@@ -45,6 +45,7 @@ import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.logic.loc
 import com.veljkoni.chessko.models.GameStatus
 import com.veljkoni.chessko.models.PieceColor
+import com.veljkoni.chessko.online.OnlineCloseConfirm
 import com.veljkoni.chessko.online.OnlineLink
 import com.veljkoni.chessko.online.OnlineNotice
 import com.veljkoni.chessko.online.OnlineResult
@@ -78,6 +79,8 @@ fun OnlineGameDestination(onDismiss: () -> Unit) {
     val game = vm.game
 
     var showCloseConfirm by remember { mutableStateOf(false) }
+    // Varijanta potvrde zatvaranja, zamrznuta pri otvaranju dijaloga.
+    var closeConfirm by remember { mutableStateOf(OnlineCloseConfirm.GAME_WAITS) }
     var showResignConfirm by remember { mutableStateOf(false) }
     var showAnalysis by remember { mutableStateOf(false) }
 
@@ -109,7 +112,14 @@ fun OnlineGameDestination(onDismiss: () -> Unit) {
         vm.close()
         onDismiss()
     }
-    val requestClose = { if (isPlaying) showCloseConfirm = true else closeNow() }
+    val requestClose = {
+        if (isPlaying) {
+            closeConfirm = OnlineCloseConfirm.of(game.onlineCanMove)
+            showCloseConfirm = true
+        } else {
+            closeNow()
+        }
+    }
 
     FullScreenDestination(onDismiss = requestClose) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = DS.Space.l)) {
@@ -137,23 +147,25 @@ fun OnlineGameDestination(onDismiss: () -> Unit) {
 
     // Zatvaranje usred partije: predaja se nudi samo dok je veza ziva; inace bi
     // `resign` bio tihi no-op a ekran bi se zatvorio. Bez veze partija ceka
-    // (sacuvana je; prijatelj vidi „izgubio vezu").
+    // (sacuvana je; prijatelj vidi „izgubio vezu"). Varijanta je zamrznuta pri otvaranju:
+    // veza koja se vrati dok je dijalog otvoren ne sme pretvoriti „Zatvori" u „Predaj".
     if (showCloseConfirm) {
-        val canAct = game.onlineCanMove
+        val offersResign = closeConfirm == OnlineCloseConfirm.RESIGN
         AlertDialog(
             onDismissRequest = { showCloseConfirm = false },
             title = {
                 Text(
-                    text = if (canAct) loc("Predati partiju?") else loc("Partija će te čekati."),
+                    text = if (offersResign) loc("Predati partiju?") else loc("Partija će te čekati."),
                     color = DS.ink,
                     fontWeight = FontWeight.Bold
                 )
             },
             confirmButton = {
-                if (canAct) {
+                if (offersResign) {
                     TextButton(onClick = {
                         showCloseConfirm = false
-                        vm.resign()
+                        // Veza je u medjuvremenu pala: bez predaje, partija ceka.
+                        if (closeConfirm.resignsOnConfirm(game.onlineCanMove)) vm.resign()
                         closeNow()
                     }) { Text(text = loc("Predaj"), color = DS.danger, fontWeight = FontWeight.Bold) }
                 } else {
@@ -359,7 +371,13 @@ private fun StatusLine(text: String, showsProgress: Boolean) {
 
 @Composable
 private fun OnlineStatusArea(vm: OnlineViewModel, game: GameViewModel, onAnalyze: () -> Unit, onClose: () -> Unit) {
-    when (val state = vm.state) {
+    val state = vm.state
+    // Server trazi noviju verziju: trajna poruka umesto beskrajnog „Povezujem…".
+    if (state !is OnlineState.Ended && vm.updateRequired) {
+        StatusLine(loc("Za igru preko interneta potrebna je novija verzija aplikacije."), showsProgress = false)
+        return
+    }
+    when (state) {
         is OnlineState.Ended -> EndedArea(vm, game, onAnalyze, onClose)
         is OnlineState.Playing -> {
             val connection = when {

@@ -76,7 +76,6 @@ fun onlineNoticeText(notice: OnlineNotice): String = when (notice) {
     OnlineNotice.RATE_LIMITED -> loc("Previše poziva, pokušaj za minut.")
     OnlineNotice.BAD_CODE -> loc("Neispravan kod.")
     OnlineNotice.DECLINED -> loc("Prijatelj je odbio poziv.")
-    OnlineNotice.UPDATE_APP -> loc("Ažuriraj aplikaciju da bi igrao preko interneta.")
     OnlineNotice.INVITE_CANCELLED -> loc("Poziv je otkazan.")
     OnlineNotice.DRAW_DECLINED -> loc("Prijatelj je odbio remi.")
     // Masina ga ne emituje (tiho se resava); grana postoji da `when` bude iscrpan.
@@ -121,7 +120,15 @@ fun OnlineLobbyView(vm: OnlineViewModel, modifier: Modifier = Modifier) {
                 input = friendInput,
                 onInputChange = { friendInput = it }
             )
-            if (!isConnected) {
+            if (vm.updateRequired) {
+                Text(
+                    text = loc("Za igru preko interneta potrebna je novija verzija aplikacije."),
+                    color = DS.inkMuted,
+                    style = Type.body,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().testTag("online.updateRequired")
+                )
+            } else if (!isConnected) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(DS.Space.s, Alignment.CenterHorizontally),

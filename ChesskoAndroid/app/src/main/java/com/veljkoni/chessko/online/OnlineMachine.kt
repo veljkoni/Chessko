@@ -13,7 +13,7 @@ enum class OnlineLink { CONNECTED, RECONNECTING }
 enum class OnlineResult { I_RESIGNED, OPPONENT_RESIGNED, DRAW_AGREED, ABORTED, BOARD }
 
 enum class OnlineNotice {
-    OFFLINE, BUSY, SELF_CODE, RATE_LIMITED, BAD_CODE, DECLINED, UPDATE_APP,
+    OFFLINE, BUSY, SELF_CODE, RATE_LIMITED, BAD_CODE, DECLINED,
     /** U interfejsu, ali ga mašina ne emituje: `code_taken` se tiho rešava. */
     CODE_TAKEN,
     INVITE_CANCELLED, DRAW_DECLINED,
@@ -69,10 +69,16 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
     private var socketAlive = false
     /** Da li je TRENUTNI socket vezan za `myCode` (welcome/resumed stigli). */
     private var socketBound = false
+    /**
+     * Server je odbio verziju protokola (`error version`). Kraj za ovu sesiju:
+     * mašina više ne traži vezu i ignoriše sve događaje; UI trajno traži ažuriranje.
+     */
+    var updateRequired = false
+        private set
 
     /** Igrač sme da igra/predaje/nudi remi samo dok je veza živa. */
     val canAct: Boolean
-        get() = (state as? OnlineState.Playing)?.link == OnlineLink.CONNECTED
+        get() = !updateRequired && (state as? OnlineState.Playing)?.link == OnlineLink.CONNECTED
 
     private fun nextBackoff(): OnlineEffect {
         val s = BACKOFF[minOf(reconnectAttempt, BACKOFF.size - 1)]
@@ -95,6 +101,7 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
                 if (e.message is ServerMessage.Welcome || e.message is ServerMessage.Resumed) socketBound = true
             else -> {}
         }
+        if (updateRequired) return emptyList()
         if (state is OnlineState.Ended) {
             return when (e) {
                 OnlineEvent.BackToLobby -> {
@@ -227,7 +234,10 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
                         listOf(nextBackoff())
                     }
                 }
-                OnlineError.VERSION -> listOf(OnlineEffect.ShowMessage(OnlineNotice.UPDATE_APP))
+                OnlineError.VERSION -> {
+                    updateRequired = true
+                    emptyList()
+                }
                 OnlineError.BAD_CODE -> backToLobby(OnlineNotice.BAD_CODE)
                 OnlineError.OFFLINE -> backToLobby(OnlineNotice.OFFLINE)
                 OnlineError.BUSY -> backToLobby(OnlineNotice.BUSY)
@@ -307,5 +317,27 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
 
     private companion object {
         val BACKOFF = listOf(1, 2, 4, 8, 15)
+    }
+}
+
+/**
+ * Potvrda zatvaranja usred partije. Varijanta se bira kad se dijalog otvori i ne
+ * menja se dok je otvoren (veza koja se vrati ne sme pretvoriti „Zatvori" u „Predaj").
+ * Verno prenosi iOS `OnlineCloseConfirm`.
+ */
+enum class OnlineCloseConfirm {
+    /** „Predati partiju?" [Predaj] */
+    RESIGN,
+    /** „Partija će te čekati." [Zatvori] */
+    GAME_WAITS;
+
+    /**
+     * Potvrda predaje samo ako je ponuđena predaja I mašina u trenutku dodira još sme
+     * da igra; inače se ekran zatvara a partija čeka.
+     */
+    fun resignsOnConfirm(canActNow: Boolean): Boolean = this == RESIGN && canActNow
+
+    companion object {
+        fun of(canAct: Boolean): OnlineCloseConfirm = if (canAct) RESIGN else GAME_WAITS
     }
 }

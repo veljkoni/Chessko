@@ -3,6 +3,7 @@ package com.veljkoni.chessko
 import com.veljkoni.chessko.models.PieceColor
 import com.veljkoni.chessko.online.ActiveGame
 import com.veljkoni.chessko.online.ClientMessage
+import com.veljkoni.chessko.online.OnlineCloseConfirm
 import com.veljkoni.chessko.online.OnlineEffect
 import com.veljkoni.chessko.online.OnlineError
 import com.veljkoni.chessko.online.OnlineEvent
@@ -210,9 +211,79 @@ class OnlineMachineTest {
         assertEquals(playing(), m.state)
     }
 
-    @Test fun versionErrorShowsUpdateApp() {
+    // I3: greška verzije je kraj za sesiju — bez ponovnog povezivanja, trajno „ažuriraj".
+    @Test fun versionErrorRequiresUpdateAndStopsTheMachine() {
         val m = machine(OnlineState.Connecting)
-        assertEquals(listOf<OnlineEffect>(OnlineEffect.ShowMessage(OnlineNotice.UPDATE_APP)), m.handle(rx(ServerMessage.Error(OnlineError.VERSION))))
+        assertFalse(m.updateRequired)
+        assertEquals(noFx, m.handle(rx(ServerMessage.Error(OnlineError.VERSION))))
+        assertTrue(m.updateRequired)
+        assertEquals(noFx, m.handle(OnlineEvent.SocketClosed))       // nema ScheduleReconnect
+        assertEquals(noFx, m.handle(OnlineEvent.AppBecameActive))    // nema Connect
+        assertEquals(noFx, m.handle(OnlineEvent.SocketOpened))       // nema Hello
+        assertEquals(noFx, m.handle(rx(ServerMessage.Welcome("K7M4QX"))))
+        assertEquals(OnlineState.Connecting, m.state)
+        assertTrue(m.updateRequired)
+    }
+
+    @Test fun versionErrorWithStoredGameIgnoresResumedAndBlocksActions() {
+        val m = machine(playing(OnlineLink.RECONNECTING), game)
+        assertEquals(noFx, m.handle(rx(ServerMessage.Error(OnlineError.VERSION))))
+        assertEquals(noFx, m.handle(rx(ServerMessage.Resumed("g1", PieceColor.WHITE, listOf("e2e4"), true))))
+        assertFalse(m.canAct)
+        assertEquals(noFx, m.handle(OnlineEvent.Resign))
+        assertEquals(noFx, m.handle(OnlineEvent.BackToLobby))
+        assertEquals(game, m.stored)
+    }
+
+    // I1: kraj koji je server sačuvao dok je ova strana bila odsutna stiže odmah posle `resumed`.
+    @Test fun resignedRightAfterResumedEndsOpponentResigned() {
+        val m = machine(playing(OnlineLink.RECONNECTING), game)
+        assertEquals(
+            listOf<OnlineEffect>(OnlineEffect.ReplaceMoves(listOf("e2e4"))),
+            m.handle(rx(ServerMessage.Resumed("g1", PieceColor.WHITE, listOf("e2e4"), false))),
+        )
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(rx(ServerMessage.Resigned)))
+        assertEquals(OnlineState.Ended(OnlineResult.OPPONENT_RESIGNED), m.state)
+        assertNull(m.stored)
+    }
+
+    @Test fun drawAcceptRightAfterResumedEndsDrawEvenThoughOfferFlagWasReset() {
+        // Ova strana je ponudila remi pa izgubila vezu; `resumed` briše zastavicu ponude.
+        val m = machine(playing(OnlineLink.RECONNECTING, dMe = true), game)
+        m.handle(rx(ServerMessage.Resumed("g1", PieceColor.WHITE, emptyList(), false)))
+        assertEquals(playing(OnlineLink.CONNECTED, away = true), m.state)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(rx(ServerMessage.DrawReply(true))))
+        assertEquals(OnlineState.Ended(OnlineResult.DRAW_AGREED), m.state)
+    }
+
+    @Test fun resumedAfterRelaunchThenResignedEnds() {
+        val m = machine(OnlineState.Idle, game)
+        m.handle(OnlineEvent.SocketOpened)
+        m.handle(rx(ServerMessage.Welcome("K7M4QX")))
+        m.handle(rx(ServerMessage.Resumed("g1", PieceColor.WHITE, listOf("e2e4"), false)))
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(rx(ServerMessage.Resigned)))
+        assertEquals(OnlineState.Ended(OnlineResult.OPPONENT_RESIGNED), m.state)
+    }
+
+    @Test fun boardFinishedAfterResumedSendsFinishedAndEnds() {
+        // Mat/pat iz liste poteza: VM posle `ReplaceMoves` javlja BoardFinished.
+        val m = machine(playing(OnlineLink.RECONNECTING), game)
+        m.handle(rx(ServerMessage.Resumed("g1", PieceColor.WHITE, listOf("f2f3", "e7e5", "g2g4", "d8h4"), false)))
+        assertEquals(listOf(send(ClientMessage.Finished), OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+        // server je partiju već obrisao: game_gone posle kraja ne menja ništa
+        assertEquals(noFx, m.handle(rx(ServerMessage.Error(OnlineError.GAME_GONE))))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+    }
+
+    // I4: varijanta potvrde zatvaranja je zamrznuta pri otvaranju.
+    @Test fun closeConfirmVariantIsCapturedAndResignNeedsLiveLink() {
+        assertEquals(OnlineCloseConfirm.RESIGN, OnlineCloseConfirm.of(true))
+        assertEquals(OnlineCloseConfirm.GAME_WAITS, OnlineCloseConfirm.of(false))
+        assertTrue(OnlineCloseConfirm.RESIGN.resignsOnConfirm(true))
+        assertFalse(OnlineCloseConfirm.RESIGN.resignsOnConfirm(false))
+        assertFalse(OnlineCloseConfirm.GAME_WAITS.resignsOnConfirm(true))
+        assertFalse(OnlineCloseConfirm.GAME_WAITS.resignsOnConfirm(false))
     }
 
     @Test fun actionsAreRefusedWhileReconnecting() {
