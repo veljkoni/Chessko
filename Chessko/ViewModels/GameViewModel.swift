@@ -141,6 +141,8 @@ struct FlyingCapture: Sendable {
 enum GameMode: String, Codable {
     case vsComputer
     case localFriend
+    /// Partija sa prijateljem preko interneta (`OnlineViewModel` drzi vezu).
+    case online
 }
 
 // MARK: - Game View Model
@@ -172,6 +174,22 @@ final class GameViewModel {
 
     var gameMode: GameMode = .vsComputer
     var playerColor: PieceColor = .white
+
+    // MARK: Online (igra preko interneta)
+
+    /// Poziva se posle svakog SOPSTVENOG poteza u `.online`: `ply` = broj poteza
+    /// PRE ovog, `uci` = potez sa slovom promocije ako je ima.
+    var onLocalMove: ((Int, String) -> Void)?
+    /// Poziva se kad je tabla gotova po pravilima (mat, pat, remi po pravilu)
+    /// posle bilo kog poteza ili posle `replaceMoves`.
+    var onBoardFinished: (() -> Void)?
+    /// Postavlja ga `OnlineViewModel` iz `OnlineMachine.canAct`; gleda se samo u `.online`.
+    var onlineCanMove: Bool = true
+    /// Kraj online partije; dok je postavljen, tabla je u `.online` zakljucana.
+    private(set) var onlineResult: OnlineResult?
+
+    /// Slot online partije — preziveva gasenje aplikacije dok partija traje.
+    static let onlineSaveKey = "chessko.savedGame.online"
 
     var activePlayerColor: PieceColor {
         gameMode == .localFriend ? gameState.currentTurn : playerColor
@@ -321,7 +339,7 @@ final class GameViewModel {
     }
 
     func resign() {
-        guard canResign else { return }
+        guard canResign, gameMode != .online else { return }   // online: predaju vodi OnlineMachine
         let loser = activePlayerColor
         gameState.status = .resigned(loser)
         viewingMoveIndex = nil
@@ -347,6 +365,10 @@ final class GameViewModel {
 
     var isPlayerTurn: Bool {
         if isReviewing { return false }
+        if gameMode == .online {
+            return onlineResult == nil && onlineCanMove && !isGameOver
+                && gameState.currentTurn == playerColor
+        }
         if gameMode == .localFriend {
             return !isGameOver && !isThinking
         } else {
@@ -363,9 +385,9 @@ final class GameViewModel {
 
     var isStockfishAvailable: Bool { stockfish.isAvailable }
 
-    var canUndo: Bool { !history.isEmpty && !isThinking && !isGameOver && !isReviewing }
+    var canUndo: Bool { gameMode != .online && !history.isEmpty && !isThinking && !isGameOver && !isReviewing }
 
-    var canResign: Bool { !isGameOver && !isThinking && (!history.isEmpty || !gameState.moveNotations.isEmpty) }
+    var canResign: Bool { gameMode != .online && !isGameOver && !isThinking && (!history.isEmpty || !gameState.moveNotations.isEmpty) }
 
     var hasSavedGame: Bool { UserDefaults.standard.data(forKey: savedGameKey) != nil }
 
@@ -385,6 +407,10 @@ final class GameViewModel {
                 return gameState.currentTurn == .white
                     ? Loc("Beli igra")
                     : Loc("Crni igra")
+            } else if gameMode == .online {
+                return gameState.currentTurn == playerColor
+                    ? Loc("Tvoj potez")
+                    : Loc("Prijatelj je na potezu")
             } else {
                 return gameState.currentTurn == playerColor
                     ? Loc("Tvoj potez")
@@ -482,7 +508,10 @@ final class GameViewModel {
         legalMovesForSelected = []
     }
 
-    private func execute(_ move: ChessMove, addToHistory: Bool = true) {
+    private func execute(_ move: ChessMove, addToHistory: Bool = true, remote: Bool = false) {
+        let plyBefore = gameState.moveHistory.count
+        // Online nema undo, pa ni istorije stanja.
+        let addToHistory = addToHistory && gameMode != .online
         // ── Capture info BEFORE state change ────────────────────────────────
         let capturedPiece: ChessPiece?
         let captureFromPos: Position
@@ -583,13 +612,18 @@ final class GameViewModel {
             }
         }
 
+        if gameMode == .online {
+            if !remote { onLocalMove?(plyBefore, move.uci) }
+            if isGameOver { onBoardFinished?() }
+            return
+        }
         if !isGameOver { triggerAI() }
     }
 
     // MARK: - Undo
 
     func undo() {
-        guard canUndo else { return }
+        guard gameMode != .online, canUndo else { return }
         flyingCapture = nil
         viewingMoveIndex = nil
 
@@ -884,6 +918,7 @@ final class GameViewModel {
         self.gameMode = gameMode
         self.playerColor = playerColor
         self.hasRecordedGameEnd = false
+        self.onlineResult = nil
         self.viewingMoveIndex = nil
         if let raw = UserDefaults.standard.string(forKey: "selectedDifficulty"),
            let diff = GameDifficulty(rawValue: raw) {
@@ -957,6 +992,88 @@ final class GameViewModel {
         updateEvaluation()
     }
 
+    // MARK: - Igra preko interneta
+
+    /// Gradi tablu iz pocetne pozicije sa tacno ovim potezima (UCI), bez zvuka i
+    /// animacije. Staje na prvom potezu koji se ne razresava ili nije legalan.
+    private func rebuildQuietly(moves: [String]) {
+        var state = GameState.initial()
+        var last: ChessMove?
+        for uci in moves {
+            guard let move = ChessMove.fromUCI(uci, in: state) else { break }
+            state = state.applying(move)
+            last = move
+        }
+        gameGeneration += 1
+        flyingCapture = nil
+        animatingPiece = nil
+        promotionMove = nil
+        showPromotion = false
+        viewingMoveIndex = nil
+        isThinking = false
+        history.removeAll()
+        gameState = state
+        lastMove = last
+        selectedPosition = nil
+        legalMovesForSelected = []
+        save()
+        updateEvaluation()
+    }
+
+    /// Pocinje (ili nastavlja posle ponovnog povezivanja) online partiju.
+    func startOnlineGame(color: PieceColor, moves: [String]) {
+        gameMode = .online
+        playerColor = color
+        hasRecordedGameEnd = true   // online se nikad ne upisuje u statistiku
+        onlineResult = nil
+        rebuildQuietly(moves: moves)
+    }
+
+    /// Primenjuje potez protivnika. `false` (bez ikakve promene) ako nije
+    /// protivnikov red, partija je zakljucana ili potez nije legalan.
+    func applyRemoteMove(_ uci: String) -> Bool {
+        guard gameMode == .online, onlineResult == nil, !isGameOver,
+              gameState.currentTurn != playerColor,
+              let move = ChessMove.fromUCI(uci, in: gameState) else { return false }
+        execute(move, addToHistory: false, remote: true)
+        return true
+    }
+
+    /// Zamenjuje tablu tacno ovim potezima (stanje sa servera posle sinhronizacije).
+    func replaceMoves(_ moves: [String]) {
+        guard gameMode == .online else { return }
+        rebuildQuietly(moves: moves)
+        if isGameOver { onBoardFinished?() }
+    }
+
+    /// Zakljucava online partiju i brise njen slot da je sledece pokretanje ne otvori.
+    func endOnline(_ result: OnlineResult) {
+        guard gameMode == .online else { return }
+        onlineResult = result
+        selectedPosition = nil
+        legalMovesForSelected = []
+        promotionMove = nil
+        showPromotion = false
+        switch result {
+        case .drawAgreed:
+            gameState.status = .draw(.agreement)
+            SoundManager.shared.playMove()
+            Haptics.notification(.warning)
+        case .opponentResigned:
+            gameState.status = .resigned(playerColor == .white ? .black : .white)
+            SoundManager.shared.playMove()
+            Haptics.notification(.success)
+        case .iResigned:
+            gameState.status = .resigned(playerColor)
+            SoundManager.shared.playMove()
+            Haptics.notification(.error)
+        case .board, .aborted:
+            break
+        }
+        clearSave()
+        updateEvaluation()
+    }
+
     func generatePGN() -> String {
         var pgn = ""
         pgn += "[Event \"Chessko Game\"]\n"
@@ -964,8 +1081,8 @@ final class GameViewModel {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         pgn += "[Date \"\(formatter.string(from: Date()))\"]\n"
-        pgn += "[White \"\(gameMode == .localFriend ? "Player 1" : (playerColor == .white ? "Player" : "Chessko AI"))\"]\n"
-        pgn += "[Black \"\(gameMode == .localFriend ? "Player 2" : (playerColor == .black ? "Player" : "Chessko AI"))\"]\n"
+        pgn += "[White \"\(gameMode == .localFriend ? "Player 1" : (playerColor == .white ? "Player" : (gameMode == .online ? "Friend" : "Chessko AI")))\"]\n"
+        pgn += "[Black \"\(gameMode == .localFriend ? "Player 2" : (playerColor == .black ? "Player" : (gameMode == .online ? "Friend" : "Chessko AI")))\"]\n"
 
         let result: String
         switch gameState.status {

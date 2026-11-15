@@ -107,6 +107,7 @@ add("Težak", "Hard", "Difficile", "Schwer", "Difficile", "Сложный", "困
 
 # ── Game status messages ────────────────────────────────────────────────────
 add("Tvoj potez", "Your move", "À vous de jouer", "Du bist am Zug", "Tocca a te", "Ваш ход", "轮到你了", "आपकी चाल")
+add("Prijatelj je na potezu", "Your friend’s move", "Au tour de ton ami", "Dein Freund ist am Zug", "Tocca al tuo amico", "Ход друга", "轮到朋友了", "दोस्त की चाल")
 add("Računar razmišlja...", "Computer is thinking…", "L’ordinateur réfléchit…", "Computer denkt nach…", "Il computer sta pensando…", "Компьютер думает…", "电脑思考中…", "कंप्यूटर सोच रहा है…")
 add("Šah! Tvoj kralj je napadnut.", "Check! Your king is under attack.", "Échec ! Votre roi est attaqué.", "Schach! Dein König wird angegriffen.", "Scacco! Il tuo re è sotto attacco.", "Шах! Ваш король под атакой.", "将军！你的国王被攻击。", "शह! आपके राजा पर हमला है।")
 add("Šah! Napadaš kralja.", "Check! You attack the king.", "Échec ! Vous attaquez le roi.", "Schach! Du greifst den König an.", "Scacco! Attacchi il re.", "Шах! Вы атакуете короля.", "将军！你在攻击对方国王。", "शह! आप राजा पर हमला कर रहे हैं।")
