@@ -35,6 +35,9 @@ class OnlineViewModel private constructor(private val app: Application) {
         fun get(app: Application): OnlineViewModel =
             instance ?: synchronized(this) { instance ?: OnlineViewModel(app).also { instance = it } }
 
+        /** Postojeci primerak ili null; NIKAD ga ne pravi (zivotni ciklus aktivnosti). */
+        fun existing(): OnlineViewModel? = instance
+
         /** Cita sacuvanu partiju BEZ pravljenja primerka (to bi podiglo GameViewModel i motor). */
         fun hasStoredGame(context: Context): Boolean =
             readStored(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)) != null
@@ -84,6 +87,8 @@ class OnlineViewModel private constructor(private val app: Application) {
     private var generation = 0
     private var reconnectJob: Job? = null
     private var uiOpen = false
+    /** Aktivnost nije vidljiva (ON_STOP): zakazani reconnect-i se ne izvrsavaju. */
+    private var backgrounded = false
     // Dogadjaji se serijalizuju: efekat (npr. `ReplaceMoves` -> `onBoardFinished`)
     // sme da proizvede nov dogadjaj, ali se on obradjuje tek posle tekuceg.
     private val queue = ArrayDeque<OnlineEvent>()
@@ -109,6 +114,7 @@ class OnlineViewModel private constructor(private val app: Application) {
 
     fun open() {
         uiOpen = true
+        backgrounded = false
         if (OnlineLogic.shouldOpenOnOpen(machine.state, connection != null || reconnectJob?.isActive == true)) {
             openSocket()
         }
@@ -152,8 +158,22 @@ class OnlineViewModel private constructor(private val app: Application) {
         if (uiOpen) openSocket()
     }
 
+    /**
+     * ON_STOP aktivnosti: veza se gasi i reconnect-i se obustavljaju, inace bi pozadinska
+     * aplikacija ostala "online" zauvek -- prijatelj nikad ne bi video "izgubio vezu" i
+     * serverov limit od 30 minuta ne bi poceo. Partija ostaje sacuvana; `appBecameActive`
+     * je nastavlja.
+     */
+    fun appWentToBackground() {
+        if (!(uiOpen || machine.stored != null)) return
+        backgrounded = true
+        shutDownSocket()
+        handle(OnlineEvent.SocketClosed)
+    }
+
     /** Android oblik iOS `scenePhaseChanged(.active)`; zove se iz ON_START aktivnosti. */
     fun appBecameActive() {
+        backgrounded = false
         if (!(uiOpen || machine.stored != null)) return
         if (machine.state is OnlineState.Idle) {
             if (connection == null) openSocket()
@@ -267,9 +287,11 @@ class OnlineViewModel private constructor(private val app: Application) {
 
     private fun scheduleReconnect(seconds: Int) {
         reconnectJob?.cancel()
+        reconnectJob = null
+        if (backgrounded) return
         reconnectJob = scope.launch {
             delay(seconds * 1000L)
-            if (OnlineLogic.needsConnection(machine.state, uiOpen, machine.stored != null)) openSocket()
+            if (!backgrounded && OnlineLogic.needsConnection(machine.state, uiOpen, machine.stored != null)) openSocket()
         }
     }
 }

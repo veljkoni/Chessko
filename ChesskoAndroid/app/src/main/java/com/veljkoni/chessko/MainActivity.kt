@@ -73,6 +73,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -80,6 +81,7 @@ import androidx.compose.ui.unit.Dp
 import com.veljkoni.chessko.logic.StockfishLevel
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.foundation.shape.CircleShape
+import com.veljkoni.chessko.online.OnlineViewModel
 import com.veljkoni.chessko.ui.theme.ChesskoTheme
 import com.veljkoni.chessko.ui.theme.DS
 import com.veljkoni.chessko.ui.theme.Type
@@ -88,6 +90,24 @@ import com.veljkoni.chessko.viewmodels.GameViewModel
 import com.veljkoni.chessko.viewmodels.PuzzleViewModel
 
 class MainActivity : ComponentActivity() {
+    // Zivotni ciklus igre preko interneta (parnost sa iOS `scenePhase`): u pozadini se
+    // veza gasi (prijatelj vidi „izgubio vezu", serverov limit od 30 minuta pocinje),
+    // pri povratku se nastavlja. Nikad ne PRAVI `OnlineViewModel` -- deluje samo ako
+    // vec postoji ili postoji sacuvana partija.
+    private fun onlineIfAny(): OnlineViewModel? =
+        OnlineViewModel.existing()
+            ?: if (OnlineViewModel.hasStoredGame(this)) OnlineViewModel.get(application) else null
+
+    override fun onStop() {
+        super.onStop()
+        onlineIfAny()?.appWentToBackground()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        onlineIfAny()?.appBecameActive()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -144,6 +164,9 @@ class MainActivity : ComponentActivity() {
                 var showNewGameMenu by remember { mutableStateOf(false) }
                 var showColorPicker by remember { mutableStateOf(false) }
                 var showChessClock by remember { mutableStateOf(false) }
+                // Igra preko interneta: odmah otvorena samo ako postoji sacuvana partija
+                // (cita se iz SharedPreferences, `OnlineViewModel` se NE pravi pri pokretanju).
+                var showOnline by remember { mutableStateOf(OnlineViewModel.hasStoredGame(context)) }
                 var showResetConfirm by remember { mutableStateOf(false) }
                 var showResignConfirm by remember { mutableStateOf(false) }
                 var dismissGameOverOverlay by remember { mutableStateOf(false) }
@@ -240,6 +263,15 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         showNewGameMenu = false
                                         gameViewModel.newGame(GameMode.LOCAL_FRIEND, PieceColor.WHITE)
+                                    }
+                                    DSRowDivider()
+                                    NewGameOptionRow(
+                                        icon = Icons.Default.Public,
+                                        title = loc("Igraj preko interneta"),
+                                        description = null
+                                    ) {
+                                        showNewGameMenu = false
+                                        showOnline = true
                                     }
                                     DSRowDivider()
                                     // Bez reci „Premium" — nema kupovina (spec § 5, § 16).
@@ -402,6 +434,10 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                }
+
+                if (showOnline) {
+                    OnlineGameDestination(onDismiss = { showOnline = false })
                 }
 
                 if (showChessClock) {
@@ -1029,7 +1065,7 @@ fun gameBoardSide(availableWidth: Dp, availableHeight: Dp, isTablet: Boolean, is
 private fun NewGameOptionRow(
     icon: ImageVector,
     title: String,
-    description: String,
+    description: String?,
     onClick: () -> Unit
 ) {
     Row(
@@ -1043,7 +1079,7 @@ private fun NewGameOptionRow(
         Icon(imageVector = icon, contentDescription = null, tint = DS.accent, modifier = Modifier.size(28.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, color = DS.ink, style = Type.body, fontWeight = FontWeight.SemiBold)
-            Text(text = description, color = DS.inkMuted, style = Type.caption)
+            if (description != null) Text(text = description, color = DS.inkMuted, style = Type.caption)
         }
     }
 }
