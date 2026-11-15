@@ -11,6 +11,7 @@ struct ActiveGame: Codable, Equatable, Sendable {
     let opponent: String
 }
 
+// Zove se OnlineLink (ne Link) da se ne sudara sa SwiftUI-jevim `Link`.
 enum OnlineLink: Equatable, Sendable { case connected, reconnecting }
 
 enum OnlineResult: Equatable, Sendable { case iResigned, opponentResigned, drawAgreed, aborted, board }
@@ -38,6 +39,8 @@ enum OnlineEvent: Sendable {
     case invite(code: String), cancelInvite, accept, decline
     case localMove(ply: Int, uci: String)
     case resign, offerDraw, answerDraw(Bool), boardFinished, appBecameActive
+    /// Iz `.ended` nazad u lobi (isti socket, bez novog hello-a ako je živ).
+    case backToLobby
 }
 
 enum OnlineEffect: Equatable, Sendable {
@@ -56,6 +59,15 @@ struct OnlineMachine: Sendable {
     let myCode: String
     var stored: ActiveGame?
     private var reconnectAttempt = 0
+    /// Da li je socket trenutno otvoren (za `backToLobby` iz `.ended`).
+    private var socketAlive = false
+
+    /// Igrač sme da igra/predaje/nudi remi samo dok je veza živa. UI onemogućava
+    /// tablu i dugmad kad je `false`.
+    var canAct: Bool {
+        if case .playing(_, .connected, _, _, _) = state { return true }
+        return false
+    }
 
     private static let backoff = [1, 2, 4, 8, 15]
 
@@ -77,8 +89,23 @@ struct OnlineMachine: Sendable {
     }
 
     mutating func handle(_ e: OnlineEvent) -> [OnlineEffect] {
-        if case .ended = state { return [] }
+        // Socket živost se prati u svakom stanju, i u `.ended`.
         switch e {
+        case .socketOpened: socketAlive = true
+        case .socketClosed: socketAlive = false
+        default: break
+        }
+        if case .ended = state {
+            if case .backToLobby = e {
+                if socketAlive { state = .lobby; return [] }
+                state = .connecting
+                return [.connect]
+            }
+            return []
+        }
+        switch e {
+        case .backToLobby:
+            return []
         case .socketOpened:
             switch state {
             case .idle, .connecting:
@@ -127,24 +154,31 @@ struct OnlineMachine: Sendable {
             state = .lobby
             return [.send(.decline(from: from))]
 
+        // Dok je veza prekinuta (.reconnecting) akcije se odbijaju (canAct).
+        // Potez koji je utrčao u umirući socket ispravlja `replaceMoves` posle
+        // `resumed` — server je istina.
         case .localMove(let ply, let uci):
-            guard case .playing = state else { return [] }
+            guard canAct else { return [] }
             return [.send(.move(ply: ply, uci: uci))]
         case .resign:
-            guard case .playing = state else { return [] }
+            guard canAct else { return [] }
             return [.send(.resign)] + end(.iResigned)
         case .offerDraw:
-            guard case .playing(let g, let l, let a, let dBy, _) = state else { return [] }
+            guard canAct, case .playing(let g, let l, let a, let dBy, _) = state else { return [] }
             state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: dBy, drawOfferedByMe: true)
             return [.send(.drawOffer)]
         case .answerDraw(let acc):
-            guard case .playing(let g, let l, let a, _, let dMe) = state else { return [] }
+            guard canAct, case .playing(let g, let l, let a, _, let dMe) = state else { return [] }
             if acc { return [.send(.drawReply(accept: true))] + end(.drawAgreed) }
             state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: false, drawOfferedByMe: dMe)
             return [.send(.drawReply(accept: false))]
         case .boardFinished:
             guard case .playing = state else { return [] }
-            return [.send(.finished)] + end(.board)
+            // Tabla je gotova pa se završava lokalno čak i bez veze; `finished`
+            // se šalje samo ako je veza živa. Inače partiju čisti protivnikov
+            // `finished` ili serverov prekid posle 30 minuta.
+            let send: [OnlineEffect] = canAct ? [.send(.finished)] : []
+            return send + end(.board)
 
         case .received(let m):
             return receive(m)

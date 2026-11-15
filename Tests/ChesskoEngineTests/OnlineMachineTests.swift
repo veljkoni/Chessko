@@ -188,3 +188,50 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
     var m = machine(.connecting)
     #expect(m.handle(.received(.error(.version))) == [.showMessage(.updateApp)])
 }
+
+// Fix round 1: bez akcija tokom obnove veze
+@Test func actionsAreRefusedWhileReconnecting() {
+    let events: [OnlineEvent] = [.localMove(ply: 0, uci: "e2e4"), .resign, .offerDraw, .answerDraw(true), .answerDraw(false)]
+    for e in events {
+        var m = machine(playing(.reconnecting, dBy: true), stored: game)
+        #expect(m.handle(e) == [])
+        #expect(m.state == playing(.reconnecting, dBy: true))
+        #expect(m.stored == game)
+    }
+}
+
+@Test func canActOnlyWhenConnectedPlaying() {
+    #expect(machine(playing(.connected)).canAct)
+    #expect(!machine(playing(.reconnecting)).canAct)
+    #expect(!machine(.lobby).canAct)
+}
+
+@Test func boardFinishedWhileReconnectingEndsWithoutSend() {
+    var m = machine(playing(.reconnecting), stored: game)
+    #expect(m.handle(.boardFinished) == [.persist(nil)])
+    #expect(m.state == .ended(.board))
+}
+
+@Test func backToLobbyFromEndedWithLiveSocketGoesToLobby() {
+    var m = machine(.idle)
+    _ = m.handle(.socketOpened)
+    m.state = .ended(.board)
+    #expect(m.handle(.backToLobby) == [])
+    #expect(m.state == .lobby)
+}
+
+@Test func backToLobbyAfterSocketClosedInEndedReconnects() {
+    var m = machine(.idle)
+    _ = m.handle(.socketOpened)
+    m.state = .ended(.board)
+    #expect(m.handle(.socketClosed) == [])
+    #expect(m.state == .ended(.board))
+    #expect(m.handle(.backToLobby) == [.connect])
+    #expect(m.state == .connecting)
+}
+
+@Test func backToLobbyIgnoredOutsideEnded() {
+    var m = machine(playing(), stored: game)
+    #expect(m.handle(.backToLobby) == [])
+    #expect(m.state == playing())
+}
