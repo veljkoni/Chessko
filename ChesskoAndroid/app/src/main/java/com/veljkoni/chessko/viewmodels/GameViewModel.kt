@@ -10,13 +10,17 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.veljkoni.chessko.logic.*
 import com.veljkoni.chessko.models.*
+import com.veljkoni.chessko.online.OnlineResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 enum class GameMode {
-    VS_COMPUTER, LOCAL_FRIEND
+    VS_COMPUTER, LOCAL_FRIEND,
+
+    /** Partija sa prijateljem preko interneta (`OnlineViewModel` drzi vezu). */
+    ONLINE
 }
 
 /**
@@ -36,12 +40,17 @@ class GameViewModel(
     companion object {
         const val FREE_PLAY_SAVE_KEY = "saved_game"
 
+        /** Slot online partije -- preziveva gasenje aplikacije dok partija traje. */
+        const val ONLINE_SAVE_KEY = "saved_game.online"
+
+        private const val STEP_SAVE_PREFIX = "saved_game.step."
+
         /**
          * Korak dobija SOPSTVENI slot. Sa jednim kljucem bi drugi primerak
          * modela ucitao partiju koju korisnik ima u toku na tabu Igra i prvim
          * potezom je pregazio -- model snima celu partiju posle SVAKOG poteza.
          */
-        fun stepSaveKey(stepId: String) = "saved_game.step.$stepId"
+        fun stepSaveKey(stepId: String) = "$STEP_SAVE_PREFIX$stepId"
 
         /**
          * Brise sacuvanu partiju KORAKA sa diska, bez potrebe za zivim
@@ -64,8 +73,9 @@ class GameViewModel(
 
     /// Izvedeno iz `saveKey`, ne zasebno stanje -- nema dva izvora istine o
     /// tome da li je ovaj primerak partija koraka Puta ili slobodna partija.
+    // Samo kljuc koraka: online primerak (`ONLINE_SAVE_KEY`) NIJE korak Puta.
     val isStepGame: Boolean
-        get() = saveKey != FREE_PLAY_SAVE_KEY
+        get() = saveKey.startsWith(STEP_SAVE_PREFIX)
 
     /// Tezina koju propisuje `game` korak Puta (postavlja je `startStepGame`).
     /// Kad je postavljena, ima prednost nad globalnim podesavanjem korisnika
@@ -118,6 +128,28 @@ class GameViewModel(
 
     var gameMode by mutableStateOf(GameMode.VS_COMPUTER)
     var playerColor by mutableStateOf(PieceColor.WHITE)
+
+    // ── Online (igra preko interneta) ───────────────────────────────────
+    /** Poziva se posle svakog SOPSTVENOG poteza u `ONLINE`: `ply` = broj poteza PRE ovog, `uci` sa slovom promocije. */
+    var onLocalMove: ((Int, String) -> Unit)? = null
+
+    /** Poziva se kad je tabla gotova po pravilima (mat, pat, remi) posle bilo kog poteza ili `replaceMoves`. */
+    var onBoardFinished: (() -> Unit)? = null
+
+    private var onlineCanMoveState by mutableStateOf(true)
+
+    /** Postavlja ga `OnlineViewModel` iz `OnlineMachine.canAct`; gleda se samo u `ONLINE`. */
+    var onlineCanMove: Boolean
+        get() = onlineCanMoveState
+        set(value) {
+            onlineCanMoveState = value
+            // Otvoren izbor promocije ne sme ostati mrtav kad masina prestane da dozvoljava poteze.
+            if (gameMode == GameMode.ONLINE && !value && showPromotion) cancelPromotion()
+        }
+
+    /** Kraj online partije; dok je postavljen, tabla je u `ONLINE` zakljucana. */
+    var onlineResult by mutableStateOf<OnlineResult?>(null)
+        private set
 
     var showPromotion by mutableStateOf(false)
     var promotionMove by mutableStateOf<ChessMove?>(null)
@@ -240,7 +272,10 @@ class GameViewModel(
         get() = if (gameMode == GameMode.LOCAL_FRIEND) gameState.currentTurn else playerColor
 
     val isPlayerTurn: Boolean
-        get() = if (gameMode == GameMode.LOCAL_FRIEND) {
+        get() = if (gameMode == GameMode.ONLINE) {
+            onlineResult == null && onlineCanMove && !isGameOver && !isReviewing &&
+                gameState.currentTurn == playerColor
+        } else if (gameMode == GameMode.LOCAL_FRIEND) {
             !isGameOver && !isThinking && !isReviewing
         } else {
             gameState.currentTurn == playerColor && !isThinking && !isReviewing
@@ -253,10 +288,11 @@ class GameViewModel(
         }
 
     val canUndo: Boolean
-        get() = history.isNotEmpty() && !isThinking && !isReviewing
+        get() = gameMode != GameMode.ONLINE && history.isNotEmpty() && !isThinking && !isReviewing
 
+    // Online: predaju vodi OnlineMachine (Task 13/14), ne ovaj model.
     val canResign: Boolean
-        get() = !isGameOver && !isThinking && (history.isNotEmpty() || gameState.moveNotations.isNotEmpty())
+        get() = gameMode != GameMode.ONLINE && !isGameOver && !isThinking && (history.isNotEmpty() || gameState.moveNotations.isNotEmpty())
 
     val isFlipped: Boolean
         get() = if (gameMode == GameMode.LOCAL_FRIEND) {
@@ -341,6 +377,10 @@ class GameViewModel(
     }
 
     fun confirmPromotion(type: PieceType) {
+        if (gameMode == GameMode.ONLINE && (!onlineCanMove || onlineResult != null)) {
+            cancelPromotion() // nema poteza i nema onLocalMove dok masina ne moze da deluje
+            return
+        }
         val move = promotionMove ?: return
         promotionMove = null
         showPromotion = false
@@ -354,7 +394,8 @@ class GameViewModel(
         legalMovesForSelected = emptyList()
     }
 
-    private fun execute(move: ChessMove, addToHistory: Boolean = true) {
+    private fun execute(move: ChessMove, addToHistory: Boolean = true, remote: Boolean = false) {
+        val plyBefore = gameState.moveHistory.size
         // Capture details BEFORE state change
         val capturedPiece = when (move.flag) {
             is MoveFlag.EnPassant -> {
@@ -382,6 +423,11 @@ class GameViewModel(
         save()
         updateEvaluation()
 
+        if (gameMode == GameMode.ONLINE) {
+            if (!remote) onLocalMove?.invoke(plyBefore, move.uci)
+            if (isGameOver) onBoardFinished?.invoke()
+            return
+        }
         if (!isGameOver) {
             triggerAI()
         }
@@ -432,6 +478,97 @@ class GameViewModel(
         viewingMoveIndex = null
         isThinking = false
         hasRecordedGameEnd = false
+        onlineResult = null
+        clearSave()
+        updateEvaluation()
+    }
+
+    // ── Online (igra preko interneta) ───────────────────────────────────
+
+    /**
+     * Gradi tablu iz niza UCI poteza bez zvuka i animacije. Staje na prvom potezu koji se ne
+     * razresava (nelegalan ili necitljiv) -- bez pada. Istoriju stanja drzi kao i `execute`
+     * (`allHistoryStates` je izvor pregleda poteza i analize partije).
+     */
+    private fun rebuildQuietly(moves: List<String>) {
+        var state = GameState.initial()
+        var last: ChessMove? = null
+        val rebuilt = mutableListOf<Pair<GameState, ChessMove?>>()
+        for (uci in moves) {
+            val move = ChessMove.fromUCI(uci, state) ?: break
+            rebuilt.add(Pair(state, last))
+            state = state.applying(move)
+            last = move
+        }
+        promotionMove = null
+        showPromotion = false
+        viewingMoveIndex = null
+        isThinking = false
+        history.clear()
+        history.addAll(rebuilt)
+        gameState = state
+        lastMove = last
+        selectedPosition = null
+        legalMovesForSelected = emptyList()
+        save()
+        updateEvaluation()
+    }
+
+    /** Pocinje (ili nastavlja posle ponovnog povezivanja) online partiju. */
+    fun startOnlineGame(color: PieceColor, moves: List<String>) {
+        gameMode = GameMode.ONLINE
+        playerColor = color
+        hasRecordedGameEnd = true // online se nikad ne upisuje u statistiku
+        onlineResult = null
+        rebuildQuietly(moves)
+    }
+
+    /**
+     * Primenjuje potez protivnika. `false` (bez ikakve promene) ako nije protivnikov red,
+     * partija je zakljucana ili potez nije legalan.
+     */
+    fun applyRemoteMove(uci: String): Boolean {
+        if (gameMode != GameMode.ONLINE || onlineResult != null || isGameOver) return false
+        if (gameState.currentTurn == playerColor) return false
+        val move = ChessMove.fromUCI(uci, gameState) ?: return false
+        execute(move, addToHistory = true, remote = true)
+        return true
+    }
+
+    /** Zamenjuje tablu tacno ovim potezima (stanje sa servera posle sinhronizacije). */
+    fun replaceMoves(moves: List<String>) {
+        if (gameMode != GameMode.ONLINE || onlineResult != null) return
+        rebuildQuietly(moves)
+        if (isGameOver) onBoardFinished?.invoke()
+    }
+
+    /** Zakljucava online partiju i brise njen slot da je sledece pokretanje ne otvori. */
+    fun endOnline(result: OnlineResult) {
+        if (gameMode != GameMode.ONLINE) return
+        onlineResult = result
+        selectedPosition = null
+        legalMovesForSelected = emptyList()
+        promotionMove = null
+        showPromotion = false
+        when (result) {
+            OnlineResult.DRAW_AGREED -> {
+                gameState = gameState.copy(status = GameStatus.Draw(DrawReason.Agreement))
+                soundManager.playMove()
+                hapticManager.warning()
+            }
+            OnlineResult.OPPONENT_RESIGNED -> {
+                val opponent = if (playerColor == PieceColor.WHITE) PieceColor.BLACK else PieceColor.WHITE
+                gameState = gameState.copy(status = GameStatus.Resigned(opponent))
+                soundManager.playCheckmate()
+                hapticManager.success()
+            }
+            OnlineResult.I_RESIGNED -> {
+                gameState = gameState.copy(status = GameStatus.Resigned(playerColor))
+                soundManager.playCheckmate()
+                hapticManager.warning()
+            }
+            OnlineResult.BOARD, OnlineResult.ABORTED -> Unit
+        }
         clearSave()
         updateEvaluation()
     }
@@ -441,8 +578,8 @@ class GameViewModel(
         sb.appendLine("[Event \"Chessko Game\"]")
         sb.appendLine("[Site \"Chessko App\"]")
         sb.appendLine("[Date \"${java.time.LocalDate.now()}\"]")
-        sb.appendLine("[White \"${if (gameMode == GameMode.LOCAL_FRIEND) "Player 1" else if (playerColor == PieceColor.WHITE) "Player" else "Chessko AI"}\"]")
-        sb.appendLine("[Black \"${if (gameMode == GameMode.LOCAL_FRIEND) "Player 2" else if (playerColor == PieceColor.BLACK) "Player" else "Chessko AI"}\"]")
+        sb.appendLine("[White \"${if (gameMode == GameMode.LOCAL_FRIEND) "Player 1" else if (playerColor == PieceColor.WHITE) "Player" else if (gameMode == GameMode.ONLINE) "Friend" else "Chessko AI"}\"]")
+        sb.appendLine("[Black \"${if (gameMode == GameMode.LOCAL_FRIEND) "Player 2" else if (playerColor == PieceColor.BLACK) "Player" else if (gameMode == GameMode.ONLINE) "Friend" else "Chessko AI"}\"]")
 
         val result = when (val s = gameState.status) {
             is GameStatus.Checkmate -> if (s.color == PieceColor.WHITE) "0-1" else "1-0"
@@ -716,6 +853,8 @@ class GameViewModel(
     }
 
     private fun save() {
+        // Posle kraja online partije slot se ne sme ponovo napraviti (relaunch bi je vratio kao zivu).
+        if (gameMode == GameMode.ONLINE && onlineResult != null) return
         try {
             val json = JSONObject()
             json.put("fen", gameState.fen)
@@ -836,6 +975,7 @@ class GameViewModel(
 
             gameState = savedState.copy(status = savedStatus, moveNotations = savedMoveNotations)
             gameMode = savedMode
+            if (savedMode == GameMode.ONLINE) hasRecordedGameEnd = true // online se nikad ne upisuje u statistiku
             playerColor = savedColor
             lastMove = savedLastMove
             history.clear()

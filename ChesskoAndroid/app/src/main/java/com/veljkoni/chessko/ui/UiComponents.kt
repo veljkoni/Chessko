@@ -142,6 +142,8 @@ fun getStatusMessage(viewModel: GameViewModel): String {
         is GameStatus.Playing -> {
             if (viewModel.gameMode == GameMode.LOCAL_FRIEND) {
                 if (viewModel.gameState.currentTurn == PieceColor.WHITE) loc("Beli igra") else loc("Crni igra")
+            } else if (viewModel.gameMode == GameMode.ONLINE) {
+                if (viewModel.gameState.currentTurn == color) loc("Tvoj potez") else loc("Prijatelj je na potezu")
             } else {
                 if (viewModel.gameState.currentTurn == color) loc("Tvoj potez") else loc("Računar razmišlja...")
             }
