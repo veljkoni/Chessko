@@ -10,10 +10,30 @@
 		03BA8BC3E785458B933E3985 /* ChessPuzzle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ECC8B40DD749EA914DA61C /* ChessPuzzle.swift */; };
 		0EDF68A95E104F4FBC084E78 /* move-self.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BFDE9AD864ED479FA9B3560F /* move-self.mp3 */; };
 		10CA7A1000000000000000A1 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000A2 /* Localizable.xcstrings */; };
-		12B03638DDB14F728820F87B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 03B4A9461A9A431BB1C05988 /* Assets.xcassets */; };
-		1D9DC5DEB26740F393C90E2A /* ChessAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EFB6EDE03904183ADC59ECE /* ChessAI.swift */; };
 		10CA7A1000000000000000B2 /* LocalizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000B1 /* LocalizationManager.swift */; };
 		10CA7A1000000000000000B4 /* SettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000B3 /* SettingsSheet.swift */; };
+		10CA7A1000000000000000C2 /* nn-37f18f62d772.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */; };
+		10CA7A1000000000000000C4 /* nn-1111cefa1111.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */; };
+		10CA7A1000000000000000C5 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C6 /* Content */; };
+		10CA7A1000000000000000L1 /* LessonContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L2 /* LessonContent.swift */; };
+		10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L4 /* LessonRepository.swift */; };
+		10CA7A1000000000000000L5 /* LessonRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L6 /* LessonRenderer.swift */; };
+		10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000M2 /* MoveAnalysis.swift */; };
+		10CA7A1000000000000000N1 /* UCIScoreParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000N2 /* UCIScoreParser.swift */; };
+		10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000P2 /* PlatformHelper.swift */; };
+		10CA7A1000000000000000Q1 /* AnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */; };
+		10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000R2 /* PuzzleRepository.swift */; };
+		10CA7A1000000000000000S1 /* StatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000S2 /* StatsManager.swift */; };
+		10CA7A1000000000000000T1 /* AnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000T2 /* AnalysisView.swift */; };
+		10CA7A1000000000000000U1 /* Curriculum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000U2 /* Curriculum.swift */; };
+		10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000V2 /* ProgressStore.swift */; };
+		10CA7A1000000000000000W1 /* PathView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000W2 /* PathView.swift */; };
+		10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000X2 /* StepPracticeView.swift */; };
+		10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Y2 /* StepGameView.swift */; };
+		10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Z2 /* PromotionOverlay.swift */; };
+		10CA7A2000000000000000P1 /* LocalFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A2000000000000000P2 /* LocalFormat.swift */; };
+		12B03638DDB14F728820F87B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 03B4A9461A9A431BB1C05988 /* Assets.xcassets */; };
+		1D9DC5DEB26740F393C90E2A /* ChessAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EFB6EDE03904183ADC59ECE /* ChessAI.swift */; };
 		250DDA525348403690EC2812 /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11D1909A17A462F8BF7B8BF /* GameState.swift */; };
 		27F14DA314BB450EBBA57761 /* ChesskoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A7DFB91567E4FFD869A7B7F /* ChesskoApp.swift */; };
 		2F51D610F5994AB8AE204B14 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3CF59B4F4804EB9BBE49F3A /* GameView.swift */; };
@@ -23,125 +43,105 @@
 		4A9C3E02B2784A5CAEFD2102 /* MateExerciseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9C3E00B2784A5CAEFD2100 /* MateExerciseViewModel.swift */; };
 		5121DCD7B0AD4E48BE1F4C3E /* MoveGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B14BD27CB2A1472DA10FBF00 /* MoveGenerator.swift */; };
 		5945CB2F31AC412D90A755D5 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D66F2BC5E3D48C793764D24 /* LessonDetailView.swift */; };
-		10CA7A1000000000000000L5 /* LessonRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L6 /* LessonRenderer.swift */; };
 		5B2D1A04C3894B7DAEF03302 /* OpeningExerciseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */; };
 		689A3E8BBB8744F497C8E082 /* Position.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA1E9BAE39C4E178203B664 /* Position.swift */; };
 		76E8F15964E84209B6549CC7 /* PieceImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48D8C6D4E4A487EB552BE28 /* PieceImageView.swift */; };
 		80B6F639D41D443E93C53CD6 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59755406843949CDA29BF61D /* SoundManager.swift */; };
-		10CA7A1000000000000000S1 /* StatsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000S2 /* StatsManager.swift */; };
-		10CA7A1000000000000000V1 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000V2 /* ProgressStore.swift */; };
-		10CA7A1000000000000000P1 /* PlatformHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000P2 /* PlatformHelper.swift */; };
-		10CA7A1000000000000000R1 /* PuzzleRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000R2 /* PuzzleRepository.swift */; };
-		10CA7A1000000000000000N1 /* UCIScoreParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000N2 /* UCIScoreParser.swift */; };
-		10CA7A2000000000000000P1 /* LocalFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A2000000000000000P2 /* LocalFormat.swift */; };
-		10CA7A1000000000000000L1 /* LessonContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L2 /* LessonContent.swift */; };
-		10CA7A1000000000000000U1 /* Curriculum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000U2 /* Curriculum.swift */; };
-		10CA7A1000000000000000L3 /* LessonRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000L4 /* LessonRepository.swift */; };
-		10CA7A1000000000000000W1 /* PathView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000W2 /* PathView.swift */; };
-		10CA7A1000000000000000X1 /* StepPracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000X2 /* StepPracticeView.swift */; };
-		10CA7A1000000000000000Y1 /* StepGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Y2 /* StepGameView.swift */; };
-		10CA7A1000000000000000Z1 /* PromotionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Z2 /* PromotionOverlay.swift */; };
-		D5A1C0DE00000000000000G1 /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A1C0DE00000000000000G2 /* GameComponents.swift */; };
-		10CA7A1000000000000000T1 /* AnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000T2 /* AnalysisView.swift */; };
-		10CA7A1000000000000000M1 /* MoveAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000M2 /* MoveAnalysis.swift */; };
-		B0A2D51000000000000000B1 /* BoardSizing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A2D51000000000000000B2 /* BoardSizing.swift */; };
-		10CA7A1000000000000000Q1 /* AnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */; };
-		10CA7A1000000000000000C5 /* Content in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C6 /* Content */; };
 		89FF6573C083465EA4FD092C /* StockfishBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */; };
 		8F65DA2358D64C568E6F51C3 /* ChessPiece.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */; };
 		8F9ABCE715DD4B4A8218DDF2 /* CapturedPiecesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */; };
 		8F9ABCE715DD4B4A8218EE01 /* EvalBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CBFECDFF734F169829EE01 /* EvalBarView.swift */; };
-		DFF4981773CA469D8413546E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */; };
+		953F5BE085B54B8E8B4B00D5 /* puzzles.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */; };
 		A57241CB60E343C88020F848 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD9659979FC044E9AF7C79F0 /* ContentView.swift */; };
 		AA328371C25F4E9CB9AF69F6 /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0EA4B995364C26A8D2D2A9 /* GameViewModel.swift */; };
+		B0A2D51000000000000000B1 /* BoardSizing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A2D51000000000000000B2 /* BoardSizing.swift */; };
+		B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86234DD826B24AC8AB906C35 /* ChessMove.swift */; };
+		B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */; };
+		B90005A02FE86EC500465DC2 /* ChessKitEngine in Frameworks */ = {isa = PBXBuildFile; productRef = B900059F2FE86EC500465DC2 /* ChessKitEngine */; };
+		BFAED7538A98488EAAC4D91B /* SquareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50511444A0D9466E931F8B68 /* SquareView.swift */; };
 		C0DE00000000000000000B01 /* OnlineCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A01 /* OnlineCode.swift */; };
 		C0DE00000000000000000B02 /* OnlineProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A02 /* OnlineProtocol.swift */; };
 		C0DE00000000000000000B03 /* OnlineMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A03 /* OnlineMachine.swift */; };
 		C0DE00000000000000000B04 /* OnlineConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A04 /* OnlineConnection.swift */; };
 		C0DE00000000000000000B05 /* OnlineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A05 /* OnlineViewModel.swift */; };
-		B43869AD5D4C44679B0D42A0 /* ChessMove.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86234DD826B24AC8AB906C35 /* ChessMove.swift */; };
-		B6EBA374DC0C47E680B9ED8D /* ZobristTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */; };
-		B90005A02FE86EC500465DC2 /* ChessKitEngine in Frameworks */ = {isa = PBXBuildFile; productRef = B900059F2FE86EC500465DC2 /* ChessKitEngine */; };
-		BFAED7538A98488EAAC4D91B /* SquareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50511444A0D9466E931F8B68 /* SquareView.swift */; };
+		C0DE00000000000000000B06 /* OnlineLobbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A06 /* OnlineLobbyView.swift */; };
+		C0DE00000000000000000B07 /* OnlineGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A07 /* OnlineGameView.swift */; };
 		C121561CEAF141258C332E4A /* GameState+FEN.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CAA9846D8C14F02AAFFA704 /* GameState+FEN.swift */; };
 		D4168CD080D94B9E8F4ED3CD /* MoveHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 403F8F9B90274C9886E43245 /* MoveHistoryView.swift */; };
+		D5A1C0DE00000000000000G1 /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A1C0DE00000000000000G2 /* GameComponents.swift */; };
+		DFF4981773CA469D8413546E /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */; };
 		EA67FFB8764A4E268D89CE1B /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 147B70AC4F314B858E7A311A /* BoardView.swift */; };
 		F576EA45142C4D29864D41D3 /* PuzzleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E9B4EAAD094A458A1C7C9A /* PuzzleViewModel.swift */; };
 		F6BB829DAB6F4BDEBDB7F8BA /* capture.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EF19F3B9D71945BB9A651A9D /* capture.mp3 */; };
-		10CA7A1000000000000000C2 /* nn-37f18f62d772.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */; };
-		10CA7A1000000000000000C4 /* nn-1111cefa1111.nnue in Resources */ = {isa = PBXBuildFile; fileRef = 10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */; };
-		953F5BE085B54B8E8B4B00D5 /* puzzles.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */; };
-		C0DE00000000000000000B06 /* OnlineLobbyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A06 /* OnlineLobbyView.swift */; };
-		C0DE00000000000000000B07 /* OnlineGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DE00000000000000000A07 /* OnlineGameView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		03B4A9461A9A431BB1C05988 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		03ECC8B40DD749EA914DA61C /* ChessPuzzle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPuzzle.swift; sourceTree = "<group>"; };
 		10CA7A1000000000000000A2 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		10CA7A1000000000000000B1 /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000B3 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-37f18f62d772.nnue"; sourceTree = "<group>"; };
+		10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-1111cefa1111.nnue"; sourceTree = "<group>"; };
+		10CA7A1000000000000000C6 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
+		10CA7A1000000000000000L2 /* LessonContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonContent.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000L4 /* LessonRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonRepository.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000L6 /* LessonRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonRenderer.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000M2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000N2 /* UCIScoreParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UCIScoreParser.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000P2 /* PlatformHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelper.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisViewModel.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000R2 /* PuzzleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleRepository.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000S2 /* StatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsManager.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000T2 /* AnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisView.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000U2 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000V2 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000W2 /* PathView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathView.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000X2 /* StepPracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepPracticeView.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000Y2 /* StepGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepGameView.swift; sourceTree = "<group>"; };
+		10CA7A1000000000000000Z2 /* PromotionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromotionOverlay.swift; sourceTree = "<group>"; };
+		10CA7A2000000000000000P2 /* LocalFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFormat.swift; sourceTree = "<group>"; };
 		147B70AC4F314B858E7A311A /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		159925D8F9A044579FAB41AB /* Chessko.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Chessko.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1EFB6EDE03904183ADC59ECE /* ChessAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessAI.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000B1 /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000B3 /* SettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSheet.swift; sourceTree = "<group>"; };
+		253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		33E9B4EAAD094A458A1C7C9A /* PuzzleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleViewModel.swift; sourceTree = "<group>"; };
 		403F8F9B90274C9886E43245 /* MoveHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveHistoryView.swift; sourceTree = "<group>"; };
 		4A9C3E00B2784A5CAEFD2100 /* MateExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MateExerciseViewModel.swift; sourceTree = "<group>"; };
 		50511444A0D9466E931F8B68 /* SquareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SquareView.swift; sourceTree = "<group>"; };
 		59755406843949CDA29BF61D /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000S2 /* StatsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsManager.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000V2 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000P2 /* PlatformHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformHelper.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000R2 /* PuzzleRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleRepository.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000N2 /* UCIScoreParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UCIScoreParser.swift; sourceTree = "<group>"; };
-		10CA7A2000000000000000P2 /* LocalFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFormat.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000L2 /* LessonContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonContent.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000U2 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000L4 /* LessonRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonRepository.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000W2 /* PathView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathView.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000X2 /* StepPracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepPracticeView.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000Y2 /* StepGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepGameView.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000Z2 /* PromotionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromotionOverlay.swift; sourceTree = "<group>"; };
-		D5A1C0DE00000000000000G2 /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000T2 /* AnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisView.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000M2 /* MoveAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveAnalysis.swift; sourceTree = "<group>"; };
-		B0A2D51000000000000000B2 /* BoardSizing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSizing.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000Q2 /* AnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisViewModel.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000C6 /* Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Content; sourceTree = "<group>"; };
 		5B1AAF6AB38A4B93B2F6F00A /* ChessPiece.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessPiece.swift; sourceTree = "<group>"; };
 		5B2D1A00C3894B7DAEF03300 /* OpeningExerciseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpeningExerciseViewModel.swift; sourceTree = "<group>"; };
 		6A7DFB91567E4FFD869A7B7F /* ChesskoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChesskoApp.swift; sourceTree = "<group>"; };
 		6CAA9846D8C14F02AAFFA704 /* GameState+FEN.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GameState+FEN.swift"; sourceTree = "<group>"; };
 		6D66F2BC5E3D48C793764D24 /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
-		10CA7A1000000000000000L6 /* LessonRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonRenderer.swift; sourceTree = "<group>"; };
 		7C6B1A14F7794C6985D468FA /* LearnViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnViewModel.swift; sourceTree = "<group>"; };
+		86234DD826B24AC8AB906C35 /* ChessMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessMove.swift; sourceTree = "<group>"; };
+		97E697423DC545FD8B18BD01 /* PuzzleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleView.swift; sourceTree = "<group>"; };
+		9F0EA4B995364C26A8D2D2A9 /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
+		B0A2D51000000000000000B2 /* BoardSizing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardSizing.swift; sourceTree = "<group>"; };
+		B14BD27CB2A1472DA10FBF00 /* MoveGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveGenerator.swift; sourceTree = "<group>"; };
+		BFDE9AD864ED479FA9B3560F /* move-self.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "move-self.mp3"; sourceTree = "<group>"; };
 		C0DE00000000000000000A01 /* OnlineCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineCode.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000A02 /* OnlineProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineProtocol.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000A03 /* OnlineMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineMachine.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000A04 /* OnlineConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineConnection.swift; sourceTree = "<group>"; };
 		C0DE00000000000000000A05 /* OnlineViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineViewModel.swift; sourceTree = "<group>"; };
-		86234DD826B24AC8AB906C35 /* ChessMove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessMove.swift; sourceTree = "<group>"; };
-		97E697423DC545FD8B18BD01 /* PuzzleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PuzzleView.swift; sourceTree = "<group>"; };
-		9F0EA4B995364C26A8D2D2A9 /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
-		B14BD27CB2A1472DA10FBF00 /* MoveGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveGenerator.swift; sourceTree = "<group>"; };
-		BFDE9AD864ED479FA9B3560F /* move-self.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "move-self.mp3"; sourceTree = "<group>"; };
+		C0DE00000000000000000A06 /* OnlineLobbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineLobbyView.swift; sourceTree = "<group>"; };
+		C0DE00000000000000000A07 /* OnlineGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineGameView.swift; sourceTree = "<group>"; };
 		C11D1909A17A462F8BF7B8BF /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
-		C3CF59B4F4804EB9BBE49F3A /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		C3CF59B4F4804EB9BBE49CCC /* ChessClockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChessClockView.swift; sourceTree = "<group>"; };
+		C3CF59B4F4804EB9BBE49F3A /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		C48D8C6D4E4A487EB552BE28 /* PieceImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PieceImageView.swift; sourceTree = "<group>"; };
 		CD9659979FC044E9AF7C79F0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D5A1C0DE00000000000000G2 /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
+		E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = puzzles.sqlite; sourceTree = "<group>"; };
 		E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZobristTable.swift; sourceTree = "<group>"; };
 		EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockfishBridge.swift; sourceTree = "<group>"; };
 		EF19F3B9D71945BB9A651A9D /* capture.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = capture.mp3; sourceTree = "<group>"; };
-		10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-37f18f62d772.nnue"; sourceTree = "<group>"; };
-		10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */ = {isa = PBXFileReference; lastKnownFileType = file; path = "nn-1111cefa1111.nnue"; sourceTree = "<group>"; };
-		E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = puzzles.sqlite; sourceTree = "<group>"; };
-		F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturedPiecesView.swift; sourceTree = "<group>"; };
 		F1CBFECDFF734F169829EE01 /* EvalBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvalBarView.swift; sourceTree = "<group>"; };
-		253C1D9E82F34FFA9CE161C1 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		F1CBFECDFF734F169829FEF0 /* CapturedPiecesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturedPiecesView.swift; sourceTree = "<group>"; };
 		FBA1E9BAE39C4E178203B664 /* Position.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Position.swift; sourceTree = "<group>"; };
-		C0DE00000000000000000A06 /* OnlineLobbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineLobbyView.swift; sourceTree = "<group>"; };
-		C0DE00000000000000000A07 /* OnlineGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlineGameView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,15 +179,15 @@
 				C48D8C6D4E4A487EB552BE28 /* PieceImageView.swift */,
 				97E697423DC545FD8B18BD01 /* PuzzleView.swift */,
 				50511444A0D9466E931F8B68 /* SquareView.swift */,
-			10CA7A1000000000000000B3 /* SettingsSheet.swift */,
-			10CA7A1000000000000000W2 /* PathView.swift */,
-			10CA7A1000000000000000X2 /* StepPracticeView.swift */,
-			10CA7A1000000000000000Y2 /* StepGameView.swift */,
-			10CA7A1000000000000000Z2 /* PromotionOverlay.swift */,
-			D5A1C0DE00000000000000G2 /* GameComponents.swift */,
-			C0DE00000000000000000A06 /* OnlineLobbyView.swift */,
-			C0DE00000000000000000A07 /* OnlineGameView.swift */,
-			10CA7A1000000000000000T2 /* AnalysisView.swift */,
+				10CA7A1000000000000000B3 /* SettingsSheet.swift */,
+				10CA7A1000000000000000W2 /* PathView.swift */,
+				10CA7A1000000000000000X2 /* StepPracticeView.swift */,
+				10CA7A1000000000000000Y2 /* StepGameView.swift */,
+				10CA7A1000000000000000Z2 /* PromotionOverlay.swift */,
+				D5A1C0DE00000000000000G2 /* GameComponents.swift */,
+				C0DE00000000000000000A06 /* OnlineLobbyView.swift */,
+				C0DE00000000000000000A07 /* OnlineGameView.swift */,
+				10CA7A1000000000000000T2 /* AnalysisView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -235,10 +235,10 @@
 				CD9659979FC044E9AF7C79F0 /* ContentView.swift */,
 				EF19F3B9D71945BB9A651A9D /* capture.mp3 */,
 				BFDE9AD864ED479FA9B3560F /* move-self.mp3 */,
-			10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */,
-			10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */,
-			E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */,
-			10CA7A1000000000000000C6 /* Content */,
+				10CA7A1000000000000000C1 /* nn-37f18f62d772.nnue */,
+				10CA7A1000000000000000C3 /* nn-1111cefa1111.nnue */,
+				E438AB95F72D4C4CB1243B49 /* puzzles.sqlite */,
+				10CA7A1000000000000000C6 /* Content */,
 				56675E349B49490FBF15E423 /* Logic */,
 				36769A74D0654206BE9E76DC /* Models */,
 				1854FE7087F64184AAA4ED29 /* ViewModels */,
@@ -258,11 +258,11 @@
 				10CA7A1000000000000000P2 /* PlatformHelper.swift */,
 				EE106B05E8A74B6D8F5B4E6D /* StockfishBridge.swift */,
 				E9848ADFC0EC482B8CD44721 /* ZobristTable.swift */,
-			10CA7A1000000000000000B1 /* LocalizationManager.swift */,
-			10CA7A1000000000000000R2 /* PuzzleRepository.swift */,
-			10CA7A1000000000000000L4 /* LessonRepository.swift */,
-			10CA7A1000000000000000N2 /* UCIScoreParser.swift */,
-			10CA7A2000000000000000P2 /* LocalFormat.swift */,
+				10CA7A1000000000000000B1 /* LocalizationManager.swift */,
+				10CA7A1000000000000000R2 /* PuzzleRepository.swift */,
+				10CA7A1000000000000000L4 /* LessonRepository.swift */,
+				10CA7A1000000000000000N2 /* UCIScoreParser.swift */,
+				10CA7A2000000000000000P2 /* LocalFormat.swift */,
 				C0DE00000000000000000A04 /* OnlineConnection.swift */,
 			);
 			path = Logic;
@@ -441,14 +441,14 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LE_SWIFT_VERSION = 6.0;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.veljkoni.chessko;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
 			name = Debug;
@@ -507,14 +507,14 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LE_SWIFT_VERSION = 6.0;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.veljkoni.chessko;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
 			};
 			name = Release;

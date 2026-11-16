@@ -3688,3 +3688,19 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   (`chessko-dizajn-snimci/prodavnice/STA-JE-NOVO.md`); live App Store opis još pominje „8 setova figura / 8 tabli"
   i ELO 1300–2600, a link ka privatnosti vodi na stari `PRIVACY_POLICY.txt`. Sitno, odloženo: iOS `open()` ne
   briše `backgrounded` (Android briše), `close` drži pozadinski zadatak pun 2 s.
+
+- **2026-11-16** — Izdanje sa igrom preko interneta poslato u prodavnice. **iOS:** stranica verzije u App Store Connect-u je
+  1.3, ali je poslednja arhiva iz Xcode-a (16. 11. u 14:25) **1.2 (2)**, i to stanje `project.pbxproj` je ušlo u commit.
+  Pre slanja na pregled verzije moraju da se poklope. Opis je ispravljen samo gde više nije bio tačan: 5 stilova
+  figura, 6 tema, 4 lokalna nivoa, nova stavka „Play a friend", a „Everything except online play runs locally"
+  umesto „Everything runs locally". Uz to su promenjeni Promotional Text, „What's New" (pun spisak od julske
+  verzije) i ključne reči, a Privacy Policy URL je sada `https://chessko.app/privacy`. iPhone kartica u App Store
+  Connect-u traži 1206 × 2622 (6,3"), pa su dizajnerovi snimci 1320 × 2868 umanjeni u
+  `chessko-dizajn-snimci/prodavnice/gotovi/ios-iphone-6.3/`. **Android 2.3 (6)**, `build.gradle.kts`, ide na
+  Closed testing → Alpha, gde je bila 2.2 (5). JVM 202/202 iz XML-a. Release APK izveden iz bundle-a: nije
+  `debuggable`, `puzzles.sqlite` je `Stored`, dozvole su `VIBRATE` i `INTERNET`. Bundle je potpisao vlasnik
+  (`key0`). Play opis je ispravljen po kodu: otvaranja su samo španska, italijanska i sicilijanska; sat nema
+  bullet, delay ni zvučno upozorenje; zadaci nemaju „hints"; teme i stilovi su tačni. Prevodi opisa na 7 jezika su
+  u `chessko-dizajn-snimci/prodavnice/play-opis-prevodi.txt`, a nova feature grafika 1024 × 500 i ikonica 512 u
+  `gotovi/android-feature-graphic/`. **Production na Play-u traži 12 testera koji su prihvatili poziv i 14 dana
+  testiranja.** Sada je prihvatilo 0 testera.
