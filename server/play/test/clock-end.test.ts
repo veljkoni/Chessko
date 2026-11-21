@@ -314,6 +314,53 @@ describe("odsustvo u partiji sa satom", () => {
   });
 });
 
+describe("oznaka odsustva na kraju partije sa satom (30 min teče od kraja)", () => {
+  it("istek dok je beli odsutan duže od 30 min: red preživi alarm, beli posle povratka dobija resumed pa flag", async () => {
+    const g = await pair("TAAAAK", "TBBBBK");
+    await openTwo(g);
+    const gone = next(g.b);
+    g.w.close();
+    expect(await gone).toEqual({ t: "opponent", state: "away" });
+    await sql("UPDATE games SET white_away = ?, turn_started = ? WHERE id = ?",
+      Date.now() - 31 * 60_000, Date.now() - 181_000, g.game);
+    const fb = next(g.b);
+    await runDurableObjectAlarm(stub());
+    expect(await fb).toEqual({ t: "flag", loser: "w" });
+    expect(await exists(g.game)).toBe(true);
+
+    const w2 = await join(g.mb.opponent);
+    const mw = take(w2, 2);
+    w2.send(JSON.stringify({ t: "resume", game: g.game, token: g.mw.token }));
+    const [rw, fw] = await mw;
+    expect(rw).toMatchObject({ t: "resumed", color: "w" });
+    expect(fw).toEqual({ t: "flag", loser: "w" });
+    expect(await exists(g.game)).toBe(false);
+    w2.close(); g.b.close();
+  });
+
+  it("predaja crnog dok je beli odsutan duže od 30 min: red preživi alarm, beli dobija resumed pa resigned", async () => {
+    const g = await pair("TAAAAM", "TBBBBM");
+    await openTwo(g);
+    const gone = next(g.b);
+    g.w.close();
+    expect(await gone).toEqual({ t: "opponent", state: "away" });
+    await sql("UPDATE games SET white_away = ? WHERE id = ?", Date.now() - 31 * 60_000, g.game);
+    g.b.send(JSON.stringify({ t: "resign" }));
+    await settle();
+    await runDurableObjectAlarm(stub());
+    expect(await exists(g.game)).toBe(true);
+
+    const w2 = await join(g.mb.opponent);
+    const mw = take(w2, 2);
+    w2.send(JSON.stringify({ t: "resume", game: g.game, token: g.mw.token }));
+    const [rw, res] = await mw;
+    expect(rw).toMatchObject({ t: "resumed", color: "w" });
+    expect(res).toEqual({ t: "resigned" });
+    expect(await exists(g.game)).toBe(false);
+    w2.close(); g.b.close();
+  });
+});
+
 describe("v1 ostaje bez sata", () => {
   it("v1 sa clock u invite: nema bad_clock ni needs_update, poziv bez sata, partija bez sata", async () => {
     const a = await join("TAAAAF", 1);

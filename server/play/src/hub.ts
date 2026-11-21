@@ -422,7 +422,7 @@ export class Hub extends DurableObject {
     if (g.row.clock) {
       const res = applyMove(g.row.clock, now);
       if (!res.ok) {
-        // Potez posle roka: ne prihvata se, partija je zavrsena istekom.
+        // Rok je prosao izmedju provere u ownGame i ovog trenutka (sat je kucnuo): kraj istekom.
         this.endByClock(g.id, g.row.white, g.row.black, g.row.clock);
         return;
       }
