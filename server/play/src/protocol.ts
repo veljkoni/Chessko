@@ -1,7 +1,6 @@
-import type { ClockSpec, WireClock } from "./clock";
+import type { ClockSpec, Side, WireClock } from "./clock";
 
 export const PROTOCOL_VERSIONS: readonly number[] = [1, 2];
-export const PROTOCOL_VERSION = 1;
 export const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
 const CODE_RE = new RegExp(`^[${CODE_ALPHABET}]{6}$`);
@@ -51,7 +50,9 @@ export type ServerMessage =
   | { t: "draw_offer" }
   | { t: "draw_reply"; accept: boolean }
   | { t: "opponent"; state: "away" | "back" }
-  | { t: "aborted" };
+  | { t: "aborted" }
+  | { t: "flag"; loser: Side }
+  | { t: "first_move_expired" };
 
 /** Prilog WebSocket-a; preživljava hibernaciju (serializeAttachment). */
 export interface Attachment {

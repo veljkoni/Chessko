@@ -6,11 +6,22 @@ import {
   type ClientMessage,
   type ServerMessage,
 } from "./protocol";
-import { applyMove, isAllowedClock, newClock, snapshot, type ClockSpec, type ClockState, type WireClock } from "./clock";
+import {
+  applyMove, deadline, isAllowedClock, newClock, snapshot,
+  type ClockSpec, type ClockState, type Side, type WireClock,
+} from "./clock";
 
 const INVITE_LIMIT = 10;
 const INVITE_WINDOW_MS = 60_000;
 export const AWAY_LIMIT_MS = 30 * 60 * 1000;
+
+/** Kraj zapisan dok strana kojoj nije javljen nema vezu. */
+type Ended = "resigned" | "draw" | "finished" | "flag_w" | "flag_b";
+
+type ClockCols = {
+  clock_base: number | null; clock_inc: number | null; w_ms: number | null; b_ms: number | null;
+  turn_started: number | null;
+};
 
 function randomHex(bytes: number): string {
   const buf = new Uint8Array(bytes);
@@ -26,8 +37,9 @@ export class Hub extends DurableObject {
         id TEXT PRIMARY KEY, white TEXT, black TEXT, white_token TEXT, black_token TEXT,
         moves TEXT, white_away INTEGER, black_away INTEGER)`,
     );
-    // Kraj dok je druga strana odsutna (I1): `ended` = resigned | draw | finished,
-    // `ended_to` = boja kojoj rezultat jos nije javljen. Starija tabela (v1) dobija kolone.
+    // Kraj dok je druga strana odsutna (I1): `ended` = resigned | draw | finished | flag_w | flag_b,
+    // `ended_to` = boja (ili obe, "wb", kod isteka vremena) kojoj rezultat jos nije javljen.
+    // Starija tabela (v1) dobija kolone.
     for (const col of [
       "ended TEXT", "ended_to TEXT",
       "clock_base INTEGER", "clock_inc INTEGER", "w_ms INTEGER", "b_ms INTEGER", "turn_started INTEGER",
@@ -233,7 +245,9 @@ export class Hub extends DurableObject {
       this.send(ws, { t: "error", reason: "self" });
       return;
     }
-    if (msg.clock !== undefined && !isAllowedClock(msg.clock)) {
+    // v1 ne zna za sat: njegov `clock` se ne gleda, pa nikad ne dobija bad_clock/needs_update.
+    const asked = this.isV2(ws) ? msg.clock : undefined;
+    if (asked !== undefined && !isAllowedClock(asked)) {
       this.send(ws, { t: "error", reason: "bad_clock" });
       return;
     }
@@ -248,7 +262,7 @@ export class Hub extends DurableObject {
       this.send(ws, { t: "error", reason: "busy" });
       return;
     }
-    const spec: ClockSpec | undefined = msg.clock === undefined ? undefined : { base: msg.clock.base, inc: msg.clock.inc };
+    const spec: ClockSpec | undefined = asked === undefined ? undefined : { base: asked.base, inc: asked.inc };
     if (spec && !this.isV2(target)) {
       this.send(ws, { t: "error", reason: "needs_update" });
       return;
@@ -281,7 +295,7 @@ export class Hub extends DurableObject {
     const iatt = this.attOf(inviter);
     if (iatt.invite !== att.code || iatt.game) return;
     const offered = iatt.inviteClock;
-    const given = msg.clock;
+    const given = this.isV2(ws) ? msg.clock : undefined; // v1: `clock` se ne gleda
     if (offered) {
       if (!given || given.base !== offered.base || given.inc !== offered.inc) return;
     } else if (given !== undefined) {
@@ -323,6 +337,7 @@ export class Hub extends DurableObject {
     inviter.serializeAttachment(iatt);
     ws.serializeAttachment(att);
     const wire = clock ? snapshot(clock, Date.now()) : null;
+    if (clock) void this.scheduleAlarm(); // rok prvog poteza belog
     this.sendClocked(inviter, {
       t: "start",
       game,
@@ -344,19 +359,12 @@ export class Hub extends DurableObject {
       .exec("SELECT white, black, moves, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games WHERE id = ?", id)
       .toArray();
     if (rows.length === 0) return undefined;
-    const r = rows[0] as {
-      white: string; black: string; moves: string;
-      clock_base: number | null; clock_inc: number | null; w_ms: number | null; b_ms: number | null;
-      turn_started: number | null;
-    };
+    const r = rows[0] as { white: string; black: string; moves: string } & ClockCols;
     const moves = JSON.parse(r.moves) as string[];
     return { white: r.white, black: r.black, moves, clock: this.clockOf(r, moves.length) };
   }
 
-  private clockOf(
-    r: { clock_base: number | null; clock_inc: number | null; w_ms: number | null; b_ms: number | null; turn_started: number | null },
-    ply: number,
-  ): ClockState | null {
+  private clockOf(r: ClockCols, ply: number): ClockState | null {
     if (r.clock_base === null || r.clock_inc === null || r.w_ms === null || r.b_ms === null || r.turn_started === null) {
       return null;
     }
@@ -379,6 +387,8 @@ export class Hub extends DurableObject {
   private ownGame(ws: WebSocket) {
     const att = this.attOf(ws);
     if (!att.code) return undefined;
+    // Rok je istekao pre ove poruke: kraj (flag / first_move_expired) je vec javljen i ovoj strani.
+    if (att.game && this.expireDue(att.game)) return undefined;
     const row = att.game ? this.gameRow(att.game) : undefined;
     if (!att.game || !row) {
       if (att.game) {
@@ -412,8 +422,8 @@ export class Hub extends DurableObject {
     if (g.row.clock) {
       const res = applyMove(g.row.clock, now);
       if (!res.ok) {
-        // Zastava i prvi potez: obradjuje Task 3; do tada potez nije prihvacen.
-        this.sendClocked(ws, { t: "sync", moves: g.row.moves }, snapshot(g.row.clock, now));
+        // Potez posle roka: ne prihvata se, partija je zavrsena istekom.
+        this.endByClock(g.id, g.row.white, g.row.black, g.row.clock);
         return;
       }
       wire = snapshot(res.next, now);
@@ -426,6 +436,76 @@ export class Hub extends DurableObject {
     this.ctx.storage.sql.exec("UPDATE games SET moves = ? WHERE id = ?", JSON.stringify(g.row.moves), g.id);
     this.sendClocked(ws, { t: "ack", ply: msg.ply }, wire);
     if (g.opp) this.sendClocked(g.opp, { t: "move", ply: msg.ply, uci: msg.uci }, wire, msg.end === true ? { end: true } : undefined);
+    if (!g.row.clock) return; // bez sata `end` ne zavrsava nista na serveru
+    if (msg.end === true) {
+      // Zavrsni potez na vreme zaustavlja sat: isti put kao `finished`.
+      if (g.opp) this.deleteGame(g.id);
+      else this.endWhileAway(ws, g.id, "finished", g.oppColor);
+    }
+    void this.scheduleAlarm(); // rok se pomerio
+  }
+
+  /**
+   * Partije sa satom u toku ciji je rok prosao (sve, ili samo `game`) zavrsava istekom.
+   * Vraca da li je `game` time zavrsena.
+   */
+  private expireDue(game?: string): boolean {
+    const rows = (game === undefined
+      ? this.ctx.storage.sql.exec(
+        `SELECT id, white, black, moves, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games
+         WHERE clock_base IS NOT NULL AND ended IS NULL`,
+      )
+      : this.ctx.storage.sql.exec(
+        `SELECT id, white, black, moves, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games
+         WHERE id = ? AND clock_base IS NOT NULL AND ended IS NULL`, game,
+      )).toArray() as unknown as ({ id: string; white: string; black: string; moves: string } & ClockCols)[];
+    const now = Date.now();
+    let hit = false;
+    for (const r of rows) {
+      const c = this.clockOf(r, (JSON.parse(r.moves) as string[]).length);
+      if (!c || now < deadline(c)) continue;
+      this.endByClock(r.id, r.white, r.black, c);
+      if (r.id === game) hit = true;
+    }
+    return hit;
+  }
+
+  /**
+   * Kraj zbog roka. Pre prvog poteza strane (ply < 2): prisutni dobijaju first_move_expired,
+   * red se brise i nista se ne pamti. Inace istek: prisutni dobijaju flag i odmah su slobodni;
+   * odsutne strane (jedna ili obe, `ended_to` "w" | "b" | "wb") ga dobijaju posle `resume`.
+   * Oznaka odsustva odsutnih se postavlja na sada, pa 30 min za zavrseni red tece od kraja.
+   */
+  private endByClock(id: string, white: string, black: string, c: ClockState): void {
+    const wSock = this.seatSocket(id, white);
+    const bSock = this.seatSocket(id, black);
+    const present = [wSock, bSock].filter((s): s is WebSocket => !!s);
+    if (c.ply < 2) {
+      for (const s of present) this.send(s, { t: "first_move_expired" });
+      this.deleteGame(id);
+    } else {
+      const loser: Side = c.ply % 2 === 0 ? "w" : "b";
+      for (const s of present) this.send(s, { t: "flag", loser });
+      const absent = (wSock ? "" : "w") + (bSock ? "" : "b");
+      if (absent === "") {
+        this.deleteGame(id);
+      } else {
+        const now = Date.now();
+        this.ctx.storage.sql.exec(
+          `UPDATE games SET ended = ?, ended_to = ?,
+             white_away = CASE WHEN ? THEN ? ELSE white_away END,
+             black_away = CASE WHEN ? THEN ? ELSE black_away END
+           WHERE id = ?`,
+          `flag_${loser}`, absent, wSock ? 0 : 1, now, bSock ? 0 : 1, now, id,
+        );
+        for (const s of present) {
+          const att = this.attOf(s);
+          delete att.game;
+          s.serializeAttachment(att);
+        }
+      }
+    }
+    void this.scheduleAlarm();
   }
 
   private onResign(ws: WebSocket): void {
@@ -445,11 +525,19 @@ export class Hub extends DurableObject {
    * Prisutna strana je odmah slobodna za nove pozive.
    */
   private endWhileAway(ws: WebSocket, game: string, kind: "resigned" | "draw" | "finished", to: "w" | "b"): void {
-    this.ctx.storage.sql.exec("UPDATE games SET ended = ?, ended_to = ? WHERE id = ?", kind, to, game);
+    const col = to === "w" ? "white_away" : "black_away";
+    // Bez sata: oznaka samo ako je jos nema (kao ranije). Sa satom odsustvo tokom partije
+    // ne istice, pa stara oznaka ne sme da obrise tek zavrseni red: 30 min tece od kraja.
+    this.ctx.storage.sql.exec(
+      `UPDATE games SET ended = ?, ended_to = ?,
+         ${col} = CASE WHEN clock_base IS NULL THEN COALESCE(${col}, ?) ELSE ? END
+       WHERE id = ?`,
+      kind, to, Date.now(), Date.now(), game,
+    );
     const att = this.attOf(ws);
     delete att.game;
     ws.serializeAttachment(att);
-    this.ensureOpponentAway(game, to);
+    void this.scheduleAlarm();
   }
 
   private onDrawOffer(ws: WebSocket): void {
@@ -518,22 +606,23 @@ export class Hub extends DurableObject {
     return undefined;
   }
 
+  private resumeRow(id: string) {
+    return this.ctx.storage.sql
+      .exec(
+        "SELECT white, black, white_token, black_token, moves, white_away, black_away, ended, ended_to, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games WHERE id = ?",
+        id,
+      )
+      .toArray()[0] as unknown as ({
+      white: string; black: string; white_token: string; black_token: string;
+      moves: string; white_away: number | null; black_away: number | null;
+      ended: Ended | null; ended_to: string | null;
+    } & ClockCols) | undefined;
+  }
+
   private onResume(ws: WebSocket, msg: Extract<ClientMessage, { t: "resume" }>): void {
     const gone = () => this.send(ws, { t: "error", reason: "game_gone" });
     if (typeof msg.game !== "string" || typeof msg.token !== "string") return gone();
-    const rows = this.ctx.storage.sql
-      .exec(
-        "SELECT white, black, white_token, black_token, moves, white_away, black_away, ended, ended_to, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games WHERE id = ?",
-        msg.game,
-      )
-      .toArray() as unknown as {
-      white: string; black: string; white_token: string; black_token: string;
-      moves: string; white_away: number | null; black_away: number | null;
-      ended: "resigned" | "draw" | "finished" | null; ended_to: "w" | "b" | null;
-      clock_base: number | null; clock_inc: number | null; w_ms: number | null; b_ms: number | null;
-      turn_started: number | null;
-    }[];
-    const r = rows[0];
+    let r = this.resumeRow(msg.game);
     if (!r) return gone();
     let mine: "w" | "b";
     if (msg.token === r.white_token) mine = "w";
@@ -543,7 +632,7 @@ export class Hub extends DurableObject {
     const oppCode = mine === "w" ? r.black : r.white;
     // Zavrsena partija: samo strana kojoj kraj nije javljen dobija ga; ona koja je
     // zavrsila je vec zavrsila lokalno.
-    if (r.ended && r.ended_to !== mine) return gone();
+    if (r.ended && !(r.ended_to ?? "").includes(mine)) return gone();
 
     // Preuzimanje sedista: svaka druga veza sa ovim kodom se zatvara.
     for (const other of this.ctx.getWebSockets()) {
@@ -557,21 +646,41 @@ export class Hub extends DurableObject {
         /* vec zatvoren */
       }
     }
+    // Rok istekao pre nego sto je alarm stigao: kraj se zapisuje sada (ova strana je jos
+    // bez sedista, pa kraj dobija kao odsutna), a rok prvog poteza brise partiju.
+    if (this.expireDue(msg.game)) {
+      r = this.resumeRow(msg.game);
+      if (!r) return gone();
+    }
     const att = this.attOf(ws);
     att.code = myCode;
     att.game = msg.game;
     this.clearInvite(att);
     ws.serializeAttachment(att);
 
+    const resumedMoves = JSON.parse(r.moves) as string[];
+    const rclock = this.clockOf(r, resumedMoves.length);
+
     if (r.ended) {
       // Odsutna strana se vratila: lista poteza (mat/pat se vidi na tabli), pa poruka
-      // kraja koju bi dobila uzivo, pa brisanje.
-      this.send(ws, {
-        t: "resumed", game: msg.game, color: mine, moves: JSON.parse(r.moves) as string[], opponent: "away",
-      });
+      // kraja koju bi dobila uzivo, pa brisanje (kad je kraj javljen svima kojima nije).
+      const flagged = r.ended === "flag_w" || r.ended === "flag_b";
+      // Sat stoji: kod isteka u trenutku roka (gubitnik 0), inace u trenutku poslednjeg poteza.
+      const wire = rclock ? snapshot(rclock, flagged ? deadline(rclock) : rclock.turnStarted) : null;
+      this.sendClocked(ws, {
+        t: "resumed", game: msg.game, color: mine, moves: resumedMoves, opponent: "away",
+      }, wire);
       if (r.ended === "resigned") this.send(ws, { t: "resigned" });
       else if (r.ended === "draw") this.send(ws, { t: "draw_reply", accept: true });
-      this.deleteGame(msg.game);
+      else if (flagged) this.send(ws, { t: "flag", loser: r.ended === "flag_w" ? "w" : "b" });
+      const rest = (r.ended_to ?? "").replace(mine, "");
+      if (rest === "") {
+        this.deleteGame(msg.game);
+      } else {
+        this.ctx.storage.sql.exec("UPDATE games SET ended_to = ? WHERE id = ?", rest, msg.game);
+        delete att.game;
+        ws.serializeAttachment(att);
+      }
       void this.scheduleAlarm();
       return;
     }
@@ -582,8 +691,6 @@ export class Hub extends DurableObject {
       msg.game,
     );
     const opp = this.seatSocket(msg.game, oppCode, ws);
-    const resumedMoves = JSON.parse(r.moves) as string[];
-    const rclock = this.clockOf(r, resumedMoves.length);
     this.sendClocked(ws, {
       t: "resumed",
       game: msg.game,
@@ -597,27 +704,47 @@ export class Hub extends DurableObject {
     void this.scheduleAlarm();
   }
 
-  /** Postavlja alarm na najraniji istek odsustva u bilo kojoj partiji. */
+  /**
+   * Alarm na najraniji rok: istek odsustva od 30 min za partije bez sata i za zavrsene
+   * redove, i rok sata (ili rok prvog poteza) za partije sa satom u toku.
+   */
   private async scheduleAlarm(): Promise<void> {
     const row = this.ctx.storage.sql
       .exec(
         `SELECT MIN(m) AS m FROM (
-           SELECT white_away AS m FROM games WHERE white_away IS NOT NULL
-           UNION ALL SELECT black_away FROM games WHERE black_away IS NOT NULL)`,
+           SELECT white_away AS m FROM games
+             WHERE white_away IS NOT NULL AND (clock_base IS NULL OR ended IS NOT NULL)
+           UNION ALL SELECT black_away FROM games
+             WHERE black_away IS NOT NULL AND (clock_base IS NULL OR ended IS NOT NULL))`,
       )
       .one() as { m: number | null };
-    if (row.m === null) {
+    let at: number | null = row.m === null ? null : row.m + AWAY_LIMIT_MS;
+    const timed = this.ctx.storage.sql
+      .exec(
+        `SELECT moves, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games
+         WHERE clock_base IS NOT NULL AND ended IS NULL`,
+      )
+      .toArray() as unknown as ({ moves: string } & ClockCols)[];
+    for (const r of timed) {
+      const c = this.clockOf(r, (JSON.parse(r.moves) as string[]).length);
+      if (c) at = at === null ? deadline(c) : Math.min(at, deadline(c));
+    }
+    if (at === null) {
       await this.ctx.storage.deleteAlarm();
     } else {
-      await this.ctx.storage.setAlarm(row.m + AWAY_LIMIT_MS);
+      await this.ctx.storage.setAlarm(at);
     }
   }
 
   async alarm(): Promise<void> {
+    // Prvo rokovi sata (oni pamte kraj sa svezom oznakom odsustva), pa istek odsustva.
+    this.expireDue();
     const cutoff = Date.now() - AWAY_LIMIT_MS;
     const rows = this.ctx.storage.sql
       .exec(
-        "SELECT id, white, black FROM games WHERE (white_away IS NOT NULL AND white_away <= ?) OR (black_away IS NOT NULL AND black_away <= ?)",
+        `SELECT id, white, black FROM games
+         WHERE (clock_base IS NULL OR ended IS NOT NULL)
+           AND ((white_away IS NOT NULL AND white_away <= ?) OR (black_away IS NOT NULL AND black_away <= ?))`,
         cutoff,
         cutoff,
       )
