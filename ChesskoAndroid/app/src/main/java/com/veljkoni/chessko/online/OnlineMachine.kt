@@ -243,6 +243,8 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
                 OnlineError.BUSY -> backToLobby(OnlineNotice.BUSY)
                 OnlineError.SELF -> backToLobby(OnlineNotice.SELF_CODE)
                 OnlineError.RATE_LIMITED -> backToLobby(OnlineNotice.RATE_LIMITED)
+                // Ponašanje sata: Task 9.
+                OnlineError.NEEDS_UPDATE, OnlineError.BAD_CLOCK -> emptyList()
             }
             is ServerMessage.InviteSent -> {
                 if (st is OnlineState.Inviting) state = OnlineState.Inviting(m.to)
@@ -281,7 +283,7 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
                 if (st !is OnlineState.Playing) return emptyList()
                 return listOf(OnlineEffect.ReplaceMoves(m.moves))
             }
-            is ServerMessage.Ack, ServerMessage.Unknown -> return emptyList()
+            is ServerMessage.Ack, ServerMessage.Unknown, is ServerMessage.Flag, ServerMessage.FirstMoveExpired -> return emptyList()
             ServerMessage.Resigned -> {
                 if (st !is OnlineState.Playing) return emptyList()
                 return end(OnlineResult.OPPONENT_RESIGNED)

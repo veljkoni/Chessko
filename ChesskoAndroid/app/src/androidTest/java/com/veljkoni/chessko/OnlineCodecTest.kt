@@ -3,9 +3,11 @@ package com.veljkoni.chessko
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.veljkoni.chessko.models.PieceColor
 import com.veljkoni.chessko.online.ClientMessage
+import com.veljkoni.chessko.online.ClockSpec
 import com.veljkoni.chessko.online.OnlineCodec
 import com.veljkoni.chessko.online.OnlineError
 import com.veljkoni.chessko.online.ServerMessage
+import com.veljkoni.chessko.online.WireClock
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,7 +27,7 @@ class OnlineCodecTest {
     @Test fun helloEncodesExactJSON() {
         val o = json(ClientMessage.Hello("K7M4QX"))
         assertEquals("hello", o.getString("t"))
-        assertEquals(1, o.getInt("v"))
+        assertEquals(2, o.getInt("v"))
         assertEquals("K7M4QX", o.getString("code"))
         assertEquals(3, o.length())
     }
@@ -82,5 +84,79 @@ class OnlineCodecTest {
         assertEquals(ServerMessage.Unknown, decode("""{"t":"move","ply":"x","uci":"e2e4"}"""))
         assertEquals(ServerMessage.Unknown, decode("""{"t":"start","game":"g","color":"x","token":"t","opponent":"o"}"""))
         assertEquals(ServerMessage.Unknown, decode("""{"nope":1}"""))
+    }
+
+    // --- v2 (sat) ---
+
+    private val wc = WireClock(ClockSpec(180, 2), 180000, 179000, PieceColor.WHITE, null)
+
+    @Test fun inviteAndAcceptEncodeClock() {
+        val i = json(ClientMessage.Invite("K7M4QX", ClockSpec.BLITZ))
+        assertEquals(180, i.getJSONObject("clock").getInt("base"))
+        assertEquals(2, i.getJSONObject("clock").getInt("inc"))
+        assertEquals(2, i.getJSONObject("clock").length())
+        assertFalse(json(ClientMessage.Invite("K7M4QX")).has("clock"))
+        val a = json(ClientMessage.Accept("K7M4QX", ClockSpec.RAPID))
+        assertTrue(a.getJSONObject("clock").getInt("base") == 600 && a.getJSONObject("clock").getInt("inc") == 5)
+        assertFalse(json(ClientMessage.Accept("K7M4QX")).has("clock"))
+    }
+
+    @Test fun moveEncodesEndOnlyWhenTrue() {
+        assertFalse(json(ClientMessage.Move(3, "e2e4")).has("end"))
+        assertTrue(json(ClientMessage.Move(3, "e2e4", end = true)).getBoolean("end"))
+    }
+
+    @Test fun startDecodesClock() {
+        val m = decode(
+            """{"t":"start","game":"g1","color":"w","token":"ab","opponent":"K7M4QX",""" +
+                """"clock":{"base":180,"inc":2,"w":180000,"b":180000,"run":null,"first":30000}}""",
+        )
+        assertEquals(
+            ServerMessage.Start("g1", PieceColor.WHITE, "ab", "K7M4QX",
+                WireClock(ClockSpec(180, 2), 180000, 180000, null, 30000)),
+            m,
+        )
+    }
+
+    @Test fun clockRunningDecodes() {
+        val m = decode("""{"t":"ack","ply":3,"clock":{"base":180,"inc":2,"w":180000,"b":179000,"run":"w"}}""")
+        assertEquals(ServerMessage.Ack(3, wc), m)
+        val b = decode("""{"t":"ack","ply":3,"clock":{"base":180,"inc":2,"w":1,"b":2,"run":"b","first":null}}""")
+        assertEquals(ServerMessage.Ack(3, WireClock(ClockSpec(180, 2), 1, 2, PieceColor.BLACK, null)), b)
+    }
+
+    @Test fun moveSyncResumedInvitedCarryClock() {
+        val c = """"clock":{"base":180,"inc":2,"w":180000,"b":179000,"run":"w"}"""
+        assertEquals(ServerMessage.Move(2, "e7e5", true, wc),
+            decode("""{"t":"move","ply":2,"uci":"e7e5","end":true,$c}"""))
+        assertEquals(ServerMessage.Move(2, "e7e5", false, null), decode("""{"t":"move","ply":2,"uci":"e7e5"}"""))
+        assertEquals(ServerMessage.Sync(listOf("a"), wc), decode("""{"t":"sync","moves":["a"],$c}"""))
+        assertEquals(
+            ServerMessage.Resumed("g", PieceColor.WHITE, listOf("e2e4"), true, wc),
+            decode("""{"t":"resumed","game":"g","color":"w","moves":["e2e4"],"opponent":"online",$c}"""),
+        )
+        assertEquals(ServerMessage.Invited("A", ClockSpec(180, 2)),
+            decode("""{"t":"invited","from":"A","clock":{"base":180,"inc":2}}"""))
+    }
+
+    @Test fun oldShapeAndMalformedClockDecodeAsNull() {
+        assertEquals(ServerMessage.Ack(2, null), decode("""{"t":"ack","ply":2}"""))
+        assertEquals(ServerMessage.Ack(2, null), decode("""{"t":"ack","ply":2,"clock":{"base":180}}"""))
+        assertEquals(ServerMessage.Ack(2, null),
+            decode("""{"t":"ack","ply":2,"clock":{"base":180,"inc":2,"w":1,"b":2,"run":"x"}}"""))
+        assertEquals(ServerMessage.Ack(2, null), decode("""{"t":"ack","ply":2,"clock":"nope"}"""))
+        assertEquals(ServerMessage.Invited("A", null), decode("""{"t":"invited","from":"A","clock":{"base":"x","inc":2}}"""))
+    }
+
+    @Test fun flagAndFirstMoveExpiredDecode() {
+        assertEquals(ServerMessage.Flag(PieceColor.WHITE), decode("""{"t":"flag","loser":"w"}"""))
+        assertEquals(ServerMessage.Flag(PieceColor.BLACK), decode("""{"t":"flag","loser":"b"}"""))
+        assertEquals(ServerMessage.Unknown, decode("""{"t":"flag","loser":"x"}"""))
+        assertEquals(ServerMessage.FirstMoveExpired, decode("""{"t":"first_move_expired"}"""))
+    }
+
+    @Test fun newErrorsDecode() {
+        assertEquals(ServerMessage.Error(OnlineError.NEEDS_UPDATE), decode("""{"t":"error","reason":"needs_update"}"""))
+        assertEquals(ServerMessage.Error(OnlineError.BAD_CLOCK), decode("""{"t":"error","reason":"bad_clock"}"""))
     }
 }

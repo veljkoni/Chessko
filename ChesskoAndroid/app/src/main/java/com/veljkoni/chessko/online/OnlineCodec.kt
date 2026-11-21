@@ -18,11 +18,11 @@ object OnlineCodec {
                 o.put("t", "hello"); o.put("v", ClientMessage.PROTOCOL_VERSION); o.put("code", m.code)
             }
             is ClientMessage.Resume -> { o.put("t", "resume"); o.put("game", m.game); o.put("token", m.token) }
-            is ClientMessage.Invite -> { o.put("t", "invite"); o.put("to", m.to) }
+            is ClientMessage.Invite -> { o.put("t", "invite"); o.put("to", m.to); m.clock?.let { o.put("clock", specJson(it)) } }
             ClientMessage.Cancel -> o.put("t", "cancel")
-            is ClientMessage.Accept -> { o.put("t", "accept"); o.put("from", m.from) }
+            is ClientMessage.Accept -> { o.put("t", "accept"); o.put("from", m.from); m.clock?.let { o.put("clock", specJson(it)) } }
             is ClientMessage.Decline -> { o.put("t", "decline"); o.put("from", m.from) }
-            is ClientMessage.Move -> { o.put("t", "move"); o.put("ply", m.ply); o.put("uci", m.uci) }
+            is ClientMessage.Move -> { o.put("t", "move"); o.put("ply", m.ply); o.put("uci", m.uci); if (m.end) o.put("end", true) }
             ClientMessage.Resign -> o.put("t", "resign")
             ClientMessage.DrawOffer -> o.put("t", "draw_offer")
             is ClientMessage.DrawReply -> { o.put("t", "draw_reply"); o.put("accept", m.accept) }
@@ -30,6 +30,8 @@ object OnlineCodec {
         }
         return o.toString()
     }
+
+    private fun specJson(c: ClockSpec) = JSONObject().put("base", c.base).put("inc", c.inc)
 
     fun decode(s: String): ServerMessage = parse(JSONObject(s)) ?: ServerMessage.Unknown
 
@@ -51,6 +53,28 @@ object OnlineCodec {
         else -> null
     }
 
+    private fun spec(o: JSONObject): ClockSpec? {
+        val b = int(o, "base") ?: return null
+        val i = int(o, "inc") ?: return null
+        return ClockSpec(b, i)
+    }
+    /** Odsutan ili neispravan `clock` je `null` (stara poruka / nepoznat oblik), nikad greška. */
+    private fun specField(o: JSONObject): ClockSpec? = (o.opt("clock") as? JSONObject)?.let { spec(it) }
+    private fun wireClock(o: JSONObject): WireClock? {
+        val c = o.opt("clock") as? JSONObject ?: return null
+        val sp = spec(c) ?: return null
+        val w = int(c, "w") ?: return null
+        val b = int(c, "b") ?: return null
+        val running = when {
+            !c.has("run") || c.isNull("run") -> null
+            str(c, "run") == "w" -> PieceColor.WHITE
+            str(c, "run") == "b" -> PieceColor.BLACK
+            else -> return null
+        }
+        val first = if (c.has("first") && !c.isNull("first")) (int(c, "first") ?: return null) else null
+        return WireClock(sp, w, b, running, first)
+    }
+
     private fun parse(o: JSONObject): ServerMessage? {
         val t = str(o, "t") ?: return null
         return when (t) {
@@ -62,10 +86,10 @@ object OnlineCodec {
                 val moves = strings(o, "moves") ?: return null
                 val opp = str(o, "opponent")
                 if (opp != "online" && opp != "away") return null
-                ServerMessage.Resumed(g, col, moves, opp == "online")
+                ServerMessage.Resumed(g, col, moves, opp == "online", wireClock(o))
             }
             "invite_sent" -> str(o, "to")?.let { ServerMessage.InviteSent(it) }
-            "invited" -> str(o, "from")?.let { ServerMessage.Invited(it) }
+            "invited" -> str(o, "from")?.let { ServerMessage.Invited(it, specField(o)) }
             "invite_cancelled" -> str(o, "from")?.let { ServerMessage.InviteCancelled(it) }
             "declined" -> str(o, "by")?.let { ServerMessage.Declined(it) }
             "start" -> {
@@ -73,15 +97,15 @@ object OnlineCodec {
                 val col = color(o) ?: return null
                 val tok = str(o, "token") ?: return null
                 val opp = str(o, "opponent") ?: return null
-                ServerMessage.Start(g, col, tok, opp)
+                ServerMessage.Start(g, col, tok, opp, wireClock(o))
             }
             "move" -> {
                 val p = int(o, "ply") ?: return null
                 val u = str(o, "uci") ?: return null
-                ServerMessage.Move(p, u)
+                ServerMessage.Move(p, u, bool(o, "end") ?: false, wireClock(o))
             }
-            "ack" -> int(o, "ply")?.let { ServerMessage.Ack(it) }
-            "sync" -> strings(o, "moves")?.let { ServerMessage.Sync(it) }
+            "ack" -> int(o, "ply")?.let { ServerMessage.Ack(it, wireClock(o)) }
+            "sync" -> strings(o, "moves")?.let { ServerMessage.Sync(it, wireClock(o)) }
             "resigned" -> ServerMessage.Resigned
             "draw_offer" -> ServerMessage.DrawOffer
             "draw_reply" -> bool(o, "accept")?.let { ServerMessage.DrawReply(it) }
@@ -91,6 +115,12 @@ object OnlineCodec {
                 else -> null
             }
             "aborted" -> ServerMessage.Aborted
+            "flag" -> when (str(o, "loser")) {
+                "w" -> ServerMessage.Flag(PieceColor.WHITE)
+                "b" -> ServerMessage.Flag(PieceColor.BLACK)
+                else -> null
+            }
+            "first_move_expired" -> ServerMessage.FirstMoveExpired
             else -> null
         }
     }
