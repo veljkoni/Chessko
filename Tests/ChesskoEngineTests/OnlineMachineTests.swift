@@ -46,14 +46,14 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 
 @Test func resumedGoesToPlayingAndReplacesMoves() {
     var m = machine(.connecting, stored: game)
-    let fx = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false)))
+    let fx = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false, clock: nil)))
     #expect(fx == [.replaceMoves(["e2e4"])])
     #expect(m.state == playing(.connected, away: true))
 }
 
 @Test func resumeAfterLongAbsenceAppliesMissingMoves() {
     var m = machine(playing(.reconnecting), stored: game)
-    let fx = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4", "e7e5", "g1f3"], opponentOnline: true)))
+    let fx = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4", "e7e5", "g1f3"], opponentOnline: true, clock: nil)))
     #expect(fx == [.replaceMoves(["e2e4", "e7e5", "g1f3"])])
 }
 
@@ -78,7 +78,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 @Test func backoffResetsAfterResumed() {
     var m = machine(playing(), stored: game)
     _ = m.handle(.socketClosed); _ = m.handle(.socketClosed)
-    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: [], opponentOnline: true)))
+    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: [], opponentOnline: true, clock: nil)))
     #expect(m.handle(.socketClosed) == [.scheduleReconnect(seconds: 1)])
 }
 
@@ -122,7 +122,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 
 @Test func startPersistsAndStartsGame() {
     var m = machine(.inviting(to: "ABCDEF"))
-    let fx = m.handle(.received(.start(game: "g1", color: .white, token: "tok", opponent: "ABCDEF")))
+    let fx = m.handle(.received(.start(game: "g1", color: .white, token: "tok", opponent: "ABCDEF", clock: nil)))
     #expect(fx == [.persist(game), .startGame(game)])
     #expect(m.stored == game)
 }
@@ -143,7 +143,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 
 @Test func incomingInviteInLobbyGoesToInvited() {
     var m = machine(.lobby)
-    #expect(m.handle(.received(.invited(from: "ABCDEF"))) == [])
+    #expect(m.handle(.received(.invited(from: "ABCDEF", clock: nil))) == [])
     #expect(m.state == .invited(from: "ABCDEF"))
 }
 
@@ -155,25 +155,25 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 
 @Test func inviteInLobbySendsInvite() {
     var m = machine(.lobby)
-    #expect(m.handle(.invite(code: "ABCDEF")) == [.send(.invite(to: "ABCDEF"))])
+    #expect(m.handle(.invite(code: "ABCDEF")) == [.send(.invite(to: "ABCDEF", clock: nil))])
     #expect(m.state == .inviting(to: "ABCDEF"))
 }
 
 @Test func remoteMoveIsAppliedOnlyInPlaying() {
     var p = machine(playing(), stored: game)
-    #expect(p.handle(.received(.move(ply: 1, uci: "e7e5"))) == [.applyRemoteMove(ply: 1, uci: "e7e5")])
+    #expect(p.handle(.received(.move(ply: 1, uci: "e7e5", end: false, clock: nil))) == [.applyRemoteMove(ply: 1, uci: "e7e5")])
     var l = machine(.lobby)
-    #expect(l.handle(.received(.move(ply: 1, uci: "e7e5"))) == [])
+    #expect(l.handle(.received(.move(ply: 1, uci: "e7e5", end: false, clock: nil))) == [])
 }
 
 @Test func localMoveSendsMoveWithCallerPly() {
     var m = machine(playing(), stored: game)
-    #expect(m.handle(.localMove(ply: 4, uci: "e2e4")) == [.send(.move(ply: 4, uci: "e2e4"))])
+    #expect(m.handle(.localMove(ply: 4, uci: "e2e4")) == [.send(.move(ply: 4, uci: "e2e4", end: false))])
 }
 
 @Test func syncReplacesMoves() {
     var m = machine(playing(), stored: game)
-    #expect(m.handle(.received(.sync(moves: ["e2e4"]))) == [.replaceMoves(["e2e4"])])
+    #expect(m.handle(.received(.sync(moves: ["e2e4"], clock: nil))) == [.replaceMoves(["e2e4"])])
 }
 
 @Test func drawOfferThenDeclineClearsFlagAndShowsNotice() {
@@ -201,7 +201,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 @Test func versionErrorWithStoredGameIgnoresResumedAndBlocksActions() {
     var m = machine(playing(.reconnecting), stored: game)
     #expect(m.handle(.received(.error(.version))) == [])
-    #expect(m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: true))) == [])
+    #expect(m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: true, clock: nil))) == [])
     #expect(!m.canAct)
     #expect(m.handle(.resign) == [])
     #expect(m.handle(.backToLobby) == [])
@@ -211,7 +211,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 // I1: kraj koji je server sačuvao dok je ova strana bila odsutna stiže odmah posle `resumed`.
 @Test func resignedRightAfterResumedEndsOpponentResigned() {
     var m = machine(playing(.reconnecting), stored: game)
-    #expect(m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false))) == [.replaceMoves(["e2e4"])])
+    #expect(m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false, clock: nil))) == [.replaceMoves(["e2e4"])])
     #expect(m.handle(.received(.resigned)) == [.persist(nil)])
     #expect(m.state == .ended(.opponentResigned))
     #expect(m.stored == nil)
@@ -220,7 +220,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 @Test func drawAcceptRightAfterResumedEndsDrawEvenThoughOfferFlagWasReset() {
     // Ova strana je ponudila remi pa izgubila vezu; `resumed` briše zastavicu ponude.
     var m = machine(playing(.reconnecting, dMe: true), stored: game)
-    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: [], opponentOnline: false)))
+    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: [], opponentOnline: false, clock: nil)))
     #expect(m.state == playing(.connected, away: true))
     #expect(m.handle(.received(.drawReply(accept: true))) == [.persist(nil)])
     #expect(m.state == .ended(.drawAgreed))
@@ -230,7 +230,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
     var m = machine(.idle, stored: game)
     _ = m.handle(.socketOpened)
     _ = m.handle(.received(.welcome(code: "K7M4QX")))
-    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false)))
+    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["e2e4"], opponentOnline: false, clock: nil)))
     #expect(m.handle(.received(.resigned)) == [.persist(nil)])
     #expect(m.state == .ended(.opponentResigned))
 }
@@ -238,7 +238,7 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
 @Test func boardFinishedAfterResumedSendsFinishedAndEnds() {
     // Mat/pat iz liste poteza: VM posle `replaceMoves` javlja boardFinished.
     var m = machine(playing(.reconnecting), stored: game)
-    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["f2f3", "e7e5", "g2g4", "d8h4"], opponentOnline: false)))
+    _ = m.handle(.received(.resumed(game: "g1", color: .white, moves: ["f2f3", "e7e5", "g2g4", "d8h4"], opponentOnline: false, clock: nil)))
     #expect(m.handle(.boardFinished) == [.send(.finished), .persist(nil)])
     #expect(m.state == .ended(.board))
     // server je partiju već obrisao: game_gone posle kraja ne menja ništa

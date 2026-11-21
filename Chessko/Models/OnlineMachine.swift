@@ -155,14 +155,14 @@ struct OnlineMachine: Sendable {
         case .invite(let code):
             guard case .lobby = state else { return [] }
             state = .inviting(to: code)
-            return [.send(.invite(to: code))]
+            return [.send(.invite(to: code, clock: nil))]
         case .cancelInvite:
             guard case .inviting = state else { return [] }
             state = .lobby
             return [.send(.cancel)]
         case .accept:
             guard case .invited(let from) = state else { return [] }
-            return [.send(.accept(from: from))]
+            return [.send(.accept(from: from, clock: nil))]
         case .decline:
             guard case .invited(let from) = state else { return [] }
             state = .lobby
@@ -173,7 +173,7 @@ struct OnlineMachine: Sendable {
         // `resumed` — server je istina.
         case .localMove(let ply, let uci):
             guard canAct else { return [] }
-            return [.send(.move(ply: ply, uci: uci))]
+            return [.send(.move(ply: ply, uci: uci, end: false))]
         case .resign:
             guard canAct else { return [] }
             return [.send(.resign)] + end(.iResigned)
@@ -211,7 +211,7 @@ struct OnlineMachine: Sendable {
             default: return []
             }
 
-        case .resumed(_, _, let moves, let online):
+        case .resumed(_, _, let moves, let online, _):
             guard let s = stored else { return [] }
             reconnectAttempt = 0
             state = .playing(s, link: .connected, opponentAway: !online,
@@ -235,12 +235,13 @@ struct OnlineMachine: Sendable {
             case .busy: return backToLobby(.busy)
             case .self_: return backToLobby(.selfCode)
             case .rateLimited: return backToLobby(.rateLimited)
+            case .needsUpdate, .badClock: return []   // sat: ponašanje u Tasku 6
             }
 
         case .inviteSent(let to):
             if case .inviting = state { state = .inviting(to: to) }
             return []
-        case .invited(let from):
+        case .invited(let from, _):
             guard case .lobby = state else { return [] }
             state = .invited(from: from)
             return []
@@ -253,7 +254,7 @@ struct OnlineMachine: Sendable {
             state = .lobby
             return [.showMessage(.declined)]
 
-        case .start(let game, let color, let token, let opponent):
+        case .start(let game, let color, let token, let opponent, _):
             switch state {
             case .lobby, .inviting, .invited: break
             default: return []
@@ -264,13 +265,13 @@ struct OnlineMachine: Sendable {
                              drawOfferedByOpponent: false, drawOfferedByMe: false)
             return [.persist(g), .startGame(g)]
 
-        case .move(let ply, let uci):
+        case .move(let ply, let uci, _, _):
             guard case .playing = state else { return [] }
             return [.applyRemoteMove(ply: ply, uci: uci)]
-        case .sync(let moves):
+        case .sync(let moves, _):
             guard case .playing = state else { return [] }
             return [.replaceMoves(moves)]
-        case .ack, .unknown:
+        case .ack, .flag, .firstMoveExpired, .unknown:
             return []
 
         case .resigned:
