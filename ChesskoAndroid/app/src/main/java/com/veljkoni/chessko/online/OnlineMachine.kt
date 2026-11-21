@@ -240,17 +240,18 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
             }
             OnlineEvent.BoardFinished -> {
                 if (st !is OnlineState.Playing) return emptyList()
-                if (isTimed) {
-                    // Sa satom `finished` se ne šalje: sopstveni završni potez je otišao sa
-                    // `end: true` i kraj stiže sa njegovim `ack`-om; inače je partija na
-                    // serveru već završena (protivnikov `end: true` dok smo bili odsutni —
-                    // `resumed` tada nema poruku kraja, kraj se vidi samo na tabli).
-                    if (pendingEndPly != null) return emptyList()
-                    return end(OnlineResult.BOARD)
-                }
+                // Sa satom i sopstvenim završnim potezom na putu (`end: true`) kraj stiže
+                // sa njegovim `ack`-om — ovde se ništa ne šalje i ne završava.
+                if (isTimed && pendingEndPly != null) return emptyList()
                 // Tabla je gotova pa se završava lokalno čak i bez veze; `finished`
-                // se šalje samo ako je veza živa. Inače partiju čisti protivnikov
-                // `finished` ili serverov prekid posle 30 minuta.
+                // se šalje samo ako je veza živa. Bez sata partiju inače čisti protivnikov
+                // `finished` ili serverov prekid posle 30 minuta. Sa satom se `finished`
+                // šalje isto: ako se dva telefona ikad ne slože oko remija po pravilu
+                // (protivnikov potez je stigao bez `end: true`), server bi bez njega držao
+                // partiju i sat bi i dalje tekao, pa bi igrač kasnije izgubio na vreme.
+                // Kad je partija na serveru već završena (npr. `resumed` posle protivnikovog
+                // `end: true` dok smo bili odsutni), server odgovara `game_gone`, koji se u
+                // `Ended` zanemaruje.
                 val send: List<OnlineEffect> =
                     if (canAct) listOf(OnlineEffect.Send(ClientMessage.Finished)) else emptyList()
                 return send + end(OnlineResult.BOARD)
@@ -431,8 +432,10 @@ class OnlineMachine(val myCode: String, var stored: ActiveGame? = null) {
 enum class OnlineCloseConfirm {
     /** „Predati partiju?" [Predaj] */
     RESIGN,
-    /** „Partija će te čekati." [Zatvori] */
-    GAME_WAITS;
+    /** „Partija će te čekati." [Zatvori] — partija bez sata. */
+    GAME_WAITS,
+    /** „Sat i dalje teče." [Zatvori] — partija na vreme: odsustvo ne zaustavlja sat. */
+    CLOCK_RUNS;
 
     /**
      * Potvrda predaje samo ako je ponuđena predaja I mašina u trenutku dodira još sme
@@ -441,6 +444,7 @@ enum class OnlineCloseConfirm {
     fun resignsOnConfirm(canActNow: Boolean): Boolean = this == RESIGN && canActNow
 
     companion object {
-        fun of(canAct: Boolean): OnlineCloseConfirm = if (canAct) RESIGN else GAME_WAITS
+        fun of(canAct: Boolean, timed: Boolean = false): OnlineCloseConfirm =
+            if (canAct) RESIGN else if (timed) CLOCK_RUNS else GAME_WAITS
     }
 }

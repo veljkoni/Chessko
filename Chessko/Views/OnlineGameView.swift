@@ -91,7 +91,8 @@ struct OnlineGameView: View {
             // otvara se pri sledećem pokretanju; prijatelj vidi „izgubio vezu").
             // Varijanta je zamrznuta pri otvaranju: veza koja se vrati dok je
             // dijalog otvoren ne sme pretvoriti „Zatvori" u „Predaj" pod prstom.
-            .alert(closeConfirm == .resign ? Loc("Predati partiju?") : Loc("Partija će te čekati."),
+            // U partiji na vreme „Partija će te čekati." nije tačno: sat i dalje teče.
+            .alert(closeConfirmTitle,
                    isPresented: $showCloseConfirm) {
                 if closeConfirm == .resign {
                     Button(Loc("Predaj"), role: .destructive) {
@@ -124,9 +125,17 @@ struct OnlineGameView: View {
         }
     }
 
+    private var closeConfirmTitle: String {
+        switch closeConfirm {
+        case .resign: return Loc("Predati partiju?")
+        case .gameWaits: return Loc("Partija će te čekati.")
+        case .clockRuns: return Loc("Sat i dalje teče.")
+        }
+    }
+
     private func requestClose() {
         if isPlaying {
-            closeConfirm = OnlineCloseConfirm(canAct: game.onlineCanMove)
+            closeConfirm = OnlineCloseConfirm(canAct: game.onlineCanMove, timed: vm.isTimedGame)
             showCloseConfirm = true
         } else {
             closeNow()
@@ -231,14 +240,16 @@ struct OnlineGameView: View {
         return max(0, color == .white ? w - b : b - w)
     }
 
-    /// Sat za karticu; osvežava se `TimelineView`-om samo u partiji na vreme.
-    private func clockInfo(_ color: PieceColor, now: Date) -> (text: String, isLow: Bool)? {
-        guard let ms = vm.displayedMs(for: color, now: now) else { return nil }
+    /// Sat za karticu; osvežava se `TimelineView`-om samo u partiji na vreme. `TimelineView`
+    /// je samo okidač za ponovno crtanje — vreme se čita iz monotonog izvora u VM-u, ne iz
+    /// `timeline.date` (zidni sat), da ručna promena sata ne pomeri prikaz.
+    private func clockInfo(_ color: PieceColor) -> (text: String, isLow: Bool)? {
+        guard let ms = vm.displayedMs(for: color) else { return nil }
         return (OnlineViewModel.clockText(ms: ms), ms < 10_000)
     }
 
     private func card(color: PieceColor, name: String, status: PlayerCardStatus?) -> some View {
-        TimelineView(.periodic(from: .now, by: vm.isTimedGame ? 0.1 : 3600)) { timeline in
+        TimelineView(.periodic(from: .now, by: vm.isTimedGame ? 0.1 : 3600)) { _ in
             DSPlayerCard(
                 color: color,
                 name: name,
@@ -247,7 +258,7 @@ struct OnlineGameView: View {
                 materialAdvantage: materialAdvantage(for: color),
                 capturedPieces: captured(by: color),
                 flyingCapture: game.flyingCapture,
-                clock: clockInfo(color, now: timeline.date)
+                clock: clockInfo(color)
             )
         }
     }
@@ -318,8 +329,9 @@ struct OnlineGameView: View {
     @ViewBuilder
     private var firstMoveLine: some View {
         if vm.isTimedGame, game.gameState.currentTurn == game.playerColor {
-            TimelineView(.periodic(from: .now, by: 0.1)) { timeline in
-                if let ms = vm.firstMoveMsLeft(now: timeline.date) {
+            TimelineView(.periodic(from: .now, by: 0.1)) { _ in
+                // `TimelineView` samo okida crtanje; vreme je monotono (VM).
+                if let ms = vm.firstMoveMsLeft() {
                     Text(LocF("Odigraj prvi potez: %@", OnlineViewModel.clockText(ms: ms)))
                         .font(.dsBody.weight(.semibold))
                         .foregroundStyle(ms < 10_000 ? DS.danger : DS.ink)

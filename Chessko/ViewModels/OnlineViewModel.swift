@@ -203,22 +203,27 @@ final class OnlineViewModel {
 
     // MARK: Sat
 
+    /// Monotono vreme u sekundama — jedini izvor i za `at` pri prijemu poruke i za
+    /// odbrojavanje. Ručna promena sata ili NTP korak ne pomera prikazani sat (zidni
+    /// `Date` bi ga pomerio). Android isto koristi `SystemClock.elapsedRealtime()`.
+    nonisolated static func monotonicNow() -> TimeInterval { ProcessInfo.processInfo.systemUptime }
+
     /// Preostalo ms za stranu (sat se računa lokalno samo za prikaz): `wire` vrednost
     /// umanjena za `now − receivedAt` samo za stranu koja trči, najmanje 0. Lokalna nula
     /// se NIKAD ne tumači — kraj dolazi samo od servera (`flag`).
-    func displayedMs(for color: PieceColor, now: Date) -> Int? {
+    func displayedMs(for color: PieceColor, now: TimeInterval = OnlineViewModel.monotonicNow()) -> Int? {
         guard case .playing(_, _, _, _, _, let reading?) = state else { return nil }
         let wire = reading.wire
         let base = color == .white ? wire.whiteMs : wire.blackMs
         guard wire.running == color else { return max(0, base) }
-        let elapsed = Int(((now.timeIntervalSinceReferenceDate - reading.receivedAt) * 1000).rounded(.down))
+        let elapsed = Int(((now - reading.receivedAt) * 1000).rounded(.down))
         return max(0, base - max(0, elapsed))
     }
 
     /// Preostalo ms za prvi potez (`nil` kad rok ne važi).
-    func firstMoveMsLeft(now: Date) -> Int? {
+    func firstMoveMsLeft(now: TimeInterval = OnlineViewModel.monotonicNow()) -> Int? {
         guard case .playing(_, _, _, _, _, let reading?) = state, let first = reading.wire.firstMoveMs else { return nil }
-        let elapsed = Int(((now.timeIntervalSinceReferenceDate - reading.receivedAt) * 1000).rounded(.down))
+        let elapsed = Int(((now - reading.receivedAt) * 1000).rounded(.down))
         return max(0, first - max(0, elapsed))
     }
 
@@ -316,7 +321,7 @@ final class OnlineViewModel {
         }
         c.onMessage = { [weak self] m in
             guard let self, self.generation == gen else { return }
-            self.handle(.received(m, at: Date().timeIntervalSinceReferenceDate))
+            self.handle(.received(m, at: OnlineViewModel.monotonicNow()))
         }
         c.onClose = { [weak self] in
             guard let self, self.generation == gen else { return }

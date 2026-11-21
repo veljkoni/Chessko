@@ -259,6 +259,15 @@ private func machine(_ state: OnlineState, stored: ActiveGame? = nil) -> OnlineM
     #expect(!OnlineCloseConfirm.gameWaits.resignsOnConfirm(canActNow: false))
 }
 
+// Partija na vreme: bez predaje dijalog kaže da sat i dalje teče; sa vezom se i dalje nudi predaja.
+@Test func closeConfirmInTimedGameSaysTheClockRuns() {
+    #expect(OnlineCloseConfirm(canAct: false, timed: true) == .clockRuns)
+    #expect(OnlineCloseConfirm(canAct: true, timed: true) == .resign)
+    #expect(OnlineCloseConfirm(canAct: false, timed: false) == .gameWaits)
+    #expect(!OnlineCloseConfirm.clockRuns.resignsOnConfirm(canActNow: true))
+    #expect(!OnlineCloseConfirm.clockRuns.resignsOnConfirm(canActNow: false))
+}
+
 // Fix round 1: bez akcija tokom obnove veze
 @Test func actionsAreRefusedWhileReconnecting() {
     let events: [OnlineEvent] = [.localMove(ply: 0, uci: "e2e4", ends: false), .resign, .offerDraw, .answerDraw(true), .answerDraw(false)]
@@ -534,10 +543,30 @@ private func readingOf(_ s: OnlineState) -> ClockReading? {
     #expect(m.handle(.boardFinished) == [.send(.finished), .persist(nil)])
 }
 
-// `resumed` za partiju završenu `finished`-om dok smo bili odsutni: kraj se vidi samo na tabli.
-@Test func timedBoardFinishedAfterResumedEndsWithoutFinished() {
+// `resumed` za partiju završenu dok smo bili odsutni: kraj se vidi samo na tabli. `finished` se
+// ipak šalje (veza je živa); server odgovara `game_gone`, koji se u `.ended` zanemaruje.
+@Test func timedBoardFinishedAfterResumedSendsFinishedAndIgnoresGameGone() {
     var m = machine(timedPlaying(.reconnecting), stored: timedGame)
     _ = m.handle(.received(.resumed(game: "g2", color: .white, moves: ["f2f3", "e7e5", "g2g4", "d8h4"], opponentOnline: false, clock: wire(run: .white, first: nil)), at: 1))
+    #expect(m.handle(.boardFinished) == [.send(.finished), .persist(nil)])
+    #expect(m.state == .ended(.board))
+    #expect(m.handle(rx(.error(.gameGone))) == [])
+    #expect(m.state == .ended(.board))
+}
+
+// Protivnikov potez je stigao bez `end: true`, a tabla je kod nas gotova (npr. dva telefona se ne
+// slažu oko remija po pravilu): sa satom se šalje `finished`, da server ne drži partiju i sat.
+@Test func timedBoardFinishedWithoutPendingEndSendsFinished() {
+    var m = machine(timedPlaying(), stored: timedGame)
+    #expect(m.handle(.received(.move(ply: 7, uci: "d8h4", end: false, clock: wire(run: .white, first: nil)), at: 3)) == [.applyRemoteMove(ply: 7, uci: "d8h4")])
+    #expect(m.handle(.boardFinished) == [.send(.finished), .persist(nil)])
+    #expect(m.state == .ended(.board))
+    #expect(m.stored == nil)
+}
+
+// Sa satom i bez veze: kraj lokalno, ništa se ne šalje (isto kao bez sata).
+@Test func timedBoardFinishedWhileReconnectingEndsWithoutSend() {
+    var m = machine(timedPlaying(.reconnecting), stored: timedGame)
     #expect(m.handle(.boardFinished) == [.persist(nil)])
     #expect(m.state == .ended(.board))
 }

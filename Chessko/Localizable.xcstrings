@@ -4135,6 +4135,59 @@
         }
       }
     },
+    "Sat i dalje teče.": {
+      "extractionState": "manual",
+      "localizations": {
+        "sr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sat i dalje teče."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The clock keeps running."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La pendule continue de tourner."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Uhr läuft weiter."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’orologio continua a correre."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Часы продолжают идти."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "棋钟会继续走。"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "घड़ी चलती रहेगी।"
+          }
+        }
+      }
+    },
     "Vreme": {
       "extractionState": "manual",
       "localizations": {
@@ -4536,7 +4589,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Il tuo amico deve aggiornare l’app per giocare con il tempo."
+            "value": "Il tuo amico deve aggiornare l’app per giocare con l’orologio."
           }
         },
         "ru": {

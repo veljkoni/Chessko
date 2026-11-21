@@ -291,6 +291,15 @@ class OnlineMachineTest {
         assertFalse(OnlineCloseConfirm.GAME_WAITS.resignsOnConfirm(false))
     }
 
+    // Partija na vreme: bez predaje dijalog kaže da sat i dalje teče; sa vezom se i dalje nudi predaja.
+    @Test fun closeConfirmInTimedGameSaysTheClockRuns() {
+        assertEquals(OnlineCloseConfirm.CLOCK_RUNS, OnlineCloseConfirm.of(false, timed = true))
+        assertEquals(OnlineCloseConfirm.RESIGN, OnlineCloseConfirm.of(true, timed = true))
+        assertEquals(OnlineCloseConfirm.GAME_WAITS, OnlineCloseConfirm.of(false, timed = false))
+        assertFalse(OnlineCloseConfirm.CLOCK_RUNS.resignsOnConfirm(true))
+        assertFalse(OnlineCloseConfirm.CLOCK_RUNS.resignsOnConfirm(false))
+    }
+
     @Test fun actionsAreRefusedWhileReconnecting() {
         val events = listOf(
             OnlineEvent.LocalMove(0, "e2e4", false), OnlineEvent.Resign, OnlineEvent.OfferDraw,
@@ -597,8 +606,9 @@ class OnlineMachineTest {
         assertEquals(listOf(send(ClientMessage.Finished), OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
     }
 
-    // `resumed` za partiju završenu dok smo bili odsutni: kraj se vidi samo na tabli.
-    @Test fun timedBoardFinishedAfterResumedEndsWithoutFinished() {
+    // `resumed` za partiju završenu dok smo bili odsutni: kraj se vidi samo na tabli. `finished` se
+    // ipak šalje (veza je živa); server odgovara `game_gone`, koji se u `Ended` zanemaruje.
+    @Test fun timedBoardFinishedAfterResumedSendsFinishedAndIgnoresGameGone() {
         val m = machine(timedPlaying(OnlineLink.RECONNECTING), timedGame)
         m.handle(OnlineEvent.Received(
             ServerMessage.Resumed(
@@ -607,6 +617,28 @@ class OnlineMachineTest {
             ),
             1.0,
         ))
+        assertEquals(listOf(send(ClientMessage.Finished), OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+        assertEquals(noFx, m.handle(rx(ServerMessage.Error(OnlineError.GAME_GONE))))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+    }
+
+    // Protivnikov potez je stigao bez `end: true`, a tabla je kod nas gotova (npr. dva telefona se ne
+    // slažu oko remija po pravilu): sa satom se šalje `finished`, da server ne drži partiju i sat.
+    @Test fun timedBoardFinishedWithoutPendingEndSendsFinished() {
+        val m = machine(timedPlaying(), timedGame)
+        assertEquals(
+            listOf<OnlineEffect>(OnlineEffect.ApplyRemoteMove(7, "d8h4")),
+            m.handle(OnlineEvent.Received(ServerMessage.Move(7, "d8h4", false, wire(run = PieceColor.WHITE, first = null)), 3.0)),
+        )
+        assertEquals(listOf(send(ClientMessage.Finished), OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+        assertNull(m.stored)
+    }
+
+    // Sa satom i bez veze: kraj lokalno, ništa se ne šalje (isto kao bez sata).
+    @Test fun timedBoardFinishedWhileReconnectingEndsWithoutSend() {
+        val m = machine(timedPlaying(OnlineLink.RECONNECTING), timedGame)
         assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
         assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
     }

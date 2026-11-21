@@ -117,7 +117,7 @@ fun OnlineGameDestination(onDismiss: () -> Unit) {
     }
     val requestClose = {
         if (isPlaying) {
-            closeConfirm = OnlineCloseConfirm.of(game.onlineCanMove)
+            closeConfirm = OnlineCloseConfirm.of(game.onlineCanMove, vm.isTimedGame)
             showCloseConfirm = true
         } else {
             closeNow()
@@ -158,7 +158,12 @@ fun OnlineGameDestination(onDismiss: () -> Unit) {
             onDismissRequest = { showCloseConfirm = false },
             title = {
                 Text(
-                    text = if (offersResign) loc("Predati partiju?") else loc("Partija će te čekati."),
+                    // U partiji na vreme „Partija će te čekati." nije tačno: sat i dalje teče.
+                    text = when (closeConfirm) {
+                        OnlineCloseConfirm.RESIGN -> loc("Predati partiju?")
+                        OnlineCloseConfirm.GAME_WAITS -> loc("Partija će te čekati.")
+                        OnlineCloseConfirm.CLOCK_RUNS -> loc("Sat i dalje teče.")
+                    },
                     color = DS.ink,
                     fontWeight = FontWeight.Bold
                 )

@@ -64,7 +64,7 @@ enum OnlineState: Equatable, Sendable {
 
 enum OnlineEvent: Sendable {
     case socketOpened, socketClosed
-    /// `at`: trenutak prijema (sekunde, npr. `Date().timeIntervalSinceReferenceDate`).
+    /// `at`: trenutak prijema (sekunde, monotono: `ProcessInfo.processInfo.systemUptime`).
     case received(ServerMessage, at: Double)
     case invite(code: String, clock: ClockSpec?), cancelInvite, accept, decline
     /// `ends`: potez po pravilima završava partiju (mat, pat, remi po pravilu).
@@ -232,17 +232,18 @@ struct OnlineMachine: Sendable {
             return [.send(.drawReply(accept: false))]
         case .boardFinished:
             guard case .playing = state else { return [] }
-            if isTimed {
-                // Sa satom `finished` se ne šalje: sopstveni završni potez je otišao sa
-                // `end: true` i kraj stiže sa njegovim `ack`-om; inače je partija na
-                // serveru već završena (protivnikov `end: true` dok smo bili odsutni —
-                // `resumed` tada nema poruku kraja, kraj se vidi samo na tabli).
-                if pendingEndPly != nil { return [] }
-                return end(.board)
-            }
+            // Sa satom i sopstvenim završnim potezom na putu (`end: true`) kraj stiže
+            // sa njegovim `ack`-om — ovde se ništa ne šalje i ne završava.
+            if isTimed && pendingEndPly != nil { return [] }
             // Tabla je gotova pa se završava lokalno čak i bez veze; `finished`
-            // se šalje samo ako je veza živa. Inače partiju čisti protivnikov
-            // `finished` ili serverov prekid posle 30 minuta.
+            // se šalje samo ako je veza živa. Bez sata partiju inače čisti protivnikov
+            // `finished` ili serverov prekid posle 30 minuta. Sa satom se `finished`
+            // šalje isto: ako se dva telefona ikad ne slože oko remija po pravilu
+            // (protivnikov potez je stigao bez `end: true`), server bi bez njega držao
+            // partiju i sat bi i dalje tekao, pa bi igrač kasnije izgubio na vreme.
+            // Kad je partija na serveru već završena (npr. `resumed` posle protivnikovog
+            // `end: true` dok smo bili odsutni), server odgovara `game_gone`, koji se u
+            // `.ended` zanemaruje.
             let send: [OnlineEffect] = canAct ? [.send(.finished)] : []
             return send + end(.board)
 
@@ -405,10 +406,14 @@ struct OnlineMachine: Sendable {
 enum OnlineCloseConfirm: Equatable, Sendable {
     /// „Predati partiju?" [Predaj]
     case resign
-    /// „Partija će te čekati." [Zatvori]
+    /// „Partija će te čekati." [Zatvori] — partija bez sata.
     case gameWaits
+    /// „Sat i dalje teče." [Zatvori] — partija na vreme: odsustvo ne zaustavlja sat.
+    case clockRuns
 
-    init(canAct: Bool) { self = canAct ? .resign : .gameWaits }
+    init(canAct: Bool, timed: Bool = false) {
+        self = canAct ? .resign : (timed ? .clockRuns : .gameWaits)
+    }
 
     /// Potvrda predaje samo ako je ponuđena predaja I mašina u trenutku dodira još sme
     /// da igra; inače se ekran zatvara a partija čeka.
