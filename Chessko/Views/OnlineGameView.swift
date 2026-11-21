@@ -268,7 +268,8 @@ struct OnlineGameView: View {
         switch result {
         case .iResigned, .opponentResigned, .board: return game.statusMessage
         case .drawAgreed: return Loc("Remi – dogovor.")
-        case .aborted:    return Loc("Partija je prekinuta.")
+        case .aborted, .firstMoveExpired: return Loc("Partija je prekinuta.")
+        case .iFlagged, .opponentFlagged: return game.statusMessage   // tekstovi isteka: Task 7
         }
     }
 
@@ -281,7 +282,7 @@ struct OnlineGameView: View {
             endedArea
         case .playing where vm.updateRequired:
             statusLine(Loc("Za igru preko interneta potrebna je novija verzija aplikacije."), showsProgress: false)
-        case .playing(_, let link, let away, let drawByOpp, _):
+        case .playing(_, let link, let away, let drawByOpp, _, _):
             VStack(spacing: DS.Space.s) {
                 if let text = connectionText(link: link, away: away) {
                     statusLine(text, showsProgress: true)
@@ -358,7 +359,7 @@ struct OnlineGameView: View {
 
     @ViewBuilder
     private var actions: some View {
-        if case .playing(_, _, _, let drawByOpp, let drawByMe) = vm.state {
+        if case .playing(_, _, _, let drawByOpp, let drawByMe, _) = vm.state {
             let canAct = game.onlineCanMove
             HStack(spacing: DS.Space.s) {
                 Button { showResignConfirm = true } label: {

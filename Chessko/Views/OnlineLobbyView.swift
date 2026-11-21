@@ -34,7 +34,7 @@ struct OnlineLobbyView: View {
     }
 
     private var invitedCode: String? {
-        if case .invited(let from) = vm.state { return from }
+        if case .invited(let from, _) = vm.state { return from }
         return nil
     }
 
@@ -223,6 +223,7 @@ enum OnlineNoticeText {
         case .inviteCancelled: return Loc("Poziv je otkazan.")
         case .drawDeclined:   return Loc("Prijatelj je odbio remi.")
         case .codeTaken:      return ""
+        case .needsUpdate:    return ""   // tekst dolazi u Task 7
         }
     }
 }

@@ -1,7 +1,8 @@
 import Foundation
 
 // Mašina stanja igre preko interneta: čista funkcija (događaj → novo stanje +
-// efekti). Bez mreže i tajmera — efekte izvršava OnlineViewModel (Task 9).
+// efekti). Bez mreže i tajmera — efekte izvršava OnlineViewModel. Vreme ulazi
+// samo kroz `received(_, at:)` (za prikaz sata), mašina ga ne meri.
 // Foundation-only.
 
 struct ActiveGame: Codable, Equatable, Sendable {
@@ -9,12 +10,36 @@ struct ActiveGame: Codable, Equatable, Sendable {
     let token: String
     let color: PieceColor
     let opponent: String
+    /// Vremenska kontrola; `nil` = partija bez sata. Stari zapisi (bez polja) se
+    /// dekodiraju kao `nil` — svaka partija pre protokola v2 je bez sata.
+    let clock: ClockSpec?
+
+    init(game: String, token: String, color: PieceColor, opponent: String, clock: ClockSpec? = nil) {
+        self.game = game
+        self.token = token
+        self.color = color
+        self.opponent = opponent
+        self.clock = clock
+    }
+}
+
+/// Poslednje stanje sata sa servera i trenutak kad je primljeno (`receivedAt`, iz
+/// događaja — mašina ne zna za vreme). Prikaz odbrojava od toga; server je istina.
+struct ClockReading: Equatable, Sendable {
+    let wire: WireClock
+    let receivedAt: Double
 }
 
 // Zove se OnlineLink (ne Link) da se ne sudara sa SwiftUI-jevim `Link`.
 enum OnlineLink: Equatable, Sendable { case connected, reconnecting }
 
-enum OnlineResult: Equatable, Sendable { case iResigned, opponentResigned, drawAgreed, aborted, board }
+enum OnlineResult: Equatable, Sendable {
+    case iResigned, opponentResigned, drawAgreed, aborted, board
+    /// Partija na vreme: istekao mi je sat / protivniku je istekao sat.
+    case iFlagged, opponentFlagged
+    /// Partija na vreme: prvi potez nije odigran u roku; bez rezultata.
+    case firstMoveExpired
+}
 
 enum OnlineNotice: Equatable, Sendable {
     case offline, busy, selfCode, rateLimited, badCode, declined
@@ -22,22 +47,28 @@ enum OnlineNotice: Equatable, Sendable {
     /// (resume preuzima mesto, ili se ponovo povezuje sa backoff-om).
     case codeTaken
     case inviteCancelled, drawDeclined
+    /// Poziv sa satom stigao je do starije verzije aplikacije (`needs_update`).
+    case needsUpdate
 }
 
 enum OnlineState: Equatable, Sendable {
     case idle, connecting, lobby
     case inviting(to: String)
-    case invited(from: String)
+    /// `clock == nil`: poziv bez sata.
+    case invited(from: String, clock: ClockSpec?)
+    /// `clock == nil`: partija bez sata (ili sat još nije stigao).
     case playing(ActiveGame, link: OnlineLink, opponentAway: Bool,
-                 drawOfferedByOpponent: Bool, drawOfferedByMe: Bool)
+                 drawOfferedByOpponent: Bool, drawOfferedByMe: Bool, clock: ClockReading?)
     case ended(OnlineResult)
 }
 
 enum OnlineEvent: Sendable {
     case socketOpened, socketClosed
-    case received(ServerMessage)
-    case invite(code: String), cancelInvite, accept, decline
-    case localMove(ply: Int, uci: String)
+    /// `at`: trenutak prijema (sekunde, npr. `Date().timeIntervalSinceReferenceDate`).
+    case received(ServerMessage, at: Double)
+    case invite(code: String, clock: ClockSpec?), cancelInvite, accept, decline
+    /// `ends`: potez po pravilima završava partiju (mat, pat, remi po pravilu).
+    case localMove(ply: Int, uci: String, ends: Bool)
     case resign, offerDraw, answerDraw(Bool), boardFinished, appBecameActive
     /// Iz `.ended` nazad u lobi (isti socket, bez novog hello-a ako je živ).
     case backToLobby
@@ -66,12 +97,20 @@ struct OnlineMachine: Sendable {
     /// Server je odbio verziju protokola (`error version`). Kraj za ovu sesiju:
     /// mašina više ne traži vezu i ignoriše sve događaje; UI trajno traži ažuriranje.
     private(set) var updateRequired = false
+    /// Partija na vreme: poslat je sopstveni završni potez (`end: true`), kraj se
+    /// proglašava tek na njegov `ack` (server je istina — potez je mogao stići kasno).
+    private var pendingEndPly: Int?
 
     /// Igrač sme da igra/predaje/nudi remi samo dok je veza živa. UI onemogućava
-    /// tablu i dugmad kad je `false`.
+    /// tablu i dugmad kad je `false`. Dok se čeka `ack` završnog poteza nema akcija.
     var canAct: Bool {
-        guard !updateRequired else { return false }
-        if case .playing(_, .connected, _, _, _) = state { return true }
+        guard !updateRequired, pendingEndPly == nil else { return false }
+        if case .playing(_, .connected, _, _, _, _) = state { return true }
+        return false
+    }
+
+    private var isTimed: Bool {
+        if case .playing(let g, _, _, _, _, _) = state { return g.clock != nil }
         return false
     }
 
@@ -90,6 +129,7 @@ struct OnlineMachine: Sendable {
 
     private mutating func end(_ r: OnlineResult) -> [OnlineEffect] {
         stored = nil
+        pendingEndPly = nil
         state = .ended(r)
         return [.persist(nil)]
     }
@@ -99,7 +139,7 @@ struct OnlineMachine: Sendable {
         switch e {
         case .socketOpened: socketAlive = true; socketBound = false
         case .socketClosed: socketAlive = false; socketBound = false
-        case .received(.welcome), .received(.resumed): socketBound = true
+        case .received(.welcome, _), .received(.resumed, _): socketBound = true
         default: break
         }
         if updateRequired { return [] }
@@ -124,7 +164,7 @@ struct OnlineMachine: Sendable {
             switch state {
             case .idle, .connecting:
                 state = .connecting
-            case .playing(_, .reconnecting, _, _, _):
+            case .playing(_, .reconnecting, _, _, _, _):
                 break
             default:
                 return []
@@ -138,9 +178,9 @@ struct OnlineMachine: Sendable {
             case .idle, .connecting, .lobby, .inviting, .invited:
                 state = .connecting
                 return [nextBackoff()]
-            case .playing(let g, _, let away, let dBy, let dMe):
+            case .playing(let g, _, let away, let dBy, let dMe, let c):
                 state = .playing(g, link: .reconnecting, opponentAway: away,
-                                 drawOfferedByOpponent: dBy, drawOfferedByMe: dMe)
+                                 drawOfferedByOpponent: dBy, drawOfferedByMe: dMe, clock: c)
                 return [nextBackoff()]
             case .ended:
                 return []
@@ -148,58 +188,77 @@ struct OnlineMachine: Sendable {
 
         case .appBecameActive:
             switch state {
-            case .playing(_, .reconnecting, _, _, _), .connecting: return [.connect]
+            case .playing(_, .reconnecting, _, _, _, _), .connecting: return [.connect]
             default: return []
             }
 
-        case .invite(let code):
+        case .invite(let code, let clock):
             guard case .lobby = state else { return [] }
             state = .inviting(to: code)
-            return [.send(.invite(to: code, clock: nil))]
+            return [.send(.invite(to: code, clock: clock))]
         case .cancelInvite:
             guard case .inviting = state else { return [] }
             state = .lobby
             return [.send(.cancel)]
         case .accept:
-            guard case .invited(let from) = state else { return [] }
-            return [.send(.accept(from: from, clock: nil))]
+            // Isti sat koji je pozvani video (server ignoriše `accept` sa drugim).
+            guard case .invited(let from, let clock) = state else { return [] }
+            return [.send(.accept(from: from, clock: clock))]
         case .decline:
-            guard case .invited(let from) = state else { return [] }
+            guard case .invited(let from, _) = state else { return [] }
             state = .lobby
             return [.send(.decline(from: from))]
 
         // Dok je veza prekinuta (.reconnecting) akcije se odbijaju (canAct).
         // Potez koji je utrčao u umirući socket ispravlja `replaceMoves` posle
         // `resumed` — server je istina.
-        case .localMove(let ply, let uci):
+        case .localMove(let ply, let uci, let ends):
             guard canAct else { return [] }
-            return [.send(.move(ply: ply, uci: uci, end: false))]
+            // Bez sata `end` se ne šalje (kraj ide kroz `finished`, kao u v1).
+            guard ends, isTimed else { return [.send(.move(ply: ply, uci: uci, end: false))] }
+            pendingEndPly = ply
+            return [.send(.move(ply: ply, uci: uci, end: true))]
         case .resign:
             guard canAct else { return [] }
             return [.send(.resign)] + end(.iResigned)
         case .offerDraw:
-            guard canAct, case .playing(let g, let l, let a, let dBy, _) = state else { return [] }
-            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: dBy, drawOfferedByMe: true)
+            guard canAct, case .playing(let g, let l, let a, let dBy, _, let c) = state else { return [] }
+            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: dBy, drawOfferedByMe: true, clock: c)
             return [.send(.drawOffer)]
         case .answerDraw(let acc):
-            guard canAct, case .playing(let g, let l, let a, _, let dMe) = state else { return [] }
+            guard canAct, case .playing(let g, let l, let a, _, let dMe, let c) = state else { return [] }
             if acc { return [.send(.drawReply(accept: true))] + end(.drawAgreed) }
-            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: false, drawOfferedByMe: dMe)
+            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: false, drawOfferedByMe: dMe, clock: c)
             return [.send(.drawReply(accept: false))]
         case .boardFinished:
             guard case .playing = state else { return [] }
+            if isTimed {
+                // Sa satom `finished` se ne šalje: sopstveni završni potez je otišao sa
+                // `end: true` i kraj stiže sa njegovim `ack`-om; inače je partija na
+                // serveru već završena (protivnikov `end: true` dok smo bili odsutni —
+                // `resumed` tada nema poruku kraja, kraj se vidi samo na tabli).
+                if pendingEndPly != nil { return [] }
+                return end(.board)
+            }
             // Tabla je gotova pa se završava lokalno čak i bez veze; `finished`
             // se šalje samo ako je veza živa. Inače partiju čisti protivnikov
             // `finished` ili serverov prekid posle 30 minuta.
             let send: [OnlineEffect] = canAct ? [.send(.finished)] : []
             return send + end(.board)
 
-        case .received(let m):
-            return receive(m)
+        case .received(let m, let at):
+            return receive(m, at: at)
         }
     }
 
-    private mutating func receive(_ m: ServerMessage) -> [OnlineEffect] {
+    /// Novo stanje sata (`nil` u poruci ne briše poslednje poznato).
+    private mutating func refreshClock(_ wire: WireClock?, at: Double) {
+        guard let wire, case .playing(let g, let l, let a, let dBy, let dMe, _) = state else { return }
+        state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: dBy, drawOfferedByMe: dMe,
+                         clock: ClockReading(wire: wire, receivedAt: at))
+    }
+
+    private mutating func receive(_ m: ServerMessage, at: Double) -> [OnlineEffect] {
         switch m {
         case .welcome:
             switch state {
@@ -211,17 +270,25 @@ struct OnlineMachine: Sendable {
             default: return []
             }
 
-        case .resumed(_, _, let moves, let online, _):
+        case .resumed(_, _, let moves, let online, let clock):
             guard let s = stored else { return [] }
             reconnectAttempt = 0
+            // Završni potez koji nije stigao do servera nije u `moves`; partija ide dalje.
+            pendingEndPly = nil
+            // Za već završenu partiju sat je zamrznut, a poruka kraja (ili kraj na
+            // tabli) stiže odmah posle — ovo stanje sata traje samo do nje.
             state = .playing(s, link: .connected, opponentAway: !online,
-                             drawOfferedByOpponent: false, drawOfferedByMe: false)
+                             drawOfferedByOpponent: false, drawOfferedByMe: false,
+                             clock: clock.map { ClockReading(wire: $0, receivedAt: at) })
             return [.replaceMoves(moves)]
 
         case .error(let err):
             switch err {
             case .gameGone:
                 guard stored != nil else { return [] }
+                // `game_gone` dobija strana koja je završila partiju: njen završni potez
+                // (`end: true`) je prihvaćen, samo `ack` nije stigao pre prekida veze.
+                if pendingEndPly != nil { return end(.board) }
                 return end(.aborted)
             case .codeTaken:
                 if stored != nil { return [] }
@@ -235,15 +302,23 @@ struct OnlineMachine: Sendable {
             case .busy: return backToLobby(.busy)
             case .self_: return backToLobby(.selfCode)
             case .rateLimited: return backToLobby(.rateLimited)
-            case .needsUpdate, .badClock: return []   // sat: ponašanje u Tasku 6
+            case .needsUpdate: return backToLobby(.needsUpdate)
+            case .badClock:
+                // Ispravan klijent je ne izaziva (šalje samo `.blitz`/`.rapid`): nazad u lobi.
+                switch state {
+                case .inviting, .invited: state = .lobby
+                default: break
+                }
+                return []
             }
 
         case .inviteSent(let to):
             if case .inviting = state { state = .inviting(to: to) }
             return []
-        case .invited(let from, _):
+        case .invited(let from, let clock):
             guard case .lobby = state else { return [] }
-            state = .invited(from: from)
+            // Bez `clock` (ili neispravan) = poziv bez sata; sat se ne izmišlja.
+            state = .invited(from: from, clock: clock)
             return []
         case .inviteCancelled:
             guard case .invited = state else { return [] }
@@ -254,24 +329,44 @@ struct OnlineMachine: Sendable {
             state = .lobby
             return [.showMessage(.declined)]
 
-        case .start(let game, let color, let token, let opponent, _):
+        case .start(let game, let color, let token, let opponent, let clock):
             switch state {
             case .lobby, .inviting, .invited: break
             default: return []
             }
-            let g = ActiveGame(game: game, token: token, color: color, opponent: opponent)
+            let g = ActiveGame(game: game, token: token, color: color, opponent: opponent, clock: clock?.spec)
             stored = g
+            pendingEndPly = nil
             state = .playing(g, link: .connected, opponentAway: false,
-                             drawOfferedByOpponent: false, drawOfferedByMe: false)
+                             drawOfferedByOpponent: false, drawOfferedByMe: false,
+                             clock: clock.map { ClockReading(wire: $0, receivedAt: at) })
             return [.persist(g), .startGame(g)]
 
-        case .move(let ply, let uci, _, _):
+        case .move(let ply, let uci, let ends, let clock):
             guard case .playing = state else { return [] }
+            refreshClock(clock, at: at)
+            // Sa satom server je partiju već završio (Ruling 2): bez `finished`.
+            // Bez sata `end` nema značenje — kraj ide kroz `boardFinished` kao do sada.
+            if ends && isTimed { return [.applyRemoteMove(ply: ply, uci: uci)] + end(.board) }
             return [.applyRemoteMove(ply: ply, uci: uci)]
-        case .sync(let moves, _):
+        case .sync(let moves, let clock):
             guard case .playing = state else { return [] }
+            refreshClock(clock, at: at)
+            // Server nije prihvatio naš potez (pa ni završni).
+            pendingEndPly = nil
             return [.replaceMoves(moves)]
-        case .ack, .flag, .firstMoveExpired, .unknown:
+        case .ack(let ply, let clock):
+            guard case .playing = state else { return [] }
+            refreshClock(clock, at: at)
+            if let p = pendingEndPly, p == ply { return end(.board) }
+            return []
+        case .flag(let loser):
+            guard case .playing(let g, _, _, _, _, _) = state else { return [] }
+            return end(loser == g.color ? .iFlagged : .opponentFlagged)
+        case .firstMoveExpired:
+            guard case .playing = state else { return [] }
+            return end(.firstMoveExpired)
+        case .unknown:
             return []
 
         case .resigned:
@@ -281,17 +376,17 @@ struct OnlineMachine: Sendable {
             guard case .playing = state else { return [] }
             return end(.aborted)
         case .drawOffer:
-            guard case .playing(let g, let l, let a, _, let dMe) = state else { return [] }
-            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: true, drawOfferedByMe: dMe)
+            guard case .playing(let g, let l, let a, _, let dMe, let c) = state else { return [] }
+            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: true, drawOfferedByMe: dMe, clock: c)
             return []
         case .drawReply(let acc):
-            guard case .playing(let g, let l, let a, let dBy, _) = state else { return [] }
+            guard case .playing(let g, let l, let a, let dBy, _, let c) = state else { return [] }
             if acc { return end(.drawAgreed) }
-            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: dBy, drawOfferedByMe: false)
+            state = .playing(g, link: l, opponentAway: a, drawOfferedByOpponent: dBy, drawOfferedByMe: false, clock: c)
             return [.showMessage(.drawDeclined)]
         case .opponent(let online):
-            guard case .playing(let g, let l, _, let dBy, let dMe) = state else { return [] }
-            state = .playing(g, link: l, opponentAway: !online, drawOfferedByOpponent: dBy, drawOfferedByMe: dMe)
+            guard case .playing(let g, let l, _, let dBy, let dMe, let c) = state else { return [] }
+            state = .playing(g, link: l, opponentAway: !online, drawOfferedByOpponent: dBy, drawOfferedByMe: dMe, clock: c)
             return []
         }
     }

@@ -62,7 +62,11 @@ final class OnlineViewModel {
         machine = OnlineMachine(myCode: code, stored: stored)
         game = GameViewModel(saveKey: GameViewModel.onlineSaveKey)
         game.onlineCanMove = machine.canAct
-        game.onLocalMove = { [weak self] ply, uci in self?.handle(.localMove(ply: ply, uci: uci)) }
+        // Poziva se posle primene poteza, pa `isGameOver` kaže da li potez završava partiju.
+        game.onLocalMove = { [weak self] ply, uci in
+            guard let self else { return }
+            self.handle(.localMove(ply: ply, uci: uci, ends: self.game.isGameOver))
+        }
         game.onBoardFinished = { [weak self] in self?.handle(.boardFinished) }
     }
 
@@ -89,7 +93,7 @@ final class OnlineViewModel {
 
     func invite(_ input: String) {
         guard let code = OnlineCode.normalize(input) else { notice = .badCode; return }
-        handle(.invite(code: code))
+        handle(.invite(code: code, clock: nil))   // izbor sata: Task 7
     }
     func accept() { handle(.accept) }
     func decline() { handle(.decline) }
@@ -248,7 +252,7 @@ final class OnlineViewModel {
         }
         c.onMessage = { [weak self] m in
             guard let self, self.generation == gen else { return }
-            self.handle(.received(m))
+            self.handle(.received(m, at: Date().timeIntervalSinceReferenceDate))
         }
         c.onClose = { [weak self] in
             guard let self, self.generation == gen else { return }
@@ -290,7 +294,7 @@ final class OnlineViewModel {
     private var needsConnection: Bool {
         switch machine.state {
         case .connecting: return uiOpen || machine.stored != nil
-        case .playing(_, .reconnecting, _, _, _): return true
+        case .playing(_, .reconnecting, _, _, _, _): return true
         default: return false
         }
     }

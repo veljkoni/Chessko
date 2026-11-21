@@ -1080,8 +1080,8 @@ final class GameViewModel {
             gameState.status = .resigned(playerColor)
             SoundManager.shared.playMove()
             Haptics.notification(.error)
-        case .board, .aborted:
-            break
+        case .board, .aborted, .iFlagged, .opponentFlagged, .firstMoveExpired:
+            break   // prikaz krajeva na vreme: Task 7
         }
         clearSave()
         updateEvaluation()
