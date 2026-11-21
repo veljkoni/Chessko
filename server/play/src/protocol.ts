@@ -1,3 +1,6 @@
+import type { ClockSpec, WireClock } from "./clock";
+
+export const PROTOCOL_VERSIONS: readonly number[] = [1, 2];
 export const PROTOCOL_VERSION = 1;
 export const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
@@ -15,16 +18,18 @@ export type ErrorReason =
   | "offline"
   | "busy"
   | "self"
-  | "rate_limited";
+  | "rate_limited"
+  | "needs_update"
+  | "bad_clock";
 
 export type ClientMessage =
   | { t: "hello"; v: number; code: string }
   | { t: "resume"; game: string; token: string }
-  | { t: "invite"; to: string }
+  | { t: "invite"; to: string; clock?: ClockSpec }
   | { t: "cancel" }
-  | { t: "accept"; from: string }
+  | { t: "accept"; from: string; clock?: ClockSpec }
   | { t: "decline"; from: string }
-  | { t: "move"; ply: number; uci: string }
+  | { t: "move"; ply: number; uci: string; end?: true }
   | { t: "resign" }
   | { t: "draw_offer" }
   | { t: "draw_reply"; accept: boolean }
@@ -33,15 +38,15 @@ export type ClientMessage =
 export type ServerMessage =
   | { t: "welcome"; code: string }
   | { t: "error"; reason: ErrorReason }
-  | { t: "resumed"; game: string; color: "w" | "b"; moves: string[]; opponent: "online" | "away" }
+  | { t: "resumed"; game: string; color: "w" | "b"; moves: string[]; opponent: "online" | "away"; clock?: WireClock }
   | { t: "invite_sent"; to: string }
-  | { t: "invited"; from: string }
+  | { t: "invited"; from: string; clock?: ClockSpec }
   | { t: "invite_cancelled"; from: string }
-  | { t: "start"; game: string; color: "w" | "b"; token: string; opponent: string }
+  | { t: "start"; game: string; color: "w" | "b"; token: string; opponent: string; clock?: WireClock }
   | { t: "declined"; by: string }
-  | { t: "move"; ply: number; uci: string }
-  | { t: "ack"; ply: number }
-  | { t: "sync"; moves: string[] }
+  | { t: "move"; ply: number; uci: string; clock?: WireClock; end?: true }
+  | { t: "ack"; ply: number; clock?: WireClock }
+  | { t: "sync"; moves: string[]; clock?: WireClock }
   | { t: "resigned" }
   | { t: "draw_offer" }
   | { t: "draw_reply"; accept: boolean }
@@ -51,6 +56,10 @@ export type ServerMessage =
 /** Prilog WebSocket-a; preživljava hibernaciju (serializeAttachment). */
 export interface Attachment {
   code: string | null;
+  /** Verzija protokola iz hello (izostalo = 1). */
+  v?: number;
+  /** Sat poziva koji je ova strana poslala (do accept/cancel/decline). */
+  inviteClock?: ClockSpec;
   game?: string;
   /** Kod koji je ova strana pozvala i koji jos nije odgovorio. */
   invite?: string;

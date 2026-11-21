@@ -33,7 +33,7 @@ describe("presence", () => {
 
   it("hello sa nepoznatom verzijom dobija error version", async () => {
     const ws = await connect();
-    expect(await ask(ws, { t: "hello", v: 2, code: "K7M4QX" })).toEqual({ t: "error", reason: "version" });
+    expect(await ask(ws, { t: "hello", v: 3, code: "K7M4QX" })).toEqual({ t: "error", reason: "version" });
     ws.close();
   });
 

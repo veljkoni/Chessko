@@ -1,11 +1,12 @@
 import { DurableObject } from "cloudflare:workers";
 import {
-  PROTOCOL_VERSION,
+  PROTOCOL_VERSIONS,
   isValidCode,
   type Attachment,
   type ClientMessage,
   type ServerMessage,
 } from "./protocol";
+import { applyMove, isAllowedClock, newClock, snapshot, type ClockSpec, type ClockState, type WireClock } from "./clock";
 
 const INVITE_LIMIT = 10;
 const INVITE_WINDOW_MS = 60_000;
@@ -27,7 +28,10 @@ export class Hub extends DurableObject {
     );
     // Kraj dok je druga strana odsutna (I1): `ended` = resigned | draw | finished,
     // `ended_to` = boja kojoj rezultat jos nije javljen. Starija tabela (v1) dobija kolone.
-    for (const col of ["ended TEXT", "ended_to TEXT"]) {
+    for (const col of [
+      "ended TEXT", "ended_to TEXT",
+      "clock_base INTEGER", "clock_inc INTEGER", "w_ms INTEGER", "b_ms INTEGER", "turn_started INTEGER",
+    ]) {
       try {
         ctx.storage.sql.exec(`ALTER TABLE games ADD COLUMN ${col}`);
       } catch {
@@ -152,7 +156,7 @@ export class Hub extends DurableObject {
   private onHello(ws: WebSocket, msg: Extract<ClientMessage, { t: "hello" }>): void {
     const current = ws.deserializeAttachment() as Attachment | null;
     if (current?.code) return; // veza vec ima kod: ignorise se
-    if (msg.v !== PROTOCOL_VERSION) {
+    if (typeof msg.v !== "number" || !PROTOCOL_VERSIONS.includes(msg.v)) {
       this.send(ws, { t: "error", reason: "version" });
       return;
     }
@@ -166,8 +170,30 @@ export class Hub extends DurableObject {
     }
     const att = (ws.deserializeAttachment() as Attachment | null) ?? { code: null, invites: [] };
     att.code = msg.code;
+    att.v = msg.v;
     ws.serializeAttachment(att);
     this.send(ws, { t: "welcome", code: msg.code });
+  }
+
+  private clearInvite(att: Attachment): void {
+    delete att.invite;
+    delete att.inviteClock;
+  }
+
+  private isV2(ws: WebSocket | undefined): boolean {
+    return !!ws && (this.attOf(ws).v ?? 1) >= 2;
+  }
+
+  /** Poruka sa satom samo vezama v2; v1 dobija poruku tacno kao ranije. */
+  private sendClocked(ws: WebSocket, msg: ServerMessage, clock: WireClock | null, extra?: { end?: true }): void {
+    if (this.isV2(ws)) {
+      const m = { ...msg } as Record<string, unknown>;
+      if (clock) m.clock = clock;
+      if (extra?.end) m.end = true;
+      this.send(ws, m as ServerMessage);
+    } else {
+      this.send(ws, msg);
+    }
   }
 
   private attOf(ws: WebSocket): Attachment {
@@ -207,6 +233,10 @@ export class Hub extends DurableObject {
       this.send(ws, { t: "error", reason: "self" });
       return;
     }
+    if (msg.clock !== undefined && !isAllowedClock(msg.clock)) {
+      this.send(ws, { t: "error", reason: "bad_clock" });
+      return;
+    }
     const target = this.socketForCode(to, ws);
     if (!target) {
       this.send(ws, { t: "error", reason: "offline" });
@@ -218,17 +248,25 @@ export class Hub extends DurableObject {
       this.send(ws, { t: "error", reason: "busy" });
       return;
     }
+    const spec: ClockSpec | undefined = msg.clock === undefined ? undefined : { base: msg.clock.base, inc: msg.clock.inc };
+    if (spec && !this.isV2(target)) {
+      this.send(ws, { t: "error", reason: "needs_update" });
+      return;
+    }
     att.invite = to;
+    if (spec) att.inviteClock = spec;
+    else delete att.inviteClock;
     ws.serializeAttachment(att);
     this.send(ws, { t: "invite_sent", to });
-    this.send(target, { t: "invited", from: att.code });
+    if (spec) this.send(target, { t: "invited", from: att.code, clock: spec });
+    else this.send(target, { t: "invited", from: att.code });
   }
 
   private onCancel(ws: WebSocket): void {
     const att = this.attOf(ws);
     if (!att.code || !att.invite) return;
     const target = this.socketForCode(att.invite, ws);
-    delete att.invite;
+    this.clearInvite(att);
     ws.serializeAttachment(att);
     if (target) {
       this.send(target, { t: "invite_cancelled", from: att.code });
@@ -242,10 +280,17 @@ export class Hub extends DurableObject {
     if (!inviter) return;
     const iatt = this.attOf(inviter);
     if (iatt.invite !== att.code || iatt.game) return;
+    const offered = iatt.inviteClock;
+    const given = msg.clock;
+    if (offered) {
+      if (!given || given.base !== offered.base || given.inc !== offered.inc) return;
+    } else if (given !== undefined) {
+      return;
+    }
 
     if (att.invite) {
       const own = this.socketForCode(att.invite, ws);
-      delete att.invite;
+      this.clearInvite(att);
       if (own) this.send(own, { t: "invite_cancelled", from: att.code });
     }
     const game = randomHex(16);
@@ -256,42 +301,66 @@ export class Hub extends DurableObject {
     const black = inviterWhite ? att.code : iatt.code!;
     const whiteToken = randomHex(16);
     const blackToken = randomHex(16);
+    const clock = offered ? newClock(offered, Date.now()) : null;
     this.ctx.storage.sql.exec(
-      "INSERT INTO games (id, white, black, white_token, black_token, moves, white_away, black_away) VALUES (?, ?, ?, ?, ?, '[]', NULL, NULL)",
+      `INSERT INTO games (id, white, black, white_token, black_token, moves, white_away, black_away,
+        clock_base, clock_inc, w_ms, b_ms, turn_started)
+       VALUES (?, ?, ?, ?, ?, '[]', NULL, NULL, ?, ?, ?, ?, ?)`,
       game,
       white,
       black,
       whiteToken,
       blackToken,
+      clock?.base ?? null,
+      clock?.inc ?? null,
+      clock?.wMs ?? null,
+      clock?.bMs ?? null,
+      clock?.turnStarted ?? null,
     );
-    delete iatt.invite;
+    this.clearInvite(iatt);
     iatt.game = game;
     att.game = game;
     inviter.serializeAttachment(iatt);
     ws.serializeAttachment(att);
-    this.send(inviter, {
+    const wire = clock ? snapshot(clock, Date.now()) : null;
+    this.sendClocked(inviter, {
       t: "start",
       game,
       color: inviterWhite ? "w" : "b",
       token: inviterWhite ? whiteToken : blackToken,
       opponent: att.code,
-    });
-    this.send(ws, {
+    }, wire);
+    this.sendClocked(ws, {
       t: "start",
       game,
       color: inviterWhite ? "b" : "w",
       token: inviterWhite ? blackToken : whiteToken,
       opponent: iatt.code!,
-    });
+    }, wire);
   }
 
-  private gameRow(id: string): { white: string; black: string; moves: string[] } | undefined {
+  private gameRow(id: string): { white: string; black: string; moves: string[]; clock: ClockState | null } | undefined {
     const rows = this.ctx.storage.sql
-      .exec("SELECT white, black, moves FROM games WHERE id = ?", id)
+      .exec("SELECT white, black, moves, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games WHERE id = ?", id)
       .toArray();
     if (rows.length === 0) return undefined;
-    const r = rows[0] as { white: string; black: string; moves: string };
-    return { white: r.white, black: r.black, moves: JSON.parse(r.moves) as string[] };
+    const r = rows[0] as {
+      white: string; black: string; moves: string;
+      clock_base: number | null; clock_inc: number | null; w_ms: number | null; b_ms: number | null;
+      turn_started: number | null;
+    };
+    const moves = JSON.parse(r.moves) as string[];
+    return { white: r.white, black: r.black, moves, clock: this.clockOf(r, moves.length) };
+  }
+
+  private clockOf(
+    r: { clock_base: number | null; clock_inc: number | null; w_ms: number | null; b_ms: number | null; turn_started: number | null },
+    ply: number,
+  ): ClockState | null {
+    if (r.clock_base === null || r.clock_inc === null || r.w_ms === null || r.b_ms === null || r.turn_started === null) {
+      return null;
+    }
+    return { base: r.clock_base, inc: r.clock_inc, wMs: r.w_ms, bMs: r.b_ms, turnStarted: r.turn_started, ply };
   }
 
   /** Brise partiju i oslobada obe strane (prilog `game`) za nove pozive. */
@@ -335,13 +404,28 @@ export class Hub extends DurableObject {
       typeof msg.uci !== "string" || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(msg.uci) ||
       turn !== g.mine || msg.ply !== g.row.moves.length
     ) {
-      this.send(ws, { t: "sync", moves: g.row.moves });
+      this.sendClocked(ws, { t: "sync", moves: g.row.moves }, g.row.clock ? snapshot(g.row.clock, Date.now()) : null);
       return;
+    }
+    const now = Date.now();
+    let wire: WireClock | null = null;
+    if (g.row.clock) {
+      const res = applyMove(g.row.clock, now);
+      if (!res.ok) {
+        // Zastava i prvi potez: obradjuje Task 3; do tada potez nije prihvacen.
+        this.sendClocked(ws, { t: "sync", moves: g.row.moves }, snapshot(g.row.clock, now));
+        return;
+      }
+      wire = snapshot(res.next, now);
+      this.ctx.storage.sql.exec(
+        "UPDATE games SET w_ms = ?, b_ms = ?, turn_started = ? WHERE id = ?",
+        res.next.wMs, res.next.bMs, res.next.turnStarted, g.id,
+      );
     }
     g.row.moves.push(msg.uci);
     this.ctx.storage.sql.exec("UPDATE games SET moves = ? WHERE id = ?", JSON.stringify(g.row.moves), g.id);
-    this.send(ws, { t: "ack", ply: msg.ply });
-    if (g.opp) this.send(g.opp, { t: "move", ply: msg.ply, uci: msg.uci });
+    this.sendClocked(ws, { t: "ack", ply: msg.ply }, wire);
+    if (g.opp) this.sendClocked(g.opp, { t: "move", ply: msg.ply, uci: msg.uci }, wire, msg.end === true ? { end: true } : undefined);
   }
 
   private onResign(ws: WebSocket): void {
@@ -398,7 +482,7 @@ export class Hub extends DurableObject {
     if (!inviter) return;
     const iatt = this.attOf(inviter);
     if (iatt.invite !== att.code) return;
-    delete iatt.invite;
+    this.clearInvite(iatt);
     inviter.serializeAttachment(iatt);
     this.send(inviter, { t: "declined", by: att.code });
   }
@@ -409,7 +493,7 @@ export class Hub extends DurableObject {
     if (!att.code) return;
     if (att.invite) {
       const target = this.socketForCode(att.invite, ws);
-      delete att.invite;
+      this.clearInvite(att);
       ws.serializeAttachment(att);
       if (target) this.send(target, { t: "invite_cancelled", from: att.code });
     }
@@ -417,7 +501,7 @@ export class Hub extends DurableObject {
       if (other === ws) continue;
       const oatt = this.attOf(other);
       if (oatt.invite === att.code) {
-        delete oatt.invite;
+        this.clearInvite(oatt);
         other.serializeAttachment(oatt);
         this.send(other, { t: "error", reason: "offline" });
       }
@@ -439,13 +523,15 @@ export class Hub extends DurableObject {
     if (typeof msg.game !== "string" || typeof msg.token !== "string") return gone();
     const rows = this.ctx.storage.sql
       .exec(
-        "SELECT white, black, white_token, black_token, moves, white_away, black_away, ended, ended_to FROM games WHERE id = ?",
+        "SELECT white, black, white_token, black_token, moves, white_away, black_away, ended, ended_to, clock_base, clock_inc, w_ms, b_ms, turn_started FROM games WHERE id = ?",
         msg.game,
       )
       .toArray() as unknown as {
       white: string; black: string; white_token: string; black_token: string;
       moves: string; white_away: number | null; black_away: number | null;
       ended: "resigned" | "draw" | "finished" | null; ended_to: "w" | "b" | null;
+      clock_base: number | null; clock_inc: number | null; w_ms: number | null; b_ms: number | null;
+      turn_started: number | null;
     }[];
     const r = rows[0];
     if (!r) return gone();
@@ -474,7 +560,7 @@ export class Hub extends DurableObject {
     const att = this.attOf(ws);
     att.code = myCode;
     att.game = msg.game;
-    delete att.invite;
+    this.clearInvite(att);
     ws.serializeAttachment(att);
 
     if (r.ended) {
@@ -496,13 +582,15 @@ export class Hub extends DurableObject {
       msg.game,
     );
     const opp = this.seatSocket(msg.game, oppCode, ws);
-    this.send(ws, {
+    const resumedMoves = JSON.parse(r.moves) as string[];
+    const rclock = this.clockOf(r, resumedMoves.length);
+    this.sendClocked(ws, {
       t: "resumed",
       game: msg.game,
       color: mine,
-      moves: JSON.parse(r.moves) as string[],
+      moves: resumedMoves,
       opponent: opp ? "online" : "away",
-    });
+    }, rclock ? snapshot(rclock, Date.now()) : null);
     if (wasAway && opp) this.send(opp, { t: "opponent", state: "back" });
     // Protivnik bez veze a bez oznake (veza izgubljena bez webSocketClose, npr. deploy).
     if (!opp) this.stampAway(msg.game, mine === "w" ? "b" : "w");
