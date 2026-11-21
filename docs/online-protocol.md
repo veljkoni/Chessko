@@ -26,7 +26,7 @@ Sve poruke su JSON objekti sa poljem `t`. Kod je 6 znakova iz abecede
 | S→K | `{t:"flag", loser:"w"\|"b"}` | v2, partija sa satom: istekao sat strane `loser`; prisutnim stranama odmah, odsutnoj posle `resume` (posle `resumed`) |
 | S→K | `{t:"first_move_expired"}` | v2, partija sa satom: strana nije odigrala prvi potez u roku od 30 s; partija se briše bez rezultata |
 
-`resume` ne traži prethodni `hello` (ali vidi (g) ispod: bez `hello` veza se tretira kao v1): autentikuje se samo tokenom, vezuje kod sedišta za vezu i zatvara svaku drugu vezu sa tim kodom (preuzimanje sedišta).
+`resume` ne traži prethodni `hello` (ali vidi „Saradnja v1 ↔ v2“: bez `hello` veza se tretira kao v1): autentikuje se samo tokenom, vezuje kod sedišta za vezu i zatvara svaku drugu vezu sa tim kodom (preuzimanje sedišta).
 
 Verzija: `resume` ne nosi `v`. Server proverava verziju samo na `hello`, a klijenti ga uvek šalju pre `resume` na istoj vezi; klijent koji dobije `{t:"error", reason:"version"}` prestaje da se povezuje i ignoriše sve dalje poruke, pa budućem serveru je dovoljno da odbije stari `hello`.
 
@@ -52,11 +52,11 @@ Partija na vreme postoji samo kad pozivalac pošalje `clock` u `invite`, a pozva
 | `run` | `"w"`, `"b"` ili `null`: čiji sat teče; `null` dok je odigrano manje od 2 poteza |
 | `first` | milisekunde do isteka roka za prvi potez strane na potezu, ili `null` kad je odigrano ≥ 2 poteza |
 
-`clock` stiže u: `start` (oba igrača), `ack`, `move` (protivniku), `sync` i `resumed`. Klijent računa prikaz iz poslednjeg `clock` i vremena kad ga je primio; server je jedina istina.
+`clock` stiže u: `start` (oba igrača), `ack`, `move` (protivniku), `sync` i `resumed`. Izuzetak po obliku: `invited.clock` nije `WireClock` nego gola specifikacija `{base, inc}` u sekundama (isto kao `clock` u `invite`/`accept`). Klijent računa prikaz iz poslednjeg `clock` i vremena kad ga je primio; server je jedina istina.
 
 Pravila:
 
-- **Prvi potez svake strane je bez sata i bez dodatka.** Rok za njega je 30 s (`FIRST_MOVE_MS`), od trenutka kad je ta strana prvi put na potezu: beli od `start`, crni od trenutka kad server prihvati prvi potez belog. Istek roka: prisutnim stranama `{t:"first_move_expired"}`, partija se briše bez rezultata. `first_move_expired` se nikad ne pamti: strana koja je tada bila odsutna kasnije dobija `game_gone` na `resume` (f).
+- **Prvi potez svake strane je bez sata i bez dodatka.** Rok za njega je 30 s (`FIRST_MOVE_MS`), od trenutka kad je ta strana prvi put na potezu: beli od `start`, crni od trenutka kad server prihvati prvi potez belog. Istek roka: prisutnim stranama `{t:"first_move_expired"}`, partija se briše bez rezultata. `first_move_expired` se nikad ne pamti: strana koja je tada bila odsutna kasnije dobija `game_gone` na `resume`.
 - Sat strane teče samo dok je ona na potezu i tek od njenog drugog poteza. Posle svakog poteza od drugog poteza te strane nadalje, njenom vremenu se oduzme potrošeno pa doda `inc`.
 - **Važi potez odigran na vreme.** Potez koji stigne kad je `sada ≥ rok` (rok = početak poteza + preostalo vreme strane) se ne prihvata: to je `flag`, gubi strana koja je igrala; protivnik ne dobija `move`. Prisutne strane dobijaju `{t:"flag", loser}`.
 - **Kraj potezom.** `move` sa `end:true` koji stigne na vreme zaustavlja sat i završava partiju kao `finished`: protivniku se prosleđuje `move` sa `end:true`, red se briše (ako je protivnik odsutan, pamti se kraj kao kod `finished`). Klijent mora da pošalje `end:true` na potezu koji sam vidi kao mat/pat/remi po pravilu, inače bi sat nastavio da teče.
@@ -65,17 +65,17 @@ Pravila:
 
 ### Kraj sa satom dok je neka strana odsutna
 
-- (c) Posle `resign`, prihvaćenog remija ili `finished` dok je strana odsutna, `clock` u njenom `resumed` je zamrznut u trenutku poslednjeg poteza (sat se ne nastavlja do povratka).
-- (d) Istek sata (`flag`) dok je jedna ili obe strane odsutne: red pamti kraj, `ended_to` može da imenuje obe boje. Svaka odsutna strana pri `resume` dobija `resumed` (sa satom zamrznutim na trenutku roka, gubitnik 0) pa tačno jedan `flag`; kad su dobile obe, red se briše.
-- (e) Kad se partija sa satom završi, oznaka odsustva odsutne strane se postavlja na trenutak kraja, pa se 30 min do brisanja reda računa od kraja, ne od ranijeg odlaska.
-- (f) `first_move_expired` se nikad ne čuva; odsutna strana na `resume` dobija `game_gone`.
+- Posle `resign`, prihvaćenog remija ili `finished` dok je strana odsutna, `clock` u njenom `resumed` je zamrznut u trenutku poslednjeg poteza (sat se ne nastavlja do povratka). `run` u njemu može i dalje biti različit od `null`, a `first` može biti 30000 kad je odigrano manje od 2 poteza; klijent kad je `resumed` za završenu partiju ne sme da pokreće sat. Posle `resumed` stiže `resigned`, `draw_reply{accept:true}` odnosno `flag`; za `finished` nikakva poruka kraja ne stiže, klijent kraj vidi na tabli (mat, pat, remi po pravilu).
+- Istek sata (`flag`) dok je jedna ili obe strane odsutne: red pamti kraj, `ended_to` može da imenuje obe boje. Svaka odsutna strana pri `resume` dobija `resumed` (sa satom zamrznutim na trenutku roka, gubitnik 0) pa tačno jedan `flag`; kad su dobile obe, red se briše.
+- Kad se partija sa satom završi, oznaka odsustva odsutne strane se postavlja na trenutak kraja, pa se 30 min do brisanja reda računa od kraja, ne od ranijeg odlaska.
+- `first_move_expired` se nikad ne čuva; odsutna strana na `resume` dobija `game_gone`.
 
 ### Saradnja v1 ↔ v2
 
-- (a) Vezi sa `v:1` (ili čiji prilog nema `v`) server nikad ne šalje nova polja ni nove poruke (`clock`, `end`). `clock` koji pošalje v1 veza se ignoriše (nikad `bad_clock`/`needs_update`), isto `end`.
+- Vezi sa `v:1` (ili čiji prilog nema `v`) server ne šalje nova polja (`clock`, `end`) i, osim izuzetka ispod, ni nove poruke. `clock` koji pošalje v1 veza u `invite`/`accept` se ignoriše (nikad `bad_clock`/`needs_update`).
 - v2 pozivalac koji pošalje `invite` sa `clock` v1 vezi dobija `{t:"error", reason:"needs_update"}`; poziv bez `clock` radi među svim kombinacijama verzija, a v1 ↔ v2 partija bez sata ima tačno stari oblik poruka.
-- (b) U partiji bez sata klijent ignoriše `end` na dolaznom `move`: server ga prosleđuje v2 vezi, ali mu ne daje značenje (ne završava partiju).
-- (g) Veza koja pošalje `resume` bez prethodnog `hello` tretira se kao v1 (nema `v`). Isporučeni klijenti uvek šalju `hello` pre `resume`.
+- `end` u partiji bez sata: server mu ne daje značenje (ne završava partiju), ali ga prosleđuje v2 primaocu u `move` bez obzira na verziju pošiljaoca (filtrira se po verziji primaoca, pa ga i v1 pošiljalac može poslati v2 protivniku). Klijent ignoriše `end` na dolaznom `move` u partiji bez sata.
+- Veza koja pošalje `resume` bez prethodnog `hello` tretira se kao v1 (nema `v`): njen `resumed` nema `clock`. Izuzetak od pravila „v1 ne dobija nove poruke“: ako je takva veza u partiji sa satom, može dobiti `flag` i `first_move_expired` (šalju se bez provere verzije). Isporučeni klijenti uvek šalju `hello` pre `resume`, pa se to u praksi ne dešava.
 - Greške dodate u v2: `needs_update` (v2 poziva sa satom v1 vezu), `bad_clock` (nedozvoljen sat).
 
 ## Objava i povratak
