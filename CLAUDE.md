@@ -47,7 +47,7 @@ swift test              # ceo skup
 swift test --filter Perft
 ```
 
-Pokriveno (**163 testa**, stanje posle igre preko interneta 2026-11-15; bilo 111 posle dizajnerskog pregleda 2026-10): 7 perft testova za svih 6
+Pokriveno (**196 testova**, stanje posle partije na vreme 2026-11-21 — `OnlineProtocolTests` 11 → **17**, `OnlineMachineTests` 41 → **68**; **163** posle igre preko interneta 2026-11-15; bilo 111 posle dizajnerskog pregleda 2026-10): 7 perft testova za svih 6
 standardnih pozicija (uključujući početnu do dubine 5, 4.865.609 čvorova, ~75–85s), 4 testa prava
 rokade (uzimanje topa na sva 4 ugla, i partija bez topa koja i dalje nosi zastarelo pravo),
 14 testova `PuzzleRepository`-ja (uključujući dva koja prolaze **celu** bazu — vidi ispod),
@@ -60,7 +60,7 @@ formata i množina (`LocalFormatTests`), 8 testova strane table (`BoardSizingTes
 1 test kataloga (`LocCatalogTests` — svaki `Loc("…")`/`LocF("…")` literal mora postojati u
 katalogu sa svih 8 jezika), 11 testova protokola igre preko interneta (`OnlineProtocolTests`) i 41 test
 njene čiste mašine stanja (`OnlineMachineTests`). Server ima svoj skup (`cd server/play && npx vitest run`,
-**48 testova** u 5 fajlova, plus `npx tsc --noEmit`) — vidi „Igra preko interneta".
+**81 test** u 8 fajlova posle partije na vreme, bilo 48 u 5; plus `npx tsc --noEmit`) — vidi „Igra preko interneta".
 `Chessko/TestSupport/LocShim.swift`
 postoji samo zbog paketa i zaštićen je `#if CHESSKO_ENGINE_PACKAGE` — u
 aplikaciji se ne kompajlira.
@@ -680,9 +680,11 @@ protokol: `docs/online-protocol.md` (jedini izvor istine o porukama); plan i led
   Endpoint `wss://play.chessko.app/ws`, `GET /health` → `ok`. Server **ne zna šah**: prosleđuje poteze i broji `ply`.
 - Objava: `cd server/play && npx wrangler deploy` (wrangler **pinovan** `4.124.0` u `package.json`; poslednja
   verzija `222ccb7e`, 2026-11-15). Provera uživo: `npm run smoke` (pravi dva klijenta protiv produkcije, uključujući
-  „resign dok je protivnik odsutan"). Testovi: `npx vitest run` (48) + `npx tsc --noEmit`.
+  „resign dok je protivnik odsutan"; od partije na vreme i partiju 3+2 i v1 ↔ v2 bez sata). **Smoke protiv produkcije i
+  objava samo uz odobrenje vlasnika**; lokalno: `CHESSKO_WS=ws://127.0.0.1:8787/ws npm run smoke` uz `npx wrangler dev`.
+  Testovi: `npx vitest run` (**81**, 8 fajlova) + `npx tsc --noEmit`.
 - Besplatan Cloudflare nivo; prelazak na plaćeni (~5 $) ne traži izmenu koda (odluka vlasnika).
-- **Verzija protokola je 1** i proverava se samo na `hello` (`resume` ne nosi `v`; klijent uvek šalje `hello` pre
+- **Verzija protokola je 2** (od partije na vreme, 2026-11-21; server prima i `v:1` i `v:2` — vidi „Partija na vreme") i proverava se samo na `hello` (`resume` ne nosi `v`; klijent uvek šalje `hello` pre
   `resume`). `error version` je **završan za sesiju** na obe platforme: bez ponovnih povezivanja, stalna poruka „Za igru
   preko interneta potrebna je novija verzija aplikacije." (rodno neutralna, isti tekst na svih 8 jezika).
 
@@ -748,6 +750,49 @@ Isti nazivi i isti tekstovi na obe platforme (paritet); sve liste ispod su isti 
 - **`code_taken` pri ponovnom povezivanju** je obično sopstvena poluotvorena veza posle gašenja aplikacije: ponavlja se uz
   backoff, bez poruke korisniku.
 - Android: `showOnline` mora preživeti rotaciju (`rememberSaveable` + `destinationShowing`), inače je ekran nevidljiv a veza živa.
+
+### Partija na vreme (sat, protokol v2)
+
+Od 2026-11-21 (grana `v2/partija-na-vreme`). Onaj ko poziva bira **`3+2`**, **`10+5`** ili **`Bez sata`** (prvi put
+3+2, posle toga poslednji izbor: iOS `chessko.online.clock`, Android `online.clock`); pozvani u dijalogu vidi
+„Partija: 3+2" / „Partija: Bez sata" i pristaje ili odbija. Spec: `docs/superpowers/specs/2026-11-21-partija-na-vreme-design.md`;
+protokol v2: `docs/online-protocol.md` (odeljak „Sat (v2)" i „Saradnja v1 ↔ v2"); plan i ledger:
+`.superpowers/sdd/2026-11-21-partija-na-vreme/`.
+
+- **Vreme meri samo server** (`server/play/src/clock.ts`, čist modul; `hub.ts` drži `clock_base`, `clock_inc`, `w_ms`,
+  `b_ms`, `turn_started` u redu partije i jedan `alarm` za najraniji rok svih partija). Telefon samo odbrojava lokalno od
+  poslednjeg `clock` sa servera i **nikad ne proglašava istek sam**: na nuli stoji `0:00` i čeka `flag`.
+- **Prvi potez svake strane je bez sata i bez dodatka, rok 30 s** („Odigraj prvi potez: 0:25"); istek →
+  `first_move_expired`, partija se briše bez rezultata („Partija je prekinuta jer prvi potez nije odigran.").
+- **Važi potez odigran na vreme:** potez koji završava partiju (mat, pat, remi po pravilu) nosi `end:true` i zaustavlja sat;
+  telefon koji ga je odigrao proglašava kraj tek na `ack`. Potez koji stigne posle roka je `flag`.
+- **Odsustvo ne zaustavlja sat**; rok od 30 min važi samo za partije bez sata i završene redove.
+- **Stare verzije (iOS 1.3, Android 2.4 i starije) šalju `hello v:1`** i server im nikad ne šalje nova polja ni poruke.
+  Partija bez sata stara ↔ nova radi kao pre; poziv sa satom ka v1 vezi daje pozivaocu `needs_update` („Prijatelj treba da
+  ažurira aplikaciju za igru na vreme."), a stara aplikacija ne dobija ništa.
+- Kod: iOS `Models/OnlineProtocol.swift`, `Models/OnlineMachine.swift` (stanje sata, `ClockReading`), `ViewModels/OnlineViewModel.swift`,
+  `Views/OnlineLobbyView.swift` (izbor vremena), `Views/OnlineGameView.swift` i `GameComponents.swift` (sat u kartici igrača);
+  Android isto u `online/` i `ui/Online*View.kt`, `ui/GameComponents.kt`. Android odbrojava po `SystemClock.elapsedRealtime`
+  (isti izvor kao `at` u mašini stanja). Sačuvana partija bez sata iz starije verzije se učitava (`OnlineStoredGameTest`).
+- **Redosled objave: prvo server, pa aplikacije.** Server v2 služi i v1 klijente, pa ga je bezbedno objaviti pre izdanja;
+  nova aplikacija protiv starog (v1) servera bi dobila `error version` na `hello v:2`. Povratak servera: `npx wrangler rollback`
+  (stari server nove kolone samo ne čita).
+
+**Završna provera 2026-11-21 (Task 11), protiv lokalnog `wrangler dev`, ne produkcije.** iOS na simulatoru iPhone 18 Pro
+(iOS 27.2), pravi dodiri kroz Xcode MCP (tekst se unosi preko `simctl pbcopy` + „Paste", jer MCP komanda za kucanje nije
+pronađena); Android na `Medium_Phone_API_36.1`, `adb`. Aplikacije su privremeno (nikad commit-ovano) usmerene na
+`ws://127.0.0.1:8787/ws` / `ws://10.0.2.2:8787/ws`, uz `usesCleartextTraffic` na Androidu.
+- Nova ↔ nova: 3+2 do isteka (sat crnog teče tek posle prvog poteza, oba ekrana u istoj sekundi pokazuju isto vreme,
+  „Isteklo ti je vreme." / „Prijatelju je isteklo vreme."); 10+5 sa istekom roka prvog poteza na obe strane; mat potezom
+  sa `end:true` u partiji 3+2 (red partije posle toga obrisan na serveru); partija bez sata kao pre (bez sata u karticama).
+- `needs_update`: iOS i Android pozivaju v1 klijent iz skripte sa satom → poruka o ažuriranju, v1 ne dobija ništa;
+  isti poziv bez sata stiže v1 klijentu u starom obliku (`{"t":"invited","from":…}` bez `clock`).
+- **Prave stare aplikacije** (build sa `59a220e`): stara iOS ↔ stara Android do mata; nova iOS ↔ stara Android i nova
+  Android ↔ stara iOS bez sata do mata, **u oba smera ko poziva**; nova (iOS i Android) poziva staru sa 3+2 → nova dobija
+  poruku o ažuriranju, stara ne dobija ništa; posle svega stare aplikacije normalno igraju i nijedna nije pokazala „potrebna je
+  novija verzija". Izveštaj sa snimcima: `.superpowers/sdd/2026-11-21-partija-na-vreme/task-11-report.md`.
+- **Nije provereno:** prave telefonske mreže (nema nadoknade kašnjenja, pristup C), istek sata dok je strana odsutna na pravom
+  uređaju (pokriveno samo testovima servera), iPad/tablet raspored sata, produkcijski server (nije objavljen).
 
 ### Unakrsna partija iPhone ↔ Android (2026-11-15, posle spajanja)
 
@@ -991,6 +1036,11 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **10 — razmaci i tipografija** (spec 5.6) | **da, uz presudu** | `DS.Space` 169 / `DS.Radius` 65 / `DS.maxBoardSide` 6 / skala 159 pozivnih mesta; 285 `.dp` literala ostaje namerno po ulozi — vidi „Android dizajn sistem" |
 | **Dizajnerski pregled** (2026-10, obe platforme) | **da** | spec `docs/design/CHESSKO-IMPLEMENTACIJA.md` § 2–§ 17; 6 tema / 5 stilova (odluka vlasnika); `BoardSizing` do 800 na tabletu; celoekranska Analiza/Podešavanja/Sat; vidi `IMPLEMENTACIJA-LOG.md` → „Završni izveštaj" |
 
+Testovi (partija na vreme, 2026-11-21): **231 JVM** (`OnlineMachineTest` 41 → 66, HEAD `8b6322b`, XML 23:14) + **71
+instrumentisani** (`OnlineCodecTest` 5 → 13, nov `OnlineStoredGameTest` 2; jedan prolaz na `Medium_Phone_API_36.1`, XML 23:17,
+HEAD `8b6322b`; prvi pokušaj istog prolaza je pao na prvom testu sa „Test failed with status -1" bez traga, sekundu posle
+brzog podizanja emulatora — ponovljen odmah, 71/71), oba iz XML-a, 0 padova. Ispod je stanje pre toga.
+
 Testovi (izdanje 2.4, 2026-11-21): **206 JVM** (+4 `BoardCoordinatesTest`, HEAD `8d04c5d`) + **61 instrumentisani**
 (+1 `BoardDragSurvivesBoardChangeTest`; prvi prolaz na `Pixel_Tablet_API_36.1`, pa ponovljen na `Medium_Phone_API_36.1`
 posle oslobađanja prostora, HEAD `273e2dc`, 61/61), oba iz XML-a, 0 padova. Ispod je stanje pre toga.
@@ -1111,6 +1161,15 @@ Stari spisak ispod je stanje pre toga (149 JVM + 55 instrumentisanih) i ostaje k
 
 ## Poznata ograničenja / TODO kandidati
 
+- **Partija na vreme (2026-11-21), odloženo:**
+  - Poziv koji stigne dok igrač **nije u lobiju** (npr. još gleda ekran završene partije) mašina stanja tiho odbacuje, a
+    pozivalac čeka bez ikakve povratne informacije dok ne otkaže. **Zatečeno** (isti `guard case .lobby` u `59a220e`), viđeno u
+    završnoj proveri na obe platforme.
+  - Sat **nestaje iz kartica** kad se partija završi, i posle isteka vremena (umesto da ostane `0:00`) — odluka vlasnika.
+  - Android linija „Odigraj prvi potez: 0:xx" nema tabularne cifre; sat u kartici je `Monospace` (iOS monospaced cifre) —
+    vizuelno slično, ne isto.
+  - Sitnice iz pregleda (ledger): pokvaren `clock` se dekodira kao „bez sata" umesto greške; čekanje `ack`-a za završni potez
+    se ne čuva preko gašenja aplikacije; `game_gone` dok se čeka `ack` daje kraj na tabli; Android `int()` ne prima `180.0`.
 - **Igra preko interneta (2026-11-15), odloženo ili presuđeno:**
   - Ponuda remija odsutnom protivniku se **odbacuje** (resign/draw poruke se ne čuvaju); ponuđač može ponovo kad se protivnik vrati (`back`).
     Slično, ponuda stigla dok je protivnik između `hello` i `resume` se gubi. Presuđeno: stvarno, ali ne nosi ništa.
@@ -3745,3 +3804,13 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
     `packageReleaseUniversalApk`, `aapt`: versionCode 7 / versionName 2.4, nije `debuggable`, `puzzles.sqlite`
     `Stored`, dozvole `VIBRATE` + `INTERNET`. Bundle nepotpisan (`app/build/outputs/bundle/release/`), potpis
     radi vlasnik.
+
+- **2026-11-21** — Partija na vreme (grana `v2/partija-na-vreme`, 11 taskova, od `789197a`; spec i protokol v2 — vidi
+  „Igra preko interneta" → „Partija na vreme"). Izbor `3+2` / `10+5` / `Bez sata`, vreme meri server, rok prvog poteza
+  30 s, kraj potezom sa `end:true`, stare verzije (`v:1`) rade kao pre, a poziv sa satom ka njima daje `needs_update`.
+  Testovi: server **81** (bilo 48), `swift test` **196** (bilo 166), Android JVM **231** (bilo 206), instrumentisani **71**
+  (bilo 61) — sve iz XML-a/izlaza na HEAD `8b6322b`. Završna provera protiv lokalnog `wrangler dev`: nova ↔ nova
+  (3+2 do isteka, rok prvog poteza, mat sa `end:true`, bez sata), v1 klijent iz skripte, i **prave stare aplikacije**
+  (build sa `59a220e`) u svim smerovima — sve prošlo, izveštaj `.superpowers/sdd/2026-11-21-partija-na-vreme/task-11-report.md`.
+  Jedan prolaz emulatora (23:16:32–23:41:46). Android **2.5 (8)**; iOS verziju (1.4) podešava vlasnik pri arhiviranju.
+  **Server nije objavljen i ništa nije poslato na GitHub** — objava servera (pre aplikacija), push i prodavnice čekaju vlasnika.
