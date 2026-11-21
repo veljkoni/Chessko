@@ -127,7 +127,8 @@
 - [ ] **Step 1:** Dopuni `docs/online-protocol.md` tako da svaka poruka i polje iz Taskova 2–3 stoji u tabeli; dodaj odeljak „Sat (v2)" sa pravilima iz Global Constraints.
 - [ ] **Step 2:** `smoke.mjs` dobija scenario: dva `v:2` klijenta, poziv `{180,2}`, `start` sa `clock`, dva poteza, `move` sa `end:true`; i scenario `v:1` ↔ `v:2` bez sata (stari oblik poruka). Pokreće se protiv servera koji je zadat promenljivom `CHESSKO_WS` (podrazumevano produkcija).
 - [ ] **Step 3: Run** lokalno: `npx wrangler dev` u jednom terminalu, `CHESSKO_WS=ws://127.0.0.1:8787/ws npm run smoke` → sve PASS.
-- [ ] **Step 4: Commit** `docs: protokol v2 (sat); smoke za partiju na vreme`. Objava (`npx wrangler deploy`) i smoke protiv produkcije tek uz odobrenje vlasnika — izvođač ovde staje i javlja.
+- [ ] **Step 4:** U `docs/online-protocol.md` dodaj odeljak „Objava i povratak": pre objave zapiši trenutnu verziju (`npx wrangler deployments list`); povratak je `npx wrangler rollback <verzija>`. Stari server nove kolone samo ne čita, pa zapisi partija ostaju upotrebljivi.
+- [ ] **Step 5: Commit** `docs: protokol v2 (sat); smoke za partiju na vreme`. Objava (`npx wrangler deploy`) i smoke protiv produkcije tek uz odobrenje vlasnika — izvođač ovde staje i javlja.
 
 ### Task 5: iOS — poruke protokola v2
 
@@ -237,5 +238,6 @@
 
 - [ ] **Step 1:** Server: `npx vitest run && npx tsc --noEmit`; `swift test`; Android `testDebugUnitTest` (iz XML-a).
 - [ ] **Step 2:** Jedan prolaz emulatora (recept iz `CLAUDE.md`, `-gpu host`, telefonski AVD; ako javi `INSUFFICIENT_STORAGE`, prvo `adb shell pm uninstall-system-updates`): `connectedDebugAndroidTest` (iz XML-a), pa unakrsna partija iOS simulator (Xcode MCP) ↔ Android emulator protiv lokalnog `wrangler dev` servera: 3+2 do isteka vremena jedne strane; rok prvog poteza; mat potezom sa `end:true`; poziv starije verzije (server sa `v:1` klijentom iz smoke skripte) → poruka o ažuriranju; partija bez sata kao pre. Ugasi emulator odmah posle (`adb emu kill`, `./gradlew --stop`, `pgrep -f qemu-system` prazan).
-- [ ] **Step 3:** Ažuriraj `CLAUDE.md` i verziju Androida; iOS verziju (1.4 i build broj) podešava vlasnik u Xcode-u pri arhiviranju.
-- [ ] **Step 4: Commit** `Igra na vreme: završna provera i dokumentacija`. Objava servera, push i izdanja u prodavnicama čekaju vlasnika.
+- [ ] **Step 3: Prave stare aplikacije protiv novog servera.** U zasebnom worktree-ju od commit-a `59a220e` (stanje pre ovog plana: iOS kakav je 1.3, Android 2.4) napravi obe aplikacije i usmeri ih na lokalni `wrangler dev` sa novim serverom (privremeno, u radnom stablu tog worktree-ja, izmena adrese servera se ne commit-uje). Proveri: stara iOS ↔ stara Android partija bez sata do mata; stara ↔ nova bez sata (u oba smera ko poziva); nova poziva staru sa 3+2 → nova dobija poruku o ažuriranju, stara ne dobija ništa; posle svega stara aplikacija i dalje radi (nema poruke „potrebna je novija verzija"). Zabeleži rezultat u izveštaj.
+- [ ] **Step 4:** Ažuriraj `CLAUDE.md` i verziju Androida; iOS verziju (1.4 i build broj) podešava vlasnik u Xcode-u pri arhiviranju.
+- [ ] **Step 5: Commit** `Igra na vreme: završna provera i dokumentacija`. Objava servera, push i izdanja u prodavnicama čekaju vlasnika.
