@@ -81,3 +81,5 @@ Pravila:
 ## Objava i povratak
 
 Pre objave servera zapiši trenutnu verziju: `npx wrangler deployments list` (u `server/play`). Objava je `npx wrangler deploy`. Povratak: `npx wrangler rollback <verzija>`. Stari server nove kolone (`clock_base`, `clock_inc`, `w_ms`, `b_ms`, `turn_started`) samo ne čita, pa zapisi partija ostaju upotrebljivi posle povratka. Objava servera i smoke protiv produkcije samo uz odobrenje vlasnika.
+
+**Povratak na stari (samo v1) server je bezbedan SAMO dok iOS i Android aplikacije sa protokolom v2 nisu izdate.** Posle izdanja stari server na `hello v:2` odgovara `error version`, koji je završan za sesiju, pa bi svaka ažurirana aplikacija trajno pokazivala „Za igru preko interneta potrebna je novija verzija aplikacije." — i za partije bez sata. Zato se posle izdanja aplikacija greška ispravlja novom objavom, a vraća se samo na verziju servera koja razume v2. Uz to: redovi sa `ended="flag_w"`/`"flag_b"` i `ended_to="wb"` su staroj verziji nepoznati; to postaje nebitno kad takve redove mogu da imaju samo v2 aplikacije, koje stari server ionako odbija.
