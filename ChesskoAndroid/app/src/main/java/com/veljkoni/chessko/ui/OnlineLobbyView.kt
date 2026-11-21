@@ -6,6 +6,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -53,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.veljkoni.chessko.logic.loc
+import com.veljkoni.chessko.online.ClockSpec
 import com.veljkoni.chessko.online.OnlineCode
 import com.veljkoni.chessko.online.OnlineNotice
 import com.veljkoni.chessko.online.OnlineState
@@ -80,8 +84,7 @@ fun onlineNoticeText(notice: OnlineNotice): String = when (notice) {
     OnlineNotice.DRAW_DECLINED -> loc("Prijatelj je odbio remi.")
     // Masina ga ne emituje (tiho se resava); grana postoji da `when` bude iscrpan.
     OnlineNotice.CODE_TAKEN -> ""
-    // Privremeno do Task-a 10 (nov ključ za `needs_update`).
-    OnlineNotice.NEEDS_UPDATE -> ""
+    OnlineNotice.NEEDS_UPDATE -> loc("Prijatelj treba da ažurira aplikaciju za igru na vreme.")
 }
 
 /** Velika slova, samo znaci azbuke koda, najvise 6, crtica posle treceg. */
@@ -101,6 +104,7 @@ fun OnlineLobbyView(vm: OnlineViewModel, modifier: Modifier = Modifier) {
     val isConnected = state is OnlineState.Lobby || state is OnlineState.Inviting || state is OnlineState.Invited
     val isInviting = state is OnlineState.Inviting
     val invitedFrom = (state as? OnlineState.Invited)?.from
+    val invitedClock = (state as? OnlineState.Invited)?.clock
     var friendInput by remember { mutableStateOf(TextFieldValue("")) }
 
     Column(
@@ -165,6 +169,16 @@ fun OnlineLobbyView(vm: OnlineViewModel, modifier: Modifier = Modifier) {
                     text = loc("Kod %@ te poziva na partiju").replace("%@", OnlineCode.format(invitedFrom)),
                     color = DS.ink,
                     fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = loc("Partija: %@").replace(
+                        "%@", invitedClock?.let { OnlineViewModel.clockLabel(it) } ?: loc("Bez sata")
+                    ),
+                    color = DS.inkMuted,
+                    style = Type.body,
+                    modifier = Modifier.testTag("online.invitedClock")
                 )
             },
             confirmButton = {
@@ -311,6 +325,7 @@ private fun InviteCard(
                     }
                 }
             )
+            ClockPicker(vm)
             val enabled = isConnected && input.text.isNotEmpty()
             Button(
                 onClick = { invite() },
@@ -324,6 +339,44 @@ private fun InviteCard(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).alpha(if (enabled) 1f else 0.38f)
             ) {
                 Text(text = loc("Pozovi"), style = Type.body, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+/** Izbor vremena za poziv: `3+2` / `10+5` / Bez sata. Pamti se kroz `OnlineViewModel`. */
+@Composable
+private fun ClockPicker(vm: OnlineViewModel) {
+    val options: List<Pair<ClockSpec?, String>> = listOf(
+        ClockSpec.BLITZ to OnlineViewModel.clockLabel(ClockSpec.BLITZ),
+        ClockSpec.RAPID to OnlineViewModel.clockLabel(ClockSpec.RAPID),
+        null to loc("Bez sata"),
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s), modifier = Modifier.fillMaxWidth()) {
+        Text(text = loc("Vreme"), color = DS.inkMuted, style = Type.caption, fontWeight = FontWeight.Medium)
+        Row(
+            modifier = Modifier.fillMaxWidth().testTag("online.clockPicker"),
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.s)
+        ) {
+            for ((spec, label) in options) {
+                val selected = vm.selectedClock == spec
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .clip(RoundedCornerShape(DS.Radius.m))
+                        .background(if (selected) DS.accent else DS.fill)
+                        .selectable(selected = selected, role = Role.RadioButton, onClick = { vm.selectClock(spec) }),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        color = if (selected) DS.onAccent else DS.ink,
+                        style = Type.body,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

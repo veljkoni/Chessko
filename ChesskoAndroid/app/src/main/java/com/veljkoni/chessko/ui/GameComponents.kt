@@ -108,7 +108,8 @@ fun PlayerCard(
     capturedPieces: List<ChessPiece> = emptyList(),
     evaluation: Evaluation? = null,
     showsChevron: Boolean = false,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null
 ) {
     val shape = RoundedCornerShape(DS.Radius.m)
     Row(
@@ -214,6 +215,8 @@ fun PlayerCard(
         if (evaluation != null) {
             EvaluationChip(evaluation)
         }
+
+        trailing?.invoke()
 
         if (showsChevron) {
             Icon(

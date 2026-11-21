@@ -28,6 +28,40 @@ class OnlineViewModel private constructor(private val app: Application) {
         const val PREFS = "chessko_online"
         const val CODE_KEY = "online.code"
         const val ACTIVE_GAME_KEY = "online.activeGame"
+        const val CLOCK_KEY = "online.clock"
+
+        /** Oznaka vremenske kontrole za dugme/dijalog: `3+2`. */
+        fun clockLabel(spec: ClockSpec): String = "${spec.base / 60}+${spec.inc}"
+
+        /** Vrednost u prefs-u: `3+2` / `10+5` / `none`. */
+        fun storedValue(spec: ClockSpec?): String = when (spec) {
+            ClockSpec.RAPID -> "10+5"
+            null -> "none"
+            else -> "3+2"
+        }
+
+        /** Nepoznata ili nepostojeca vrednost je `3+2` (prvi put i posle pokvarenog zapisa). */
+        fun clock(fromStored: String?): ClockSpec? = when (fromStored) {
+            "10+5" -> ClockSpec.RAPID
+            "none" -> null
+            else -> ClockSpec.BLITZ
+        }
+
+        /** Preostalo vreme: `M:SS`, ispod 10 s `S.d`, nikad ispod 0 (0 → `0:00`), od sata `H:MM:SS`. */
+        fun clockText(ms: Int): String {
+            val v = maxOf(0, ms)
+            if (v == 0) return "0:00"
+            if (v < 10_000) return "${v / 1000}.${(v % 1000) / 100}"
+            val total = v / 1000
+            val h = total / 3600
+            val m = (total % 3600) / 60
+            val sec = total % 60
+            return if (h > 0) "%d:%02d:%02d".format(java.util.Locale.US, h, m, sec)
+            else "%d:%02d".format(java.util.Locale.US, m, sec)
+        }
+
+        /** Isti izvor kao `now()` za mašinu; za odbrojavanje u UI-ju (milisekunde). */
+        fun nowMs(): Long = SystemClock.elapsedRealtime()
 
         @Volatile
         private var instance: OnlineViewModel? = null
@@ -95,6 +129,42 @@ class OnlineViewModel private constructor(private val app: Application) {
      */
     var updateRequired: Boolean by mutableStateOf(false)
         private set
+
+    /** Izabrana vremenska kontrola za pozive (`null` = bez sata); pamti se između pokretanja. */
+    var selectedClock: ClockSpec? by mutableStateOf(clock(prefs.getString(CLOCK_KEY, null)))
+        private set
+
+    fun selectClock(spec: ClockSpec?) {
+        selectedClock = spec
+        prefs.edit().putString(CLOCK_KEY, storedValue(spec)).apply()
+    }
+
+    /** Partija ima sat (ticker i prikaz u karticama samo tada). */
+    val isTimedGame: Boolean
+        get() = (state as? OnlineState.Playing)?.game?.clock != null
+
+    /**
+     * Prikaz sata: vrednost sa servera, a samo strani koja trci oduzima se proteklo od
+     * prijema (`nowMs` = [nowMs], monotono kao `at` u mašini). Nikad ispod 0; lokalna
+     * nula ništa ne pokreće — kraj dolazi samo od servera.
+     */
+    fun displayedMs(color: PieceColor, nowMs: Long): Int? {
+        val reading = (state as? OnlineState.Playing)?.clock ?: return null
+        val wire = reading.wire
+        val base = if (color == PieceColor.WHITE) wire.whiteMs else wire.blackMs
+        if (wire.running != color) return maxOf(0, base)
+        return maxOf(0, base - elapsedMs(reading, nowMs))
+    }
+
+    /** Preostalo ms za prvi potez (`null` kad rok ne važi). */
+    fun firstMoveMsLeft(nowMs: Long): Int? {
+        val reading = (state as? OnlineState.Playing)?.clock ?: return null
+        val first = reading.wire.firstMoveMs ?: return null
+        return maxOf(0, first - elapsedMs(reading, nowMs))
+    }
+
+    private fun elapsedMs(reading: ClockReading, nowMs: Long): Int =
+        maxOf(0.0, nowMs - reading.receivedAt * 1000.0).toInt()
 
     var myCode: String by mutableStateOf("")
         private set
@@ -173,8 +243,7 @@ class OnlineViewModel private constructor(private val app: Application) {
             notice = OnlineNotice.BAD_CODE
             return
         }
-        // Izbor sata je Task 10; do tada poziv bez sata.
-        handle(OnlineEvent.Invite(code, null))
+        handle(OnlineEvent.Invite(code, selectedClock))
     }
 
     fun accept() = handle(OnlineEvent.Accept)

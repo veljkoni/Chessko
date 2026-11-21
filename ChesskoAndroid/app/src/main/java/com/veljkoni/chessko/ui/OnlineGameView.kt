@@ -30,7 +30,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.text.font.FontFamily
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -95,7 +98,7 @@ fun OnlineGameDestination(onDismiss: () -> Unit) {
     // Obavestenje se prikazuje ~4 s pa se brise (isto kao iOS).
     LaunchedEffect(vm.notice) {
         if (vm.notice != null) {
-            kotlinx.coroutines.delay(4000)
+            delay(4000)
             vm.notice = null
         }
     }
@@ -268,7 +271,7 @@ private fun OnlineGameContent(
                         .padding(vertical = DS.Space.xl),
                     verticalArrangement = Arrangement.spacedBy(DS.Space.m)
                 ) {
-                    FriendCard(game, activeStyle)
+                    FriendCard(vm, game, activeStyle)
                     MyCard(vm, game, activeStyle)
                     footer()
                 }
@@ -286,7 +289,7 @@ private fun OnlineGameContent(
                     verticalArrangement = Arrangement.spacedBy(DS.Space.m),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    FriendCard(game, activeStyle)
+                    FriendCard(vm, game, activeStyle)
                     board()
                     MyCard(vm, game, activeStyle)
                     footer()
@@ -308,7 +311,7 @@ private fun captured(game: GameViewModel, color: PieceColor) =
     if (color == PieceColor.WHITE) game.gameState.capturedByWhite else game.gameState.capturedByBlack
 
 @Composable
-private fun FriendCard(game: GameViewModel, pieceStyle: PieceStyle) {
+private fun FriendCard(vm: OnlineViewModel, game: GameViewModel, pieceStyle: PieceStyle) {
     val color = if (game.playerColor == PieceColor.WHITE) PieceColor.BLACK else PieceColor.WHITE
     val active = isActive(game, color)
     PlayerCard(
@@ -318,7 +321,8 @@ private fun FriendCard(game: GameViewModel, pieceStyle: PieceStyle) {
         status = if (active) PlayerCardStatus.ToMove(inCheck = isInCheck(game, color)) else null,
         isActive = active,
         materialAdvantage = getMaterialAdvantage(game.gameState, color),
-        capturedPieces = captured(game, color)
+        capturedPieces = captured(game, color),
+        trailing = { OnlineClockText(vm, color, active) }
     )
 }
 
@@ -333,9 +337,9 @@ private fun MyCard(vm: OnlineViewModel, game: GameViewModel, pieceStyle: PieceSt
                 OnlineResult.I_RESIGNED, OnlineResult.OPPONENT_RESIGNED, OnlineResult.BOARD -> getStatusMessage(game)
                 OnlineResult.DRAW_AGREED -> loc("Remi – dogovor.")
                 OnlineResult.ABORTED -> loc("Partija je prekinuta.")
-                // Privremeno do Task-a 10 (pravi tekstovi za kraj na vreme).
-                OnlineResult.I_FLAGGED, OnlineResult.OPPONENT_FLAGGED -> getStatusMessage(game)
-                OnlineResult.FIRST_MOVE_EXPIRED -> loc("Partija je prekinuta.")
+                OnlineResult.I_FLAGGED -> loc("Isteklo ti je vreme.")
+                OnlineResult.OPPONENT_FLAGGED -> loc("Prijatelju je isteklo vreme.")
+                OnlineResult.FIRST_MOVE_EXPIRED -> loc("Partija je prekinuta jer prvi potez nije odigran.")
             }
         )
         active -> PlayerCardStatus.ToMove(inCheck = isInCheck(game, color))
@@ -348,7 +352,58 @@ private fun MyCard(vm: OnlineViewModel, game: GameViewModel, pieceStyle: PieceSt
         status = status,
         isActive = active,
         materialAdvantage = getMaterialAdvantage(game.gameState, color),
-        capturedPieces = captured(game, color)
+        capturedPieces = captured(game, color),
+        trailing = { OnlineClockText(vm, color, active) }
+    )
+}
+
+/**
+ * Sat strane u kartici. Crta se samo dok partija sa satom TRAJE (`Playing`), a
+ * osvezava na 100 ms samo tada; bez sata nema nijedne periodicne rekompozicije.
+ * Lokalna nula je samo `0:00` — nista ne reaguje, kraj dolazi od servera (`flag`).
+ */
+@Composable
+private fun OnlineClockText(vm: OnlineViewModel, color: PieceColor, active: Boolean) {
+    if (!vm.isTimedGame || vm.state !is OnlineState.Playing) return
+    val now = rememberOnlineNowMs()
+    val ms = vm.displayedMs(color, now) ?: return
+    Text(
+        text = OnlineViewModel.clockText(ms),
+        color = if (ms < 10_000) DS.danger else if (active) DS.ink else DS.inkMuted,
+        style = Type.title.copy(fontFamily = FontFamily.Monospace),
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        modifier = Modifier.testTag("online.clock.$color")
+    )
+}
+
+/** Monotono vreme (ms) koje se menja na 100 ms dok je pozivalac u kompoziciji. */
+@Composable
+private fun rememberOnlineNowMs(): Long {
+    var now by remember { mutableLongStateOf(OnlineViewModel.nowMs()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            now = OnlineViewModel.nowMs()
+            delay(100)
+        }
+    }
+    return now
+}
+
+@Composable
+private fun FirstMoveLine(vm: OnlineViewModel, game: GameViewModel) {
+    if (!vm.isTimedGame || game.gameState.currentTurn != game.playerColor) return
+    val state = vm.state as? OnlineState.Playing ?: return
+    if (state.clock?.wire?.firstMoveMs == null) return
+    val now = rememberOnlineNowMs()
+    val ms = vm.firstMoveMsLeft(now) ?: return
+    Text(
+        text = loc("Odigraj prvi potez: %@").replace("%@", OnlineViewModel.clockText(ms)),
+        color = if (ms < 10_000) DS.danger else DS.ink,
+        style = Type.body,
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().testTag("online.firstMove")
     )
 }
 
@@ -389,6 +444,7 @@ private fun OnlineStatusArea(vm: OnlineViewModel, game: GameViewModel, onAnalyze
                 else -> null
             }
             val notice = vm.notice?.takeIf { it != OnlineNotice.CODE_TAKEN }
+            FirstMoveLine(vm, game)
             when {
                 connection != null -> StatusLine(connection, showsProgress = true)
                 state.drawOfferedByOpponent -> DrawOfferBox(vm)
