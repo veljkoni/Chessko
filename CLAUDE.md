@@ -992,8 +992,8 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **Dizajnerski pregled** (2026-10, obe platforme) | **da** | spec `docs/design/CHESSKO-IMPLEMENTACIJA.md` § 2–§ 17; 6 tema / 5 stilova (odluka vlasnika); `BoardSizing` do 800 na tabletu; celoekranska Analiza/Podešavanja/Sat; vidi `IMPLEMENTACIJA-LOG.md` → „Završni izveštaj" |
 
 Testovi (izdanje 2.4, 2026-11-21): **206 JVM** (+4 `BoardCoordinatesTest`, HEAD `8d04c5d`) + **61 instrumentisani**
-(+1 `BoardDragSurvivesBoardChangeTest`; prolaz na `Pixel_Tablet_API_36.1`, jer telefonskom AVD-u nije bilo mesta za
-instalaciju), oba iz XML-a, 0 padova. Ispod je stanje pre toga.
+(+1 `BoardDragSurvivesBoardChangeTest`; prvi prolaz na `Pixel_Tablet_API_36.1`, pa ponovljen na `Medium_Phone_API_36.1`
+posle oslobađanja prostora, HEAD `273e2dc`, 61/61), oba iz XML-a, 0 padova. Ispod je stanje pre toga.
 
 Testovi (posle igre preko interneta, 2026-11-15): **202 JVM** (`./gradlew testDebugUnitTest`, iz XML-a, HEAD `f824fa7`;
 bilo 149 posle dizajnerskog pregleda; nove klase: `OnlineCodeTest` 5, `OnlineMachineTest` 41, `OnlineReplayTest` 2,
@@ -1099,6 +1099,11 @@ Stari spisak ispod je stanje pre toga (149 JVM + 55 instrumentisanih) i ostaje k
 > `26_zadaci_light_pejzaz_greska` koji je **launcher**, uz to portretan. Provera koja je sve tri
 > uhvatila je jeftina: `find -size 0`, dimenzije iz PNG zaglavlja (pejzaž mora biti širi nego viši)
 > i piksel podloge (`#F2F3F7` svetla / `#0E1428` tamna `DS.ground`).
+>
+> **Kad emulator javi `INSTALL_FAILED_INSUFFICIENT_STORAGE`**, prvo proveri `adb shell df -h /data`. Play
+> prodavnica na `google_apis_playstore` slici sama ažurira Google aplikacije (YouTube, Mape, Play usluge…) i za
+> nekoliko nedelja napuni `/data` od 6 GB (2026-11-21: ostalo 418 MB). `adb shell pm uninstall-system-updates`
+> vraća fabričke verzije i ne dira instalirane aplikacije ni njihove podatke; `-wipe-data` nije potreban.
 >
 > Za razliku od iOS simulatora, **sintetički tapovi na Androidu rade**
 > (`adb shell input tap`, koordinate iz `uiautomator dump`), pa nije potreban nijedan
@@ -3733,7 +3738,10 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   - Testovi: JVM **206/206**, instrumentisani **61/61**, 0 padova, oba iz XML-a. Instrumentisani prolaz je na
     **`Pixel_Tablet_API_36.1`**: `Medium_Phone_API_36.1` ima ~420 MB slobodno na `/data` i javlja
     `INSTALL_FAILED_INSUFFICIENT_STORAGE` za APK od 103 MB (mutacioni prolaz jednog testa je na telefonu još stao,
-    pun nije). Emulator ugašen odmah posle (`pgrep -f qemu-system` prazan). Release: `bundleRelease` +
+    pun nije). **Dopuna istog dana:** uzrok nije bila aplikacija nego Play prodavnica na emulatoru, koja je sama
+    ažurirala ~25 Google aplikacija i napunila `/data` od 6 GB. `adb shell pm uninstall-system-updates` je vratio
+    fabričke verzije (418 MB → 4,3 GB slobodno, `lernegy` i njeni podaci netaknuti), a pun prolaz je ponovljen na
+    telefonu: **61/61**, 0 padova, HEAD `273e2dc`, XML 21:45. Emulator ugašen odmah posle (`pgrep -f qemu-system` prazan). Release: `bundleRelease` +
     `packageReleaseUniversalApk`, `aapt`: versionCode 7 / versionName 2.4, nije `debuggable`, `puzzles.sqlite`
     `Stored`, dozvole `VIBRATE` + `INTERNET`. Bundle nepotpisan (`app/build/outputs/bundle/release/`), potpis
     radi vlasnik.
