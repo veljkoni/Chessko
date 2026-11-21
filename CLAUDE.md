@@ -991,6 +991,10 @@ opisuje kao „prenos svega iz faza 0–5", što je pet faza posla, pa se radi u
 | **10 — razmaci i tipografija** (spec 5.6) | **da, uz presudu** | `DS.Space` 169 / `DS.Radius` 65 / `DS.maxBoardSide` 6 / skala 159 pozivnih mesta; 285 `.dp` literala ostaje namerno po ulozi — vidi „Android dizajn sistem" |
 | **Dizajnerski pregled** (2026-10, obe platforme) | **da** | spec `docs/design/CHESSKO-IMPLEMENTACIJA.md` § 2–§ 17; 6 tema / 5 stilova (odluka vlasnika); `BoardSizing` do 800 na tabletu; celoekranska Analiza/Podešavanja/Sat; vidi `IMPLEMENTACIJA-LOG.md` → „Završni izveštaj" |
 
+Testovi (izdanje 2.4, 2026-11-21): **206 JVM** (+4 `BoardCoordinatesTest`, HEAD `8d04c5d`) + **61 instrumentisani**
+(+1 `BoardDragSurvivesBoardChangeTest`; prolaz na `Pixel_Tablet_API_36.1`, jer telefonskom AVD-u nije bilo mesta za
+instalaciju), oba iz XML-a, 0 padova. Ispod je stanje pre toga.
+
 Testovi (posle igre preko interneta, 2026-11-15): **202 JVM** (`./gradlew testDebugUnitTest`, iz XML-a, HEAD `f824fa7`;
 bilo 149 posle dizajnerskog pregleda; nove klase: `OnlineCodeTest` 5, `OnlineMachineTest` 41, `OnlineReplayTest` 2,
 `online.OnlineLogicTest` 4, `MoveUciTest` 1) + **60 instrumentisanih** (iz XML-a prolaza Task-a 14, 2026-11-15, **nije
@@ -1575,6 +1579,12 @@ Stari spisak ispod je stanje pre toga (149 JVM + 55 instrumentisanih) i ostaje k
   i infrastruktura je već jednom ujela (`espresso-core` 3.5.1 i 3.6.1 padaju na API 36).
   Uvođenje novog test-obrasca u **zatvaranju** faze je način na koji obim eksplodira, pa je
   svesno odloženo. **Cena ako grešim:** regresiju danas može neko da vrati neprimećeno.
+  > **Dopuna (izdanje 2.4):** infrastruktura sada postoji — `BoardDragSurvivesBoardChangeTest`
+  > je Compose UI test nad `BoardView`-om (`performTouchInput` sa `down`/`moveBy` raspoređenim
+  > kroz više poziva, test tagovi `board.dragOverlay` i `board.piece.<red>.<kolona>`, provera
+  > `useUnmergedTree = true` jer `clickable` na polju spaja semantiku). Prolazi na API 36. Ali
+  > pokriva **drugi** bug (promena table usred prevlačenja); tap-pa-prevlačenje iz Faze 9 i dalje
+  > nema test — sada je to jedan test više po istom obrascu, ne nov obrazac.
 - **ZATVORENO u dizajnerskom pregledu (§ 4, Task 3):** Analiza, Podešavanja i Sat su na Androidu
   celoekranska odredišta (`ui/FullScreen.kt`, sloj iznad `Scaffold`-a), ne `Dialog`; donja traka se
   ispod njih ne crta. Neprovereno na uređaju do ponovnog snimanja.
@@ -3704,3 +3714,26 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   u `chessko-dizajn-snimci/prodavnice/play-opis-prevodi.txt`, a nova feature grafika 1024 × 500 i ikonica 512 u
   `gotovi/android-feature-graphic/`. **Production na Play-u traži 12 testera koji su prihvatili poziv i 14 dana
   testiranja.** Sada je prihvatilo 0 testera.
+
+- **2026-11-21** — Android 2.4 (7), dve ispravke iz testerskih snimaka (grana `v2/android-2.4-ispravke`, nije
+  spojena ni poslata).
+  - **Figura je ostajala da lebdi na tabli** (pešak između a3/b3, top između h4/h5). `draggedPiece`/`dragStartPos`
+    žive van `pointerInput(board, isFlipped, squareSizePx)`; kad se tabla promeni usred prevlačenja (igra preko
+    interneta: protivnikov potez stigne dok igrač drži figuru), Compose otkazuje i ponovo pokreće korutinu gesta, a
+    otkazivanje je preskakalo poništavanje na kraju bloka. Lebdeća figura (1,18, senka) ostajala je na poslednjem
+    mestu prsta, a polazno polje bez figure. Poništavanje je sada u `finally`; semantika gesta (redosled
+    `positionChange`/`consume`, naoružan dug pritisak, `Final` prolaz) netaknuta. Čuva ga instrumentisani
+    `BoardDragSurvivesBoardChangeTest`, **dokazan mutacijom**: bez `finally` pada na „Did not expect any node but
+    found '1' … `board.dragOverlay`" posle promene table, sa njim prolazi.
+  - **Koordinate kod okrenute table** (igra crnim, i igra u dvoje) su bile na gornjem redu i desnoj koloni. Formula
+    je bila prepisana sa iOS-a, koji okrenutu tablu rotira za 180° (`BoardView.swift:82-83`, `:130`); Android ne
+    rotira nego obilazi obrnutim redom, pa je donja ivica uvek prikazni red 7, a leva prikazna kolona 0. Odluka je u
+    `logic/BoardCoordinates.kt` (čista funkcija, u koordinatama table), JVM `BoardCoordinatesTest` (4; sa starom
+    formulom padaju 3). Provereno snimkom na emulatoru: igra crnim, slova h…a dole, brojevi 1…8 levo.
+  - Testovi: JVM **206/206**, instrumentisani **61/61**, 0 padova, oba iz XML-a. Instrumentisani prolaz je na
+    **`Pixel_Tablet_API_36.1`**: `Medium_Phone_API_36.1` ima ~420 MB slobodno na `/data` i javlja
+    `INSTALL_FAILED_INSUFFICIENT_STORAGE` za APK od 103 MB (mutacioni prolaz jednog testa je na telefonu još stao,
+    pun nije). Emulator ugašen odmah posle (`pgrep -f qemu-system` prazan). Release: `bundleRelease` +
+    `packageReleaseUniversalApk`, `aapt`: versionCode 7 / versionName 2.4, nije `debuggable`, `puzzles.sqlite`
+    `Stored`, dozvole `VIBRATE` + `INTERNET`. Bundle nepotpisan (`app/build/outputs/bundle/release/`), potpis
+    radi vlasnik.
