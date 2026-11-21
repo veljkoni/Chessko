@@ -12,6 +12,42 @@ final class OnlineViewModel {
 
     static let codeKey = "chessko.online.code"
     static let activeGameKey = "chessko.online.activeGame"
+    static let clockKey = "chessko.online.clock"
+
+    /// Poslednji izbor vremena u lobiju (`nil` = bez sata). Prvi put 3+2.
+    var selectedClock: ClockSpec? {
+        didSet { UserDefaults.standard.set(Self.storedValue(for: selectedClock), forKey: Self.clockKey) }
+    }
+
+    static func storedValue(for clock: ClockSpec?) -> String {
+        switch clock {
+        case ClockSpec.blitz?: return "3+2"
+        case ClockSpec.rapid?: return "10+5"
+        default: return "none"
+        }
+    }
+
+    static func clock(fromStored value: String?) -> ClockSpec? {
+        switch value {
+        case "10+5": return .rapid
+        case "none": return nil
+        default: return .blitz
+        }
+    }
+
+    /// „3+2“ (osnova u minutima + dodatak u sekundama) za dijalog poziva i izbor.
+    static func clockLabel(_ spec: ClockSpec) -> String { "\(spec.base / 60)+\(spec.inc)" }
+
+    /// Preostalo vreme za prikaz: `M:SS`, ispod 10 s `S.d`; nikad ispod 0 (0 → `0:00`).
+    static func clockText(ms: Int) -> String {
+        let ms = max(0, ms)
+        if ms == 0 { return "0:00" }
+        if ms < 10_000 { return "\(ms / 1000).\((ms % 1000) / 100)" }
+        let total = ms / 1000
+        let h = total / 3600, m = (total % 3600) / 60, sec = total % 60
+        if h > 0 { return String(format: "%d:%02d:%02d", h, m, sec) }
+        return String(format: "%d:%02d", m, sec)
+    }
 
     /// Čita sačuvanu partiju BEZ pravljenja `shared` (to bi podiglo GameViewModel i motor).
     static var hasStoredGame: Bool {
@@ -59,6 +95,7 @@ final class OnlineViewModel {
             stored = try? JSONDecoder().decode(ActiveGame.self, from: data)
         }
         myCode = code
+        selectedClock = Self.clock(fromStored: defaults.string(forKey: Self.clockKey))
         machine = OnlineMachine(myCode: code, stored: stored)
         game = GameViewModel(saveKey: GameViewModel.onlineSaveKey)
         game.onlineCanMove = machine.canAct
@@ -93,7 +130,7 @@ final class OnlineViewModel {
 
     func invite(_ input: String) {
         guard let code = OnlineCode.normalize(input) else { notice = .badCode; return }
-        handle(.invite(code: code, clock: nil))   // izbor sata: Task 7
+        handle(.invite(code: code, clock: selectedClock))
     }
     func accept() { handle(.accept) }
     func decline() { handle(.decline) }
@@ -162,6 +199,33 @@ final class OnlineViewModel {
                 end()
             }
         }
+    }
+
+    // MARK: Sat
+
+    /// Preostalo ms za stranu (sat se računa lokalno samo za prikaz): `wire` vrednost
+    /// umanjena za `now − receivedAt` samo za stranu koja trči, najmanje 0. Lokalna nula
+    /// se NIKAD ne tumači — kraj dolazi samo od servera (`flag`).
+    func displayedMs(for color: PieceColor, now: Date) -> Int? {
+        guard case .playing(_, _, _, _, _, let reading?) = state else { return nil }
+        let wire = reading.wire
+        let base = color == .white ? wire.whiteMs : wire.blackMs
+        guard wire.running == color else { return max(0, base) }
+        let elapsed = Int(((now.timeIntervalSinceReferenceDate - reading.receivedAt) * 1000).rounded(.down))
+        return max(0, base - max(0, elapsed))
+    }
+
+    /// Preostalo ms za prvi potez (`nil` kad rok ne važi).
+    func firstMoveMsLeft(now: Date) -> Int? {
+        guard case .playing(_, _, _, _, _, let reading?) = state, let first = reading.wire.firstMoveMs else { return nil }
+        let elapsed = Int(((now.timeIntervalSinceReferenceDate - reading.receivedAt) * 1000).rounded(.down))
+        return max(0, first - max(0, elapsed))
+    }
+
+    /// Partija ima sat (za prikaz kartica).
+    var isTimedGame: Bool {
+        if case .playing(let g, _, _, _, _, _) = state { return g.clock != nil }
+        return false
     }
 
     // MARK: Događaji i efekti

@@ -231,17 +231,31 @@ struct OnlineGameView: View {
         return max(0, color == .white ? w - b : b - w)
     }
 
+    /// Sat za karticu; osvežava se `TimelineView`-om samo u partiji na vreme.
+    private func clockInfo(_ color: PieceColor, now: Date) -> (text: String, isLow: Bool)? {
+        guard let ms = vm.displayedMs(for: color, now: now) else { return nil }
+        return (OnlineViewModel.clockText(ms: ms), ms < 10_000)
+    }
+
+    private func card(color: PieceColor, name: String, status: PlayerCardStatus?) -> some View {
+        TimelineView(.periodic(from: .now, by: vm.isTimedGame ? 0.1 : 3600)) { timeline in
+            DSPlayerCard(
+                color: color,
+                name: name,
+                status: status,
+                isActive: isActive(color),
+                materialAdvantage: materialAdvantage(for: color),
+                capturedPieces: captured(by: color),
+                flyingCapture: game.flyingCapture,
+                clock: clockInfo(color, now: timeline.date)
+            )
+        }
+    }
+
     private var opponentCard: some View {
         let color = friendColor
-        return DSPlayerCard(
-            color: color,
-            name: Loc("Prijatelj"),
-            status: isActive(color) ? .toMove(inCheck: isInCheck(color)) : nil,
-            isActive: isActive(color),
-            materialAdvantage: materialAdvantage(for: color),
-            capturedPieces: captured(by: color),
-            flyingCapture: game.flyingCapture
-        )
+        return card(color: color, name: Loc("Prijatelj"),
+                    status: isActive(color) ? .toMove(inCheck: isInCheck(color)) : nil)
     }
 
     private var playerCard: some View {
@@ -251,15 +265,7 @@ struct OnlineGameView: View {
             guard isActive(color) else { return nil }
             return .toMove(inCheck: isInCheck(color))
         }()
-        return DSPlayerCard(
-            color: color,
-            name: Loc("Ti"),
-            status: status,
-            isActive: isActive(color),
-            materialAdvantage: materialAdvantage(for: color),
-            capturedPieces: captured(by: color),
-            flyingCapture: game.flyingCapture
-        )
+        return card(color: color, name: Loc("Ti"), status: status)
     }
 
     /// Rezultat posle kraja; do tada `nil`.
@@ -268,8 +274,10 @@ struct OnlineGameView: View {
         switch result {
         case .iResigned, .opponentResigned, .board: return game.statusMessage
         case .drawAgreed: return Loc("Remi – dogovor.")
-        case .aborted, .firstMoveExpired: return Loc("Partija je prekinuta.")
-        case .iFlagged, .opponentFlagged: return game.statusMessage   // tekstovi isteka: Task 7
+        case .aborted: return Loc("Partija je prekinuta.")
+        case .firstMoveExpired: return Loc("Partija je prekinuta jer prvi potez nije odigran.")
+        case .iFlagged: return Loc("Isteklo ti je vreme.")
+        case .opponentFlagged: return Loc("Prijatelju je isteklo vreme.")
         }
     }
 
@@ -284,6 +292,7 @@ struct OnlineGameView: View {
             statusLine(Loc("Za igru preko interneta potrebna je novija verzija aplikacije."), showsProgress: false)
         case .playing(_, let link, let away, let drawByOpp, _, _):
             VStack(spacing: DS.Space.s) {
+                firstMoveLine
                 if let text = connectionText(link: link, away: away) {
                     statusLine(text, showsProgress: true)
                 } else if drawByOpp {
@@ -301,6 +310,22 @@ struct OnlineGameView: View {
             } else {
                 statusLine(hasNetwork ? Loc("Povezujem…") : Loc("Nema veze sa internetom."),
                            showsProgress: hasNetwork)
+            }
+        }
+    }
+
+    /// „Odigraj prvi potez: 0:25“ — samo igraču na potezu dok važi rok za prvi potez.
+    @ViewBuilder
+    private var firstMoveLine: some View {
+        if vm.isTimedGame, game.gameState.currentTurn == game.playerColor {
+            TimelineView(.periodic(from: .now, by: 0.1)) { timeline in
+                if let ms = vm.firstMoveMsLeft(now: timeline.date) {
+                    Text(LocF("Odigraj prvi potez: %@", OnlineViewModel.clockText(ms: ms)))
+                        .font(.dsBody.weight(.semibold))
+                        .foregroundStyle(ms < 10_000 ? DS.danger : DS.ink)
+                        .monospacedDigit()
+                        .frame(maxWidth: .infinity)
+                }
             }
         }
     }

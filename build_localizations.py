@@ -150,6 +150,15 @@ add("Prijatelj je odbio remi.", "Your friend declined the draw.", "Ton ami a ref
 add("Partija je prekinuta.", "The game was aborted.", "La partie a été interrompue.", "Die Partie wurde abgebrochen.", "La partita è stata interrotta.", "Партия прервана.", "对局已中断。", "बाज़ी रोक दी गई।")
 add("Prijatelj", "Friend", "Ami", "Freund", "Amico", "Друг", "朋友", "दोस्त")
 add("Partija će te čekati.", "The game will wait for you.", "La partie t’attendra.", "Die Partie wartet auf dich.", "La partita ti aspetterà.", "Партия подождёт тебя.", "对局会等你回来。", "बाज़ी तुम्हारा इंतज़ार करेगी।")
+# ── Partija na vreme (iOS Task 7) ───────────────────────────────────────────
+add("Vreme", "Time", "Temps", "Zeit", "Tempo", "Время", "时间", "समय")
+add("Bez sata", "No clock", "Sans pendule", "Ohne Uhr", "Senza orologio", "Без часов", "不计时", "बिना घड़ी")
+add("Partija: %@", "Game: %@", "Partie : %@", "Partie: %@", "Partita: %@", "Партия: %@", "对局：%@", "बाज़ी: %@")
+add("Odigraj prvi potez: %@", "Make your first move: %@", "Joue ton premier coup : %@", "Mach deinen ersten Zug: %@", "Fai la tua prima mossa: %@", "Сделай первый ход: %@", "请走第一步：%@", "पहली चाल चलो: %@")
+add("Isteklo ti je vreme.", "Your time ran out.", "Ton temps est écoulé.", "Deine Zeit ist abgelaufen.", "Il tuo tempo è scaduto.", "У тебя закончилось время.", "你的时间用完了。", "तुम्हारा समय खत्म हो गया।")
+add("Prijatelju je isteklo vreme.", "Your friend’s time ran out.", "Le temps de ton ami est écoulé.", "Die Zeit deines Freundes ist abgelaufen.", "Il tempo del tuo amico è scaduto.", "У друга закончилось время.", "朋友的时间用完了。", "दोस्त का समय खत्म हो गया।")
+add("Partija je prekinuta jer prvi potez nije odigran.", "The game was aborted because the first move wasn’t played.", "La partie a été interrompue car le premier coup n’a pas été joué.", "Die Partie wurde abgebrochen, weil der erste Zug nicht gespielt wurde.", "La partita è stata interrotta perché la prima mossa non è stata giocata.", "Партия прервана, потому что первый ход не был сделан.", "对局已中止，因为没有走第一步。", "पहली चाल न चली जाने के कारण बाज़ी रोक दी गई।")
+add("Prijatelj treba da ažurira aplikaciju za igru na vreme.", "Your friend needs to update the app to play with a clock.", "Ton ami doit mettre à jour l’application pour jouer avec une pendule.", "Dein Freund muss die App aktualisieren, um mit Uhr zu spielen.", "Il tuo amico deve aggiornare l’app per giocare con il tempo.", "Другу нужно обновить приложение, чтобы играть на время.", "朋友需要更新应用才能计时对弈。", "दोस्त को समय के साथ खेलने के लिए ऐप अपडेट करना होगा।")
 
 # ── Puzzle screen ───────────────────────────────────────────────────────────
 add("Izaberi dan", "Choose a day", "Choisir un jour", "Tag wählen", "Scegli un giorno", "Выберите день", "选择日期", "दिन चुनें")

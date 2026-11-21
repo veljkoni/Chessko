@@ -1081,7 +1081,7 @@ final class GameViewModel {
             SoundManager.shared.playMove()
             Haptics.notification(.error)
         case .board, .aborted, .iFlagged, .opponentFlagged, .firstMoveExpired:
-            break   // prikaz krajeva na vreme: Task 7
+            break   // tekst kraja crta `OnlineGameView` (`resultText`)
         }
         clearSave()
         updateEvaluation()

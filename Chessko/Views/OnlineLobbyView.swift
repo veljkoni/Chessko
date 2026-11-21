@@ -38,6 +38,11 @@ struct OnlineLobbyView: View {
         return nil
     }
 
+    private var invitedClockLabel: String {
+        if case .invited(_, let clock?) = vm.state { return OnlineViewModel.clockLabel(clock) }
+        return Loc("Bez sata")
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: DS.Space.l) {
@@ -67,6 +72,8 @@ struct OnlineLobbyView: View {
         ) {
             Button(Loc("Prihvati")) { vm.accept() }
             Button(Loc("Odbij"), role: .cancel) { vm.decline() }
+        } message: {
+            Text(LocF("Partija: %@", invitedClockLabel))
         }
     }
 
@@ -156,6 +163,8 @@ struct OnlineLobbyView: View {
                     .submitLabel(.go)
                     .onSubmit(invite)
 
+                clockPicker
+
                 Button {
                     invite()
                 } label: {
@@ -169,6 +178,23 @@ struct OnlineLobbyView: View {
         .padding(DS.Space.l)
         .frame(maxWidth: .infinity)
         .dsCard()
+    }
+
+    private var clockPicker: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            Text(Loc("Vreme"))
+                .font(.dsCaption.weight(.medium))
+                .foregroundStyle(DS.inkMuted)
+            Picker(Loc("Vreme"), selection: Binding(
+                get: { OnlineViewModel.storedValue(for: vm.selectedClock) },
+                set: { vm.selectedClock = OnlineViewModel.clock(fromStored: $0) }
+            )) {
+                Text(verbatim: "3+2").tag("3+2")
+                Text(verbatim: "10+5").tag("10+5")
+                Text(Loc("Bez sata")).tag("none")
+            }
+            .pickerStyle(.segmented)
+        }
     }
 
     private func invite() {
@@ -223,7 +249,7 @@ enum OnlineNoticeText {
         case .inviteCancelled: return Loc("Poziv je otkazan.")
         case .drawDeclined:   return Loc("Prijatelj je odbio remi.")
         case .codeTaken:      return ""
-        case .needsUpdate:    return ""   // tekst dolazi u Task 7
+        case .needsUpdate:    return Loc("Prijatelj treba da ažurira aplikaciju za igru na vreme.")
         }
     }
 }

@@ -120,6 +120,8 @@ struct DSPlayerCard: View {
     var flyingCapture: FlyingCapture? = nil
     var evaluation: DSEvaluation? = nil
     var showsChevron: Bool = false
+    /// Sat partije na vreme (tekst + da li je ispod 10 s). `nil` = bez sata.
+    var clock: (text: String, isLow: Bool)? = nil
 
     var body: some View {
         HStack(alignment: .center, spacing: DS.Space.m) {
@@ -165,6 +167,15 @@ struct DSPlayerCard: View {
 
             if let evaluation {
                 EvaluationChip(evaluation: evaluation)
+            }
+
+            if let clock {
+                Text(clock.text)
+                    .font(.system(size: 22, weight: .semibold, design: .monospaced))
+                    .monospacedDigit()
+                    .foregroundStyle(clock.isLow ? DS.danger : (isActive ? DS.ink : DS.inkMuted))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
 
             if showsChevron {
