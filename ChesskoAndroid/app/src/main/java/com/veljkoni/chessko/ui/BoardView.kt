@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -353,33 +354,47 @@ fun BoardView(
                         draggedPiece = pieceOnSquare
                         dragStartPos = startPos
                         dragTouchOffset = down.position + overSlop
-                        onTap(startPos)
+                        // `try/finally`, ne poništavanje na kraju bloka: `draggedPiece`/
+                        // `dragStartPos` žive VAN ovog `pointerInput`-a, a njegov ključ je
+                        // `board`. Kad se tabla promeni usred prevlačenja (igra preko
+                        // interneta: stigne protivnikov potez dok igrač drži figuru),
+                        // Compose OTKAZUJE ovu korutinu i pokreće novu — a otkazivanje je
+                        // preskakalo poništavanje na kraju, pa je lebdeća figura ostajala
+                        // zauvek na poslednjem mestu prsta, a polazno polje bez figure
+                        // (izdanje 2.4, snimci testera). `finally` se izvršava na SVAKOM
+                        // izlazu, uključujući otkazivanje; upis u stanje u njemu nije
+                        // `suspend`, pa radi i u otkazanoj korutini. Čuva ga
+                        // `BoardDragSurvivesBoardChangeTest`.
+                        try {
+                            onTap(startPos)
 
-                        val completed = drag(drag.id) { change ->
-                            // REDOSLED JE BITAN: `positionChange()` vraca
-                            // `Offset.Zero` za vec potrosen `change`, pa se
-                            // pomeraj mora procitati PRE `consume()`. Obrnuto
-                            // figura ostaje zalepljena za polazno polje i potez
-                            // se nikad ne odigra (izmereno na emulatoru).
-                            // `detectDragGestures` je interno radio isti
-                            // redosled.
-                            val delta = change.positionChange()
-                            change.consume()
-                            dragTouchOffset += delta
-                        }
-
-                        if (completed) {
-                            val endDisplayCol = (dragTouchOffset.x / squareSizePx).toInt().coerceIn(0, 7)
-                            val endDisplayRow = (dragTouchOffset.y / squareSizePx).toInt().coerceIn(0, 7)
-                            val endRow = if (isFlipped) 7 - endDisplayRow else endDisplayRow
-                            val endCol = if (isFlipped) 7 - endDisplayCol else endDisplayCol
-                            val targetPos = Position(endRow, endCol)
-                            if (targetPos != startPos) {
-                                onTap(targetPos)
+                            val completed = drag(drag.id) { change ->
+                                // REDOSLED JE BITAN: `positionChange()` vraca
+                                // `Offset.Zero` za vec potrosen `change`, pa se
+                                // pomeraj mora procitati PRE `consume()`. Obrnuto
+                                // figura ostaje zalepljena za polazno polje i potez
+                                // se nikad ne odigra (izmereno na emulatoru).
+                                // `detectDragGestures` je interno radio isti
+                                // redosled.
+                                val delta = change.positionChange()
+                                change.consume()
+                                dragTouchOffset += delta
                             }
+
+                            if (completed) {
+                                val endDisplayCol = (dragTouchOffset.x / squareSizePx).toInt().coerceIn(0, 7)
+                                val endDisplayRow = (dragTouchOffset.y / squareSizePx).toInt().coerceIn(0, 7)
+                                val endRow = if (isFlipped) 7 - endDisplayRow else endDisplayRow
+                                val endCol = if (isFlipped) 7 - endDisplayCol else endDisplayCol
+                                val targetPos = Position(endRow, endCol)
+                                if (targetPos != startPos) {
+                                    onTap(targetPos)
+                                }
+                            }
+                        } finally {
+                            draggedPiece = null
+                            dragStartPos = null
                         }
-                        draggedPiece = null
-                        dragStartPos = null
                     }
                 }
     ) {
@@ -449,6 +464,8 @@ fun BoardView(
                     .graphicsLayer {
                         shadowElevation = 8.dp.toPx()
                     }
+                    // Za `BoardDragSurvivesBoardChangeTest` (izdanje 2.4).
+                    .testTag("board.dragOverlay")
             )
         }
 
@@ -640,6 +657,9 @@ fun SquareView(
                 .padding(6.dp)
                 .offset(x = translationX, y = translationY)
                 .scale(if (isSelected) selectionScale else 1.0f)
+                // Za `BoardDragSurvivesBoardChangeTest`: polazno polje mora ponovo da
+                // crta figuru kad prevlačenje prekine promena table.
+                .testTag("board.piece.${position.row}.${position.col}")
 
             AsyncImage(
                 model = "file:///android_asset/pieces/$assetName.svg",
