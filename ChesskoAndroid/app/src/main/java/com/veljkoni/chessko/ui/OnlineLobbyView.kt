@@ -80,6 +80,8 @@ fun onlineNoticeText(notice: OnlineNotice): String = when (notice) {
     OnlineNotice.DRAW_DECLINED -> loc("Prijatelj je odbio remi.")
     // Masina ga ne emituje (tiho se resava); grana postoji da `when` bude iscrpan.
     OnlineNotice.CODE_TAKEN -> ""
+    // Privremeno do Task-a 10 (nov ključ za `needs_update`).
+    OnlineNotice.NEEDS_UPDATE -> ""
 }
 
 /** Velika slova, samo znaci azbuke koda, najvise 6, crtica posle treceg. */

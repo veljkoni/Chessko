@@ -571,7 +571,9 @@ class GameViewModel(
                 soundManager.playCheckmate()
                 hapticManager.warning()
             }
-            OnlineResult.BOARD, OnlineResult.ABORTED -> Unit
+            // Kraj na vreme: status table se ne menja (prikaz je Task 10).
+            OnlineResult.BOARD, OnlineResult.ABORTED,
+            OnlineResult.I_FLAGGED, OnlineResult.OPPONENT_FLAGGED, OnlineResult.FIRST_MOVE_EXPIRED -> Unit
         }
         clearSave()
         updateEvaluation()

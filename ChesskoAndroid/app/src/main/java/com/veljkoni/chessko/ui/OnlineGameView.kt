@@ -333,6 +333,9 @@ private fun MyCard(vm: OnlineViewModel, game: GameViewModel, pieceStyle: PieceSt
                 OnlineResult.I_RESIGNED, OnlineResult.OPPONENT_RESIGNED, OnlineResult.BOARD -> getStatusMessage(game)
                 OnlineResult.DRAW_AGREED -> loc("Remi – dogovor.")
                 OnlineResult.ABORTED -> loc("Partija je prekinuta.")
+                // Privremeno do Task-a 10 (pravi tekstovi za kraj na vreme).
+                OnlineResult.I_FLAGGED, OnlineResult.OPPONENT_FLAGGED -> getStatusMessage(game)
+                OnlineResult.FIRST_MOVE_EXPIRED -> loc("Partija je prekinuta.")
             }
         )
         active -> PlayerCardStatus.ToMove(inCheck = isInCheck(game, color))

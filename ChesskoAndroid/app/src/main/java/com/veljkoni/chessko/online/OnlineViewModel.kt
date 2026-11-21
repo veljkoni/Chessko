@@ -2,6 +2,7 @@ package com.veljkoni.chessko.online
 
 import android.app.Application
 import android.content.Context
+import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -42,25 +43,41 @@ class OnlineViewModel private constructor(private val app: Application) {
         fun hasStoredGame(context: Context): Boolean =
             readStored(context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)) != null
 
-        internal fun readStored(prefs: android.content.SharedPreferences): ActiveGame? {
-            val raw = prefs.getString(ACTIVE_GAME_KEY, null) ?: return null
-            return try {
-                val o = JSONObject(raw)
-                val color = when (o.getString("color")) {
-                    "white" -> PieceColor.WHITE
-                    "black" -> PieceColor.BLACK
-                    else -> return null
-                }
-                ActiveGame(o.getString("game"), o.getString("token"), color, o.getString("opponent"))
-            } catch (_: Exception) {
-                null
+        internal fun readStored(prefs: android.content.SharedPreferences): ActiveGame? =
+            prefs.getString(ACTIVE_GAME_KEY, null)?.let { decodeStored(it) }
+
+        /**
+         * Star zapis (pre protokola v2) nema `clock` i čita se kao partija bez sata.
+         * Pokvaren `clock` u inače ispravnom zapisu odbacuje ceo zapis: partija čiji se
+         * sat ne zna ne sme tiho postati partija bez sata (slala bi `finished`).
+         */
+        internal fun decodeStored(raw: String): ActiveGame? = try {
+            val o = JSONObject(raw)
+            val color = when (o.getString("color")) {
+                "white" -> PieceColor.WHITE
+                "black" -> PieceColor.BLACK
+                else -> null
             }
+            val clock: ClockSpec? = if (!o.has("clock") || o.isNull("clock")) null else {
+                val c = o.getJSONObject("clock")
+                ClockSpec(c.getInt("base"), c.getInt("inc"))
+            }
+            color?.let { ActiveGame(o.getString("game"), o.getString("token"), it, o.getString("opponent"), clock) }
+        } catch (_: Exception) {
+            null
         }
 
-        internal fun encodeStored(g: ActiveGame): String = JSONObject()
-            .put("game", g.game).put("token", g.token)
-            .put("color", if (g.color == PieceColor.WHITE) "white" else "black")
-            .put("opponent", g.opponent).toString()
+        internal fun encodeStored(g: ActiveGame): String {
+            val o = JSONObject()
+                .put("game", g.game).put("token", g.token)
+                .put("color", if (g.color == PieceColor.WHITE) "white" else "black")
+                .put("opponent", g.opponent)
+            g.clock?.let { o.put("clock", JSONObject().put("base", it.base).put("inc", it.inc)) }
+            return o.toString()
+        }
+
+        /** Trenutak prijema poruke za `ClockReading` — monotono, ne zavisi od sata uređaja. */
+        private fun now(): Double = SystemClock.elapsedRealtime() / 1000.0
     }
 
     private val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -112,7 +129,9 @@ class OnlineViewModel private constructor(private val app: Application) {
         machine = OnlineMachine(code, stored)
         game = GameViewModel(app, GameViewModel.ONLINE_SAVE_KEY)
         game.onlineCanMove = machine.canAct
-        game.onLocalMove = { ply, uci -> handle(OnlineEvent.LocalMove(ply, uci)) }
+        // `onLocalMove` se zove posle primene poteza (pre `onBoardFinished`), pa
+        // `isGameOver` već kaže da li ovaj potez završava partiju.
+        game.onLocalMove = { ply, uci -> handle(OnlineEvent.LocalMove(ply, uci, ends = game.isGameOver)) }
         game.onBoardFinished = { handle(OnlineEvent.BoardFinished) }
         hasActiveGame = stored != null
     }
@@ -154,7 +173,8 @@ class OnlineViewModel private constructor(private val app: Application) {
             notice = OnlineNotice.BAD_CODE
             return
         }
-        handle(OnlineEvent.Invite(code))
+        // Izbor sata je Task 10; do tada poziv bez sata.
+        handle(OnlineEvent.Invite(code, null))
     }
 
     fun accept() = handle(OnlineEvent.Accept)
@@ -279,7 +299,7 @@ class OnlineViewModel private constructor(private val app: Application) {
         val gen = generation
         val c = OnlineConnection()
         c.onOpen = { if (generation == gen) handle(OnlineEvent.SocketOpened) }
-        c.onMessage = { m -> if (generation == gen) handle(OnlineEvent.Received(m)) }
+        c.onMessage = { m -> if (generation == gen) handle(OnlineEvent.Received(m, now())) }
         c.onClose = {
             if (generation == gen) {
                 connection = null

@@ -3,6 +3,8 @@ package com.veljkoni.chessko
 import com.veljkoni.chessko.models.PieceColor
 import com.veljkoni.chessko.online.ActiveGame
 import com.veljkoni.chessko.online.ClientMessage
+import com.veljkoni.chessko.online.ClockReading
+import com.veljkoni.chessko.online.ClockSpec
 import com.veljkoni.chessko.online.OnlineCloseConfirm
 import com.veljkoni.chessko.online.OnlineEffect
 import com.veljkoni.chessko.online.OnlineError
@@ -13,8 +15,10 @@ import com.veljkoni.chessko.online.OnlineNotice
 import com.veljkoni.chessko.online.OnlineResult
 import com.veljkoni.chessko.online.OnlineState
 import com.veljkoni.chessko.online.ServerMessage
+import com.veljkoni.chessko.online.WireClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,7 +30,7 @@ class OnlineMachineTest {
     private fun playing(
         link: OnlineLink = OnlineLink.CONNECTED, away: Boolean = false,
         dBy: Boolean = false, dMe: Boolean = false,
-    ) = OnlineState.Playing(game, link, away, dBy, dMe)
+    ) = OnlineState.Playing(game, link, away, dBy, dMe, clock = null)
 
     private fun machine(state: OnlineState, stored: ActiveGame? = null): OnlineMachine {
         val m = OnlineMachine("K7M4QX", stored)
@@ -34,7 +38,8 @@ class OnlineMachineTest {
         return m
     }
 
-    private fun rx(m: ServerMessage) = OnlineEvent.Received(m)
+    /** Dolazna poruka bez važnog vremena prijema (partije bez sata). */
+    private fun rx(m: ServerMessage) = OnlineEvent.Received(m, 0.0)
     private fun send(m: ClientMessage) = OnlineEffect.Send(m)
     private val noFx = emptyList<OnlineEffect>()
 
@@ -171,18 +176,18 @@ class OnlineMachineTest {
     @Test fun incomingInviteInLobbyGoesToInvited() {
         val m = machine(OnlineState.Lobby)
         assertEquals(noFx, m.handle(rx(ServerMessage.Invited("ABCDEF"))))
-        assertEquals(OnlineState.Invited("ABCDEF"), m.state)
+        assertEquals(OnlineState.Invited("ABCDEF", null), m.state)
     }
 
     @Test fun inviteWhileInvitedSendsNothing() {
-        val m = machine(OnlineState.Invited("ABCDEF"))
-        assertEquals(noFx, m.handle(OnlineEvent.Invite("XYZ234")))
-        assertEquals(OnlineState.Invited("ABCDEF"), m.state)
+        val m = machine(OnlineState.Invited("ABCDEF", null))
+        assertEquals(noFx, m.handle(OnlineEvent.Invite("XYZ234", null)))
+        assertEquals(OnlineState.Invited("ABCDEF", null), m.state)
     }
 
     @Test fun inviteInLobbySendsInvite() {
         val m = machine(OnlineState.Lobby)
-        assertEquals(listOf(send(ClientMessage.Invite("ABCDEF"))), m.handle(OnlineEvent.Invite("ABCDEF")))
+        assertEquals(listOf(send(ClientMessage.Invite("ABCDEF"))), m.handle(OnlineEvent.Invite("ABCDEF", null)))
         assertEquals(OnlineState.Inviting("ABCDEF"), m.state)
     }
 
@@ -195,7 +200,7 @@ class OnlineMachineTest {
 
     @Test fun localMoveSendsMoveWithCallerPly() {
         val m = machine(playing(), game)
-        assertEquals(listOf(send(ClientMessage.Move(4, "e2e4"))), m.handle(OnlineEvent.LocalMove(4, "e2e4")))
+        assertEquals(listOf(send(ClientMessage.Move(4, "e2e4"))), m.handle(OnlineEvent.LocalMove(4, "e2e4", false)))
     }
 
     @Test fun syncReplacesMoves() {
@@ -288,7 +293,7 @@ class OnlineMachineTest {
 
     @Test fun actionsAreRefusedWhileReconnecting() {
         val events = listOf(
-            OnlineEvent.LocalMove(0, "e2e4"), OnlineEvent.Resign, OnlineEvent.OfferDraw,
+            OnlineEvent.LocalMove(0, "e2e4", false), OnlineEvent.Resign, OnlineEvent.OfferDraw,
             OnlineEvent.AnswerDraw(true), OnlineEvent.AnswerDraw(false),
         )
         for (e in events) {
@@ -358,5 +363,278 @@ class OnlineMachineTest {
         assertEquals(OnlineState.Connecting, m.state)
         assertEquals(noFx, m.handle(rx(ServerMessage.Welcome("K7M4QX"))))
         assertEquals(OnlineState.Lobby, m.state)
+    }
+
+    // Pozadina: eksplicitan prekid veze (isto kao iOS)
+    @Test fun backgroundThenActiveReconnectsFromPlaying() {
+        val m = machine(playing(), game)
+        // pozadina: veza pada, mašina traži reconnect (VM ga ne zakazuje dok je u pozadini)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.ScheduleReconnect(1)), m.handle(OnlineEvent.SocketClosed))
+        assertEquals(playing(OnlineLink.RECONNECTING), m.state)
+        // povratak: odmah connect, bez čekanja backoff-a
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Connect), m.handle(OnlineEvent.AppBecameActive))
+    }
+
+    // ── Partija na vreme (protokol v2) ──────────────────────────────────
+
+    private val timedGame = ActiveGame("g2", "tok2", PieceColor.WHITE, "ABCDEF", ClockSpec.BLITZ)
+
+    private fun wire(
+        w: Int = 180_000, b: Int = 180_000, run: PieceColor? = null, first: Int? = 30_000,
+    ) = WireClock(ClockSpec.BLITZ, w, b, run, first)
+
+    private fun timedPlaying(
+        link: OnlineLink = OnlineLink.CONNECTED, away: Boolean = false,
+        clock: ClockReading? = ClockReading(wire(), 100.0),
+    ) = OnlineState.Playing(timedGame, link, away, drawOfferedByOpponent = false, drawOfferedByMe = false, clock = clock)
+
+    private fun readingOf(s: OnlineState): ClockReading? = (s as? OnlineState.Playing)?.clock
+
+    @Test fun invitedCarriesClockFromMessage() {
+        val m = machine(OnlineState.Lobby)
+        assertEquals(noFx, m.handle(rx(ServerMessage.Invited("ABCDEF", ClockSpec.RAPID))))
+        assertEquals(OnlineState.Invited("ABCDEF", ClockSpec.RAPID), m.state)
+    }
+
+    @Test fun acceptSendsTheSameClockAsTheInvite() {
+        val timed = machine(OnlineState.Invited("ABCDEF", ClockSpec.BLITZ))
+        assertEquals(listOf(send(ClientMessage.Accept("ABCDEF", ClockSpec.BLITZ))), timed.handle(OnlineEvent.Accept))
+        val untimed = machine(OnlineState.Invited("ABCDEF", null))
+        assertEquals(listOf(send(ClientMessage.Accept("ABCDEF", null))), untimed.handle(OnlineEvent.Accept))
+    }
+
+    @Test fun inviteWithClockSendsClock() {
+        val m = machine(OnlineState.Lobby)
+        assertEquals(
+            listOf(send(ClientMessage.Invite("ABCDEF", ClockSpec.RAPID))),
+            m.handle(OnlineEvent.Invite("ABCDEF", ClockSpec.RAPID)),
+        )
+        assertEquals(OnlineState.Inviting("ABCDEF"), m.state)
+    }
+
+    @Test fun startWithClockSetsReadingAndStoresSpec() {
+        val m = machine(OnlineState.Inviting("ABCDEF"))
+        val w = wire()
+        val fx = m.handle(OnlineEvent.Received(ServerMessage.Start("g2", PieceColor.WHITE, "tok2", "ABCDEF", w), 42.5))
+        assertEquals(listOf(OnlineEffect.Persist(timedGame), OnlineEffect.StartGame(timedGame)), fx)
+        assertEquals(timedGame, m.stored)
+        assertEquals(ClockSpec.BLITZ, m.stored?.clock)
+        assertEquals(timedPlaying(clock = ClockReading(w, 42.5)), m.state)
+    }
+
+    @Test fun startWithoutClockIsUntimed() {
+        val m = machine(OnlineState.Invited("ABCDEF", null))
+        m.handle(rx(ServerMessage.Start("g1", PieceColor.WHITE, "tok", "ABCDEF", null)))
+        assertNull(m.stored?.clock)
+        assertNull(readingOf(m.state))
+    }
+
+    @Test fun ackMoveSyncAndResumedRefreshTheReading() {
+        val a = wire(w = 170_000, run = PieceColor.BLACK, first = null)
+        val m1 = machine(timedPlaying(), timedGame)
+        assertEquals(noFx, m1.handle(OnlineEvent.Received(ServerMessage.Ack(2, a), 200.0)))
+        assertEquals(ClockReading(a, 200.0), readingOf(m1.state))
+
+        val b = wire(b = 160_000, run = PieceColor.WHITE, first = null)
+        val m2 = machine(timedPlaying(), timedGame)
+        assertEquals(
+            listOf<OnlineEffect>(OnlineEffect.ApplyRemoteMove(3, "e7e5")),
+            m2.handle(OnlineEvent.Received(ServerMessage.Move(3, "e7e5", false, b), 300.0)),
+        )
+        assertEquals(ClockReading(b, 300.0), readingOf(m2.state))
+
+        val c = wire(w = 150_000, run = PieceColor.WHITE, first = null)
+        val m3 = machine(timedPlaying(), timedGame)
+        assertEquals(
+            listOf<OnlineEffect>(OnlineEffect.ReplaceMoves(listOf("e2e4", "e7e5"))),
+            m3.handle(OnlineEvent.Received(ServerMessage.Sync(listOf("e2e4", "e7e5"), c), 400.0)),
+        )
+        assertEquals(ClockReading(c, 400.0), readingOf(m3.state))
+
+        val d = wire(w = 90_000, b = 120_000, run = PieceColor.WHITE, first = null)
+        val m4 = machine(timedPlaying(OnlineLink.RECONNECTING), timedGame)
+        assertEquals(
+            listOf<OnlineEffect>(OnlineEffect.ReplaceMoves(listOf("e2e4", "e7e5"))),
+            m4.handle(OnlineEvent.Received(
+                ServerMessage.Resumed("g2", PieceColor.WHITE, listOf("e2e4", "e7e5"), true, d), 500.0,
+            )),
+        )
+        assertEquals(timedPlaying(clock = ClockReading(d, 500.0)), m4.state)
+    }
+
+    // Poruka bez `clock` (stara ili pokvarena) ne briše poslednje stanje sata.
+    @Test fun messageWithoutClockKeepsTheLastReading() {
+        val r = ClockReading(wire(run = PieceColor.WHITE, first = null), 7.0)
+        val m = machine(timedPlaying(clock = r), timedGame)
+        m.handle(OnlineEvent.Received(ServerMessage.Ack(2, null), 50.0))
+        m.handle(OnlineEvent.Received(ServerMessage.Move(3, "e7e5", false, null), 60.0))
+        m.handle(OnlineEvent.Received(ServerMessage.Sync(listOf("e2e4", "e7e5"), null), 70.0))
+        assertEquals(r, readingOf(m.state))
+    }
+
+    @Test fun otherPlayingEventsKeepTheReading() {
+        val r = ClockReading(wire(run = PieceColor.WHITE, first = null), 7.0)
+        val m = machine(timedPlaying(clock = r), timedGame)
+        m.handle(rx(ServerMessage.Opponent(false)))
+        m.handle(rx(ServerMessage.DrawOffer))
+        m.handle(OnlineEvent.SocketClosed)
+        assertEquals(r, readingOf(m.state))
+    }
+
+    @Test fun flagEndsWithTheRightSide() {
+        val mine = machine(timedPlaying(), timedGame)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), mine.handle(rx(ServerMessage.Flag(PieceColor.WHITE))))
+        assertEquals(OnlineState.Ended(OnlineResult.I_FLAGGED), mine.state)
+        assertNull(mine.stored)
+        val theirs = machine(timedPlaying(), timedGame)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), theirs.handle(rx(ServerMessage.Flag(PieceColor.BLACK))))
+        assertEquals(OnlineState.Ended(OnlineResult.OPPONENT_FLAGGED), theirs.state)
+    }
+
+    @Test fun flagRightAfterResumedEnds() {
+        val m = machine(timedPlaying(OnlineLink.RECONNECTING), timedGame)
+        m.handle(OnlineEvent.Received(
+            ServerMessage.Resumed("g2", PieceColor.WHITE, listOf("e2e4"), false, wire(w = 0, run = PieceColor.WHITE, first = null)),
+            1.0,
+        ))
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(rx(ServerMessage.Flag(PieceColor.WHITE))))
+        assertEquals(OnlineState.Ended(OnlineResult.I_FLAGGED), m.state)
+    }
+
+    @Test fun firstMoveExpiredEndsWithoutResult() {
+        val m = machine(timedPlaying(), timedGame)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(rx(ServerMessage.FirstMoveExpired)))
+        assertEquals(OnlineState.Ended(OnlineResult.FIRST_MOVE_EXPIRED), m.state)
+        assertNull(m.stored)
+    }
+
+    @Test fun flagAndFirstMoveExpiredOutsidePlayingAreIgnored() {
+        val l = machine(OnlineState.Lobby)
+        assertEquals(noFx, l.handle(rx(ServerMessage.Flag(PieceColor.WHITE))))
+        assertEquals(noFx, l.handle(rx(ServerMessage.FirstMoveExpired)))
+        assertEquals(OnlineState.Lobby, l.state)
+    }
+
+    @Test fun needsUpdateWhileInvitingGoesBackToLobbyWithNotice() {
+        val m = machine(OnlineState.Inviting("ABCDEF"))
+        assertEquals(
+            listOf<OnlineEffect>(OnlineEffect.ShowMessage(OnlineNotice.NEEDS_UPDATE)),
+            m.handle(rx(ServerMessage.Error(OnlineError.NEEDS_UPDATE))),
+        )
+        assertEquals(OnlineState.Lobby, m.state)
+        // Tiče se prijateljeve aplikacije, ne ove: nije kraj sesije.
+        assertFalse(m.updateRequired)
+    }
+
+    @Test fun badClockWhileInvitingGoesBackToLobbySilently() {
+        val m = machine(OnlineState.Inviting("ABCDEF"))
+        assertEquals(noFx, m.handle(rx(ServerMessage.Error(OnlineError.BAD_CLOCK))))
+        assertEquals(OnlineState.Lobby, m.state)
+    }
+
+    @Test fun timedEndingLocalMoveSendsEndAndWaitsForAck() {
+        val m = machine(timedPlaying(), timedGame)
+        assertEquals(
+            listOf(send(ClientMessage.Move(6, "d8h4", end = true))),
+            m.handle(OnlineEvent.LocalMove(6, "d8h4", ends = true)),
+        )
+        // VM odmah posle poteza javlja BoardFinished: u partiji sa satom bez `finished`, čeka se ack.
+        assertEquals(noFx, m.handle(OnlineEvent.BoardFinished))
+        assertNotNull(readingOf(m.state))
+        assertTrue("treba da ostane u Playing do ack-a", m.state is OnlineState.Playing)
+        assertFalse(m.canAct) // ništa se ne šalje za partiju koja se upravo završava
+        val a = wire(w = 150_000, run = null, first = null)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(OnlineEvent.Received(ServerMessage.Ack(6, a), 9.0)))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+        assertNull(m.stored)
+    }
+
+    @Test fun timedAckForAnotherPlyDoesNotEnd() {
+        val m = machine(timedPlaying(), timedGame)
+        m.handle(OnlineEvent.LocalMove(6, "d8h4", ends = true))
+        assertEquals(noFx, m.handle(OnlineEvent.Received(ServerMessage.Ack(4, wire()), 9.0)))
+        assertTrue("ack drugog poteza ne završava partiju", m.state is OnlineState.Playing)
+    }
+
+    @Test fun timedNonEndingLocalMoveSendsEndFalse() {
+        val m = machine(timedPlaying(), timedGame)
+        assertEquals(
+            listOf(send(ClientMessage.Move(2, "g1f3", end = false))),
+            m.handle(OnlineEvent.LocalMove(2, "g1f3", ends = false)),
+        )
+        assertTrue(m.canAct)
+    }
+
+    @Test fun untimedEndingLocalMoveKeepsTodaysFlow() {
+        val m = machine(playing(), game)
+        assertEquals(
+            listOf(send(ClientMessage.Move(6, "d8h4", end = false))),
+            m.handle(OnlineEvent.LocalMove(6, "d8h4", ends = true)),
+        )
+        assertEquals(listOf(send(ClientMessage.Finished), OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+    }
+
+    // Ruling 2: primalac završnog poteza ne šalje `finished` (server je partiju već završio).
+    @Test fun timedRemoteEndingMoveEndsBoardWithoutFinished() {
+        val m = machine(timedPlaying(), timedGame)
+        val w = wire(w = 100_000, b = 90_000, run = null, first = null)
+        val fx = m.handle(OnlineEvent.Received(ServerMessage.Move(7, "d8h4", true, w), 3.0))
+        assertEquals(listOf(OnlineEffect.ApplyRemoteMove(7, "d8h4"), OnlineEffect.Persist(null)), fx)
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+        // VM posle primene poteza javlja BoardFinished: ignoriše se, ništa se ne šalje.
+        assertEquals(noFx, m.handle(OnlineEvent.BoardFinished))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+    }
+
+    @Test fun untimedRemoteMoveIgnoresEnd() {
+        val m = machine(playing(), game)
+        assertEquals(
+            listOf<OnlineEffect>(OnlineEffect.ApplyRemoteMove(7, "d8h4")),
+            m.handle(rx(ServerMessage.Move(7, "d8h4", true, null))),
+        )
+        assertEquals(playing(), m.state)
+        assertEquals(listOf(send(ClientMessage.Finished), OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
+    }
+
+    // `resumed` za partiju završenu dok smo bili odsutni: kraj se vidi samo na tabli.
+    @Test fun timedBoardFinishedAfterResumedEndsWithoutFinished() {
+        val m = machine(timedPlaying(OnlineLink.RECONNECTING), timedGame)
+        m.handle(OnlineEvent.Received(
+            ServerMessage.Resumed(
+                "g2", PieceColor.WHITE, listOf("f2f3", "e7e5", "g2g4", "d8h4"), false,
+                wire(run = PieceColor.WHITE, first = null),
+            ),
+            1.0,
+        ))
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(OnlineEvent.BoardFinished))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+    }
+
+    // Završni potez otišao, veza pala pre ack-a: strana koja je završila dobija game_gone.
+    @Test fun timedGameGoneWhileAwaitingEndAckEndsBoard() {
+        val m = machine(timedPlaying(), timedGame)
+        m.handle(OnlineEvent.LocalMove(6, "d8h4", ends = true))
+        m.handle(OnlineEvent.SocketClosed)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(rx(ServerMessage.Error(OnlineError.GAME_GONE))))
+        assertEquals(OnlineState.Ended(OnlineResult.BOARD), m.state)
+    }
+
+    // Završni potez nije stigao do servera: `resumed` ga ne sadrži, partija se nastavlja.
+    @Test fun timedResumedWithoutTheEndingMoveClearsThePendingEnd() {
+        val m = machine(timedPlaying(), timedGame)
+        m.handle(OnlineEvent.LocalMove(6, "d8h4", ends = true))
+        m.handle(OnlineEvent.SocketClosed)
+        m.handle(OnlineEvent.Received(ServerMessage.Resumed("g2", PieceColor.WHITE, listOf("e2e4"), true, wire()), 2.0))
+        assertTrue(m.canAct)
+        assertEquals(listOf<OnlineEffect>(OnlineEffect.Persist(null)), m.handle(rx(ServerMessage.Error(OnlineError.GAME_GONE))))
+        assertEquals(OnlineState.Ended(OnlineResult.ABORTED), m.state)
+    }
+
+    @Test fun timedSyncClearsThePendingEnd() {
+        val m = machine(timedPlaying(), timedGame)
+        m.handle(OnlineEvent.LocalMove(6, "d8h4", ends = true))
+        m.handle(OnlineEvent.Received(ServerMessage.Sync(listOf("e2e4"), wire()), 2.0))
+        assertTrue(m.canAct)
     }
 }
