@@ -24,6 +24,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import com.veljkoni.chessko.logic.BoardCoordinates
 import com.veljkoni.chessko.logic.SettingsManager
 import com.veljkoni.chessko.logic.HapticManager
 import androidx.compose.ui.Alignment
@@ -406,8 +407,10 @@ fun BoardView(
                             isInCheck = isInCheck,
                             hidePiece = isBeingDragged,
                             isLight = (boardRow + boardCol) % 2 == 0,
-                            isBottomEdge = if (isFlipped) displayRow == 0 else displayRow == 7,
-                            isLeftEdge = if (isFlipped) displayCol == 7 else displayCol == 0,
+                            // Ne iOS formula: Android ne rotira tablu nego obilazi
+                            // obrnutim redom — vidi `BoardCoordinates`.
+                            isBottomEdge = BoardCoordinates.isBottomEdge(pos, isFlipped),
+                            isLeftEdge = BoardCoordinates.isLeftEdge(pos, isFlipped),
                             isFlipped = isFlipped,
                             boardTheme = boardTheme,
                             pieceStyle = pieceStyle,
