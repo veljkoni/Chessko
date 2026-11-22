@@ -680,7 +680,7 @@ protokol: `docs/online-protocol.md` (jedini izvor istine o porukama); plan i led
   WebSocket Hibernation (prisustvo i pozivi žive u attachment-ima, 30-minutno odsustvo u SQLite-u uz `alarm`).
   Endpoint `wss://play.chessko.app/ws`, `GET /health` → `ok`. Server **ne zna šah**: prosleđuje poteze i broji `ply`.
 - Objava: `cd server/play && npx wrangler deploy` (wrangler **pinovan** `4.124.0` u `package.json`; poslednja
-  verzija `222ccb7e`, 2026-11-15). Provera uživo: `npm run smoke` (pravi dva klijenta protiv produkcije, uključujući
+  verzija `05f413c7`, 2026-11-22, protokol v2 sa satom; prethodna `222ccb7e`). Provera uživo: `npm run smoke` (pravi dva klijenta protiv produkcije, uključujući
   „resign dok je protivnik odsutan"; od partije na vreme i partiju 3+2 i v1 ↔ v2 bez sata). **Smoke protiv produkcije i
   objava samo uz odobrenje vlasnika**; lokalno: `CHESSKO_WS=ws://127.0.0.1:8787/ws npm run smoke` uz `npx wrangler dev`.
   Testovi: `npx vitest run` (**81**, 8 fajlova) + `npx tsc --noEmit`.
@@ -3849,3 +3849,9 @@ Prioritet poređan po vrednosti; završene stavke označene su `[x]`.
   (6) Italijanski `needs_update`: „…per giocare con l’orologio." (7) Tri nova poznata ograničenja (remi/predaja pre presude
   servera, izgubljen `flag`, `scheduleAlarm`). Testovi: `swift test` **199** (bilo 196), Android JVM **234** (bilo 231),
   server **81**, `tsc` čist, iOS build uspešan, katalog = izlaz skripte.
+
+- **2026-11-22** — Partija na vreme spojena u `main` (fast-forward, `f455201`) i poslata na GitHub; testovi na spojenom
+  stablu: server 81/81, `swift test` 199/199, Android JVM 234/234 (iz XML-a). Server objavljen: verzija **`05f413c7`**
+  (prethodna `222ccb7e`), `/health` → `ok`, `npm run smoke` protiv produkcije prošao (v1 partija, predaja dok je protivnik
+  odsutan, 3+2 sa `end:true`, `bad_clock`, `needs_update`, v1 ↔ v2 bez sata). Od ovog trenutka se ne vraća na `222ccb7e`
+  čim v2 aplikacije izađu. Ostaju izdanja iOS i Android 2.5 (8).
